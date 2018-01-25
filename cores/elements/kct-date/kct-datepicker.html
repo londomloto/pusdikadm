@@ -1,0 +1,37 @@
+<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
+
+<dom-module id="kct-datepicker">
+    <template>
+        <style>
+            .dp-container {
+                width: 310px;
+                height: 434px;
+                padding: 0;
+                margin: 0;
+            }
+            .dp-header { background-color: #00BCD4; padding: 20px; color: #fff; }
+            .dp-yr { font-size: 15px; font-weight: 500; opacity: .7;  }
+            .dp-dt { font-size: 36px; font-weight: 600;  }
+        </style>
+        <paper-dialog id="popup">
+            <div class="dp-container">
+                <div class="dp-header">
+                    <div class="dp-yr">2017</div>
+                    <div class="dp-dt">Sat, Aug 26</div>
+                </div>
+                <div class="dp-body"></div>
+            </div>
+        </paper-dialog>        
+    </template>
+    <script>
+        class KctDatePicker extends Polymer.Element {
+            static get is() {
+                return 'kct-datepicker';
+            }
+            open() {
+                this.$.popup.open();
+            }
+        }
+        customElements.define(KctDatePicker.is, KctDatePicker);
+    </script>
+</dom-module>

@@ -1,0 +1,89 @@
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../settings/blocks/setting-header-block.html">
+
+<dom-module id="company-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--page-background-color);
+            }
+            h3.title {
+                font-size: 15px;
+                font-weight: 500;
+            }
+        </style>        
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox>
+            <setting-header-block icon="home" text="Konfigurasi" desc="Organisasi" on-back-tap="__onBackTap">
+                <div class="separator"></div>
+                <paper-button on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Simpan</paper-button>
+            </setting-header-block>
+            <div class="flex padding">
+                <kct-column columns="2">
+                    <div>
+                        <h3 class="title">Data Organisasi</h3>
+                        <paper-input label="Nama Organisasi" value="{{ company.scp_name }}"></paper-input>
+                        <paper-input label="Alamat" value="{{ company.scp_address }}"></paper-input>
+                        <paper-input label="No. Telepon" value="{{ company.scp_phone }}"></paper-input>
+                        <paper-input label="No. Fax" value="{{ company.scp_fax }}"></paper-input>
+                        <paper-input label="Alamat Email" value="{{ company.scp_email }}"></paper-input>
+                        <paper-input label="Homepage" value="{{ company.scp_homepage }}"></paper-input>
+                    </div>    
+                    <div></div>
+                </kct-column>
+                
+            </div>
+        </kct-vbox>
+
+    </template>
+    <script>
+        class CompanyPage extends KctView {
+            static get is() {
+                return 'company-page';
+            }
+
+            handleRouteParams(setting) {
+                if (setting != 'company') return;
+                this.__loadCompany();
+            }
+
+            __loadCompany() {
+                let payload = {
+                    params: {
+                        scp_default: 1
+                    }
+                };
+
+                this.$.ajax.GET('/company', payload).then(res => {
+                    if (res.success) {
+                        this.set('company', res.data[0]);
+                    }
+                });
+            }
+
+            __onSaveTap() {
+                let payload = this.company;
+
+                this.$.ajax.PUT('/company/' + this.company.scp_id, payload).then(res => {
+                    if (res.success) {
+                        this.toast('Sukses', 'Data instansi berhasil disimpan');
+                    }
+                });
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+
+        customElements.define(CompanyPage.is, CompanyPage);
+    </script>
+</dom-module>

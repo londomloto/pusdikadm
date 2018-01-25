@@ -1,0 +1,117 @@
+<dom-module id="kct-page">
+    <template>
+        <style>
+            :host { 
+                display: block; 
+                height: 100%;
+            }
+        </style>
+    </template>
+    <script>
+
+        class KctPage extends Polymer.Element {
+            static get is() {
+                return 'kct-page';
+            }
+
+            static get properties() {
+                return {
+                    type: { type: String },
+                    name: { type: String, reflectToAttribute: true },
+                    title: { type: String, notify: true, reflectToAttribute: true },
+                    config: { type: Object, notify: true },
+                    route: { type: Object, notify: true },
+                    state: { type: Object },
+                    user: { type: Object, notify: true },
+                    opened: { type: Boolean, value: false, reflectToAttribute: true }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__typeChanged(type)'
+                ];
+            }
+
+            constructor() {
+                super();
+
+                this.__ready = { done: false };
+                
+                this.__ready.promise = new Promise((res, rej) => {
+                    this.__ready.resolve = res;
+                    this.__ready.reject = rej;
+                });
+            }
+
+            ready() {
+                super.ready();
+                this.__ready.done = true;
+                this.__ready.resolve();
+            }
+
+            __typeChanged(type) {
+                if (type) {
+                    if (this.__ready.done) {
+                        this.__stampPage();
+                    } else {
+                        this.__ready.promise.then(() => {
+                            this.__stampPage();
+                        });
+                    }
+                }
+            }
+
+            __stampPage() {
+                let existing = this.shadowRoot.querySelector('#page');
+                
+                if (existing) {
+                    this.shadowRoot.removeChild(existing);
+                }
+
+                let template = document.createElement('template');    
+
+                template.innerHTML = `
+                    <${this.type} 
+                        id="page" 
+                        name="[[ name ]]" 
+                        title="{{ title }}" 
+                        config="{{ config }}" 
+                        route="{{ route }}" 
+                        state="[[ state ]]" 
+                        user="{{ user }}" 
+                        opened="[[ opened ]]"></${this.type}>
+                `;
+
+                let instance = this._stampTemplate(template);
+                this.shadowRoot.appendChild(instance);
+                this.$.page = instance.$.page;
+            }
+
+            activate() {
+                if (this.$.page && this.$.page.activate) {
+                    this.$.page.activate();
+                }
+            }
+
+            close() {
+                let evt = new CustomEvent('close', {
+                    detail: {},
+                    bubble: true,
+                    composed: true
+                });
+                
+                this.dispatchEvent(evt);
+            }
+
+            handleResizing(width, height) {
+                if (this.$.page && this.$.page.handleResizing) {
+                    this.$.page.handleResizing(width, height);
+                } 
+            }
+
+        }
+
+        customElements.define(KctPage.is, KctPage);
+    </script>
+</dom-module>

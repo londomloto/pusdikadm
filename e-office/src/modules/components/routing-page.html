@@ -1,0 +1,86 @@
+<link rel="import" href="../../../../cores/bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../../../cores/bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-pages/kct-pages.html">
+<link rel="import" href="route-pages/route-foo-page.html">
+<link rel="import" href="route-pages/route-bar-page.html">
+<link rel="import" href="route-pages/route-baz-page.html">
+
+<dom-module id="routing-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: var(--routing-page-height, 100%);
+                background-color: var(--page-background-color);
+            }
+            paper-listbox {
+                background-color: transparent;
+            }
+            paper-item {
+                font-weight: 400;
+                cursor: pointer;
+            }
+            paper-item iron-icon {
+                margin-right: 10px;
+            }
+        </style>
+
+        <kct-pages id="pages" selected="{{ page }}" attr-for-selected="name">
+            <paper-listbox name="idx">
+                <template is="dom-repeat" items="{{ links }}">
+                    <paper-item on-tap="__onLinkTap">
+                        <iron-icon icon="label-outline"></iron-icon>
+                        <paper-item-body>Open [[ item.page ]] page</paper-item-body>
+                    </paper-item>
+                </template>
+            </paper-listbox>
+
+            <route-foo-page name="foo" route="{{ route }}" state="[[ state ]]"></route-foo-page>
+            <route-bar-page name="bar" route="{{ route }}" state="[[ state ]]"></route-bar-page>
+            <route-baz-page name="baz" route="{{ route }}" state="[[ state ]]"></route-baz-page>
+        </kct-pages>
+
+    </template>
+    <script>
+        class RoutingPage extends KctView {
+            static get is() {
+                return 'routing-page';
+            }
+
+            static get properties() {
+                return {
+                    page: { type: String, value: 'idx' },
+                    links: {
+                        type: Array,
+                        value: () => ([
+                            { page: 'foo' },
+                            { page: 'bar' },
+                            { page: 'baz' }
+                        ])
+                    }
+                };
+            }
+
+            handleRouteParams(page) {
+                if (page) {
+                    this.set('page', page);
+                } else {
+                    this.set('page', 'idx');
+                }
+            }
+
+            handleResizing(width, height) {
+                this.updateStyles({
+                    '--routing-page-height': height + 'px'
+                });
+            }
+
+            __onLinkTap(e) {
+                let link = e.model.item;
+                this.set('route.path', '/components/routing/' + link.page);
+            }
+        }
+
+        customElements.define(RoutingPage.is, RoutingPage);
+    </script>
+</dom-module>

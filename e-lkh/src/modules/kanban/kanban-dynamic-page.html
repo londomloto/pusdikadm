@@ -1,0 +1,577 @@
+<link rel="import" href="../../../../cores/bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../../../cores/bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../../../cores/bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../../cores/bower_components/vaadin-combo-box/vaadin-combo-box.html">
+
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-chip/kct-chip.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../cores/elements/kct-file/kct-file.html">
+<link rel="import" href="../../../../cores/elements/kct-combobox/kct-combobox.html">
+
+<!-- <link rel="import" href="../../../../cores/elements/kct-app/blocks/page-header-block.html"> -->
+<link rel="import" href="../settings/blocks/setting-header-block.html">
+
+<dom-module id="kanban-dynamic-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                overflow: hidden;
+            }
+            .sidebar {
+                background-color: #F5F5F5;
+                width: 250px;
+                height: var(--kanban-dynamic-sidebar-height, 100%);
+                overflow-y: auto;
+                overflow-x: hidden;
+            }
+            .content {
+                height: var(--kanban-dynamic-content-height, 100%);
+                padding: 16px;
+                overflow-y: auto;
+                overflow-x: hidden;
+            }
+            paper-listbox {
+                padding: 0;
+                --paper-listbox-background-color: transparent;
+            }
+            paper-item iron-icon {
+                --iron-icon-width: 24px;
+                --iron-icon-height: 24px;
+                position: relative;
+                color: var(--paper-grey-600);
+                top: 0px;
+            }
+            paper-item.iron-selected iron-icon {
+                color: #fff;
+            }
+            paper-item {
+                font-weight: 400;
+                font-size: 14px;
+                cursor: pointer;
+                --paper-item-min-height: 36px;
+                --paper-item-selected: {
+                    background-color: var(--paper-blue-grey-500);
+                    color: #fff;
+                };
+            }
+            
+            .paper-item-text {
+                margin-left: 10px;
+
+            }
+            .paper-item-text span {
+                font-size: 12px;
+                color: #999;
+            }
+            paper-item.iron-selected span {
+                color: #fff;
+            }
+            .form-item {
+                background-color: var(--paper-grey-100);
+            }
+            form-item h3 {
+                font-size: 16px;
+                font-weight: 400;
+            }
+            .form-item-tool {
+                float: right;
+                position: relative;
+                top: -10px;
+            }
+            .form-item-tool paper-fab {
+                display: inline-block;
+                margin: 0 1px;
+                background-color: var(--paper-grey-500);
+                box-shadow: none;
+            }
+            .box-foot paper-button {
+                font-size: 13px;
+            }
+            .box-foot iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
+            }
+        </style>
+        
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-file id="file-browser" on-change="__onSelectFile"></kct-file>
+
+        <!-- <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to setting" on-tap="__onBackTap"></paper-fab>
+        </div> -->
+
+        <kct-vbox>
+            <setting-header-block icon="av:web" text="Formulir" on-back-tap="__onBackTap">
+                <kct-combobox 
+                    id="combo" 
+                    slot="header-value" 
+                    label="Pilih atau cari bisnis proses..." 
+                    value="{{ worker }}" 
+                    items="[[ workers ]]" 
+                    item-label-path="text" 
+                    item-value-path="name"
+                    no-label-float>
+                        <template>
+                            <style>
+                                .text { font-weight: 500;  }
+                                .desc { font-weight: 300; color: #999;  }
+                            </style>
+                            <div class="text">[[ item.text ]]</div>
+                            <div class="desc">[[ item.name ]]</div>
+                        </template>
+                </kct-combobox>
+                <div class="separator"></div>
+                <paper-button on-tap="__onAddTap" disabled$="[[ __disabledAddForm ]]"><iron-icon icon="add"></iron-icon>&nbsp;Tambah Formulir</paper-button>
+            </setting-header-block>
+            <!-- <page-header-block icon="av:web" extra-size>
+                <label slot="header-content">Dynamic Form</label>
+                <vaadin-combo-box 
+                    id="combo" 
+                    slot="header-content" 
+                    label="Available Workflow" 
+                    value="{{ worker }}" 
+                    items="[[ workers ]]" 
+                    item-label-path="text" 
+                    item-value-path="name"
+                    no-label-float>
+                        <template>
+                            <style>
+                                .text { font-weight: 500;  }
+                                .desc { font-weight: 300; color: #999;  }
+                            </style>
+                            <div class="text">[[ item.text ]]</div>
+                            <div class="desc">[[ item.name ]]</div>
+                        </template>
+                </vaadin-combo-box>
+
+                <paper-button on-tap="__onAddTap" disabled$="[[ __disabledAddForm ]]"><iron-icon icon="add"></iron-icon>&nbsp;Add Form</paper-button>
+            </page-header-block> -->
+
+            <div class="flex">
+                <kct-hbox fit>
+                    <div class="sidebar b-r">
+                        <paper-listbox selected="{{ activity }}" attr-for-selected="name">
+                            <template is="dom-repeat" items="[[ activities ]]">
+                                <paper-item name="[[ item.id ]]">
+                                    <iron-icon icon="description"></iron-icon>
+                                    <div class="paper-item-text">
+                                        [[ item.text ]]
+                                    </div>
+                                </paper-item>
+                            </template>
+                        </paper-listbox>
+                    </div>
+                    <div class="flex">
+                        <div class="content">
+                            <template is="dom-repeat" items="[[ forms ]]">
+                                <div class="box b-a form-item">
+                                    <div class="box-body">
+                                        <div>
+                                            <h3 class="f-400 m-b-xs">[[ item.bf_name ]]</h3>
+                                            <p class="text-muted">[[ item.bf_description ]]</p>
+                                        </div>
+                                        <div class="line"></div>
+                                        <div>
+                                            <p class="f-400 m-b-xs">Template</p>
+                                            <p style="color: var(--paper-blue-500);"><a title="Download" href="/api/v2/demo/bpmn/forms/download/[[item.bf_id]]?access_token=[[user.su_access_token]]" target="_blank">[[ item.bf_tpl_orig ]]</a>&nbsp;</p>
+                                        </div>
+                                        <div class="m-t">
+                                            <p class="f-400 m-b-xs">Akses Role</span></p>
+                                            <div  style="min-height: 40px;">
+                                                <template is="dom-repeat" items="[[ item.bf_roles ]]" as="role">
+                                                    <kct-chip label="[[ role.bfr_sr_name ]]" icon="verified-user" on-cleartap="__onRoleDeleteTap"></kct-chip>
+                                                </template>
+                                            </div>
+                                        </div>
+                                        <div class="m-t">
+                                            <p class="f-400 m-b-xs">Akses Pengguna</p>
+                                            <div  style="min-height: 40px;">
+                                                <template is="dom-repeat" items="[[ item.bf_users ]]" as="user">
+                                                    <kct-chip label="[[ user.bfu_su_fullname ]]" icon="perm-identity" on-cleartap="__onUserDeleteTap"></kct-chip>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="box-foot" style="padding: 0 10px 10px 10px; text-align: center;">
+                                        <paper-button on-tap="__onAddRoleTap"><iron-icon icon="add"></iron-icon>&nbsp;Role</paper-button>
+                                        <paper-button on-tap="__onAddUserTap"><iron-icon icon="add"></iron-icon>&nbsp;Pengguna</paper-button>
+                                        <paper-button on-tap="__onEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Sunting</paper-button>
+                                        <paper-button on-tap="__onDeleteTap"><iron-icon icon="close"></iron-icon>&nbsp;Hapus</paper-button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                        
+                    </div>
+                </kct-hbox>
+            </div>
+        </kct-vbox>
+
+        <!-- dialog: role -->
+        <kct-dialog id="role-dialog" title="Tambah Role" width="400">
+            <template preserve-content>
+                <style>
+                    vaadin-combo-box { padding: 0; }
+                </style>
+                <div slot="dialog-body">
+                    <vaadin-combo-box
+                        id="combo-role" 
+                        label="Pilih role" 
+                        items="[[ roles ]]" 
+                        item-value-path="sr_id" 
+                        item-label-path="sr_name" no-float-label ></vaadin-combo-box>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onRoleDialogAdd">Tambah</paper-button>
+                    <paper-button on-tap="__onRoleDialogClose">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        <!-- dialog: user -->
+        <kct-dialog id="user-dialog" title="Tambah Pengguna" width="400">
+            <template preserve-content>
+                <style>
+                    vaadin-combo-box { padding: 0; }
+                </style>
+                <div slot="dialog-body">
+                    <vaadin-combo-box
+                        id="combo-user" 
+                        label="Pilih Pengguna" 
+                        items="[[ users ]]" 
+                        item-value-path="su_id" 
+                        item-label-path="su_fullname" no-float-label></vaadin-combo-box>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onUserDialogAdd">Tambah</paper-button>
+                    <paper-button on-tap="__onUserDialogClose">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        <!-- dialog: editor -->
+        <kct-dialog id="editor" title="Form Editor" width="400">
+            <template preserve-content>
+                <style include="theme-helper"></style>
+                <div slot="dialog-body">
+                    <paper-input label="Nama Template" value="{{ selectedForm.bf_name }}"></paper-input>
+                    <paper-input label="Keterangan" value="{{ selectedForm.bf_description }}"></paper-input>
+                    <kct-hbox class="m-t">
+                        <div>
+                            <paper-button on-tap="__onBrowseFileTap" class="btn-sm btn-primary">Browse template</paper-button>
+                        </div>
+                        <div class="flex ellipsis" style="line-height: 28px;">
+                            [[ filename ]]
+                        </div>
+                    </kct-hbox>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSave">Simpan</paper-button>
+                    <paper-button on-tap="__onEditorClose">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class KanbanDynamicPage extends KctView {
+
+            static get is() {
+                return 'kanban-dynamic-page';
+            }
+
+            static get properties() {
+                return {
+                    title: {type: String, notify: true, value: 'Form Templates'},
+                    workers: { type: Array },
+                    roles: { type: Array },
+                    users: { type: Array },
+                    activities: { type: Array },
+                    forms: { type: Array },
+                    selectedForm: { type: Object },
+                    worker: { type: String },
+                    activity: { type: String },
+                    filename: { type: String },
+                    __disabledAddForm: { type: Boolean, value: true }
+                }
+            }
+
+            static get observers() {
+                return [
+                    '__workerChanged(worker)',
+                    '__activityChanged(activity)'
+                ];
+            }
+
+            handleRouteParams(...params) {
+                let [setting, action] = params;
+                if (setting == 'kanban-dynamic') {
+                    this.__loadWorkers();
+                }
+            }
+
+            handleResizing(width, height) {
+                let styles = {};
+                let delta = this.shadowRoot.querySelector('setting-header-block').offsetHeight;
+
+                styles['--kanban-dynamic-content-height'] = (height - delta - 32) + 'px';
+                styles['--kanban-dynamic-sidebar-height'] = (height - delta) + 'px';
+
+                this.updateStyles(styles);
+            }
+
+            __workerChanged(worker) {
+                this.set('__disabledAddForm', true);
+                this.__loadActivities(worker);
+            }
+
+            __activityChanged(activity) {
+                this.set('__disabledAddForm', false);
+                this.__loadForms(activity);
+            }
+
+            __loadWorkers() {
+                this.$.ajax.GET('/bpmn/workers').then((res) => {
+                    let workers = res.data;
+                    this.set('workers', workers);
+
+                    if (workers.length) {
+                        this.set('worker', workers[workers.length - 1].name);
+                    }
+                });
+            }
+
+            __loadActivities(worker) {
+                this.set('activities', []);
+
+                if (worker) {
+                    this.$.ajax.GET('/bpmn/activities/' + worker).then((res) => {
+                        let activities = res.data;
+                        this.set('activities', activities);
+                        if (activities.length) {
+                            //this.set('activity', activities[0].id);
+                        }
+                    });    
+                }
+            }
+
+            __loadForms(activity) {
+                this.set('forms', []);
+                if (activity) {
+                    this.$.ajax.GET('/bpmn/forms?activity=' + activity).then((res) => {
+                        let forms = res.data;
+                        this.set('forms', forms);
+                    });
+                }
+            }
+
+            __onDeleteTap(e) {
+                let form = e.model.item;
+                this.confirm('Confirm', 'Are you sure want to delete this template?').then((y) => {
+                    if (y) {
+                        this.$.ajax.DELETE('/bpmn/forms/' + form.bf_id).then((res) => {
+                            this.__loadForms(this.activity);
+                        });
+                    }   
+                });
+            }
+
+            __onAddRoleTap(e) {
+                let form = e.model.item;
+                
+                this.set('selectedForm', form);
+
+                this.$['combo-role'].value = '';
+                this.$['role-dialog'].open();
+
+                // refresh roles
+                this.$.ajax.GET('/roles').then(res => {
+                    let exists = form.bf_roles.map(r => r.bfr_sr_id),
+                        roles = res.data.filter(r => {
+                            return exists.indexOf(r.sr_id) === -1;
+                        });
+
+                    this.set('roles', roles);
+                });
+            }
+
+            __onRoleDeleteTap(e) {
+                let role = e.model.role;
+
+                this.confirm(
+                    'Confirm',
+                    'Delete assigned role from template?'
+                ).then((y) => {
+                    if (y) {
+                        this.$.ajax.DELETE('/bpmn/forms-roles/' + role.bfr_id).then((res) => {
+                            this.__loadForms(this.activity);
+                        });    
+                    }
+                });
+            }
+
+            __onAddUserTap(e) {
+                let form = e.model.item;
+                this.set('selectedForm', form);
+                
+                this.$['combo-user'].value = '';
+                this.$['user-dialog'].open();
+
+                // refresh users
+                this.$.ajax.GET('/users').then(res => {
+                    let exists = form.bf_users.map(u => u.bfu_su_id),
+                        users = res.data.filter(u => { return exists.indexOf(u.su_id) === -1; });
+                    this.set('users', users);
+                });
+            }
+
+            __onUserDeleteTap(e) {
+                let user = e.model.user;
+
+                this.confirm(
+                    'Confirm',
+                    'Delete assigned user from template?'
+                ).then((y) => {
+                    if (y) {
+                        this.$.ajax.DELETE('/bpmn/forms-users/' + user.bfu_id).then((res) => {
+                            this.__loadForms(this.activity);
+                        });    
+                    }
+                });
+            }
+
+            __onAddTap() {
+                this.set('selectedForm', {
+                    bf_activity: this.activity,
+                    bf_roles: [],
+                    bf_users: []
+                });
+
+                this.set('filename', '');
+                this.$['file-browser'].reset();
+
+                this.$.editor.open();
+                // this.$['form-editor'].open();
+            }
+
+            __onEditTap(e) {
+                let form = e.model.item;
+                
+                this.set('selectedForm', form);
+                this.set('filename', '');
+                
+                this.$['file-browser'].reset();
+                this.$.editor.open();
+                // this.$['form-editor'].open();
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+
+            __onUserDialogAdd() {
+                let form = this.selectedForm,
+                    user = this.$['combo-user'].value;
+
+                if (form && user) {
+                    let data = form;
+                    data.bf_users.push({
+                        bfu_su_id: user,
+                        bfu_bf_id: form.bf_id
+                    });
+
+                    this.$.ajax.PUT('/bpmn/forms/' + form.bf_id, data).then(res => {
+                        this.__loadForms(this.activity);
+                    });
+                }
+
+                this.$['user-dialog'].close();
+            }
+
+            __onUserDialogClose() {
+                this.$['user-dialog'].close();
+            }
+
+            __onRoleDialogAdd() {
+                let form = this.selectedForm,
+                    role = this.$['combo-role'].value;
+
+                if (form && role) {
+                    let data = form;
+
+                    data.bf_roles.push({
+                        bfr_sr_id: role,
+                        bfr_bf_id: form.bf_id
+                    });
+
+                    this.$.ajax.PUT('/bpmn/forms/' + form.bf_id, data).then(res => {
+                        this.__loadForms(this.activity);
+                    });
+                }
+
+                this.$['role-dialog'].close();
+            }
+
+            __onRoleDialogClose() {
+                this.$['role-dialog'].close();
+            }
+
+            __onEditorSave() {
+                let data = this.selectedForm;
+
+                if (data.bf_id) {
+                    this.$.ajax.PUT('/bpmn/forms/' + data.bf_id, data).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/bpmn/forms', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        let file = this.$['file-browser'].file().files[0];
+                        if (file) {
+                            this.$.ajax.UPLOAD('/bpmn/forms/upload/' + res.data.bf_id, {
+                                files: [
+                                    { name: 'userfile', file: file }
+                                ]
+                            }).then(() => {
+                                this.__loadForms(this.activity);
+                            });
+                        } else {
+                            this.__loadForms(this.activity);
+                        }
+                    }
+                    this.$.editor.close();
+                }
+            }   
+
+            __onEditorClose() {
+                this.$.editor.close();
+            }
+
+            __onBrowseFileTap() {
+                this.$['file-browser'].browse();
+            }
+
+            __onSelectFile() {
+                let form = this.selectedForm;
+                if (form) {
+                    let file = this.$['file-browser'].file(),
+                        name = file.files[0].name;
+
+                    this.set('filename', name);
+                    this.set('selectedForm.bf_tpl_orig', name);
+                }
+            }
+
+        }
+
+        customElements.define(KanbanDynamicPage.is, KanbanDynamicPage);
+    </script>
+</dom-module>

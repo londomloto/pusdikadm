@@ -1,0 +1,18 @@
+
+POST:
+    {
+        // post user
+        new: {
+            A: '2',
+            B: '1'
+        }
+    }
+    
+STEP:
+
+1)  Cek current status di tabel trans
+2)  Cek next conn setelah current status
+3)  Baca konditional masing2 conn
+4)  Jika tidak ada konditional, lanjut ke next status
+5)  Jika ada, compare konditional dgn data postingan
+6)  Jika cocok, lanjut next status

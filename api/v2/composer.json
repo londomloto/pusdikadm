@@ -1,0 +1,9 @@
+{
+    "require": {
+        "firebase/php-jwt": "^4.0",
+        "dapphp/securimage": "3.6.5",
+        "phpmailer/phpmailer": "^6.0",
+        "fightbulc/moment": "^1.26",
+        "wisembly/elephant.io": "^3.3"
+    }
+}

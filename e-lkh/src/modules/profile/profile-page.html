@@ -1,0 +1,207 @@
+<link rel="import" href="../../../../cores/bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../cores/bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../cores/bower_components/vaadin-material-theme/vaadin-date-picker.html">
+<link rel="import" href="../../../../cores/bower_components/vaadin-date-picker/vaadin-date-picker.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-file/kct-file.html">
+<link rel="import" href="../../../../cores/elements/kct-combobox/kct-combobox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../settings/blocks/setting-header-block.html">
+
+<dom-module id="profile-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: var(--profile-page-height, 582px);
+                background-color: var(--paper-grey-100);
+            }
+            .sidebar {
+                width: 200px;
+                padding-right: 1rem;
+                position: relative;
+            }
+            .profile-avatar {
+                height: 200px;
+                background-color: #dfdfdf;
+                overflow: hidden;
+            }
+            .profile-avatar img {
+                height: 100%;
+                display: block;
+            }
+            .profile-name {
+                background-color: var(--paper-blue-grey-500);
+                color: #fff;
+            }
+            .fab-camera {
+                position: absolute;
+                top: 172px;
+                left: 50%;
+                margin-left: -28px;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox>
+            <setting-header-block icon="face" text="Profile" desc="[[ user.su_fullname ]]" hide-nav></setting-header-block>
+            <div class="flex scroll-y padding">
+                <kct-hbox> 
+                    <div class="sidebar">
+                        <div class="rel">
+                            <div class="profile-avatar">
+                                <img src$="[[ user.su_avatar_thumb ]]&w=200&h=200">
+                                <kct-file id="avatar" on-change="__onAvatarChange"></kct-file>
+                            </div>
+                            <div class="profile-name p-a text-center">&nbsp;</div>
+                            <paper-fab class="fab-raised fab-blue fab-camera" icon="image:camera-alt" title="Change photo" on-tap="__onAvatarTap"></paper-fab>
+                        </div>
+                    </div>
+                    <div class="flex">
+                        <paper-card class="block">
+                            <div class="card-content">
+                                <h3 class="block-title">Data Pribadi</h3>
+                                <paper-input label="Nama Lengkap" value="{{ user.su_fullname }}"></paper-input>
+                                <paper-input label="Jenis Kelamin" value="{{ user.su_sex }}"></paper-input>
+                                <kct-column columns="2" spacer="0px">
+                                    <div>
+                                        <paper-input label="Tempat Lahir" value="{{ user.su_pob }}"></paper-input>
+                                    </div>
+                                    <div>
+                                        <vaadin-date-picker label="Tanggal Lahir" value="{{ user.su_dob }}"></vaadin-date-picker>        
+                                    </div>
+                                </kct-column>
+                                <paper-input label="Nomor Induk Pegawai" value="{{ user.su_no }}"></paper-input>
+                                <paper-input label="Pangkat Golongan Ruang" value="{{ user.su_grade }}"></paper-input>
+                                <kct-combobox 
+                                    url="/jobs" 
+                                    label="Jabatan (Pekerjaan)" 
+                                    value="{{ user.su_sj_id }}" 
+                                    page-size="10" 
+                                    item-label-path="sj_name" 
+                                    item-value-path="sj_id" 
+                                    autoload></kct-combobox>
+
+                                <kct-combobox 
+                                    url="/departments" 
+                                    label="Unit Kerja" 
+                                    value="{{ user.su_sdp_id }}" 
+                                    page-size="10" 
+                                    item-label-path="sdp_name" 
+                                    item-value-path="sdp_id" 
+                                    autoload></kct-combobox>
+                                <kct-combobox 
+                                    url="/company" 
+                                    label="Organisasi" 
+                                    value="{{ user.su_scp_id }}" 
+                                    page-size="10" 
+                                    item-label-path="scp_name" 
+                                    item-value-path="scp_id" 
+                                    autoload></kct-combobox>
+
+                                <div class="m-t">
+                                    <paper-button class="btn-primary" on-tap="__onSaveBasicTap">Simpan Perubahan</paper-button> 
+                                </div>
+                            </div>
+                        </paper-card>
+
+                        <paper-card class="block">
+                            <div class="card-content">
+                                <h3 class="block-title">Data Akun</h3>
+                                <paper-input label="Alamat Email" value="{{ user.su_email }}"></paper-input>
+                                <paper-input label="Password" type="password" value="{{ __account.password1 }}"></paper-input>
+                                <paper-input label="Konfirmasi Password" type="password" value="{{ __account.password2 }}"></paper-input>
+                                <div class="m-t">
+                                    <paper-button class="btn-primary" on-tap="__onSaveAccountTap">Simpan Perubahan</paper-button>
+                                </div>
+                            </div>
+                        </paper-card>
+                        
+                    </div>
+                </kct-hbox>
+            </div>
+        </kct-vbox>
+    </template>
+    <script>
+        class ProfilePage extends KctView {
+            static get is() {
+                return 'profile-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Profile' }
+                };
+            }
+
+            constructor() {
+                super();
+                this.__account = {
+                    password1: null,
+                    password2: null
+                };
+            }
+
+            handleResizing(width, height) {
+                this.updateStyles({ '--profile-page-height': height + 'px' });
+            }
+
+            __onSaveBasicTap() {
+                let data = Object.assign({}, this.user);
+
+                this.$.ajax.PUT('/profile/' + data.su_id, data).then(() => {
+                    this.__reset = Object.assign({}, this.user);
+                    this.toast('Sukses', 'Data profile berhasil disimpan');
+                });
+            }
+
+            __onSaveAccountTap() {
+                if (this.__account.password1 && (this.__account.password1 == this.__account.password2)) {
+                    let data = { su_passwd: this.__account.password1 };
+                    
+                    this.$.ajax.PUT('/profile/' + this.user.su_id, data).then(() => {
+                        this.toast('Sukses', 'Data akun berhasil disimpan');     
+                    });
+                }
+            }
+
+            __onResetBasicTap() {
+                for(let key in this.__reset) {
+                    this.set('user.' + key, this.__reset[key]);
+                }
+            }
+
+            __onAvatarTap(e) {
+                this.shadowRoot.querySelector('#avatar').browse();
+            }
+
+            __onAvatarChange(e) {
+                let file = this.shadowRoot.querySelector('#avatar').file();
+
+                let data = {
+                    files: [
+                        { name: 'avatar', file: file }
+                    ]
+                };
+
+                this.$.ajax.UPLOAD('/profile/' + this.user.su_id + '/upload', data).then((res) => {
+                    if (res.data) {
+                        for (let key of ['su_avatar', 'su_avatar_url', 'su_avatar_thumb']) {
+                            this.set('user.' + key, res.data[key]);
+                        }
+                    }
+                });
+            }
+        }
+
+        customElements.define(ProfilePage.is, ProfilePage);
+    </script>
+</dom-module>

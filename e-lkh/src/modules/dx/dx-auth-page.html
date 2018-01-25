@@ -1,0 +1,37 @@
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-app/blocks/page-header-block.html">
+
+<dom-module id="dx-auth-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+        </style>
+
+        <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to setting" on-tap="__onBackTap"></paper-fab>
+        </div>
+
+        <kct-vbox>
+            <page-header-block icon="done-all" description="Upload Authorization"></page-header-block>
+            <div class="flex">
+                
+            </div>
+        </kct-vbox>
+    </template>
+    <script>
+        class DxAuthPage extends KctView {
+
+            static get is() {
+                return 'dx-auth-page';
+            }
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+
+        customElements.define(DxAuthPage.is, DxAuthPage);
+    </script>
+</dom-module>

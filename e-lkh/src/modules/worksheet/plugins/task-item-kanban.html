@@ -1,0 +1,135 @@
+<!-- <link rel="import" href="user-dock.html"> -->
+
+<dom-module id="task-item-kanban">
+    <template>
+        <style include="theme-helper">
+            .item {
+                border-radius: 3px;
+                margin-bottom: 0;
+            }
+            .item .box-body {
+                cursor: pointer;
+            }
+            .item .box-body > * {
+                pointer-events: none;
+            }
+            .item .box-foot {
+                padding: 5px 10px;
+                font-size: 11px;
+                color: var(--paper-grey-500);
+                pointer-events: none;
+            }
+            .item .box-foot iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
+                margin-right: 3px;
+                position: relative;
+                top: -1px;
+            }
+            .item .box-user {
+                position: absolute;
+                right: 10px;
+                bottom: 6px;
+            }
+            .item-user {
+                position: relative;
+                overflow: hidden;
+                width: 30px;
+                height: 30px;
+                border-radius: 3px;
+                float: left;
+                margin-left: 2px;
+            }
+            .item-badge {
+                float: left;
+            }
+            .item-badge + .item-badge {
+                margin-left: 20px;
+            }
+            .item-title {
+                font-weight: 400;
+                color: var(--paper-blue-grey-500);
+                font-size: 15px;
+            }
+            .item-desc {
+                font-size: 13px;
+                color: #999;
+            }
+            .item-meta {
+                font-size: 11px;
+                font-weight: 300;
+                color: #999;
+            }
+            .item-meta b {
+                font-weight: 500;
+            }
+            .box-label {
+                margin: 5px 0;
+            }
+            .item-label {
+                font-size: 11px;
+                font-weight: 300;
+                float: left;
+                background-color: var(--paper-grey-500);
+                color: #fff;
+                padding: 2px 5px;
+                border-radius: 2px;
+                margin: 0 1px;
+            }
+            .item-clear {
+                display: block;
+                clear: both;
+            }
+        </style>
+        
+        <div class="box box-shadow-z2 item" style$="border-left: 2px solid [[ accent ]]">
+            <div class="box-body" on-tap="__onItemTap">
+                <h3 class="item-title">[[ record.task.tt_title ]]</h3>
+                <p class="item-meta">
+                    Dibuat oleh <b>[[ record.task.creator_su_fullname ]]</b> [[ record.task.tt_created_dt_relative ]]
+                </p>
+                <div class="box-label">
+                    <template is="dom-repeat" items="[[ record.labels ]]">
+                        <span class="item-label" style$="background-color: [[ item.sl_color ]]">[[ item.sl_label ]]</span>
+                    </template>
+                    <span class="item-clear"></span>
+                </div>
+            </div>
+            <div class="box-user">
+                <div class="item-user" title$="Dibuat oleh [[ record.task.creator_su_fullname ]]">
+                    <img src$="[[ record.task.creator_su_avatar_thumb ]]&w=30&h=30" alt=".">
+                </div>
+                <!-- <user-dock items="[[ record.users ]]"></user-dock> -->
+            </div>
+            <div class="box-foot">
+                <!-- <div class="item-badge">
+                    <iron-icon icon="today"></iron-icon>&nbsp;Dibuat [[ record.task.tt_created_dt_relative ]]    
+                </div>
+                <div class="clearfix"></div> -->
+            </div>
+        </div>
+
+    </template>
+    <script>
+        class TaskItemKanban extends Polymer.Element {
+            static get is() {
+                return 'task-item-kanban';
+            }
+
+            static get properties() {
+                return {
+                    accent: { type: String },
+                    record: { type: Object },
+                    draggable: { type: Boolean, value: true, reflectToAttribute: true }
+                };
+            }
+
+            __onItemTap() {
+                this.dispatchEvent(new CustomEvent('item-tap'));
+            }
+
+        }
+
+        customElements.define(TaskItemKanban.is, TaskItemKanban);
+    </script>
+</dom-module>

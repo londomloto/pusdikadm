@@ -1,0 +1,146 @@
+<link rel="import" href="../../../../cores/bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../../cores/bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-app/blocks/page-header-block.html">
+<link rel="import" href="../../../../cores/mixins/theme.html">
+<link rel="import" href="blocks/setting-header-block.html">
+
+<dom-module id="settings-index-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--page-background-color);
+            }
+            .item {
+                float: left;
+                margin-right: 15px;
+                width: 80px;
+            }
+            .item > .item-icon > paper-fab {
+                box-shadow: none;
+                position: absolute;
+                left: 50%;
+                margin-left: -28px;
+                background-color: var(--paper-blue-grey-400);
+            }
+            .item > .item-icon {
+                text-align: center;
+                padding-bottom: 8px;
+                position: relative;
+                height: 56px;
+            }
+            .item > .item-text {
+                text-align: center;
+                font-size: 13px;
+            }
+            h3 {
+                font-size: 15px;
+                font-weight: 500;
+            }
+        </style>
+        
+        <kct-vbox  data-authorized>
+            
+            <!-- <page-header-block icon="settings" title="Settings" description="Control Panel"></page-header-block> -->
+
+            <setting-header-block text="Settings" desc="Control Panel" icon="settings" hide-nav></setting-header-block>
+
+            <div class="flex scroll-y">
+                <div class="padding">
+                    <template is="dom-repeat" items="[[ links ]]" as="group">
+                        <div class="m-b">
+                            <h3>[[ group.text ]]</h3>
+                        </div>
+                        <paper-card class="block">
+                            <div class="card-content">
+                                <template is="dom-repeat" items="[[ group.children ]]" as="menu">
+                                    <div class="item" >
+                                        <div class="item-icon">
+                                            <paper-fab on-tap="__onMenuTap" data-path$="[[ menu.path ]]" icon="[[ menu.icon ]]" class="fab-raised"></paper-fab>
+                                        </div>
+                                        <div class="item-text">[[ menu.text ]]</div>
+                                    </div>
+                                </template>
+                                <div class="clearfix"></div>
+                            </div>
+                        </paper-card>
+                    </template>
+                </div>
+            </div> 
+        </kct-vbox>
+        
+    </template>
+    <script>
+        class SettingsIndexPage extends Mixins(KctView).use(Mixins.Theme) {
+            static get is() {
+                return 'settings-index-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Konfigurasi' },
+                    links: {
+                        type: Array,
+                        value: () => {
+                            return [
+                                {
+                                    text: 'Role & Pengguna',
+                                    children: [
+                                        { text: 'Role', path: '/settings/roles', icon: 'verified-user' },
+                                        { text: 'Pengguna', path: '/settings/users', icon: 'social:person-outline' },
+                                        { text: 'Akses', path: '/settings/roles-permissions', icon: 'lock-outline' }
+                                        // { text: 'User Permission', path: '/settings/users-permissions', icon: 'lock-outline' }
+                                    ]
+                                },
+                                {
+                                    text: 'Bisnis Proses (flowchart)',
+                                    children: [
+                                        { text: 'Template', path: '/settings/kanban-settings', icon: 'view-carousel' },
+                                        { text: 'Flowchart', path: '/settings/bpmn', icon: 'donut-large' },
+                                        { text: 'Formulir', path: '/settings/kanban-dynamic', icon: 'av:web' }
+                                    ]
+                                },
+                                {
+                                    text: 'Organisasi',
+                                    children: [
+                                        { text: 'Organisasi', path: '/settings/company', icon: 'home' },
+                                        { text: 'Unit Kerja', path: '/settings/departments', icon: 'work' },
+                                        { text: 'Jabatan', path: '/settings/jobs', icon: 'av:web' }
+
+                                    ]
+                                },
+                                // {
+                                //     text: 'Dynamic Upload',
+                                //     children: [
+                                //         { text: 'Profile', path: '/settings/dx-profile', icon: 'open-in-browser' },
+                                //         { text: 'Mapping', path: '/settings/dx-mapping', icon: 'low-priority' },
+                                //         { text: 'Authorization', path: '/settings/dx-auth', icon: 'done-all' }
+                                //     ]
+                                // },
+                                {
+                                    text: 'Aplikasi',
+                                    children: [
+                                        { text: 'Umum', path: '/settings/general/general', icon: 'settings', permission: 'general@settings' },
+                                        // { text: 'Timezone', path: '/settings/timezone', icon: 'social:public', permission: 'timezone@settings' },
+                                        // { text: 'Numbering', path: '/settings/autonumber', icon: 'image:filter-5' },
+                                        { text: 'Menu', path: '/settings/menus', icon: 'menu', permission: 'menus@settings' },
+                                        { text: 'Module', path: '/settings/modules', icon: 'code', permission: 'modules@settings' }
+                                    ]
+                                }
+                            ];
+                        }
+                    }
+                }
+            }
+            
+            __onMenuTap(e) {
+                let path = e.target.dataset.path;
+                if (path) {
+                    this.set('route.path', path);
+                }
+            }
+        }
+        customElements.define(SettingsIndexPage.is, SettingsIndexPage);
+    </script>
+</dom-module>

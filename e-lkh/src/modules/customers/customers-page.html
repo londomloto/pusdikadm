@@ -1,0 +1,198 @@
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../cores/elements/kct-app/blocks/page-header-block.html">
+<link rel="import" href="../../../../cores/mixins/theme.html">
+
+<dom-module id="customers-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: var(--customers-page-height, 100%);
+                background-color: var(--page-background-color);
+            }
+            .box-foot {
+                padding: 8px;
+            }
+            .customer-info {
+                padding-left: 10px;
+            }
+            .customer-logo {
+                display: block;
+                width: 36px;
+                height: 36px;
+                color: #fff;
+                text-align: center;
+                line-height: 36px;
+                font-weight: 300;
+                font-size: 20px;
+                border-radius: 50%;
+            }
+            .customer-info h3 {
+                font-size: 16px;
+                font-weight: 300;
+                margin-bottom: 8px;
+            }
+            .customer-info p {
+                font-size: 13px;
+                color: var(--paper-grey-500);
+                display: block;
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+            }
+            .customer-info iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
+                position: relative;
+                top: -2px;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox>
+            <page-header-block icon="account-circle" title="Customers" description="List of registered customers">
+                <paper-icon-button on-tap="__onRefreshTap" icon="refresh"></paper-icon-button>
+                <div class="separator"></div>
+                <paper-button on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Add Customer</paper-button>
+            </page-header-block>
+            <div class="flex scroll-y">
+                <div class="padding">
+                    <kct-column columns="5">
+                        <template is="dom-repeat" items="[[ customers ]]">
+                            <paper-card class="block">
+                                <div class="card-content">
+                                    <kct-hbox>
+                                        <div>
+                                            <span style$="background-color: [[ _accent() ]]" class="customer-logo">[[ __computeInitial(item) ]]</span>
+                                        </div>
+                                        <div class="flex">
+                                            <div class="customer-info">
+                                                <h3>[[ item.mc_company_name ]]</h3>    
+                                                <p><iron-icon icon="perm-identity"></iron-icon>&nbsp;[[ item.mc_contact_name ]]</span></p>
+                                                <p><iron-icon icon="communication:phone"></iron-icon>&nbsp;[[ item.mc_phone ]]</span></p>
+                                                <p><iron-icon icon="mail"></iron-icon>&nbsp;[[ item.mc_email ]]</span></p>
+                                            </div>
+                                        </div>
+                                    </kct-hbox>
+                                </div>
+                                <div class="card-actions text-center">
+                                    <paper-button on-tap="__onEditTap" class="btn-sm">Detail</paper-button>
+                                    <paper-button on-tap="__onRemoveTap" class="btn-sm text-danger">Remove</paper-button>
+                                </div>
+                            </paper-card>
+                        </template>        
+                    </kct-column>
+                </div>
+            </div>
+        </kct-vbox>
+
+        <kct-dialog id="editor" width="400" height="100%" title="Customer Editor">
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <paper-input label="Name / Company" value="{{ selectedCustomer.mc_company_name }}"></paper-input>
+                    <paper-input label="Contact Name" value="{{ selectedCustomer.mc_contact_name }}"></paper-input>
+                    <paper-input label="Phone" value="{{ selectedCustomer.mc_phone }}"></paper-input>
+                    <paper-input label="Email" value="{{ selectedCustomer.mc_email }}"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSave">Save</paper-button>
+                    <paper-button on-tap="__onEditorClose">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>    
+    <script>
+        class CustomersPage extends Mixins(KctView).use(Mixins.Theme) {
+            static get is() {
+                return 'customers-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Customers' },
+                    customers: { type: Array },
+                    selectedCustomer: { type: Object }
+                }
+            }
+
+            activate() {
+                this.__loadCustomers();
+            }
+
+            handleResizing(width, height) {
+                this.updateStyles({ '--customers-page-height': height + 'px' });
+            }
+
+            __computeInitial(customer) {
+                return (customer.mc_company_name || '').substr(0, 1).toUpperCase();
+            }
+
+            __loadCustomers() {
+
+                let ajax = this.$.ajax;
+
+                ajax.GET('/customers').then(res => {
+                    this.set('customers', res.data);
+                });
+
+            }
+
+            __onRefreshTap() {
+                this.__loadCustomers();
+            }
+
+            __onEditTap(e) {
+                let customer = e.model.item;
+                this.set('selectedCustomer', customer);
+                this.$.editor.open();
+            }
+
+            __onAddTap() {
+                this.set('selectedCustomer', {});
+                this.$.editor.open();
+            }
+
+            __onRemoveTap(e) {
+                let item = e.model.item;
+                this.confirm('Confirm', 'Delete customer?').then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/customers/' + item.mc_id).then(() => {
+                            this.__loadCustomers();
+                        });
+                    }
+                });
+            }
+
+            __onEditorSave() {
+                this.$.editor.close();
+
+                let data = this.selectedCustomer,
+                    ajax = this.$.ajax;
+
+                if (data.mc_id) {
+                    ajax.PUT('/customers/' + data.mc_id, data).then(done.bind(this));
+                } else {
+                    ajax.POST('/customers', data).then(done.bind(this));
+                }
+
+                function  done(res) {
+                    if (res.success) {
+                        this.__loadCustomers();
+                    }
+                }
+            }
+
+            __onEditorClose() {
+                this.$.editor.close();
+            }
+        }
+
+        customElements.define(CustomersPage.is, CustomersPage);
+    </script>
+</dom-module>

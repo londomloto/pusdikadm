@@ -1,0 +1,33 @@
+<link rel="import" href="../../../../../cores/elements/kct-view/kct-view.html">
+
+<dom-module id="route-baz-page">
+    <template>
+        <style include="theme-helper">
+            h3 {
+                font-size: 20px;
+                font-weight: 300;
+            }
+        </style>
+
+        <div class="padding">
+            <h3>Welcome to baz page</h3>
+            <div class="m-t">
+                <paper-button class="btn-primary" on-tap="__onBackTap">Back</paper-button>    
+            </div>
+        </div>
+
+    </template>
+    <script>
+        class RouteBazPage extends KctView {
+            static get is() {
+                return 'route-baz-page';
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/components/routing');
+            }
+        }
+
+        customElements.define(RouteBazPage.is, RouteBazPage);
+    </script>
+</dom-module>

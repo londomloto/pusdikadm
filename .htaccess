@@ -1,0 +1,23 @@
+<IfModule mod_rewrite.c>
+    Options +FollowSymLinks
+    RewriteEngine on
+
+    #RewriteCond %{HTTPS} !=on
+    #RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # ACCEPTABLE
+    #RewriteCond %{REQUEST_URI} ^/(bower_components|elements|mixins|vendors|themes|helpers|fonts)/
+    #RewriteRule ^(.*)$ cores/$1 [L,NC]
+
+    #RewriteCond %{HTTP_HOST} ^wssales\.ws\.io$
+    #RewriteRule ^wssales(/(.*))? http://wssales-portal.ws.io/$2 [P,L]
+    #RewriteRule ^wssales/(.*)$ http://wssales-portal.ws.io/$1  [L]
+
+    #RewriteCond %{REQUEST_URI} /(bower_components|elements|mixins|vendors|themes|helpers|fonts)/
+    #RewriteCond %{REQUEST_URI} !/(cores)/
+    #RewriteRule ^([^/]+)/(.*)$ /cores/$2 [L,R=301]
+
+    RewriteCond %{REQUEST_URI} !\.(html|gif|jpg|jpeg|png|css|js|ttf|woff2?|svg|eot|map|json|ico)$
+    RewriteRule ^([^/]+)/(.*)$ $1/ [L,NC]
+    #RewriteRule ^$ /demo [L]
+</IfModule>

@@ -1,0 +1,71 @@
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-tour/kct-tour.html">
+<link rel="import" href="../../../../cores/vendors/hopscotch/hopscotch.html">
+
+<dom-module id="intro-page">
+    <template>
+
+        <style include="theme-helper"></style>
+        <style>
+            :host {
+                height: 100%;
+            }
+            h1 {
+                display: inline;
+            }
+            .container {
+                box-sizing: border-box;
+                height: 100%;
+            }
+        </style>
+
+        <kct-tour id="tour"></kct-tour>
+
+        <div class="container padding">
+            <h1>Basic Usage</h1>    
+            <paper-button on-tap="__onStartTap" class="btn-red">Start</paper-button>
+        </div>
+
+    </template>
+    <script>
+        class IntroPage extends KctView {
+            static get is() {
+                return 'intro-page';
+            }
+
+            __onStartTap() {
+
+                let tour = {
+                    id: 'my-tour',
+                    showCloseButton: false,
+                    steps: [
+                        {
+                            title: 'Welcome',
+                            content: 'This is my tour',
+                            target: this.shadowRoot.querySelector('h1'),
+                            placement: 'right'
+                        }
+                    ]
+                };
+
+                hopscotch.startTour(tour);
+                
+                /*let intro = introJs(this.shadowRoot.querySelector('.container'));
+
+                intro.setOptions({
+                    steps: [
+                        {
+                            intro: 'Welcome to jungle',
+                            element: this.shadowRoot.querySelector('h1')
+                        }
+                    ]
+                });
+
+                console.log(intro);
+                intro.start();*/
+            }
+        }
+        customElements.define(IntroPage.is, IntroPage);
+    </script>
+</dom-module>

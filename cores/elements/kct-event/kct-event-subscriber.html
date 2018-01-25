@@ -1,0 +1,49 @@
+<dom-module id="kct-event-subscriber">
+    <script>
+        {
+            let guid = 0;
+            let events = {};
+
+            class KctEventSubscriber extends Polymer.Element {
+                static get is() {
+                    return 'kct-event-subscriber';
+                }
+
+                constructor() {
+                    super();
+                    this.__guid = 'subscriber-' + (++guid);
+                    this.__handleGlobalEvent = this.__onGlobalEvent.bind(this);
+                }
+
+                ready() {
+                    super.ready();
+                    this._ensureAttribute('hidden', true);
+                }
+
+                connectedCallback() {
+                    super.connectedCallback();
+                    document.addEventListener('global-event', this.__handleGlobalEvent);
+                }
+
+                disconnectedCallback() {
+                    document.removeEventListener('global-event', this.__handleGlobalEvent);
+                    super.disconnectedCallback();
+                }
+
+                __onGlobalEvent(e) {
+                    let info = e.detail;
+                    
+                    let localEvent = new CustomEvent(info.name, {
+                        composed: true,
+                        detail: info.data
+                    });
+
+                    this.dispatchEvent(localEvent);
+                }
+            }
+
+            customElements.define(KctEventSubscriber.is, KctEventSubscriber);
+        }
+        
+    </script>
+</dom-module>

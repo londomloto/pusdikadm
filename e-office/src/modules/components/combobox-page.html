@@ -1,0 +1,161 @@
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../cores/elements/kct-combobox/kct-combobox.html">
+
+<dom-module id="combobox-page">
+    <template>
+        
+        <style include="theme-helper">
+            :host { 
+
+                height: var(--combobox-page-height, 100%);
+                background-color: var(--page-background-color); 
+            }
+        </style>
+
+        <div class="padding">
+            <kct-column columns="4">
+                <div>
+                    <paper-card class="block">
+                        <div class="card-content">
+                            <h3 class="block-title">Pagination</h3>
+
+                            <kct-combobox 
+                                url="/users" 
+                                value="{{ record.su_id }}" 
+                                label="Available Users" 
+                                page-size="5" 
+                                item-value-path="su_id" 
+                                item-label-path="su_fullname" 
+                                toolbar='[{"text": "Create member", "icon": "add", "tap": "__onComboToolTap", "close": true}, {"text": "Invite member", "icon": "mail", "tap": "__onComboToolTap", "close": true}]' 
+                                on-load="__onComboUserLoad"
+                                autoload></kct-combobox> 
+
+                            <kct-combobox 
+                                url="/users" 
+                                value="{{ record.su_id }}" 
+                                label="Available Users" 
+                                page-size="2" 
+                                item-value-path="su_id" 
+                                item-label-path="su_fullname"></kct-combobox> 
+
+                        </div>
+                    </paper-card>
+                </div>
+                <div>
+                    <paper-card class="block">
+                        <div class="card-content">
+                            <h3 class="block-title">Cascading</h3>
+
+                            <kct-combobox 
+                                url="/roles" 
+                                label="Available Roles"  
+                                value="{{ selectedRole }}" 
+                                page-size="4" 
+                                item-value-path="sr_id" 
+                                item-label-path="sr_name" 
+                                autoload></kct-combobox> 
+
+                            <kct-combobox 
+                                id="combo-user" 
+                                url="/users" 
+                                label="Users in Role" 
+                                page-size="2" 
+                                item-value-path="su_id" 
+                                item-label-path="su_fullname"></kct-combobox> 
+
+                        </div>
+                    </paper-card>
+                </div>
+                <div>
+                    <paper-card class="block">
+                        <div class="card-content">
+                            <h3 class="block-title">Cascading (Remote)</h3>
+
+                            <!-- <kct-combobox 
+                                value="{{ record.su_id }}" 
+                                label="Available Users" 
+                                item-value-path="su_id" 
+                                item-label-path="su_fullname"></kct-combobox> 
+
+                            <kct-combobox 
+                                value="{{ record.su_id }}" 
+                                label="Available Users" 
+                                item-value-path="su_id" 
+                                item-label-path="su_fullname"></kct-combobox>  -->
+
+                        </div>
+                    </paper-card>
+                </div>
+                <div></div>
+            </kct-column>
+        </div>
+
+    </template>
+    <script>
+        class ComboboxPage extends KctView {
+            static get is() {
+                return 'combobox-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Combobox', notify: true },
+                    record: { type: Object }
+                };
+            }
+            static get observers() {
+                return [
+                    '__selectedRoleChanged(selectedRole)'
+                ];
+            }
+            ready() {
+                super.ready();
+
+                this.set('record', {
+                    su_id: '8'
+                });
+            }
+
+            handleResizing(width, height) {
+                this.updateStyles({
+                    '--combobox-page-height': height + 'px'
+                })
+            }
+
+            __selectedRoleChanged(role) {
+                if (role) {
+
+                    this.$['combo-user'].params = {
+                        su_sr_id: role
+                    };
+
+                    // ---OR---
+                    // this.$['combo-user'].load({
+                    //     params: {
+                    //         su_sr_id: role
+                    //     }
+                    // });
+                } else {
+                    this.$['combo-user'].items = [];
+                }
+            }
+
+            __onComboUserLoad(e) {
+                /*let combo = e.target;
+                let items = (combo.items || []).slice();
+
+                if (items.length == 0) {
+                    items.push({ su_id: '-1', su_fullname: 'No data found' })
+                }
+
+                combo.items = items;*/
+            }
+
+            __onComboToolTap(e) {
+                console.log(e);
+            }
+        }
+
+        customElements.define(ComboboxPage.is, ComboboxPage);
+    </script>
+</dom-module>

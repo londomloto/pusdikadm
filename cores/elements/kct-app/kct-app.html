@@ -1,0 +1,149 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../mixins/resolver.html">
+<link rel="import" href="../kct-config/kct-config.html">
+<link rel="import" href="../kct-router/kct-router.html">
+<link rel="import" href="../kct-pages/kct-pages.html">
+<link rel="import" href="../kct-ajax/kct-ajax.html">
+<link rel="import" href="../kct-message/kct-alert.html">
+
+<dom-module id="kct-app">
+    
+    <template>
+
+        <style>
+            :host { display: block; height: 100%; }
+            #pages {
+                display: block;
+                height: 100%;
+            }
+        </style>
+        
+        <kct-config id="config" name="[[ name ]]" config="{{ config }}"></kct-config>
+        <kct-ajax id="ajax" config="[[ config ]]"></kct-ajax>
+        <kct-router id="router" config="[[ config ]]" routes="[[ routes ]]" route="{{ route }}" state="{{ state }}" fallback="[[ fallback ]]" on-authenticate="__onAuthenticate"></kct-router>
+
+        <template is="dom-if" if="[[ state.layout ]]">
+            <kct-pages id="pages" selected="{{ state.layout }}" attr-for-selected="name" fallback-selection="error" lazy-load>
+                <main-layout  name="main"  config="{{ config }}" route="{{ route }}" state="[[ state ]]" import="layouts/main-layout.html"></main-layout>
+                <auth-layout  name="auth"  config="{{ config }}" route="{{ route }}" state="[[ state ]]" import="layouts/auth-layout.html"></auth-layout>
+                <page-layout  name="page"  config="{{ config }}" route="{{ route }}" state="[[ state ]]" import="layouts/page-layout.html"></page-layout>
+                <error-layout name="error" config="{{ config }}" route="{{ route }}" state="[[ state ]]" import="layouts/error-layout.html"></error-layout>
+            </kct-pages>
+        </template>
+
+        <kct-alert id="update-alert" icon="social:notifications-active" title="Updates">
+            <p>
+                There are updates available for your application. <br>
+                Clear your browser cache to apply new updates.
+            </p>
+        </kct-alert>
+
+    </template>
+
+    <script>
+        class KctApp extends Mixins(Polymer.Element).use(Mixins.Resolver) {
+                
+            static get is() { 
+                return 'kct-app'; 
+            }
+
+            static get properties() {
+                return {
+                    name: { type: String, reflectToAttribute: true },
+                    fallback: { type: String },
+                    routes: {
+                        type: Object,
+                        notify: true,
+                        value: {
+                            '/login': {
+                                layout: 'auth',
+                                module: 'auth',
+                                page: 'login-page',
+                                authentication: false
+                            },
+                            '/invitation/:token': {
+                                layout: 'auth',
+                                module: 'auth',
+                                page: 'invitation-page',
+                                authentication: false
+                            },
+                            '/projects/:project': {
+                                module: 'projects',
+                                page: 'project-page'
+                            },
+                            '/settings/:setting/:params': {
+                                module: 'settings',
+                                page: 'settings-page'
+                            },
+                            '/settings/:setting': {
+                                module: 'settings',
+                                page: 'settings-page'
+                            },
+                            '/worksheet/:params': {
+                                module: 'worksheet',
+                                page: 'worksheet-page'
+                            }
+                        }
+                    }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__appTitleChanged(config.app_title)'
+                ];
+            }
+
+            ready() {
+                super.ready();
+                this.__loadConfig();
+            }
+
+            /**
+             * Load application config from server
+             */
+            __loadConfig() {
+                let config = Object.assign({}, this.config),
+                    version = config.app_version;
+
+                this.$.ajax.GET('/config/load').then(res => {
+                    let data = res.data;
+
+                    if (data) {
+                        
+                        if (version != data.app_version) {
+                            this.$['update-alert'].open();
+                        }
+
+                        Object.keys(data).forEach(k => {
+                            config[k] = data[k];
+                        });
+
+                        this.set('config', config);
+                    }
+                });
+
+            }
+
+            __appTitleChanged(title) {
+                this._debounce(
+                    'apptitle',
+                    () => {
+                        document.title = title;
+                    },
+                    1000
+                );
+            }
+
+            __onAuthenticate(e) {
+                if ( ! e.detail.success) {
+                    this.set('route.path', '/login');
+                }
+            }
+
+        }
+
+        customElements.define(KctApp.is, KctApp);
+    </script>
+
+</dom-module>

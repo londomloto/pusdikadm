@@ -1,0 +1,191 @@
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/bower_components/paper-radio-group/paper-radio-group.html">
+<link rel="import" href="../../../../cores/bower_components/paper-radio-button/paper-radio-button.html">
+<link rel="import" href="../../../../cores/bower_components/vaadin-combo-box/vaadin-combo-box.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../cores/elements/kct-app/blocks/page-header-block.html">
+
+<dom-module id="products-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: var(--products-page-height, 100%);
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-grid 
+            id="grid" 
+            url="/products" 
+            columns="[[ columns ]]" 
+            selection-model="row" 
+            selected="{{ selectedRecord }}" 
+            icon="view-quilt" 
+            title="Products" 
+            description="List of available products" 
+            autoload>
+
+            <paper-button slot="primary-toolbar" on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Add</paper-button>
+            <paper-button slot="primary-toolbar" on-tap="__onEditTap"><iron-icon icon="done"></iron-icon>&nbsp;Edit</paper-button>
+            <paper-button slot="primary-toolbar" on-tap="__onRemoveTap"><iron-icon icon="clear"></iron-icon>&nbsp;Remove</paper-button>
+
+        </kct-grid>
+
+        <kct-dialog id="editor" title="Product Editor" height="100%" width="400">
+
+            <template preserve-content>
+                <style include="theme-helper"></style>
+
+                <div slot="dialog-body">
+                    <vaadin-combo-box 
+                        id="combo-products" 
+                        label="Services" 
+                        value="{{ editingRecord.tp_service }}" 
+                        items="[[ services ]]" 
+                        item-label-path="tp_service" 
+                        item-value-path="tp_service"
+                        allow-custom-value></vaadin-combo-box>
+                    
+                    <paper-input label="Sub Service" value="{{ editingRecord.tp_sub_service }}"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSave">Save</paper-button>
+                    <paper-button on-tap="__onEditorClose">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+    </template>
+    <script>
+        class ProductsPage extends KctView {
+            static get is() {
+                return 'products-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Products' },
+                    columns: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'rownumber' },
+                            {
+                                type: 'action',
+                                width: 80,
+                                align: 'center',
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        return `
+                                            <kct-grid-action on-tap="__onChangeRecordTap" icon="image:edit" accent="cyan" title="Edit record" icon-only rounded></kct-grid-action>
+                                            <kct-grid-action on-tap="__onDeleteRecordTap" icon="close" accent="danger" title="Delete record" icon-only rounded></kct-grid-action>
+                                        `;
+                                    }
+                                    return '';
+                                }
+                            },
+                            { text: 'Service', width: 300, dataIndex: 'tp_service'},
+                            { text: 'Sub Service', width: 300, dataIndex: 'tp_sub_service' },
+                        ])
+                    },
+                    services: { type: Array },
+                    editingRecord: { type: Object }
+                };
+            }
+            handleResizing(width, height) {
+                this.updateStyles({
+                    '--products-page-height': height + 'px'
+                });
+
+                if (this.$.grid) {
+                    this.$.grid.resize();
+                }
+            }
+
+            activate() {
+                if (this.$.grid) {
+                    this.$.grid.deferAutoresize();
+                }
+            }
+            
+            __loadServices() {
+                return  this.$.ajax.GET('/products/services').then(res => {
+                    this.set('services', res.data);
+                });
+            }
+            __loadReferences() {
+                return Promise.all([
+                    this.__loadServices()
+                ]);
+            }
+            __editRecord(record) {
+                this.mask('Opening...');
+
+                this.__loadReferences().then(() => {
+                    this.unmask();
+
+                    this.set('editingRecord', Object.assign({}, record));
+                    this.$.editor.open();
+                });
+            }
+            __deleteRecord(record) {
+                this.confirm('Confirm', 'Are you sure you want to delete this record?').then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/products/' + record.tp_id).then(() => {
+                            this.$.grid.load();
+                        });
+                    }
+                });
+            }
+            __onAddTap() {
+                this.__editRecord({});
+            }
+            __onEditTap() {
+                if ( ! this.selectedRecord) {
+                    this.toast('Warning', 'No selected record to edit', 'warn');
+                    return;
+                }
+
+                this.__editRecord(this.selectedRecord);
+            }
+            __onChangeRecordTap(e) {
+                this.__editRecord(e.data);
+            }
+            __onRemoveTap() {
+                if ( ! this.selectedRecord) {
+                    this.toast('Warning', 'No selected record to edit', 'warn');
+                    return;
+                }
+
+                this.__deleteRecord(this.selectedRecord);
+            }
+            __onDeleteRecordTap(e) {
+                this.__deleteRecord(e.data);
+            }
+            __onEditorClose() {
+                this.$.editor.close();
+            }
+            __onEditorSave() {
+                this.$.editor.close();
+
+                let data = this.editingRecord,
+                    ajax = this.$.ajax;
+
+                if (data.tp_id) {
+                    ajax.PUT('/products/' + data.tp_id, data).then(done.bind(this));
+                } else {
+                    ajax.POST('/products', data).then(done.bind(this))
+                }
+                
+                function done(res) {
+                    if (res.success) {
+                        this.$.grid.load();
+                    }
+                }
+            }
+        }
+
+        customElements.define(ProductsPage.is, ProductsPage);
+    </script>
+</dom-module>

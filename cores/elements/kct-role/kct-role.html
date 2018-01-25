@@ -1,0 +1,104 @@
+<link rel="import" href="../kct-ajax/kct-ajax.html">
+
+<dom-module id="kct-role">
+    <template>
+        <kct-ajax id="ajax"></kct-ajax>
+    </template>
+
+    <script>
+        class KctRole extends Polymer.Element {
+            static get is() {
+                return 'kct-role';
+            }
+            static get properties() {
+                return {
+                    autoValidate: { type: Boolean, value: false, reflectToAttribute: true }
+                };
+            }
+            constructor() {
+                super();
+                this.__context = null;
+                this.__permissions = null;
+            }
+            ready() {
+                super.ready();
+                this._ensureAttribute('hidden', true);
+
+                Polymer.RenderStatus.afterNextRender(this, () => {
+                    let context = this.__findContext();
+
+                    context.shadowRoot.querySelectorAll('[data-perm]').forEach(node => {
+                        node.dataset.display = node.style.display;
+                        node.style.display = 'none';
+                    });
+                });
+
+                if (this.autoValidate) {
+                    this.validate();
+                }
+            }
+
+            validate(context = null) {
+                if ( ! context) {
+                    context = this.__findContext();
+                }
+
+                this.__loadPermissions().then(() => {
+                    
+                    context.shadowRoot.querySelectorAll('[data-perm]').forEach(elem => {
+                        let perm = elem.dataset.perm;
+
+                        if (elem.dataset.display === undefined) {
+                            elem.dataset.display = elem.style.display;
+                        }
+                        
+                        if (this.__permissions[perm]) {
+                            elem.style.display = elem.dataset.display;
+                        } else {
+                            elem.style.display = 'none';
+                        }
+                    });
+
+                });
+            }
+
+            __loadPermissions() {
+                if ( ! this.__permissions) {
+                    return this.$.ajax.GET('/users/users-permissions?display=authorized').then(r => {
+                        let perms = {};
+                        
+                        r.data.forEach(e => {
+                            perms[e.permission] = true;
+                        });
+
+                        this.set('__permissions', perms);
+                    });    
+                } else {
+                    return Promise.resolve();
+                }
+            }
+            __findContext() {
+                if ( ! this.__context) {
+                    let node = this.parentNode;
+                    let host;
+
+                    while(true) {
+                        host = node.host;
+                        
+                        if (host || node.localName == 'body') {
+                            break;
+                        } else {
+                            node = node.parentNode;
+                        }
+                    }
+                    
+                    this.__context = host || node;
+                }
+
+                return this.__context;
+            }
+        }
+
+        customElements.define(KctRole.is, KctRole);
+    </script>
+</dom-module>

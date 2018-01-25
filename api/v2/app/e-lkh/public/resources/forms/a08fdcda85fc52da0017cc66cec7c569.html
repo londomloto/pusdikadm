@@ -1,0 +1,53 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="../../../../../cores/bower_components/vaadin-material-theme/vaadin-date-picker.html">
+<link rel="import" href="../../../../../cores/bower_components/vaadin-date-picker/vaadin-date-picker.html">
+<link rel="import" href="../../../../../cores/vendors/moment/moment.html">
+
+<dom-module id="form-absensi">
+    <template>
+        <style include="form-style"></style>
+
+        <div class="section">
+            <h3 class="section-title">Data Absensi</h3>
+            <div>
+                <vaadin-date-picker value="{{ record.data.tap_date }}" label="Tanggal Absen" on-value-changed="__onPresenceDateChange"></vaadin-date-picker>
+                <paper-textarea rows="5" value="{{ record.data.tap_desc }}" label="Uraian Tugas (Kegiatan)">
+                </paper-textarea>
+                <paper-input value="{{ record.data.tap_volume }}" label="Volume"></paper-input>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Data Kegiatan</h3>
+            <div>
+                <paper-input value="{{ record.task.tt_title }}" label="Nama Kegiatan"></paper-input>
+            </div>
+        </div>
+        
+    </template>
+    <script>
+        class FormAbsensi extends FormBase {
+            static get is() {
+                return 'form-absensi';
+            }
+
+            __formatDate(s) {
+                let date = moment(s, 'YYYY-MM-DD');
+                return date.format('DD MMM YYYY');
+            }
+
+            __onPresenceDateChange(e) {
+                let value = e.target.value;
+                
+                if (value) {
+                    this.set('record.task.tt_title', this.user.su_fullname + ' - ' + this.__formatDate(value));
+                } else {
+                    // this.set('record.task.tt_title', '');
+                }
+            }
+        }
+
+        customElements.define(FormAbsensi.is, FormAbsensi);
+    </script>
+</dom-module>

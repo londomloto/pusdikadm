@@ -1,0 +1,64 @@
+<link rel="import" href="../../../../cores/bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<dom-module id="video-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: var(--video-page-height, 100%);
+                background-color: var(--page-background-color);
+            }
+            #player {
+                width: 640px;
+                height: 360px;
+            }
+        </style>
+        <div class="padding">
+            <paper-card>
+                <div class="card-content">
+                    <div id="player">
+                        <video id="video" controls autoplay>
+                            <source src="https://192.168.0.100/media.php" type='video/mp4;codecs="avc1.42E01E, mp4a.40.2"'/>
+                        </video>    
+                    </div>
+                </div>
+            </paper-card>
+            
+        </div>
+    </template>
+    <script>
+        class VideoPage extends KctView {
+            static get is() {
+                return 'video-page';
+            }
+
+            ready() {
+                super.ready();
+            }
+
+            handleResizing(width, height) {
+                this.updateStyles({
+                    '--video-page-height': height + 'px'
+                });
+                this.__resizeVideo();
+            }
+
+            __resizeVideo() {
+                let video = this.$.video,
+                    player = this.$.player;
+
+                let originalVideoHeight = video.videoHeight;
+                let currentVideoHeight = video.clientHeight;
+                let playerHeight = player.clientHeight;
+                let currentScale = originalVideoHeight / currentVideoHeight;
+                let scaleY = (playerHeight / originalVideoHeight) * currentScale;
+                
+                video.style['transform-origin'] = '0% 0%';
+                video.style['transform'] = 'scaleY(' +  scaleY + ')';
+            }
+
+
+        }
+
+        customElements.define(VideoPage.is, VideoPage);
+    </script>
+</dom-module>

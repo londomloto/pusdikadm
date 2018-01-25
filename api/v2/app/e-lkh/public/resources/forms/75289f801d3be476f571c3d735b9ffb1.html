@@ -1,0 +1,31 @@
+<dom-module id="form-pendaftaran">
+    <template>
+        <style include="theme-helper">
+            .section {
+                padding: 15px;
+                border: 1px solid #dfdfdf;
+            }
+            .section-title {
+                font-size: 15px;
+                font-weight: 500;
+            }
+        </style>
+
+        <div class="section">
+            <h3 class="section-title">Data Peserta</h3>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Data Account</h3>
+        </div>
+
+    </template>
+    <script>
+        class FormPendaftaran extends FormBase {
+            static get is() {
+                return 'form-pendaftaran';
+            }
+        }
+        customElements.define(FormPendaftaran.is, FormPendaftaran);
+    </script>
+</dom-module>

@@ -1,0 +1,202 @@
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../cores/elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="datagrid-page.html">
+
+<dom-module id="dialog-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: var(--dialog-page-height, 100%);
+                background-color: var(--page-background-color);
+            }
+        </style>
+
+        <div class="padding">
+            
+            <paper-button class="btn-blue-grey" data-target="dialog1" on-tap="__onOpenTap">Full Size</paper-button>
+            <paper-button class="btn-blue-grey" data-target="dialog2" on-tap="__onOpenTap">Contain Grid</paper-button>
+            <paper-button class="btn-blue-grey" data-target="dialog3" on-tap="__onOpenTap">Contain Iframe</paper-button>
+            <paper-button class="btn-blue-grey" data-target="dialog4" on-tap="__onOpenTap">Scrollable</paper-button>
+            <paper-button class="btn-blue-grey" data-target="dialog5" on-tap="__onOpenTap">Tabbed</paper-button>
+
+        </div>
+
+        <kct-dialog id="dialog1" title="Example Dialog" width="100%" height="100%">
+            <template preserve-content>
+                <div slot="dialog-body">
+                    
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button data-target="dialog1" on-tap="__onCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        <kct-dialog id="dialog2" title="Example Dialog" on-opened="__onDialog2Opened" width="100%" height="100%" fit-content>
+            <template preserve-content>
+                <style>
+                    :host {
+                        --dialog-header: {
+                            background-color: var(--paper-grey-100);
+                        };
+                    }
+                </style>
+                <div slot="dialog-body">
+                    <kct-grid 
+                        id="grid" 
+                        url="/users" 
+                        columns="{{ columns }}"
+                        hide-info>
+
+                        <template preserve-content>
+                            <style include="theme-helper"></style>
+                        </template>
+
+                        <paper-button slot="primary-toolbar"><iron-icon icon="add"></iron-icon>&nbsp;New</paper-button>
+                        <paper-button slot="primary-toolbar"><iron-icon icon="done"></iron-icon>&nbsp;Edit</paper-button>
+                        <paper-button slot="primary-toolbar"><iron-icon icon="clear"></iron-icon>&nbsp;Delete</paper-button>
+                        
+                    </kct-grid>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button data-target="dialog2" on-tap="__onCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        <kct-dialog id="dialog3" title="Example Dialog" width="100%" height="100%" fit-content>
+            <template preserve-content>
+                <style>
+                    iframe {
+                        height: 100%;
+                        width: 100%;
+                        border: none;
+                    }
+                </style>
+                <div slot="dialog-body">
+                    <iframe src="https://www.worksaurus.com"></iframe>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button data-target="dialog3" on-tap="__onCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        <kct-dialog id="dialog4" title="Example Dialog" width="480" height="100%" scrollable>
+            <template preserve-content>
+                <style>
+                    .content {
+                        height: 1000px;
+                    }
+                </style>
+                <div slot="dialog-body">
+                    <div class="content"></div>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button data-target="dialog4" on-tap="__onCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        <kct-dialog id="dialog5" title="Example Dialog" width="480" height="100%" fit-content>
+            <template preserve-content>
+                <style>
+                    :host {
+                        --dialog-header: {
+                            background-color: var(--paper-grey-100);
+                        };
+                    }
+                    paper-tabs {
+                        background-color: var(--paper-grey-100);
+                    }
+                </style>
+                <div slot="dialog-body">
+                    <kct-vbox>
+                        <div>
+                            <paper-tabs selected="bar" attr-for-selected="name">
+                                <paper-tab name="foo">Profile</paper-tab>
+                                <paper-tab name="bar">Friends</paper-tab>
+                                <paper-tab name="baz">Message</paper-tab>
+                            </paper-tabs>
+                        </div>
+                        <div>
+                            <!-- iron-pages -->
+                        </div>
+                    </kct-vbox>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button data-target="dialog5" on-tap="__onCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class DialogPage extends KctView {
+
+            static get is() {
+                return 'dialog-page';
+            }
+
+            static get properties() {
+                return {
+                    columns: {
+                        type: Array,
+                        value: () => {
+                            return [
+                                { type: 'rownumber' },
+                                { text: 'Email Address', dataIndex: 'su_email' },
+                                { text: 'Full Name', dataIndex: 'su_fullname' },
+                                { text: 'Gender', dataIndex: 'su_sex', width: 120 },
+                                { text: 'Date of Birth', dataIndex: 'su_dob' },
+                                { text: 'Jobs Title', dataIndex: 'su_job_title' },
+                                {
+                                    type: 'action',
+                                    text: '',
+                                    width: 250,
+                                    renderer: (e) => {
+                                        if (e.data) {
+                                            return `
+                                                <paper-button class="btn-default"><iron-icon icon="search"></iron-icon>&nbsp;View</paper-button> 
+                                                <paper-button on-tap="__onRecordEditTap" class="btn-amber"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
+                                                <paper-button class="btn-danger"><iron-icon icon="close"></iron-icon>&nbsp;Trash</paper-button>
+                                            `;
+                                        }
+                                        return '';
+                                    }
+                                }
+                            ];
+                        }
+                    }
+                };
+            }
+
+            handleResizing(width, height) {
+                this.updateStyles({
+                    '--dialog-page-height': height + 'px'
+                });
+            }
+
+            __onDialog2Opened() {
+                this.$.grid.resize();
+                this.$.grid.deferAutoload();
+            }
+
+            __onOpenTap(e) {
+                let dialog = e.target.dataset.target;
+                this.$[dialog].open();
+            }
+
+            __onCloseTap(e) {
+                let dialog = e.target.dataset.target;
+                this.$[dialog].close();   
+            }
+        }
+
+        customElements.define(DialogPage.is, DialogPage);
+    </script>
+</dom-module>

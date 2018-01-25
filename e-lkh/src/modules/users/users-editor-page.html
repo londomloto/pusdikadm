@@ -1,0 +1,227 @@
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/vaadin-combo-box/vaadin-combo-box.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-checkbox/kct-checkbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../cores/elements/kct-form/kct-form-validator.html">
+<link rel="import" href="../../../../cores/elements/kct-combobox/kct-combobox.html">
+<link rel="import" href="../settings/blocks/setting-header-block.html">
+
+<dom-module id="users-editor-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--paper-grey-100);
+            }
+
+            h3 {
+                font-weight: 400;
+                font-size: 16px;
+                margin-bottom: 16px;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <!-- <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
+        </div> -->
+
+        <kct-vbox>
+            <setting-header-block icon="perm-identity" text="Konfigurasi" desc="Editor Pengguna" on-back-tap="__onBackTap">
+                <div class="separator"></div>
+                <paper-button on-tap="__onSaveTap" disabled$="[[ __formInvalid ]]"><iron-icon icon="done"></iron-icon>&nbsp;Simpan</paper-button>
+            </setting-header-block>
+            <!-- <page-header-block image="[[ avatar ]]" icon="perm-identity" title="User Editor" description="[[ record.su_fullname ]]">
+                <paper-button on-tap="__onSaveTap" disabled$="[[ __formInvalid ]]"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
+            </page-header-block>
+ -->
+            <div class="flex scroll-y padding">
+                <kct-form-validator id="validator" invalid="{{ __formInvalid }}" auto-validate>
+                    <paper-card class="block">
+                        <div class="card-content">
+                            <h3 class="block-title">Data Pengguna</h3>
+                            <div>
+                                <paper-input label="Nama Lengkap" value="{{ record.su_fullname }}" required auto-validate error-message="Nama lengkap wajib diisi"></paper-input>
+                                <paper-input label="Jenis Kelamin" value="{{ record.su_sex }}"></paper-input>
+                                <kct-column columns="2" gutter="15px" space="0">
+                                    <div>
+                                        <paper-input label="Tempat Lahir" value="{{ record.su_pob }}"></paper-input>
+                                    </div>
+                                    <div>
+                                        <paper-input label="Tanggal Lahir" value="{{ record.su_dob }}"></paper-input>
+                                    </div>
+                                </kct-column>
+                                <paper-input label="Nomor Induk Pegawai" value="{{ record.su_no }}"></paper-input>
+                                <paper-input label="Pangkat / Gol. Ruang" value="{{ record.su_grade }}"></paper-input>
+                                <kct-combobox 
+                                    url="/jobs" 
+                                    label="Jabatan (Pekerjaan)" 
+                                    value="{{ record.su_sj_id }}" 
+                                    page-size="10" 
+                                    item-label-path="sj_name" 
+                                    item-value-path="sj_id" 
+                                    autoload></kct-combobox>
+                                <kct-combobox 
+                                    url="/departments" 
+                                    label="Unit Kerja" 
+                                    value="{{ record.su_sdp_id }}" 
+                                    page-size="10" 
+                                    item-label-path="sdp_name" 
+                                    item-value-path="sdp_id" 
+                                    autoload></kct-combobox>
+                                <kct-combobox 
+                                    url="/company" 
+                                    label="Organisasi" 
+                                    value="{{ record.su_scp_id }}" 
+                                    page-size="10" 
+                                    item-label-path="scp_name" 
+                                    item-value-path="scp_id" 
+                                    autoload></kct-combobox>
+                            </div>
+                        </div>
+                    </paper-card>
+
+                    <paper-card class="block">
+                        <div class="card-content">
+                            <h3 class="block-title">Data Akun</h3>
+                            <div>
+                                <paper-input id="email" label="Alamat email" type="email" value="{{ record.su_email }}" required auto-validate error-message="Alamat email wajib diisi"></paper-input>
+                                <vaadin-combo-box 
+                                    label="Group Akses (Role)" 
+                                    value="{{ record.su_sr_id }}" 
+                                    items="[[ roles ]]" 
+                                    item-label-path="sr_name" 
+                                    item-value-path="sr_id" 
+                                    required auto-validate error-message="Group akses wajib diisi"></vaadin-combo-box>
+                                <paper-input label="Password" type="password" value="{{ password1 }}"></paper-input>
+                                <paper-input label="Konfirmasi password" type="password" value="{{ password2 }}"></paper-input>
+                                <kct-checkbox value="{{ record.su_active }}">Aktifkan akun pengguna</kct-checkbox>
+                            </div>
+                        </div>
+                    </paper-card>
+                    <paper-card class="block">
+                        <div class="card-content">
+                            <h3 class="block-title">Hapus Akun</h3>
+                            <div>
+                                <p>Menghapus akun akan menghapus dokumen yang berkaitan dengan penggguna</p>
+                                <paper-button on-tap="__onRemoveAccountTap" class="btn-danger btn-raised m-t">Hapus Pengguna</paper-button>
+                            </div>
+                        </div>
+                    </paper-card>
+                </kct-form-validator>
+            </div>
+        </kct-vbox>
+
+    </template>
+    <script>
+        class UsersEditorPage extends KctView {
+            static get is() {
+                return 'users-editor-page';
+            }
+
+            static get properties() {
+                return {
+                    page: { type: String, value: 'profile' },
+                    roles: { type: Array },
+                    record: { type: Object, value: () => ({ su_active: '1' }) },
+                    avatar: {
+                        type: String,
+                        computed: '__computeAvatar(record.su_avatar_thumb)'
+                    }
+                };
+            }
+
+            handleRouteParams(setting, action, id) {
+                if (setting != 'users') {
+                    return;
+                }
+
+                if (action) {
+                    this.__loadRoles();    
+
+                    if (id) {
+                        this.__loadRecord(id);
+                    } else {
+                        this.set('record', {});
+                        this.$.validator.validate();
+                    }
+                }
+            }
+
+            __computeAvatar(avatar) {
+                return avatar ? (avatar + '&w=32&h=32') : null;
+            }
+
+            __loadRecord(id) {
+                this.$.ajax.GET('/users/' + id).then((res) => {
+                    if (res.success) {
+                        this.set('record', res.data);
+                    } else {
+                        this.alert('Oops!', "Data pengguna tidak ditemukan").then(() => {
+                            this.__back();
+                        });
+                    }
+                });
+            }
+
+            __loadRoles() {
+                this.$.ajax.GET('/roles').then((res) => {
+                    this.set('roles', res.data);
+                });
+            }
+
+            __back() {
+                this.set('route.path', '/settings/users');
+            }
+
+            __onSaveTap() {
+                let data = Object.assign({}, this.record);
+                let phantom = ! data.su_id;
+
+                if (this.password1) {
+                    data.su_passwd = this.password1;
+                }
+
+                data.su_kanban = this.kanban;
+
+                if (phantom) {
+                    this.$.ajax.POST('/users', data).then(done.bind(this));
+                } else {
+                    this.$.ajax.PUT('/users/' + data.su_id, data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.toast('Sukses', 'Data pengguna sudah disimpan');
+                        this.__back();
+                    }
+                }
+            }
+
+            __onRemoveAccountTap() {
+                this.confirm('Konfirmasi', 'Anda yakin akan menghapus pengguna ini ?').then((y) => {
+                    if (y) {
+                        this.$.ajax.DELETE('/users/' + this.record.su_id).then((res) => {
+                            if (res.success) {
+                                this.__back();
+                            }
+                        });
+                    }
+                });  
+            }
+
+            __onBackTap() {
+                this.__back();
+            }
+        }
+
+        customElements.define(UsersEditorPage.is, UsersEditorPage);
+    </script>
+</dom-module>

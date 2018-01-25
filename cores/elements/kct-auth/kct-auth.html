@@ -1,0 +1,171 @@
+<link rel="import" href="../../mixins/storage.html">
+<link rel="import" href="../../mixins/resolver.html">
+<link rel="import" href="../kct-ajax/kct-ajax.html">
+
+<dom-module id="kct-auth">
+    <template>
+        <kct-ajax id="ajax" config="[[ config ]]" auth="[[ name ]]"></kct-ajax>
+    </template>
+    <script>
+        class KctAuth extends Mixins(Polymer.Element).use(
+            Mixins.Resolver, 
+            Mixins.Storage
+        ) {
+            static get is() {
+                return 'kct-auth';
+            }
+
+            static get properties() {
+                return {
+                    name: { type: String, notify: true },
+                    user: {
+                        type: Object,
+                        notify: true,
+                        value: () => ({
+                            su_id: null,
+                            su_email: null,
+                            su_fullname: null,
+                            su_avatar: null,
+                            su_avatar_url: null,
+                            su_avatar_thumb: null,
+                            su_access_token: null
+                        })
+                    },
+                    config: { type: Object },
+                    storageKey: { type: String },
+                    autoValidate: { type: Boolean, value: false },
+                    validationUrl: { type: String, value: '/auth/validate' },
+                    loginUrl: { type: String, value: '/auth/login' },
+                    errors: { type: String }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__configChanged(config.*)',
+                    '__nameChanged(name)',
+                    '__userChanged(user.*)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__silent = false;
+                this.__errors = '';
+            }
+
+            ready() {
+                super.ready();
+                this._ensureAttribute('hidden', true);
+            }
+
+            validate() {
+                let token = this.user && this.user.su_access_token,
+                    defer = this._defer();
+
+                if ( ! token) {
+                    this.__fireEvent('validate', { success: false });
+                    defer.resolve({ success: false });
+                } else {
+                    this.$.ajax.GET(this.validationUrl).then(res => {
+                        let success = res.success;
+
+                        if ( ! success) {
+                            this.__invalidate();
+                        }
+
+                        this.__fireEvent('validate', { success: success });
+                        defer.resolve({ success: success });
+                    });
+                }
+
+                return defer.promise;
+            }
+
+            login(email, password, captcha = '', remember = false) {
+                let payload = {
+                    email: email,
+                    password: password, 
+                    captcha: captcha,
+                    remember: remember,
+                    client: 'browser'
+                };
+
+                return this.$.ajax.POST(this.loginUrl, payload).then(res => {
+                    if (res.success) {
+                        let user = res.data;
+                        this.set('user', user);
+                        return user;
+                    } else {
+                        this.set('errors', res.message);
+                        return null;
+                    }
+                });
+            }
+
+            logout() {
+                this.__invalidate();
+                return Promise.resolve();
+            }
+
+            __invalidate() {
+                // clear user data
+                let user = {};
+
+                Object.keys(this.user).forEach(k => {
+                    user[k] = null;
+                });
+
+                this.set('user', user);
+            }
+
+            __configChanged() {
+                if ( ! this.name) {
+                    this.set('name', this.config.app_name);
+                }
+            }
+
+            __nameChanged(name) {
+                if ( ! name) return;
+
+                // setup storage key
+                let storageKey = this._getStorageKey(name, this.constructor.is);
+                this.set('storageKey', storageKey);
+
+                let data = Object.assign({}, this.constructor.properties.user.value());
+                this._initStorage(this.storageKey, data);
+
+                // load from storage
+                data = this._getStorageItem(storageKey);
+                
+                this.__silent = true;
+                this.set('user', data);
+                this.__silent = false;
+
+                this.__fireEvent('load');
+
+                if (this.autoValidate) {
+                    this.validate();
+                }
+            }
+
+            __userChanged(changed) {
+                if (this.__silent) return;
+                if (this.storageKey) {
+                    this._saveStorage(this.storageKey, this.user);
+                }
+            }
+
+            __fireEvent(type, data = {}) {
+                let evt = new CustomEvent(type, {
+                    detail: data
+                });
+
+                this.dispatchEvent(evt);
+            }
+        }
+
+
+        customElements.define(KctAuth.is, KctAuth);
+    </script>
+</dom-module>

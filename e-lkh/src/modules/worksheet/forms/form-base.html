@@ -1,0 +1,22 @@
+<dom-module id="form-base">
+    <script>
+        class FormBase extends Polymer.Element {
+            static get is() {
+                return 'form-base';
+            }
+
+            static get properties() {
+                return {
+                    record: { type: Object, notify: true },
+                    action: { type: String, value: 'create'},
+                    invalid: { type: Boolean, notify: true }
+                };
+            }
+
+            save() {
+                
+            }
+        }
+        customElements.define(FormBase.is, FormBase);
+    </script>
+</dom-module>

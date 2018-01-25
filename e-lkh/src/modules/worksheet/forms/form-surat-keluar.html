@@ -1,0 +1,26 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-vbox.html">
+
+<dom-module id="form-surat-keluar">
+    <template>
+        <style include="theme-helper"></style>
+
+        <paper-input></paper-input>
+        <paper-button on-tap="__onCreateTap">Simpan</paper-button>
+
+    </template>
+    <script>
+        class FormSuratKeluar extends FormBase {
+            static get is() {
+                return 'form-surat-keluar';
+            }
+
+            __onCreateTap() {
+                this.save();
+            }
+        }
+        customElements.define(FormSuratKeluar.is, FormSuratKeluar);
+    </script>
+</dom-module>

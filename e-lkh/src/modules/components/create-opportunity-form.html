@@ -1,0 +1,178 @@
+<dom-module id="create-opportunity-form">
+    <template preserve-content>
+        <style include="theme-helper">
+            vaadin-combo-box { 
+                padding: 2px 0; 
+            }
+            paper-input[type=number] { 
+                padding: 0;
+                --paper-input-container: {
+                    padding: 12px 0;
+                };
+            }
+            .btn-remove-item {
+                position: relative;
+                top: 25px;
+            }
+        </style>
+        <kct-ajax id="form-ajax-1"></kct-ajax>
+        <kct-ajax id="form-ajax-2"></kct-ajax>
+        <kct-hbox>
+            <div class="flex p-r">
+                <vaadin-combo-box 
+                    id="combo-customer" 
+                    label="Customer" 
+                    value="{{ record.ts_mc_id }}",
+                    items="[[ customers ]]"
+                    item-label-path="mc_company_name" 
+                    
+                    item-value-path="mc_id">
+                    <template>
+                        <style>
+                            .bold { font-weight: 500; }
+                            .nude { color: #999; font-size: 14px;  }
+                        </style>
+                        <div class="bold">[[ item.mc_company_name ]]</div>
+                        <div class="nude">Contact: [[ item.mc_contact_name ]] - [[ item.mc_phone ]]</div>
+                    </template>        
+                </vaadin-combo-box>                        
+            </div>
+
+        </kct-hbox>
+
+        <kct-hbox>
+            <div class="flex p-r">
+                <vaadin-combo-box 
+                    id="combo-segment" 
+                    label="Segment" 
+                    value="{{ record.ts_segment }}",
+                    items="[[ customerSegment ]]"
+                    item-label-path="text" 
+                    item-value-path="name">       
+                </vaadin-combo-box>                        
+            </div>
+            <div class="flex">
+                <paper-input label="Expected Close" type="date" value="{{ record.ts_expected_date_closed }}"></paper-input>
+                <input type="hidden" value="{{ record.ts_creator }}"/>
+            </div>
+        </kct-hbox>
+        <template is="dom-repeat" items="[[ record.products ]]">
+            
+            <kct-hbox>
+                <div class="flex p-r">
+                    <vaadin-combo-box 
+                        id="combo-product" 
+                        label="Products" 
+                        value="{{ item.ts_tp_id }}" 
+                        items="[[ products ]]" 
+                        item-label-path="tp_sub_service" 
+                        item-value-path="tp_id">
+                             <template>
+                            <style>
+                                .bold { font-weight: 500; }
+                                .nude { color: #999; font-size: 14px;  }
+                            </style>
+                            <div class="bold">[[ item.tp_sub_service ]]</div>
+                            <div class="nude">[[ item.tp_service ]]</div>
+                        </template>     
+                    </vaadin-combo-box> 
+                </div>
+                <div class="flex p-r">
+                    <vaadin-combo-box 
+                        id="combo-revenue" 
+                        label="Revenue Type" 
+                        value="{{ item.ts_revenue_type }}",
+                        items="[[ revenueTypes ]]"
+                        item-label-path="text" 
+                        item-value-path="name">       
+                    </vaadin-combo-box>                        
+                </div>
+                <div class="flex p-r">
+                    <paper-input label="Amounts (IDR)" type="number" value="{{ item.ts_amounts }}"></paper-input>
+                </div>
+                <div>
+                    <paper-button class="btn btn-sm btn-danger btn-remove-item" on-tap="__removeProduct">Delete</paper-button>
+                </div>
+
+            </kct-hbox>
+
+        </template>
+
+        <div class="m-t">
+            <paper-button class="btn btn-sm btn-indigo" on-tap="__addProduct">Add Product</paper-button>
+        </div>
+
+    </template>
+
+    <script>
+        class CreateOpportunityForm extends KctView {
+            static get is() {
+                return 'create-opportunity-form';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Worksheet' },
+                    revenueTypes:  {
+                        type: Array,
+                        value: () => ([
+                            { text: 'One Time', name: 'One Time' },
+                            { text: 'Recurring', name: 'Recurring' }
+                        ])
+                    },
+                    customerSegment:  {
+                        type: Array,
+                        value: () => ([
+                            { text: 'FSI', name: 'FSI' },
+                            { text: 'FMCG', name: 'FMCG' },
+                            { text: 'MAETL', name: 'MAETL' },
+                            { text: 'EPSE', name: 'EPSE' },
+                            { text: 'Reseller & SME', name: 'Reseller & SME' }
+                        ])
+                    },
+                    customers: { type: Array },
+                    products: { type: Array },
+                    customersStatuses: { 
+                        type: Array,
+                        value: () => ([
+                            { text: 'HOT', name: 'HOT' },
+                            { text: 'HOLD', name: 'HOLD' },
+                            { text: 'DUMP', name: 'DUMP' }
+                        ])
+                    },
+                    sales: { type: Object , value: {
+                        products: []
+                    }}
+                }
+            }
+
+            ready() {
+                super.ready();
+                this.__loadCustomers();
+                this.__loadProducts();
+            }
+
+            __addProduct() {
+                console.log(this.record.products);
+                console.log(typeof this.record.products);
+                if(!this.record.products) this.set('record.products',[]);
+                this.push('record.products',{});
+            }
+
+             __loadCustomers() {
+                let ajax = this.$['form-ajax-1'];
+                ajax.GET('/customers').then(res => {
+                    this.set('customers', res.data);
+                });
+            }
+
+            __loadProducts() {
+                let ajax = this.$['form-ajax-2'];
+                ajax.GET('/products').then(res => {
+                    this.set('products', res.data);
+                });
+            }
+            
+        }
+        customElements.define(CreateOpportunityForm.is, CreateOpportunityForm);
+    </script>
+</dom-module>
