@@ -44,8 +44,8 @@ class TaskActivity extends \Micro\Model {
             $data['sender_su_fullname'] = $this->sender->su_fullname;
         }
 
-        // $data['tta_verb'] = $this->tta_verb;
-        // $data['tta_icon'] = $this->tta_icon;
+        $data['tta_verb'] = $this->getVerb();
+        $data['tta_icon'] = $this->getIcon();
         
         // parse attachment
         $data['tta_text'] = '';
@@ -225,23 +225,18 @@ class TaskActivity extends \Micro\Model {
         $data['tta_type'] = $type;
         $data['tta_created'] = date('Y-m-d H:i:s');
         $data['tta_sender'] = $auth['su_id'];
-        $data['tta_icon'] = self::__getIcon($type);
 
         $activity = new TaskActivity();
 
         if ($activity->save($data)) {
-            // update verb
-            $activity->tta_verb = $activity->getVerb();
-            $activity->save();
-
             return $activity->get($activity->tta_id);
         }
 
         return TaskActivity::none();
     }
 
-    private static function __getIcon($type) {
-        switch($type) {
+    private function getIcon() {
+        switch($this->tta_type) {
             case 'comment':
                 return 'communication:chat-bubble-outline';
             case 'update':
