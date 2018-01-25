@@ -33,20 +33,29 @@
             .container {
                 height: 100vh;
                 background-color: var(--app-login-background);
-                background-image: var(--login-background-image, url(images/cover-2.jpg));
+                background-image: var(--login-background-image, url(../../../images/backgrounds/background-2.jpg));
                 background-repeat: no-repeat;
-                background-size: contain;
+                background-size: cover;
                 background-position: 0 0;
                 background-attachment: scroll;
 
                 @apply --layout-horizontal;
             }
 
+            .overlay {
+                position: absolute;
+                left: 0;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0,0,0,.7);
+                z-index: 1;
+            }
+
             .story {
                 position: relative;
                 padding: 30px;
-                max-width: 40%;
-                color: #333;
+                color: #fff;
                 
             }
             .story h3 {
@@ -54,9 +63,15 @@
                 font-weight: 400;
             }
             .story p {
-                font-size: 30px;
+                font-size: 20px;
                 font-weight: 300;
                 line-height: 1;
+            }
+
+            .column-left,
+            .column-right {
+                position: relative;
+                z-index: 2;
             }
             
             .column-left.sm { display: none; }
@@ -79,7 +94,7 @@
             .login {
                 
                 overflow: hidden;
-                background-color: var(--app-login-background);
+                /*background-color: var(--app-login-background);*/
                 padding: 1rem;
                 color: #fff;
                 /*background-color: #ffffff;*/
@@ -169,6 +184,7 @@
         <kct-media size="{{ __responsive }}"></kct-media>
         
         <div class="container">
+            <div class="overlay"></div>
 
             <div class$="column-left [[ __responsive ]]">
                 <div class="cover">
@@ -182,7 +198,7 @@
             <div class$="column-right [[ __responsive ]]">
                 <div class="login-logo">
                     <div class="icon"><iron-icon icon="lock-outline"></iron-icon></div>
-                    <h3>e-office</h3>
+                    <h3>e-lkh</h3>
                 </div>
                 <div name="login" class="login">
                     <div class="login-form">

@@ -6,7 +6,7 @@ switch($_SERVER['SERVER_ADMIN']) {
                 'host' => 'localhost',
                 'user' => 'root',
                 'pass' => 'secret',
-                'name' => 'e_office'
+                'name' => 'e_lkh'
             )
         );
         break;
@@ -16,7 +16,7 @@ switch($_SERVER['SERVER_ADMIN']) {
                 'host' => 'localhost',
                 'user' => 'root',
                 'pass' => 'secret',
-                'name' => 'e_office'
+                'name' => 'e_lkh'
             )
         );
 }
