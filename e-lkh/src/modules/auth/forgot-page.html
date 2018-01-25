@@ -32,20 +32,29 @@
             .container {
                 height: 100vh;
                 background-color: var(--app-login-background);
-                background-image: var(--login-background-image, url(images/cover-2.jpg));
+                background-image: var(--login-background-image, url(../../../images/backgrounds/background-1.jpg));
                 background-repeat: no-repeat;
-                background-size: contain;
+                background-size: cover;
                 background-position: 0 0;
                 background-attachment: scroll;
 
                 @apply --layout-horizontal;
             }
 
+            .overlay {
+                position: absolute;
+                left: 0;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0,0,0,.7);
+                z-index: 1;
+            }
+
             .story {
                 position: relative;
                 padding: 30px;
-                max-width: 40%;
-                color: #333;
+                color: #fff;
                 
             }
             .story h3 {
@@ -53,11 +62,17 @@
                 font-weight: 400;
             }
             .story p {
-                font-size: 30px;
+                font-size: 20px;
                 font-weight: 300;
                 line-height: 1;
             }
             
+            .column-left,
+            .column-right {
+                position: relative;
+                z-index: 2;
+            }
+
             .column-left.sm { display: none; }
             .column-left.md { @apply --layout-flex; }
             .column-left.lg { @apply --layout-flex-2; }
@@ -144,6 +159,8 @@
         
         <div class="container">
 
+            <div class="overlay"></div>
+
             <div class$="column-left [[ __responsive ]]">
                 <div class="cover">
                     <div class="story">
@@ -158,31 +175,31 @@
                     <img src$="[[ _resolveUrl('../../../images/logo/worksaurus-1.png') ]]" alt="" class="logo">
                 </div>
                 <div name="forgot" class="forgot">
-                    <h3>Can't sign in? Forget your password?</h3>
-                    <p>Enter your email address below and we'll send you password reset instruction.</p>
+                    <h3>Tidak bisa login? Lupa password Anda?</h3>
+                    <p>Masukan alamat email Anda di bawah ini dan kami akan mengirimkan panduan untuk mengatur ulang password Anda.</p>
                     <div class="m-t">
-                        <paper-input id="email" value="{{ email }}" type="email" label="Enter your email address" required auto-validate error-message="Valid email address is required"></paper-input>
+                        <paper-input id="email" value="{{ email }}" type="email" label="Masukan alamat email" required auto-validate error-message="Alamat email wajib diisi"></paper-input>
                     </div>
                     <div class="m-t">
-                        <paper-button on-tap="__onRequestPasswordTap" disabled$="[[ __forgotInvalid ]]">Send me reset instruction</paper-button>&nbsp;&nbsp;or&nbsp;&nbsp;<a href="javascript:;" on-tap="__onBackTap">back to login page</a>
+                        <paper-button on-tap="__onRequestPasswordTap" disabled$="[[ __forgotInvalid ]]">Kirim Pengaturan Ulang</paper-button>&nbsp;&nbsp;atau&nbsp;&nbsp;<a href="javascript:;" on-tap="__onBackTap">kembali ke login</a>
                     </div>
                     <div class="notes">
-                        <h4>A note about spam filters</h4>
-                        <p>If you don't get an email from us within a few minutes please be sure to check your spam filter.</p>
+                        <h4>Catatan tentang filter spam</h4>
+                        <p>Jika Anda tidak mendapatkan email dari kami dalam beberapa menit, pastikan Anda untuk memeriksa filter spam.</p>
                     </div>
                 </div>
 
                 <div class="text-center" style="margin-top: 60px;">
-                    <a class="powered" href="https://www.worksaurus.com" target="_blank">
-                        <img src$="[[ _resolveUrl('../../../images/logo/worksaurus-0.png') ]]">
-                        <span class="block">POWERED BY <b>WORKSAURUS</b></span>
+                    <a class="powered" href="javascript:;" target="_blank">
+                        <img src$="[[ _resolveUrl('../../../images/logo/logo-32x32.png') ]]">
+                        <span class="block">POWERED BY <b>PUSDIKADM</b></span>
                     </a>
                 </div>
             </div>
         </div>
 
         <kct-alert id="message" button="Continue" accent="info" title="Thank you" icon="info-outline">
-            <p>Please check your inbox to reset your password</p>
+            <p>Silahkan periksa inbox email Anda</p>
         </kct-alert>
 
     </template>
@@ -231,7 +248,7 @@
                     });    
                 }
             }
-
+            
             __forgotValidator(email) {
                 let valid = true;
                 valid = valid && (this.$.email.validate());
@@ -252,7 +269,7 @@
                     email: this.email
                 };
 
-                this.mask('Submitting...');
+                this.mask('Sedang mengirim...');
 
                 this.$.ajax.POST('/auth/recover', payload).then(() => {
                     this.unmask();
