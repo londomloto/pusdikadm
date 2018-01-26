@@ -1,0 +1,73 @@
+<link rel="import" href="../../../../../cores/elements/kct-html/kct-html.html">
+
+<dom-module id="form-lkh-check">
+    <template>
+        <style include="form-style">
+            .html-editor-wrapper {
+                margin-top: 20px;
+                border: 1px solid #dfdfdf;
+                padding: 10px;
+            }
+            paper-radio-group {
+                @apply --layout-horizontal;
+            }
+            paper-radio-button {
+                padding-left: 0;
+                @apply --layout-flex;
+            }
+        </style>
+        <div class="section">
+            <h3 class="section-title">Data Absensi</h3>
+            <div>
+                <paper-input value="[[ record.data.lkh_su_fullname ]]" label="Nama Lengkap" readonly></paper-input>
+                <paper-input value="[[ record.data.lkh_su_sj_name ]]" label="Jabatan" readonly></paper-input>
+                <paper-input value="[[ record.data.lkh_su_sdp_name ]]" label="Unit Kerja" readonly></paper-input>
+
+                <kct-column columns="2">
+                    <div>
+                        <paper-input value="[[ record.data.lkh_date_formatted ]]" label="Tanggal Agenda" readonly></paper-input>
+                    </div>
+                    <div>
+                        <paper-input value="[[ record.data.lkh_volume ]]"  label="Volume" readonly></paper-input>
+                    </div>
+                </kct-column>
+                
+                <div class="html-editor-wrapper">
+                    <kct-html html="[[ record.data.lkh_desc ]]"></kct-html>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="section section-primary">
+            <h3 class="section-title">Data Pemeriksaan</h3>
+            <div>
+                <paper-radio-group attr-for-selected="name" selected="{{ record.data.lkh_valid }}">
+                    <paper-radio-button name="1">Dokumen valid</paper-radio-button>
+                    <paper-radio-button name="0">Dokumen harap direvisi</paper-radio-button>
+                </paper-radio-group>
+
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Data Kegiatan</h3>
+            <div>
+                <paper-input value="[[ record.task.tt_title ]]" label="Nama Kegiatan" readonly></paper-input>
+            </div>
+        </div>
+
+    </template>
+    <script>
+        class FormLkhCheck extends FormBase {
+            static get is() {
+                return 'form-lkh-check';
+            }
+
+            initialize() {
+                this.set('record.data.lkh_valid', '1');
+            }
+        }
+        customElements.define(FormLkhCheck.is, FormLkhCheck);
+    </script>
+</dom-module>

@@ -385,6 +385,7 @@
                             this.set('loading', false);
                             this.$.activity.load({start: 0});
                             this.$.taskprop.initialize();
+                            this.$.form.initialize();
                         });
                     } else {
                         // this.toast('Warning', `This document doesn't have form`, 'warn');
@@ -518,7 +519,7 @@
 
                     if (res.success) {
                         if ( ! back) {
-                            this.toast('Success', 'Data has been saved', 'info');
+                            this.toast('Sukses', 'Data berhasil disimpan', 'info');
                             this.$['activity'].load({start: 0});
                         }
                         

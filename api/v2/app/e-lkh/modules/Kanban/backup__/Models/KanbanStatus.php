@@ -51,9 +51,12 @@ class KanbanStatus extends \Micro\Model {
         $form = $this->form;
         $diagram = $this->diagram;
 
+        var_dump($this->kst_status);
+
         $array['kst_label'] = $link->label;
         $array['kst_name'] = $link->name;
         $array['kst_color'] = $link->stroke;
+
         $array['kst_diagrams_name'] = $diagram->name;
         $array['kst_type'] = 'common';
         $array['kst_kf_id'] = '';

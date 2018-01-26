@@ -1,0 +1,105 @@
+<link rel="import" href="../../../../../cores/vendors/moment/moment.html">
+<link rel="import" href="../../../../../cores/elements/kct-editor/kct-html-editor.html">
+
+<dom-module id="form-lkh">
+    <template>
+        <style include="form-style">
+            kct-html-editor {
+                height: 200px;
+                --wysiwyg-toolbar-background: #fff;
+                --wysiwyg-toolbar-color: var(--paper-blue-grey-500);
+                --wysiwyg-tool-icon-disabled-color: var(--paper-grey-500);
+                --wysiwyg-toolbar: {
+                    border-bottom: 1px solid #dfdfdf;
+                };
+                --wysiwyg-editable: {
+                    line-height: 24px;
+                    font-size: 15px;
+                };
+            }
+            .html-editor-wrapper {
+                margin-top: 20px;
+                border: 1px solid #dfdfdf;
+            }
+        </style>
+
+        <div class="section">
+            <h3 class="section-title">Data Absensi</h3>
+            <div>
+                <paper-input value="{{ record.data.lkh_su_fullname }}" label="Nama Lengkap" readonly></paper-input>
+                <paper-input value="{{ record.data.lkh_su_sj_name }}" label="Jabatan" readonly></paper-input>
+                <paper-input value="{{ record.data.lkh_su_sdp_name }}" label="Unit Kerja" readonly></paper-input>
+
+                <kct-column columns="2">
+                    <div>
+                        <vaadin-date-picker value="{{ record.data.lkh_date }}" label="Tanggal Agenda" on-value-changed="__onDateChanged"></vaadin-date-picker>
+                    </div>
+                    <div>
+                        <paper-input value="{{ record.data.lkh_volume }}"  label="Volume"></paper-input>
+                    </div>
+                </kct-column>
+                
+                
+                <div class="html-editor-wrapper">
+                    <kct-html-editor value="{{ record.data.lkh_desc }}"></kct-html-editor>    
+                </div>
+
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Data Kegiatan</h3>
+            <div>
+                <paper-input value="{{ record.task.tt_title }}" label="Nama Kegiatan"></paper-input>
+            </div>
+        </div>
+
+    </template>
+    <script>
+        class FormLkh extends FormBase {
+            static get is() {
+                return 'form-lkh';
+            }
+
+            initialize() {
+                this.set('record.data', {
+                    lkh_date: moment().format('YYYY-MM-DD'),
+                    lkh_su_id: this.user.su_id,
+                    lkh_su_fullname: this.user.su_fullname,
+                    lkh_su_sj_name: this.user.su_sj_name,
+                    lkh_su_sdp_name: this.user.su_sdp_name,
+                    lkh_su_scp_name: this.user.su_scp_name
+                });
+
+                this.__computeTaskTitle();
+            }
+
+            __computeTaskTitle() {
+                if ( ! this.record.data) {
+                    return '';
+                }
+
+                let value = this.record.data.lkh_date;
+                let date;
+
+                if (value) {
+                    date = moment(value, 'YYYY-MM-DD');
+                } else {
+                    date = moment();
+                }
+
+                this.set('record.task.tt_title', this.user.su_fullname + ' - ' + date.format('DD MMM YYYY'));
+            }
+
+            __onDateChanged(e) {
+                let timer = setTimeout(() => {
+                    clearTimeout(timer);
+                    timer =  null;
+                    this.__computeTaskTitle();
+                }, 10);
+                
+            }
+        }
+        customElements.define(FormLkh.is, FormLkh);
+    </script>
+</dom-module>

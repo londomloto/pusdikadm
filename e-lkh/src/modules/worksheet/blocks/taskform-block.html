@@ -10,6 +10,9 @@
 <link rel="import" href="../forms/form-pendaftaran-auth.html">
 <link rel="import" href="../forms/form-pendaftaran-view.html">
 <link rel="import" href="../forms/form-pendaftaran-conf.html">
+<link rel="import" href="../forms/form-lkh.html">
+<link rel="import" href="../forms/form-lkh-check.html">
+<link rel="import" href="../forms/form-lkh-done.html">
 <link rel="import" href="../forms/task-editor.html">
 <!-- /hapus on production -->
 
@@ -128,6 +131,12 @@
                     }
 
                     return promise;
+                }
+
+                initialize() {
+                    if (this.$.form) {
+                        this.$.form.initialize();
+                    }
                 }
 
                 beforeSave(payload) {
