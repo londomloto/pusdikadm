@@ -4,6 +4,7 @@ namespace App\Tasks\Models;
 use App\Tasks\Models\TaskLabel,
     App\Tasks\Models\TaskUser,
     App\Tasks\Models\TaskActivity,
+    App\Tasks\Models\TaskStatus,
     Phalcon\Mvc\Model\Relation;
 
 class Task extends \Micro\Model {
@@ -183,6 +184,77 @@ class Task extends \Micro\Model {
             'conditions' => 'tts_deleted = 0',
             'orderBy' => 'tts_created DESC'
         ));
+    }
+
+    public function next($payload = NULL) {
+        $app = \Micro\App::getDefault();
+
+        $statuses = $this->getCurrentStatuses();
+        $payload = is_null($payload) ? $this->toArray() : $payload;
+        $worker = NULL;
+        $affected = array();
+        $removed = array();
+
+        foreach($statuses as $status) {
+            if (is_null($worker)) {
+                $worker = $app->bpmn->worker($status->tts_worker);
+            }
+
+            $next = $worker->next($status->tts_status, $payload);
+            $affected[] = $status->tts_status;
+
+            if (count($next['data']) > 0) {
+                $nextids = array_map(function($n){ return $n['id']; }, $next['data']);
+
+                TaskStatus::get()
+                    ->inWhere('tts_status', $nextids)
+                    ->andWhere('tts_id = :id:', array('id' => $this->tt_id))
+                    ->execute()
+                    ->delete();
+
+                foreach($next['data'] as $n) {
+                    $affected[] = $n['id'];
+
+                    $found = TaskStatus::findFirst(array(
+                        'tts_tt_id = :id: AND tts_status = :status: AND tts_deleted = 0',
+                        'bind' => array(
+                            'id' => $this->tt_id,
+                            'status' => $n['id']
+                        )
+                    ));
+
+                    if ( ! $found) {
+                        $item = new TaskStatus();
+                        
+                        $create = array(
+                            'tts_tt_id' => $this->tt_id,
+                            'tts_status' => $n['id'],
+                            'tts_target' => $n['target'],
+                            'tts_worker' => $worker->name(),
+                            'tts_deleted' => 0,
+                            'tts_created' => date('Y-m-d H:i:s')
+                        );
+                        
+                        if ($item->save($create)) {
+                            $removed[] = $status;
+                        }
+                    } else {
+                        $removed[] = $status;
+                    }
+                }
+            }
+        }
+
+        // nothing changed
+        if (count($removed) > 0) {
+            foreach($removed as $m) {
+                $m->save(array('tts_deleted' => 1));
+            }
+        }
+        
+        $affected = array_values(array_unique($affected));
+        
+        return $affected;
     }
 
     public function saveLabels($post) {

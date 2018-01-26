@@ -283,9 +283,8 @@
 
             __onTaskItemTap(e) {
                 let task = e.model.item;
-
+                
                 this.set('route.data.back', '/worksheet/' + this.project + '/view/kanban');
-                this.set('route.data.task', task);
                 this.set('route.path', '/worksheet/' + this.project + '/task/update/' + task.status.tts_id);
             }
 

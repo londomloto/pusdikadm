@@ -225,7 +225,7 @@ class Task extends \Micro\Model {
 
                     if ( ! $found) {
                         $item = new TaskStatus();
-
+                        
                         $create = array(
                             'tts_tt_id' => $this->tt_id,
                             'tts_status' => $n['id'],

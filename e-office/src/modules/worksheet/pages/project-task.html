@@ -70,11 +70,11 @@
             <header-block id="header" on-back-tap="__onBackTap" text="Kegiatan">
                 <h3 slot="header-value">[[ __projectTitle ]]</h3>
 
-                <paper-button disabled$="[[ formInvalid ]]" on-tap="__onSaveTap" class="btn-action btn-primary" slot="right-toolbar" style="margin-left: 8px;">
+                <paper-button hidden$="[[ formReadonly ]]" disabled$="[[ formInvalid ]]" on-tap="__onSaveTap" class="btn-action btn-primary" slot="right-toolbar" style="margin-left: 8px;">
                     <iron-icon icon="done"></iron-icon>&nbsp;[[ __computeSaveLabel(recordAction) ]]
                 </paper-button>
                 
-                <paper-button disabled$="[[ formInvalid ]]" on-tap="__onSendTap" class="btn-action btn-blue" slot="right-toolbar" hidden$="[[ __hideSaveAndSend(recordAction) ]]">
+                <paper-button hidden$="[[ __hideSend(recordAction, formReadonly) ]]" disabled$="[[ formInvalid ]]"  on-tap="__onSendTap" class="btn-action btn-blue" slot="right-toolbar">
                     <iron-icon icon="send"></iron-icon>&nbsp;Simpan &amp; Teruskan
                 </paper-button>
 
@@ -92,6 +92,7 @@
                             form="[[ formRecord ]]" 
                             user="[[ user ]]" 
                             invalid="{{ formInvalid }}" 
+                            readonly="{{ formReadonly }}" 
                             on-save="__onFormSave" 
                             on-cancel="__onFormCancel" 
                             on-remove="__onFormRemove" 
@@ -208,17 +209,12 @@
                     if (this.route.data.back) {
                         returnAction = this.route.data.back;    
                     }
-
-                    if (this.route.data.task) {
-                        this.set('taskRecord', this.route.data.task);
-                        this.set('route.data.task', null);
-                    }
                 }
 
                 this.set('returnAction', returnAction);
                 this.set('recordAction', type);
                 this.set('recordId', id);
-                // this.set('taskRecord', {});
+                this.set('taskRecord', {});
 
                 this.set('project', project);
                 this.set('loading', true);
@@ -262,8 +258,20 @@
                 return this.recordAction == 'create' ? true : false;
             }
 
-            __hideSaveAndSend() {
-                return this.recordAction == 'create' ? true : false;
+            __hideSave() {
+                let readonly = this.formReadonly === undefined ? false : this.formReadonly;
+                console.log(this.formReadonly);
+                return readonly;
+            }
+
+            __hideSend() {
+                let readonly = this.formReadonly === undefined ? false : this.formReadonly;
+                
+                if (readonly) {
+                    return true;
+                } else {
+                    return this.recordAction == 'create' ? true : false;    
+                }
             }
 
             __computeGutter() {
@@ -393,26 +401,19 @@
             __handleUpdate() {
                 if ( ! this.recordId) return;
 
-                if (this.taskRecord) {
-                    handle.bind(this)(this.taskRecord);
-                } else {
-                    let payload = {
-                        params: {
-                            tts_id: this.recordId
-                        }
-                    };
+                let payload = {
+                    params: {
+                        tts_id: this.recordId
+                    }
+                };
 
-                    this.$.ajax.GET('/kanban', payload).then(res => {
-                        let record = res.data.length ? res.data[0] : null;
-                        handle.bind(this)(record);
-                    });
-                }
+                this.$.ajax.GET('/kanban', payload).then(res => {
+                    let record = res.data.length ? res.data[0] : null;
+                    handle.bind(this)(record);
+                });
 
                 function handle(record) {
                     if ( ! record) {
-                        
-                        this.set('taskRecord', {});
-
                         this.toast('Warning', 'Data tidak ditemukan', 'warn');
                         this.set('route.path', this.returnAction);
                         return;
@@ -497,6 +498,7 @@
                     send: send
                 };
 
+                this.$.form.beforeSave(payload);
                 this.mask('Sedang menyimpan...');
 
                 if (this.recordAction == 'create') {
@@ -526,6 +528,10 @@
                             send: send,
                             back: back
                         });
+
+                        if (res.message) {
+                            this.toast('Warning', res.message, 'warn');
+                        }
                     }
                 }
             }

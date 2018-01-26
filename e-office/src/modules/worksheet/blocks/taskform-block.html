@@ -9,6 +9,7 @@
 <link rel="import" href="../forms/form-pendaftaran.html">
 <link rel="import" href="../forms/form-pendaftaran-auth.html">
 <link rel="import" href="../forms/form-pendaftaran-view.html">
+<link rel="import" href="../forms/form-pendaftaran-conf.html">
 <link rel="import" href="../forms/task-editor.html">
 <!-- /hapus on production -->
 
@@ -33,7 +34,7 @@
 
         <kct-ajax id="ajax" novalidate></kct-ajax>
 
-        <div id="form" hidden$="[[ loading ]]"></div>
+        <div id="form-container" hidden$="[[ loading ]]"></div>
 
     </template>
     <script>
@@ -55,6 +56,7 @@
                         action: { type: String },
                         busy: { type: Boolean, value: false },
                         invalid: { type: Boolean, notify: true },
+                        readonly: { type: Boolean, value: true, notify: true },
                         loading: { type: Boolean, value: false, reflectToAttribute: true }
                     };
                 }
@@ -74,7 +76,8 @@
                 }
 
                 cleanup() {
-                    this.$.form.innerHTML = '';
+                    this.$.form = null;
+                    this.$['form-container'].innerHTML = '';
                 }
 
                 render() {
@@ -86,7 +89,7 @@
                         reject = b;
                     });
 
-                    this.$['form'].innerHTML = '';
+                    this.$['form-container'].innerHTML = '';
 
                     if ( ! form.bf_html) {
                         return;
@@ -101,7 +104,8 @@
                         temp = this.__createTemplate(name)
                         node = this._stampTemplate(temp);
 
-                        this.$['form'].appendChild(node);
+                        this.$['form-container'].appendChild(node);
+                        this.$.form = this.$['form-container'].querySelector('#form');
 
                         resolve();
                     } else {
@@ -115,7 +119,8 @@
                                 temp = this.__createTemplate(name);
                                 node = this._stampTemplate(temp);
 
-                                this.$['form'].appendChild(node);
+                                this.$['form-container'].appendChild(node);
+                                this.$.form = this.$['form-container'].querySelector('#form');
 
                                 resolve();
                             });
@@ -123,6 +128,12 @@
                     }
 
                     return promise;
+                }
+
+                beforeSave(payload) {
+                    if (this.$.form) {
+                        this.$.form.beforeSave(payload);
+                    }
                 }
 
                 __createTemplate(name) {
@@ -133,12 +144,14 @@
 
                         template.innerHTML = `
                             <${name} 
+                                id="form" 
                                 project="[[ project ]]" 
                                 record="{{ record }}" 
                                 workspace="[[ workspace ]]" 
                                 action="[[ action ]]" 
                                 user="[[ user ]]" 
-                                invalid="{{ invalid }}"></${name}>
+                                invalid="{{ invalid }}" 
+                                readonly="{{ readonly }}"></${name}>
                         `; 
 
                         cachedTemplates[name] = template;

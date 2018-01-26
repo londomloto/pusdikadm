@@ -4,6 +4,7 @@
 <link rel="import" href="../../../../../cores/bower_components/vaadin-date-picker/vaadin-date-picker.html">
 <link rel="import" href="../../../../../cores/elements/kct-layouts/kct-column.html">
 <link rel="import" href="../../../../../cores/elements/kct-combobox/kct-combobox.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
 
 <dom-module id="form-pendaftaran">
     <template>
@@ -12,7 +13,7 @@
         <div class="section">
             <h3 class="section-title">Data Peserta</h3>
             <div>
-                <paper-input label="Nama Lengkap" value="{{ record.data.su_fullname }}" on-change="__onFullNameChange"></paper-input>
+                <paper-input label="Nama Lengkap *" value="{{ record.data.su_fullname }}" required auto-validate error-message="Nama lengkap wajib diisi" on-change="__onFullNameChange"></paper-input>
                 <paper-input label="Jenis Kelamin" value="{{ record.data.su_sex }}"></paper-input>
 
                 <kct-column columns="2">
@@ -59,9 +60,19 @@
         <div class="section">
             <h3 class="section-title">Data Akun</h3>
             <div>
-                <paper-input type="email" label="Alamat Email" value="{{ record.data.su_no }}"></paper-input>
+                <paper-input type="email" label="Alamat Email *" value="{{ record.data.su_email }}" required auto-validate error-message="Alamat email harus valid"></paper-input>
+                <kct-combobox 
+                    url="/roles" 
+                    label="Group Akses (Role) *" 
+                    value="{{ record.data.su_sr_id }}" 
+                    page-size="10" 
+                    item-label-path="sr_name" 
+                    item-value-path="sr_id" 
+                    required 
+                    auto-validate 
+                    error-message="Group akses wajib diisi" 
+                    autoload></kct-combobox>
             </div>
-            
         </div>
 
         <div class="section">
@@ -78,6 +89,22 @@
                 return 'form-pendaftaran';
             }
 
+            static get observers() {
+                return [
+                    '__validationChanged(record.data.su_fullname, record.data.su_email, record.data.su_sr_id)'
+                ];
+            }
+
+            __validationChanged(fullname, email, role) {
+                let valid = true;
+
+                valid = valid && fullname;
+                valid = valid && email;
+                valid = valid && role;
+
+                this.set('invalid', !valid);
+            }
+            
             __onFullNameChange(e) {
                 let value = e.target.value;
                 if (value) {
