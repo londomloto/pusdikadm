@@ -4,7 +4,7 @@ namespace Micro;
 abstract class Model extends \Phalcon\Mvc\Model {
 
     private static $__templates = array();
-
+    
     public final static function getTemplate() {
         $class = get_called_class();
 

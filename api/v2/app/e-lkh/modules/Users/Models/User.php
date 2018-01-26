@@ -109,6 +109,24 @@ class User extends \Micro\Model {
         return 'sys_users';
     }
 
+    public function beforeSave() {
+        if (isset($this->su_scp_id) && $this->su_scp_id== '') {
+            $this->su_scp_id = NULL;
+        }
+
+        if (isset($this->su_sdp_id) && $this->su_sdp_id == '') {
+            $this->su_sdp_id = NULL;
+        }
+
+        if (isset($this->su_sj_id) && $this->su_sj_id == '') {
+            $this->su_sj_id = NULL;
+        }
+
+        if (isset($this->su_dob) && $this->su_dob == '') {
+            $this->su_dob = NULL;
+        }
+    }
+
     public function validation()
     {
         $validator = new Validation();
@@ -409,4 +427,120 @@ class User extends \Micro\Model {
         }
     }
 
+    public static function dbcreate($data) {
+        $app = \Micro\App::getDefault();
+
+        $user = new User();
+        $auth = $app->auth->user();
+
+        $data['su_created_date'] = date('Y-m-d H:i:s');
+        $data['su_created_by'] = $auth['su_fullname'];
+
+        if (isset($data['su_passwd']) && ! empty($data['su_passwd'])) {
+            $data['su_passwd'] = $app->security->createHash($data['su_passwd']);
+        }
+
+        if (isset($data['su_email'])) {
+            if ( ! isset($data['su_fullname']) || empty($data['su_fullname'])) {
+                $name = substr($data['su_email'], 0, strpos($data['su_email'], '@'));
+                $name = ucwords(str_replace('.', ' ', $name));    
+                $data['su_fullname'] = $name;
+            }
+        }
+
+        if ($user->save($data)) {
+
+            if (isset($data['su_kanban'])) {
+                $user->saveKanban($data['su_kanban']);
+            }
+
+            if (isset($data['su_invite'], $data['su_email'])) {
+                $user->su_invite_token = User::createInvitationToken(array('su_email' => $data['su_email']));
+                $user->save();
+                $user->sendInvitation();
+            }
+
+            return User::get($user->su_id);
+        } else {
+            $messages = [];
+
+            foreach($user->getMessages() as $item) {
+                $messages[] = $item->getMessage();
+            }
+
+            return (object) array(
+                'success' => FALSE,
+                'data' => NULL,
+                'message' => implode('<br>', $messages)
+            );
+        }
+
+        User::none();
+    }
+
+    public static function dbupdate($id, $data = array()) {
+        $app = \Micro\App::getDefault();
+        $query = User::get($id);
+
+        if ($query->data) {
+
+            if (isset($data['su_passwd']) && ! empty($data['su_passwd'])) {
+                $data['su_passwd'] = $app->security->createHash($data['su_passwd']);
+            }
+
+            if ($query->data->save($data)) {
+                if (isset($data['su_kanban'])) {
+                    $query->data->saveKanban($data['su_kanban']);
+                }
+
+                if (isset($data['su_invite'], $data['su_email'])) {
+                    $query->data->su_active = 0;
+                    $query->data->su_invite_token = User::createInvitationToken(array('su_email' => $data['su_email']));
+                    $query->data->save();
+                    $query->data->sendInvitation();
+                }
+            }
+
+        }
+
+        return $query;
+    }
+
+    public static function dbdelete() {
+
+    }
+
+    public static function createInvitationToken($data = array()) {
+        return \Micro\App::getDefault()->security->createToken($data, 2678400);
+    }
+
+    public function sendInvitation() {
+        if (empty($this->su_email)) {
+            return 'Alamat email tidak valid';
+        }
+
+        if (empty($this->su_invite_token)) {
+            return 'Token tidak valid';
+        }
+
+        $app = \Micro\App::getDefault();
+
+        $href = sprintf('%sinvitation?code=%s', $app->url->getClientUrl(), $this->su_invite_token);
+        $body = $app->di->get('\App\Users\Controllers\UsersController', TRUE)
+            ->view
+            ->render('invitation', array(
+                'app' => $app->config->app->name,
+                'href' => $href,
+                'support' => $app->mailer->account('support', TRUE)
+            ));
+
+        $options = array(
+            'from' => $app->mailer->account('no-reply'),
+            'to' => $this->su_email,
+            'subject' => 'Undangan untuk bergabung dengan aplikasi '.$app->config->app->name,
+            'body' => $body
+        );
+
+        return $app->mailer->send($options);
+    }
 }

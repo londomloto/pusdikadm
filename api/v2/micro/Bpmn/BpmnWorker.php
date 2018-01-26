@@ -4,15 +4,15 @@ namespace Micro\Bpmn;
 class BpmnWorker {
 
     protected $_name;
-    protected $_provider;
+    protected $_config;
     protected $_diagram;
 
-    public function __construct($name, $provider) {
+    public function __construct($name, $config) {
         $this->_name = $name;
-        $this->_provider = $provider;
+        $this->_config = $config;
         
         // fetch diagram
-        $query = call_user_func_array($this->_provider.'::get', array());
+        $query = call_user_func_array($this->_config->providers->diagram.'::get', array());
         $query->where('slug = :name:', array('name' => $name));
             
         $this->_diagram = $query->execute()->getFirst();
@@ -32,6 +32,21 @@ class BpmnWorker {
 
     public function diagram() {
         return $this->_diagram;
+    }
+
+    public function model() {
+        static $model;
+
+        if (is_null($model)) {
+            $model = FALSE;
+            
+            if ($this->_config->models->offsetExists($this->_name)) {
+                $model = $this->_config->models->{$this->_name};
+                $model = new BpmnModel($model);
+            }
+        }
+        
+        return $model;
     }
 
     public function activities() {

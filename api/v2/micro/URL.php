@@ -45,4 +45,11 @@ class URL extends \Phalcon\Mvc\Url {
         return $this->getBaseUrl().$path;
     }
 
+    public function getClientUrl() {
+        $base = $this->getBaseUrl();
+        $part = explode('/api/v2/app/', $base);
+
+        return $part[0].'/'.$part[1];
+    }
+
 }

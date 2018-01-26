@@ -7,7 +7,7 @@ use App\Users\Models\User,
 class UsersController extends \Micro\Controller {
 
     public function testAction() {
-        var_dump('test');
+        
     }
 
     public function findAction() {
@@ -20,13 +20,17 @@ class UsersController extends \Micro\Controller {
     
     public function createAction() {
         $post = $this->request->getJson();
+        return User::dbcreate($post);
+        /*$post = $this->request->getJson();
         $user = new User();
 
         if (isset($post['su_passwd']) && ! empty($post['su_passwd'])) {
             $post['su_passwd'] = $this->security->createHash($post['su_passwd']);
         }
 
-        $post['su_invite_token'] = $this->security->createToken(array('su_email' => $post['su_email']));
+        $post['su_invite_token'] = $this->security->createToken(array(
+            'su_email' => $post['su_email']
+        ), 2678400);
 
         // define fullname
         if ( ! isset($post['su_fullname']) || empty($post['su_fullname'])) {
@@ -40,9 +44,12 @@ class UsersController extends \Micro\Controller {
                 $user->saveKanban($post['su_kanban']);
             }
 
-            $this->__sendInvitationEmail($post);
+            $message = $this->__sendInvitationEmail($post);
 
-            return User::get($user->su_id);
+            $result = User::get($user->su_id);
+            $result->message = $message;
+
+            return $result;
         }else{
             $messages = $user->getMessages();
             $msg = [];
@@ -52,7 +59,7 @@ class UsersController extends \Micro\Controller {
             return ["success"=>FALSE, "message"=> implode(',', $msg)];
         }
 
-        return User::none();
+        return User::none();*/
     }
 
     public function updateAction($id) {
@@ -149,7 +156,7 @@ class UsersController extends \Micro\Controller {
                     $user->su_created_by = 'system';
                     $user->su_invite_token = $this->security->createToken(array(
                         'su_email' => $email
-                    ));
+                    ), 2678400);
 
                     $user->su_sr_id = $role;
 
@@ -235,10 +242,10 @@ class UsersController extends \Micro\Controller {
                     $result['success'] = TRUE;
                     $result['data'] = $user->toArray();
                 } else {
-                    $result['message'] = 'Already activated';
+                    $result['message'] = 'Akun sudah aktif';
                 }
             } else {
-                $result['message'] = 'Invalid activation code';
+                $result['message'] = 'Kode aktivasi tidak valid';
             }
         } else {
             $result['message'] = $verify['message'];
@@ -262,7 +269,7 @@ class UsersController extends \Micro\Controller {
             $user->save($post);
         }
 
-        $redir = $this->url->getScheme().'://'.$this->url->getHost().'/'.$this->config->app->name;
+        $redir = $this->url->getClientUrl().'profile/';
 
         return array(
             'success' => TRUE,
@@ -274,22 +281,21 @@ class UsersController extends \Micro\Controller {
 
     private function __sendInvitationEmail($data) {
         $href = sprintf(
-            '%s://%s/%s/invitation?code=%s',
-            $this->url->getScheme(),
-            $this->url->getHost(),
-            $this->config->app->name,
+            '%sinvitation?code=%s',
+            $this->url->getClientUrl(),
             $data['su_invite_token']
         ); 
         
         $body = $this->view->render('invitation', array(
-            'href' => $href
+            'app' => $this->config->app->name,
+            'href' => $href,
+            'support' => $this->mailer->account('support', TRUE)
         ));
 
         $options = array(
-            'from' => array('no-reply@worksaurus.com' => 'Worksaurus Admin'),
+            'from' => $this->mailer->account('no-reply'),
             'to' => $data['su_email'],
-            'bcc' => 'roso@kct.co.id',
-            'subject' => 'WS Team Invitation',
+            'subject' => 'Undangan untuk bergabung dengan aplikasi '.$this->config->app->name,
             'body' => $body
         );
 

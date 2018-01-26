@@ -9,13 +9,29 @@
                 return {
                     record: { type: Object, notify: true },
                     action: { type: String, value: 'create'},
-                    invalid: { type: Boolean, notify: true }
+                    invalid: { type: Boolean, notify: true },
+                    readonly: { type: Boolean, notify: true }
                 };
             }
 
-            save() {
-                
+            ready() {
+                super.ready();
+                this.set('readonly', false);
             }
+
+            toast(title, message, type = 'info') {
+                let toast = document.createElement('kct-toast');
+                
+                toast.duration = 3000;
+                toast.type = type;
+                toast.title = title;
+                toast.message = message;
+
+                document.body.appendChild(toast);
+                toast.open();
+            }
+            
+            beforeSave(payload) {}
         }
         customElements.define(FormBase.is, FormBase);
     </script>

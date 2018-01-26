@@ -109,6 +109,24 @@ class User extends \Micro\Model {
         return 'sys_users';
     }
 
+    public function beforeSave() {
+        if (isset($this->su_scp_id) && $this->su_scp_id== '') {
+            $this->su_scp_id = NULL;
+        }
+
+        if (isset($this->su_sdp_id) && $this->su_sdp_id == '') {
+            $this->su_sdp_id = NULL;
+        }
+
+        if (isset($this->su_sj_id) && $this->su_sj_id == '') {
+            $this->su_sj_id = NULL;
+        }
+
+        if (isset($this->su_dob) && $this->su_dob == '') {
+            $this->su_dob = NULL;
+        }
+    }
+
     public function validation()
     {
         $validator = new Validation();

@@ -25,6 +25,9 @@
                 font-size: 16px;
                 margin-bottom: 16px;
             }
+            .block[hidden] {
+                display: none;
+            }
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
@@ -106,7 +109,7 @@
                             </div>
                         </div>
                     </paper-card>
-                    <paper-card class="block">
+                    <paper-card class="block" hidden$="[[ __phantom ]]">
                         <div class="card-content">
                             <h3 class="block-title">Hapus Akun</h3>
                             <div>
@@ -138,10 +141,24 @@
                 };
             }
 
+            static get observers() {
+                return [
+                    '__identityChanged(record.su_id)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__phantom = true;
+            }
+
             handleRouteParams(setting, action, id) {
                 if (setting != 'users') {
                     return;
                 }
+
+                this.set('password1', '');
+                this.set('password2', '');
 
                 if (action) {
                     this.__loadRoles();    
@@ -153,6 +170,11 @@
                         this.$.validator.validate();
                     }
                 }
+            }
+
+            __identityChanged(id) {
+                let phantom = id ? false : true;
+                this.set('__phantom', phantom);
             }
 
             __computeAvatar(avatar) {
@@ -191,13 +213,18 @@
 
                 data.su_kanban = this.kanban;
 
+                this.mask('Sedang menyimpan...');
+
                 if (phantom) {
+                    data.su_invite = true;
                     this.$.ajax.POST('/users', data).then(done.bind(this));
                 } else {
                     this.$.ajax.PUT('/users/' + data.su_id, data).then(done.bind(this));
                 }
 
                 function done(res) {
+                    this.unmask();
+
                     if (res.success) {
                         this.toast('Sukses', 'Data pengguna sudah disimpan');
                         this.__back();

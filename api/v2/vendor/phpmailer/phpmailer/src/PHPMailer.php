@@ -1861,13 +1861,16 @@ class PHPMailer
             if ($tport > 0 and $tport < 65536) {
                 $port = $tport;
             }
+            
             if ($this->smtp->connect($prefix . $host, $port, $this->Timeout, $options)) {
+                
                 try {
                     if ($this->Helo) {
                         $hello = $this->Helo;
                     } else {
                         $hello = $this->serverHostname();
                     }
+
                     $this->smtp->hello($hello);
                     //Automatically enable TLS encryption if:
                     // * it's not disabled
@@ -1877,6 +1880,7 @@ class PHPMailer
                     if ($this->SMTPAutoTLS and $sslext and $secure != 'ssl' and $this->smtp->getServerExt('STARTTLS')) {
                         $tls = true;
                     }
+
                     if ($tls) {
                         if (!$this->smtp->startTLS()) {
                             throw new Exception($this->lang('connect_host'));

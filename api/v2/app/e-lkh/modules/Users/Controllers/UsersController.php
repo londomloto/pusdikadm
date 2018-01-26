@@ -7,7 +7,7 @@ use App\Users\Models\User,
 class UsersController extends \Micro\Controller {
 
     public function testAction() {
-        var_dump('test');
+        
     }
 
     public function findAction() {
@@ -20,59 +20,12 @@ class UsersController extends \Micro\Controller {
     
     public function createAction() {
         $post = $this->request->getJson();
-        $user = new User();
-
-        if (isset($post['su_passwd']) && ! empty($post['su_passwd'])) {
-            $post['su_passwd'] = $this->security->createHash($post['su_passwd']);
-        }
-
-        $post['su_invite_token'] = $this->security->createToken(array('su_email' => $post['su_email']));
-
-        // define fullname
-        if ( ! isset($post['su_fullname']) || empty($post['su_fullname'])) {
-            $name = substr($post['su_email'], 0, strpos($post['su_email'], '@'));
-            $name = ucwords(str_replace('.', ' ', $name));    
-            $post['su_fullname'] = $name;
-        }
-
-        if ($user->save($post)) {
-            if (isset($post['su_kanban'])) {
-                $user->saveKanban($post['su_kanban']);
-            }
-
-            $this->__sendInvitationEmail($post);
-
-            return User::get($user->su_id);
-        }else{
-            $messages = $user->getMessages();
-            $msg = [];
-            foreach ($messages as $message) {
-                array_push($msg, $message->getMessage());
-            }
-            return ["success"=>FALSE, "message"=> implode(',', $msg)];
-        }
-
-        return User::none();
+        return User::dbcreate($post);
     }
 
     public function updateAction($id) {
-        $query = User::get($id);
-
-        if ($query->data) {
-            $post = $this->request->getJson();
-
-            if (isset($post['su_passwd']) && ! empty($post['su_passwd'])) {
-                $post['su_passwd'] = $this->security->createHash($post['su_passwd']);
-            }
-
-            if ($query->data->save($post)) {
-                if (isset($post['su_kanban'])) {
-                    $query->data->saveKanban($post['su_kanban']);
-                }
-            }
-        }
-
-        return $query;
+        $post = $this->request->getJson();
+        return User::dbupdate($id, $post);
     }
 
     public function deleteAction($id) {
@@ -146,15 +99,13 @@ class UsersController extends \Micro\Controller {
                     $user->su_fullname = $name;
                     $user->su_active = 0;
                     $user->su_created_date = date('Y-m-d H:i:s');
-                    $user->su_created_by = 'system';
-                    $user->su_invite_token = $this->security->createToken(array(
-                        'su_email' => $email
-                    ));
+                    $user->su_created_by = $auth['su_fullname'];
+                    $user->su_invite_token = User::createInvitationToken(array('su_email' => $email));
 
                     $user->su_sr_id = $role;
 
-                    $this->__sendInvitationEmail($user->toArray());
                     $user->save();
+                    $user->sendInvitation();
 
                     if (isset($post['project']) && ! empty($post['project'])) {
                         $pu = new \App\Projects\Models\ProjectUser();
@@ -166,13 +117,13 @@ class UsersController extends \Micro\Controller {
                     $result['success'] = TRUE;
                     $result['data'] = User::get($user->su_id)->data;
                 } else {
-                    $result['message'] = 'Email address already registered';
+                    $result['message'] = 'Alamat email sudah terdaftar';
                 }
             } else {
-                $result['message'] = 'Invalid email address';
+                $result['message'] = 'Alamat email tidak valid';
             }
         } else {
-            $result['message'] = 'Invalid email address';
+            $result['message'] = 'Alamat email tidak valid';
         }
 
         return $result;
@@ -180,7 +131,13 @@ class UsersController extends \Micro\Controller {
 
     public function reinviteAction() {
         $post = $this->request->getJson();
-        $user = User::findFirst(array('su_email = :email:', 'bind' => array('email' => $post['email'])));
+
+        $user = User::findFirst(array(
+            'su_email = :email:', 
+            'bind' => array(
+                'email' => $post['email']
+            )
+        ));
 
         if ($user && $user->su_active == 0) {
             $token = $user->su_invite_token;
@@ -196,11 +153,9 @@ class UsersController extends \Micro\Controller {
             }
 
             if ($need) {
-                $code = $this->security->createToken(array('su_email' => $post['email']));
-                $user->su_invite_token = $code;
+                $user->su_invite_token = User::createInvitationToken(array('su_email' => $post['email']));
                 $user->save();
-
-                $this->__sendInvitationEmail($user->toArray());
+                $user->sendInvitation();
             }
         }
 
@@ -235,10 +190,10 @@ class UsersController extends \Micro\Controller {
                     $result['success'] = TRUE;
                     $result['data'] = $user->toArray();
                 } else {
-                    $result['message'] = 'Already activated';
+                    $result['message'] = 'Akun sudah aktif';
                 }
             } else {
-                $result['message'] = 'Invalid activation code';
+                $result['message'] = 'Kode aktivasi tidak valid';
             }
         } else {
             $result['message'] = $verify['message'];
@@ -262,7 +217,7 @@ class UsersController extends \Micro\Controller {
             $user->save($post);
         }
 
-        $redir = $this->url->getScheme().'://'.$this->url->getHost().'/'.$this->config->app->name;
+        $redir = $this->url->getClientUrl().'profile/';
 
         return array(
             'success' => TRUE,
@@ -270,29 +225,5 @@ class UsersController extends \Micro\Controller {
                 'redir' => $redir
             )
         );
-    }
-
-    private function __sendInvitationEmail($data) {
-        $href = sprintf(
-            '%s://%s/%s/invitation?code=%s',
-            $this->url->getScheme(),
-            $this->url->getHost(),
-            $this->config->app->name,
-            $data['su_invite_token']
-        ); 
-        
-        $body = $this->view->render('invitation', array(
-            'href' => $href
-        ));
-
-        $options = array(
-            'from' => array('no-reply@worksaurus.com' => 'Worksaurus Admin'),
-            'to' => $data['su_email'],
-            'bcc' => 'roso@kct.co.id',
-            'subject' => 'WS Team Invitation',
-            'body' => $body
-        );
-
-        return $this->mailer->send($options);
     }
 }

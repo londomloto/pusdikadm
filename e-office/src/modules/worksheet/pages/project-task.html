@@ -497,6 +497,8 @@
                     send: send
                 };
 
+                this.mask('Sedang menyimpan...');
+
                 if (this.recordAction == 'create') {
                     this.$.ajax.POST('/kanban', payload).then(done.bind(this));
                 } else {
@@ -504,6 +506,9 @@
                 }
 
                 function done(res) {
+                    
+                    this.unmask();
+
                     // let back = send || (this.recordAction == 'create');
                     if (back) {
                         this.set('route.path', this.returnAction);    

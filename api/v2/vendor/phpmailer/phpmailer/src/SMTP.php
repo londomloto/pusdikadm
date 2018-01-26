@@ -897,9 +897,11 @@ class SMTP
 
             return false;
         }
+
         $this->client_send($commandstring . static::LE);
 
         $this->last_reply = $this->get_lines();
+
         // Fetch SMTP code and possible error code explanation
         $matches = [];
         if (preg_match('/^([0-9]{3})[ -](?:([0-9]\\.[0-9]\\.[0-9]) )?/', $this->last_reply, $matches)) {
