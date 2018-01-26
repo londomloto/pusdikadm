@@ -98,6 +98,7 @@
             beforeSave(payload) {
                 if (payload.send) {
                     payload.record.data.su_invite = true;
+                    payload.record.data.su_ticket = this.record.task.tt_id;
                 }
             }
 

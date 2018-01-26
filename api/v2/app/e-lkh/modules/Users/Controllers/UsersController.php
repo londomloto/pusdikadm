@@ -214,7 +214,18 @@ class UsersController extends \Micro\Controller {
         }
 
         if ($user) {
-            $user->save($post);
+            if ($user->save($post)) {
+                if ( ! empty($user->su_ticket)) {
+                    $task = \App\Tasks\Models\Task::get($user->su_ticket)->data;
+                    if ($task) {
+                        
+                        $task->next($user->toArray());
+
+                        $user->su_ticket = NULL;
+                        $user->save();
+                    }
+                }
+            }
         }
 
         $redir = $this->url->getClientUrl().'profile/';
