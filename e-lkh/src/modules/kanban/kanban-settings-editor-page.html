@@ -4,6 +4,8 @@
 <link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../../../cores/bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../../../../cores/bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../../../../cores/bower_components/paper-radio-group/paper-radio-group.html">
+<link rel="import" href="../../../../cores/bower_components/paper-radio-button/paper-radio-button.html">
 <link rel="import" href="../../../../cores/bower_components/vaadin-combo-box/vaadin-combo-box.html">
 <link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
 <link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
@@ -65,6 +67,19 @@
                 margin-left: -20px;
                 box-shadow: none;
             }
+            .form-group {
+                margin-top: 8px;
+                margin-bottom: 8px;
+            }
+            .form-group > label {
+                font-size: 12px;
+                color: #666;
+                margin-bottom: 5px;
+            }
+            paper-radio-button {
+                display: block;
+                padding: 5px 0;
+            }
         </style>
 
         <kct-ajax id="ajax1"></kct-ajax>
@@ -88,6 +103,14 @@
                         <div class="p-a">
                             <paper-input value="{{ record.ks_name }}" label="Nama Template" required auto-validate error-message="Name is required"></paper-input>
                             <paper-input value="{{ record.ks_description }}" label="Keterangan"></paper-input>
+                            <div class="form-group">
+                                <label>Fungsi Template</label>
+                                <paper-radio-group selected="{{ record.ks_purpose }}" attr-for-selected="name">
+                                    <paper-radio-button name="1">Pemeriksaan LKH</paper-radio-button>
+                                    <paper-radio-button name="2">Pemeriksaan SKP</paper-radio-button>
+                                    <paper-radio-button name="0">Umum</paper-radio-button>
+                                </paper-radio-group>
+                            </div>
                         </div>
                     </div>
                     <div class="flex center">

@@ -5,21 +5,18 @@
     <template>
         <style>
             :host {
-                min-height: 100%;
-                /*height: 100%;*/
-                /*display: inline-block;*/
+                min-height: var(--panel-height, 100%);
                 margin: 0;
                 display: block;
                 float: left;
                 background-color: var(--panel-body-background, var(--paper-grey-200));
             }
+            :host([hidden]) {
+                display: none;
+            }
             .panel {
                 width: var(--panel-width, 300px);
-                /*margin: 0 0 0 15px;*/
                 margin: 0;
-                /*height: 100%;*/
-                
-                /*@apply --shadow-elevation-2dp;*/
             }
             .panel:after {
                 content: '';
@@ -29,33 +26,13 @@
                 border-right: 1px solid #F6F8F7;
             }
             .panel-content {
-                min-height: calc( 100% - 46px);
-            }
-            app-header-layout {
-                height: 100%;
-                background-color: var(--panel-body-background, #fff);
-            }
-            app-header {
-                
-            }
-            app-header[hidden] {
-                display: none;
+                min-height: calc(100% - 34px);
             }
             .primary-toolbar {
                 height: 34px;
                 line-height: 34px;
                 padding-right: 5px;
-                /*background-color: var(--panel-primary-toolbar-background, transparent);*/
-                /*color: var(--panel-header-color, #ffffff);*/
                 border-bottom: 2px solid var(--panel-primary-toolbar-background, transparent);
-                /*border-bottom: 1px solid #dfdfdf;*/
-                /*border-bottom: 1px solid #dfdfdf;*/
-            }
-            .secondary-toolbar {
-                height: 40px;
-            }
-            .secondary-toolbar ::slotted(*) {
-                @apply --layout-flex;
             }
             app-toolbar[hidden] {
                 display: none;
@@ -107,36 +84,6 @@
             <div class="panel-content">
                 <slot></slot>
             </div>
-            <!-- <app-header-layout>
-                <app-header fixed effects="[[effects]]" slot="header" hidden="[[ hideHeader ]]">
-                    <app-toolbar class="primary-toolbar" hidden$="[[ hidePrimary ]]">
-                        <div class="panel-title">
-                            <div main-title>
-                                <slot name="panel-title">[[ title ]]</slot>
-                            </div>
-                        </div>
-                        <div class="panel-tool">
-                            <slot name="primary-toolbar"></slot>
-                        </div>
-                    </app-toolbar>
-                    <app-toolbar class="primary-toolbar" hidden$="[[ hideCondensed ]]">
-                        <div class="panel-title">
-                            <div condensed-title>
-                                <slot name="panel-title-condensed">[[ title ]]</slot>
-                            </div>
-                        </div>
-                        <div class="panel-tool">
-                            <slot name="primary-toolbar"></slot>
-                        </div>
-                    </app-toolbar>
-                    <app-toolbar class="secondary-toolbar" hidden$="[[ hideSecondary ]]">
-                        <slot name="secondary-toolbar"></slot>
-                    </app-toolbar>
-                </app-header>
-                <div class="panel-content">
-                    <slot></slot>
-                </div>
-            </app-header-layout> -->
         </div>
     </template>
     <script>
@@ -147,7 +94,8 @@
             static get properties() {
                 return {
                     title: { type: String, notify: true, value: 'Panel' },
-                    width: { type: String, notify: true, value: 'auto' },
+                    width: { type: String }, 
+                    height: { type: String },
                     accent: { type: String, value: 'transparent' },
                     hideHeader: { type: Boolean, value: false },
                     hidePrimary: { type: Boolean, value: false }
@@ -156,7 +104,7 @@
             static get observers() {
                 return [
                     '__accentChanged(accent)',
-                    '__widthChanged(width)'
+                    '__sizeChanged(width, height)'
                 ];
             }
             __accentChanged(accent) {
@@ -168,10 +116,17 @@
                     '--panel-primary-toolbar-background': accent
                 });
             }
-            __widthChanged(width) {
-                let style = ! isNaN(width) ? width + 'px' : width;
-                this.updateStyles({ '--panel-width': style });
-                this.dispatchEvent(new CustomEvent('resize'));
+            __sizeChanged(width, height) {
+                if (width === undefined) return;
+                if (height === undefined) return;
+
+                width = ! isNaN(width) ? width + 'px' : width;
+                height = ! isNaN(height) ? height + 'px' : height;
+
+                this.updateStyles({
+                    '--panel-width': width,
+                    '--panel-height': height
+                });
             }
         }
         customElements.define(KctWorksheetPanel.is, KctWorksheetPanel);

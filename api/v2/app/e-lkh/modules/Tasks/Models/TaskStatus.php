@@ -38,6 +38,7 @@ class TaskStatus extends \Micro\Model {
 
     public function toArray($columns = NULL) {
         $data = parent::toArray($columns);
+        $data['tts_has_content'] = !empty($data['tts_content']);
         $data['status_text'] = NULL;
 
         if ($this->status) {

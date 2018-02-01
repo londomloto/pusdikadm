@@ -27,6 +27,7 @@ class KanbanSettingsController extends \Micro\Controller {
             $panels = $record->getPanels(array('order' => 'kp_order ASC'))->filter(function($p) use($request, $project, $user){
                 $panel = $p->toArray();
                 $panel['kp_busy'] = FALSE;
+                $panel['kp_more'] = FALSE;
                 $panel['kp_data'] = array();
 
                 $panel['kp_statuses'] = $p->statuses->filter(function($s){
@@ -67,7 +68,7 @@ class KanbanSettingsController extends \Micro\Controller {
                                 foreach($revoked as $key => $bool) {
                                     $index = self::__findIndex($key, $panel['kp_statuses']);
                                     if ($index !== -1) {
-                                        array_splice($panel['kp_statuses'], $index);    
+                                        array_splice($panel['kp_statuses'], $index, 1);    
                                     }
                                 }
                             }

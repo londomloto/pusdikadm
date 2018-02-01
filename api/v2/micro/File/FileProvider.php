@@ -23,9 +23,11 @@ class FileProvider {
     }
 
     public function download($file, $name = NULL) {
-        $info = getimagesize($file);
-        $mime = $info['mime'];
+        $info = finfo_open(FILEINFO_MIME_TYPE);
+        $mime = finfo_file($info, $file);
 
+        finfo_close($info);
+        
         if (is_null($name)) {
             $info = pathinfo($file);
             $name = '';

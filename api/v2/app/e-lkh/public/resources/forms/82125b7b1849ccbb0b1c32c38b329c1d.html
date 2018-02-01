@@ -1,0 +1,181 @@
+<link rel="import" href="../../../../../cores/vendors/moment/moment.html">
+<link rel="import" href="../../../../../cores/elements/kct-editor/kct-html-editor.html">
+
+<dom-module id="form-lkh">
+    <template>
+        <style include="form-style">
+            .html-editor-wrapper {
+                margin-top: 20px;
+                border: 1px solid #dfdfdf;
+            }
+
+            .html-editor-wrapper kct-html-editor {
+                height: 200px;
+                --wysiwyg-toolbar-background: #fff;
+                --wysiwyg-toolbar-color: var(--paper-blue-grey-500);
+                --wysiwyg-tool-icon-disabled-color: var(--paper-grey-500);
+                --wysiwyg-toolbar: {
+                    border-bottom: 1px solid #dfdfdf;
+                };
+                --wysiwyg-editable: {
+                    line-height: 24px;
+                    font-size: 15px;
+                };
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="section">
+            <h3 class="section-title">Data Identitas</h3>
+            <div>
+                <paper-input label="Nama Lengkap" value="{{ record.data.lkh_su_fullname }}" readonly></paper-input>
+                <paper-input label="Jabatan" value="{{ record.data.lkh_su_sj_name }}" readonly></paper-input>
+                <paper-input label="Unit Kerja" value="{{ record.data.lkh_su_sdp_name }}" readonly></paper-input>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Data Absensi</h3>
+            <div>
+                <kct-column columns="3">
+                    <div>
+                        <paper-input label="Tanggal" value="{{ record.data.lkh_tpr_date_formatted }}" readonly></paper-input>
+                    </div>
+                    <div>
+                        <paper-input label="Absensi" value="{{ record.data.lkh_tpr_type }}" readonly></paper-input>
+                    </div>
+                    <div>
+                        <paper-input label="Jam Absensi" value="{{ record.data.lkh_tpr_checkin }}" readonly></paper-input>
+                    </div>
+                </kct-column>
+                <paper-input label="Keterangan" value="{{ record.data.lkh_tpr_desc }}" readonly></paper-input>
+                <paper-input label="Attachment" value="{{ record.data.lkh_tpr_file }}" on-tap="__onAttachmentTap" readonly></paper-input>
+
+                <div class="m-t">
+                    <paper-button class="btn-amber" on-tap="__onEditPresenceTap">Sunting Absensi</paper-button>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Data Agenda (LKH)</h3>
+            <div>
+                <kct-column columns="2">
+                    <div>
+                        <paper-input value="[[ record.data.lkh_date_formatted ]]" label="Tanggal" readonly></paper-input>
+                    </div>
+                    <div>
+                        <paper-input value="[[ record.data.lkh_volume ]]" label="Volume"></paper-input>
+                    </div>
+                </kct-column>
+
+                <div class="html-editor-wrapper">
+                    <kct-html-editor value="{{ record.data.lkh_desc }}"></kct-html-editor>
+                </div>
+                
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Data Kegiatan</h3>
+            <div>
+                <paper-input value="{{ record.task.tt_title }}" label="Nama Kegiatan"></paper-input>
+            </div>
+        </div>
+
+    </template>
+    <script>
+        class FormLkh extends FormBase {
+            static get is() {
+                return 'form-lkh';
+            }
+
+            static get observers() {
+                return [
+                    '__computeTaskTitle(record.data.lkh_su_fullname, record.data.lkh_date_formatted)',
+                    '__computeContent(record.data.lkh_tpr_type, record.data.lkh_tpr_checkin, record.data.lkh_tpr_desc)'
+                ];
+            }
+
+            initialize() {
+                if (this.record.task.tt_is_authorized) {
+                    if (this.record.status.tts_data_id) {
+                        return this.$.ajax.GET('/lkh/' + this.record.status.tts_data_id).then(res => {
+                            this.set('record.data', res.data);
+                        });
+                    } else {
+                        return this.resolve();
+                    }
+                } else {
+                    this.set('readonly', true);
+                    this.set('removable', false);
+                    this.toast('Warning', 'Anda tidak memiliki otoritas untuk membuka kegiatan ini', 'danger');
+                    this.trigger('authorize', { auth: false });
+
+                    return this.resolve();
+                }
+            }
+
+            save() {
+                let data = this.record.data;
+
+                if (data.lkh_id) {
+                    return this.$.ajax.PUT('/lkh/' + data.lkh_id, data).then(done.bind(this));
+                } else {
+                    return this.$.ajax.POST('/lkh', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    this.set('record.data', res.data);
+
+                    if (res.success) {
+                        let query = {};
+
+                        this.set('record.status.tts_data_id', res.data.lkh_id);
+                        this.set('record.status.tts_query', JSON.stringify(query));
+                    }
+
+                    return res;
+                }
+            }
+
+            __onDateChanged(e) {
+                let timer = setTimeout(() => {
+                    clearTimeout(timer);
+                    timer =  null;
+                    this.__computeTaskTitle();
+                }, 10);
+                
+            }
+
+            __onEditPresenceTap() {
+
+            }
+
+            __computeTaskTitle(name, date) {
+                name = name || '';
+                date = date || '';
+
+                console.log(name, date);
+
+                this.set('record.task.tt_title', name + ' - ' + date);
+            }
+
+            __computeContent(type, time, desc) {
+                let content = '<iron-icon icon="label-outline"></iron-icon>&nbsp;';
+
+                if (type == 'Masuk') {
+                    content += `${type}&nbsp;`;
+                    content += time ? `( ${time} )` : '';
+                } else {
+                    content += `${type}&nbsp;`;
+                    // content += desc ? `( ${desc} )` : '';
+                }
+
+                this.set('record.status.tts_content', content);
+            }
+        }
+        customElements.define(FormLkh.is, FormLkh);
+    </script>
+</dom-module>

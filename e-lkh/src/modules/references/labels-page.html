@@ -24,7 +24,7 @@
             selected="{{ selectedRecord }}"
             header-text="Referensi" 
             header-icon="view-list" 
-            header-desc="Daftar label atau penanda" 
+            header-desc="Referensi Label" 
             selection-model="row" 
             hide-nav 
             pagination>
@@ -61,7 +61,7 @@
                 <div slot="dialog-body">
                     <paper-input label="Label" value="{{ editingRecord.sl_label }}"></paper-input>
                     <div class="form-group">
-                        <label>Select label color</label>
+                        <label>Pilih warna label</label>
                         <div>
                             <iron-selector attr-for-selected="name" selected="{{ editingRecord.sl_color }}">
                                 <template is="dom-repeat" items="[[ colors ]]">
@@ -73,8 +73,8 @@
                     </div>
                 </div>
                 <div slot="dialog-footer">
-                    <paper-button on-tap="__onEditorSaveTap">Save</paper-button>
-                    <paper-button on-tap="__onEditorCloseTap">Close</paper-button>
+                    <paper-button on-tap="__onEditorSaveTap">Simpan</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Tutup</paper-button>
                 </div>
             </template>
         </kct-dialog>

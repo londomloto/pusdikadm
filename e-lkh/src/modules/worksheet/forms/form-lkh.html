@@ -1,53 +1,122 @@
 <link rel="import" href="../../../../../cores/vendors/moment/moment.html">
-<link rel="import" href="../../../../../cores/elements/kct-editor/kct-html-editor.html">
 
 <dom-module id="form-lkh">
     <template>
         <style include="form-style">
-            kct-html-editor {
-                height: 200px;
-                --wysiwyg-toolbar-background: #fff;
-                --wysiwyg-toolbar-color: var(--paper-blue-grey-500);
-                --wysiwyg-tool-icon-disabled-color: var(--paper-grey-500);
-                --wysiwyg-toolbar: {
-                    border-bottom: 1px solid #dfdfdf;
-                };
-                --wysiwyg-editable: {
-                    line-height: 24px;
-                    font-size: 15px;
+            .item-row {
+                display: block;
+                background-color: #F9F9F9;
+                border: 1px solid #dfdfdf;
+                box-shadow: none;
+                border-radius: 0;
+                position: relative;
+            }
+            .item-row + .item-row {
+                margin-top: 15px;
+            }
+            .item-row vaadin-combo-box {
+                padding: 2px 0;
+                --paper-input-container-label-floating: {
+                    margin-bottom: 0;
                 };
             }
-            .html-editor-wrapper {
-                margin-top: 20px;
-                border: 1px solid #dfdfdf;
+            .item-actions {
+                position: absolute;
+                top: 5px;
+                right: 5px;
             }
         </style>
 
-        <div class="section">
-            <h3 class="section-title">Data Absensi</h3>
-            <div>
-                <paper-input value="{{ record.data.lkh_su_fullname }}" label="Nama Lengkap" readonly></paper-input>
-                <paper-input value="{{ record.data.lkh_su_sj_name }}" label="Jabatan" readonly></paper-input>
-                <paper-input value="{{ record.data.lkh_su_sdp_name }}" label="Unit Kerja" readonly></paper-input>
+        <kct-ajax id="ajax"></kct-ajax>
 
-                <kct-column columns="2">
+        <div class="section">
+            <h3 class="section-title">Identitas</h3>
+            <div>
+                <kct-column columns="3">
                     <div>
-                        <vaadin-date-picker value="{{ record.data.lkh_date }}" label="Tanggal Agenda" on-value-changed="__onDateChanged"></vaadin-date-picker>
+                        <paper-input label="Nama Lengkap" value="[[ record.data.lkh_su_fullname ]]" readonly></paper-input>
                     </div>
                     <div>
-                        <paper-input value="{{ record.data.lkh_volume }}"  label="Volume"></paper-input>
+                        <paper-input label="No. Induk" value="[[ record.data.lkh_su_no ]]" readonly></paper-input>
+                    </div>
+                    <div>
+                        <paper-input label="Pangkat / Gol. Ruang" value="[[ record.data.lkh_su_grade ]]" readonly></paper-input>
                     </div>
                 </kct-column>
-                
-                
-                <div class="html-editor-wrapper">
-                    <kct-html-editor value="{{ record.data.lkh_desc }}"></kct-html-editor>    
-                </div>
-
+                <paper-input label="Jabatan" value="[[ record.data.lkh_su_sj_name ]]" readonly></paper-input>
+                <paper-input label="Unit Kerja" value="[[ record.data.lkh_su_sdp_name ]]" readonly></paper-input>
             </div>
         </div>
 
         <div class="section">
+            <h3 class="section-title">Absensi</h3>
+            <div>
+                <kct-column columns="3">
+                    <div>
+                        <paper-input label="Tanggal" value="[[ record.data.lkh_tpr_date_formatted ]]" readonly></paper-input>
+                    </div>
+                    <div>
+                        <paper-input label="Absensi" value="[[ record.data.lkh_tpr_type ]]" readonly></paper-input>
+                    </div>
+                    <div>
+                        <paper-input label="Jam Absensi" value="[[ record.data.lkh_tpr_checkin ]]" readonly></paper-input>
+                    </div>
+                </kct-column>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Kegiatan</h3>
+        </div>
+        <div class="p-b" style="margin-top: -1px;">
+            <template is="dom-repeat" items="[[ record.data.items ]]">
+                        
+                <paper-card class="item-row">
+                    <div class="card-content">
+                        <div class="item-actions">
+                            <paper-icon-button on-tap="__onRemoveItemTap" icon="close"></paper-icon-button>
+                        </div>
+                        <paper-input value="{{ item.lki_desc }}"  label="Uraian Kegiatan"></paper-input>
+                        <kct-column columns="3">
+                            <div>
+                                <paper-input value="{{ item.lki_volume }}"  label="Volume" ></paper-input>
+                            </div>
+                            <div>
+                                <vaadin-combo-box 
+                                    items="[[ units ]]" 
+                                    label="Satuan"
+                                    value="{{ item.lki_unit }}" 
+                                    item-value-path="sun_name" 
+                                    item-label-path="sun_name" 
+                                    allow-custom-value></vaadin-combo-box>
+                            </div>
+                            <div>
+                                <paper-input value="{{ item.lki_cost }}"  label="Biaya" ></paper-input>
+                            </div>
+                        </kct-column>
+                    </div>
+                </paper-card>
+            </template>
+            <div class="m-t-sm text-right">
+                <paper-button on-tap="__onAddItemTap" class="btn-blue-grey m-r-0"><iron-icon icon="add"></iron-icon>&nbsp;Tambah Kegiatan</paper-button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Pemeriksaan</h3>
+            <div>
+                <kct-combobox 
+                    id="combo-module" 
+                    url="/lkh/exam/modules" 
+                    label="Module Pemeriksaan" 
+                    value="{{ record.data.lkh_exam_id }}" 
+                    page-size="10" 
+                    item-label-path="sp_title" 
+                    item-value-path="sp_id"></kct-combobox>
+            </div>
+        </div>
+
+        <div class="section" hidden>
             <h3 class="section-title">Data Kegiatan</h3>
             <div>
                 <paper-input value="{{ record.task.tt_title }}" label="Nama Kegiatan"></paper-input>
@@ -61,43 +130,149 @@
                 return 'form-lkh';
             }
 
+            static get properties() {
+                return {
+                    units: { type: Array, value: () => ([]) }
+                }
+            }
+
+            static get observers() {
+                return [
+                    '__computeTask(record.data.lkh_su_fullname, record.data.lkh_date_formatted)',
+                    '__computeContent(record.data.lkh_tpr_type, record.data.lkh_tpr_checkin, record.data.lkh_tpr_desc)'
+                ];
+            }
+
             initialize() {
-                this.set('record.data', {
-                    lkh_date: moment().format('YYYY-MM-DD'),
-                    lkh_su_id: this.user.su_id,
-                    lkh_su_fullname: this.user.su_fullname,
-                    lkh_su_sj_name: this.user.su_sj_name,
-                    lkh_su_sdp_name: this.user.su_sdp_name,
-                    lkh_su_scp_name: this.user.su_scp_name
+
+                this.$.ajax.GET('/units').then(res => {
+                    this.set('units', res.data);
                 });
 
-                this.__computeTaskTitle();
-            }
+                this.$['combo-module'].load();
 
-            __computeTaskTitle() {
-                if ( ! this.record.data) {
-                    return '';
-                }
+                if (this.record.task.tt_is_authorized) {
+                    if (this.record.status.tts_data_id) {
+                        return this.$.ajax.GET('/lkh/' + this.record.status.tts_data_id).then(res => {
+                            let data = res.data;
 
-                let value = this.record.data.lkh_date;
-                let date;
+                            if ( ! (data.items || []).length) {
+                                data.items.push({
+                                    lki_desc: '',
+                                    lki_volume: 1,
+                                    lki_unit: 'dokumen',
+                                    lki_cost: 0
+                                });    
+                            }
 
-                if (value) {
-                    date = moment(value, 'YYYY-MM-DD');
+                            this.set('record.data', data);
+                        });
+                    } else {
+                        return this.resolve();
+                    }
                 } else {
-                    date = moment();
+                    this.trigger('authorize', { auth: false });
+                    return this.resolve();
                 }
-
-                this.set('record.task.tt_title', this.user.su_fullname + ' - ' + date.format('DD MMM YYYY'));
             }
 
-            __onDateChanged(e) {
-                let timer = setTimeout(() => {
-                    clearTimeout(timer);
-                    timer =  null;
-                    this.__computeTaskTitle();
-                }, 10);
+            save(options) {
+                let data = this.record.data;
+
+                if (options.send) {
+
+                    // validate exam target
+                    if ( ! data.lkh_exam_id) {
+                        this.toast('Warning', 'Anda belum memilih module pemeriksaan', 'warn');
+                        return this.resolve({ success: false });
+                    }
+
+                    data.lkh_ticket = this.record.task.tt_id;
+                }
+
+                if (data.lkh_id) {
+                    return this.$.ajax.PUT('/lkh/' + data.lkh_id, data).then(done.bind(this));
+                } else {
+                    return this.$.ajax.POST('/lkh', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    
+
+                    if (res.success) {
+                        
+                        this.saveResult({
+                            data: res.data,
+                            date: res.data.lkh_date,
+                            author: res.data.lkh_su_id
+                        });
+
+                        this.set('record.data', res.data);
+                        this.set('record.status.tts_data_id', res.data.lkh_id);
+
+                        if (options.send) {
+                            return this.$.ajax.POST('/lkh/exam/init', data);
+                        } else {
+                            return res;
+                        }
+
+                    } else {
+                        this.toast('Warning', res.message, 'warn');
+                        return res;
+                    }
+
+                }
+            }
+
+            remove() {
+                return this.$.ajax.DELETE('/lkh/' + this.record.data.lkh_id);
+            }
+
+            __computeTask(name, date) {
+                name = name || '';
+                date = date || '';
                 
+                this.set('record.task.tt_title', name + ' - ' + date);
+            }
+
+            __computeContent(type, time, desc) {
+                let content = '<iron-icon icon="label-outline"></iron-icon>&nbsp;';
+
+                if (type == 'Masuk') {
+                    content += `${type}&nbsp;`;
+                    content += time ? `( ${time} )` : '';
+                } else {
+                    content += `${type}&nbsp;`;
+                    // content += desc ? `( ${desc} )` : '';
+                }
+
+                this.set('record.status.tts_content', content);
+            }
+
+            __onAddItemTap() {
+                this.push('record.data.items', {
+                    lki_desc: '',
+                    lki_volume: 1,
+                    lki_unit: 'dokumen',
+                    lki_cost: 0
+                });
+            }
+
+            __onRemoveItemTap(e) {
+                let index = e.model.index;
+                this.splice('record.data.items', index, 1);
+            }
+
+            __onAttachmentTap(e) {
+                let value = e.target.value;
+
+                if (value && value != '-') {
+                    this.$.ajax.DOWNLOAD('/presence/' + this.record.data.lkh_tpr_id + '/download');
+                }
+            }
+
+            __onEditPresenceTap() {
+
             }
         }
         customElements.define(FormLkh.is, FormLkh);

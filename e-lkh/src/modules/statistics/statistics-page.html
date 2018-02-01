@@ -1,0 +1,36 @@
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-layout/kct-vbox.html">
+<link rel="import" href="../settings/blocks/setting-header-block.html">
+
+<dom-module id="statistics-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--page-background-color);
+            }
+        </style>
+
+        <kct-vbox>
+            <setting-header-block text="Module" desc="Statistik" hide-nav></setting-header-block>
+            <div class="flex scroll-y">
+                
+            </div>
+        </kct-vbox>
+
+    </template>
+    <script>
+        class StatisticsPage extends KctView {
+            static get is() {
+                return 'statistics-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Statistik', notify: true }
+                };
+            }
+        }
+        customElements.define(StatisticsPage.is, StatisticsPage);    
+    </script>
+</dom-module>

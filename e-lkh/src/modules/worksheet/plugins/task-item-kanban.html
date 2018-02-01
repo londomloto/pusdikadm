@@ -9,6 +9,7 @@
             }
             .item .box-body {
                 cursor: pointer;
+                padding-bottom: 0;
             }
             .item .box-body > * {
                 pointer-events: none;
@@ -52,8 +53,15 @@
                 font-size: 15px;
             }
             .item-desc {
+                color: var(--paper-blue-grey-500);
+                margin-top: 10px;
                 font-size: 13px;
-                color: #999;
+            }
+            .item-desc iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
+                position: relative;
+                top: -1px;
             }
             .item-meta {
                 font-size: 11px;
@@ -94,6 +102,7 @@
                     </template>
                     <span class="item-clear"></span>
                 </div>
+                <div class="item-desc" inner-h-t-m-l="[[ record.status.tts_content ]]" hidden$="[[ !record.status.tts_has_content ]]"></div>
             </div>
             <div class="box-user">
                 <div class="item-user" title$="Dibuat oleh [[ record.task.creator_su_fullname ]]">

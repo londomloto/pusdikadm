@@ -1,0 +1,91 @@
+
+<dom-module id="form-lkh-exam">
+    <template>
+        <style include="form-style"></style>
+        
+        <kct-ajax id="ajax"></kct-ajax>
+        
+        <div class="section">
+            <h3 class="section-title">Identitas</h3>
+            <div>
+                <kct-column columns="3">
+                    <div>
+                        <paper-input label="Nama Lengkap" value="[[ record.data.lkh_su_fullname ]]" readonly></paper-input>
+                    </div>
+                    <div>
+                        <paper-input label="No. Induk" value="[[ record.data.lkh_su_no ]]" readonly></paper-input>
+                    </div>
+                    <div>
+                        <paper-input label="Pangkat / Gol. Ruang" value="[[ record.data.lkh_su_grade ]]" readonly></paper-input>
+                    </div>
+                </kct-column>
+                <paper-input label="Jabatan" value="[[ record.data.lkh_su_sj_name ]]" readonly></paper-input>
+                <paper-input label="Unit Kerja" value="[[ record.data.lkh_su_sdp_name ]]" readonly></paper-input>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Absensi</h3>
+            <div>
+                <kct-column columns="3">
+                    <div>
+                        <paper-input label="Tanggal" value="[[ record.data.lkh_tpr_date_formatted ]]" readonly></paper-input>
+                    </div>
+                    <div>
+                        <paper-input label="Absensi" value="[[ record.data.lkh_tpr_type ]]" readonly></paper-input>
+                    </div>
+                    <div>
+                        <paper-input label="Jam Absensi" value="[[ record.data.lkh_tpr_checkin ]]" readonly></paper-input>
+                    </div>
+                </kct-column>
+            </div>
+        </div>
+        
+
+    </template>
+    <script>
+        class FormLkhExam extends FormBase {
+            static get is() {
+                return 'form-lkh-exam';
+            }
+
+            initialize() {
+                this.set('removable', false);
+
+                if (this.action == 'create') {
+                    this.set('readonly', true);
+                    return this.resolve();
+                } else {
+                    if (this.record.status.tts_data_id) {
+                        return this.$.ajax.GET('/lkh/' + this.record.status.tts_data_id).then(res => {
+                            this.set('record.data', res.data);
+                        });
+                    } else {
+                        this.set('readonly', true);
+                        return this.resolve();
+                    }
+                }
+            }
+
+            save(options) {
+                if (options.send) {
+
+                    this.saveResult({
+                        data: this.record.data,
+                        date: this.record.data.lkh_date,
+                        author: this.record.data.lkh_su_id
+                    });
+
+                    return this.$.ajax.GET('/lkh/exam/' + this.record.data.lkh_id + '/flag').then(res => {
+                        this.set('record.data', res.data);
+                        return res;
+                    });
+                } else {
+                    this.toast('Warning', 'Tidak ada data yang perlu disimpan', 'warn');
+                    return this.resolve({ success: false });
+                }
+            }
+        }
+        customElements.define(FormLkhExam.is, FormLkhExam);
+    </script>
+</dom-module>

@@ -1,11 +1,75 @@
 <dom-module id="form-pendaftaran-view">
     <template>
-        LIHAT
+        <style include="form-style"></style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="section">
+            <h3 class="section-title">Data Peserta</h3>
+            <div>
+                <paper-input label="Nama Lengkap *" value="[[ record.data.su_fullname ]]" readonly></paper-input>
+                <paper-input label="Jenis Kelamin" value="[[ record.data.su_sex ]]" readonly></paper-input>
+
+                <kct-column columns="2">
+                    <div>
+                        <paper-input label="Tempat Lahir" value="[[ record.data.su_pob ]]" readonly></paper-input>
+                    </div>
+                    <div>
+                        <paper-input label="Tanggal Lahir" value="[[ record.data.su_dob_formatted ]]" readonly></paper-input>
+                    </div>
+                </kct-column>
+
+                <paper-input label="No. Induk Pagawai" value="[[ record.data.su_no ]]" readonly></paper-input>
+                <paper-input label="Pangkat / Gol. Ruang" value="[[ record.data.su_grade ]]" readonly></paper-input>
+                <paper-input label="Jabatan (Pekerjaan)" value="[[ record.data.su_sj_name ]]" readonly></paper-input>
+                <paper-input label="Unit Kerja" value="[[ record.data.su_sdp_name ]]" readonly></paper-input>
+                
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Data Akun</h3>
+            <div>
+                <paper-input type="email" label="Alamat Email *" value="[[ record.data.su_email ]]" readonly></paper-input>
+                <paper-input label="Group Akses (Role) *" value="[[ record.data.su_email ]]" readonly></paper-input>
+            </div>
+        </div>
+
+        <div class="section" hidden>
+            <h3 class="section-title">Data Kegiatan</h3>
+            <div>
+                <paper-input label="Nama Kegiatan" value="[[ record.task.tt_title ]]" readonly></paper-input>    
+                <kct-column columns="2">
+                    <div>
+                        <paper-input label="Dibuat Oleh" value="[[ record.task.creator_su_fullname ]]" readonly></paper-input>    
+                    </div>
+                    <div>
+                        <paper-input label="Tanggal" value="[[ record.task.tt_created_dt_formatted ]]" readonly></paper-input>    
+                    </div>
+                </kct-column>
+            </div>
+        </div>
+
     </template>
     <script>
         class FormPendaftaranView extends FormBase {
             static get is() {
                 return 'form-pendaftaran-view';
+            }
+
+            ready() {
+                super.ready();
+                this.set('readonly', true);
+            }
+
+            initialize() {
+                if (this.record.status.tts_data_id) {
+                    return this.$.ajax.GET('/users/' + this.record.status.tts_data_id).then(res => {
+                        this.set('record.data', res.data);
+                    });
+                } else {
+                    return this.resolve();
+                }
             }
         }
 

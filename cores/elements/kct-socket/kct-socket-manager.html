@@ -131,7 +131,8 @@
                     let url = this.__resolveUrl();
                     let nsp = this.__resolveNamespace();
                     let opt = {
-                        query: { room: nsp }
+                        query: { room: nsp },
+                        reconnectionDelay: 10000
                     };
 
                     if (this.secure) {

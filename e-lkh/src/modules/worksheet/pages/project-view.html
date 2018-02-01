@@ -4,6 +4,7 @@
 <link rel="import" href="../../../../../cores/elements/kct-layouts/kct-vbox.html">
 <link rel="import" href="../../../../../cores/elements/kct-combobox/kct-combobox.html">
 <link rel="import" href="../../../../../cores/elements/kct-socket/kct-socket.html">
+<link rel="import" href="../../../../../cores/elements/kct-media/kct-media.html">
 <link rel="import" href="../blocks/header-block.html">
 <link rel="import" href="../plugins/task-search.html">
 
@@ -61,13 +62,25 @@
                 50% { transform: scale(1.2); }
                 100% { transform: scale(1); }
             }
+
+            .container.sm .hidden-sm { display: none;  }
+            .container.md .hidden-md { display: none;  }
+            .container.lg .hidden-lg { display: none;  }
+
+            .container.sm #button-create-task,
+            .container.md #button-create-task {
+                padding-left: 5px;
+                padding-right: 5px;
+                min-width: auto;
+            }
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
         <kct-socket manager="worksheet-socket" on-notify="__onSocketNotify"></kct-socket>
+        <kct-media size="{{ responsive }}"></kct-media>
 
-        <kct-vbox>
-            <header-block text="Module Kegiatan" on-back-tap="__onBackTap">
+        <kct-vbox class$="container [[ responsive ]]">
+            <header-block text="Module Kegiatan" on-back-tap="__onBackTap" hide-header$="[[ __hideHeader(responsive) ]]">
                 <kct-combobox 
                     id="combo-project" 
                     slot="header-value" 
@@ -120,27 +133,29 @@
                     </template>        
                 </kct-combobox>
 
-                <div class="separator" slot="left-toolbar"></div>
+                <div class="separator hidden-sm hidden-md hidden-lg" slot="left-toolbar"></div>
 
-                <div slot="left-toolbar" class$="reload-button [[ __computeReloadClass(notify) ]]">
+                <div slot="left-toolbar" class$="reload-button [[ __computeReloadClass(notify) ]]" hidden$="[[ busy ]]">
                     <paper-icon-button on-tap="__onReloadTap" icon="refresh" title="Reload"></paper-icon-button>
                 </div>
-                
-                <paper-button id="button-create-task" on-tap="__onCreateTaskTap" slot="left-toolbar">
-                    <iron-icon icon="add" style="position: relative; top: -1px;"></iron-icon>&nbsp;Record
-                </paper-button>
 
-                <task-search on-search="__onSearch" slot="center-toolbar"></task-search>
+                <paper-spinner-lite slot="left-toolbar" active$="[[ busy ]]" hidden$="[[ !busy ]]"></paper-spinner-lite>
+
+                <paper-button id="button-create-task" on-tap="__onCreateTaskTap" slot="left-toolbar">
+                    <iron-icon icon="add" style="position: relative; top: -1px;"></iron-icon><span class="hidden-sm hidden-md">&nbsp;Record</span>
+                </paper-button>
                 
-                <paper-icon-button title="Kanban View" data-view="kanban" on-tap="__onDisplayTap" class$="display-button [[ __computeSelectedDisplay('kanban', view) ]]" icon="view-column" slot="right-toolbar"></paper-icon-button>
-                <paper-icon-button title="List View" data-view="list" on-tap="__onDisplayTap" class$="display-button [[ __computeSelectedDisplay('list', view) ]]" icon="view-list" slot="right-toolbar"></paper-icon-button>
+                <task-search project="[[ project ]]" class="" on-search="__onSearch" slot="center-toolbar"></task-search>
+                
+                <paper-icon-button title="Kanban View" data-view="kanban" on-tap="__onDisplayTap" class$="display-button hidden-sm hidden-md [[ __computeSelectedDisplay('kanban', view) ]]" icon="view-column" slot="right-toolbar"></paper-icon-button>
+                <paper-icon-button title="List View" data-view="list" on-tap="__onDisplayTap" class$="display-button hidden-sm hidden-md [[ __computeSelectedDisplay('list', view) ]]" icon="view-list" slot="right-toolbar"></paper-icon-button>
             </header-block>
 
             <div class="flex main">
 
                 <kct-pages id="view-switcher" attr-for-selected="name" selected="[[ view ]]" lazy-load>
-                    <project-view-kanban import="project-view-kanban.html" name="kanban" route="{{ route }}" state="[[ state ]]"></project-view-kanban>
-                    <project-view-grid import="project-view-grid.html" name="list" route="{{ route }}" state="[[ state ]]"></project-view-grid>
+                    <project-view-kanban import="project-view-kanban.html" busy="{{ busy }}" name="kanban" route="{{ route }}" state="[[ state ]]"></project-view-kanban>
+                    <project-view-grid import="project-view-grid.html" busy="{{ busy }}" name="list" route="{{ route }}" state="[[ state ]]"></project-view-grid>
                 </kct-pages>
 
             </div>
@@ -162,7 +177,8 @@
                         ])
                     },
                     project: { type: String },
-                    notify: { type: Boolean, value: false }
+                    notify: { type: Boolean, value: false },
+                    busy: { type: Boolean }
                 };
             }
 
@@ -203,6 +219,10 @@
 
             getActiveView() {
                 return this.$['view-switcher'].selectedItem;
+            }
+
+            __hideHeader(size) {
+                return size != 'xl' ? true : false;
             }
 
             __startTour() {
@@ -301,12 +321,6 @@
                 let view = this.getActiveView();
 
                 if (view && view.reload) {
-                    
-                    // additional fields
-                    if (search.fields !== undefined) {
-                        Array.prototype.push.apply(search.fields, ['tt_title', 'tt_desc']);
-                    }
-
                     view.params = search;
                     view.reload();    
                 }

@@ -1,0 +1,25 @@
+
+<dom-module id="form-skp-view">
+    <template>
+        <style include="form-style"></style>
+        
+        <kct-ajax id="ajax"></kct-ajax>
+
+        
+
+    </template>
+    <script>
+        class FormSkpView extends FormBase {
+            static get is() {
+                return 'form-skp-view';
+            }
+
+            static get observers() {
+                return [
+                    
+                ];
+            }
+        }
+        customElements.define(FormSkpView.is, FormSkpView);
+    </script>
+</dom-module>

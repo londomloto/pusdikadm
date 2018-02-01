@@ -38,23 +38,22 @@
     "iron-icon": "^2.0.0",
     "iron-icons": "^2.0.0",
     "iron-input": "^2.0.0",
-    "iron-meta": "^2.0.0",
     "iron-test-helpers": "^2.0.0",
     "sugar": "^2.0.0",
     "vaadin-button": "^1.0.0",
-    "vaadin-themes": "vaadin/vaadin-themes",
     "web-component-tester": "^6.1.5",
     "vaadin-demo-helpers": "^1.0.0"
   },
   "homepage": "https://github.com/vaadin/vaadin-date-picker",
-  "version": "2.0.6",
-  "_release": "2.0.6",
+  "version": "2.0.7",
+  "_release": "2.0.7",
   "_resolution": {
     "type": "version",
-    "tag": "v2.0.6",
-    "commit": "7c069dfef96a46237f1fd958d8d1a7798463ab8b"
+    "tag": "v2.0.7",
+    "commit": "a93258e06155e7fb968eebfbdeb9752792f9cfd6"
   },
-  "_source": "git://github.com/vaadin/vaadin-date-picker.git",
-  "_target": "^2.0.5",
-  "_originalSource": "vaadin/vaadin-date-picker"
+  "_source": "https://github.com/vaadin/vaadin-date-picker.git",
+  "_target": "^2.0.7",
+  "_originalSource": "vaadin-date-picker",
+  "_direct": true
 }

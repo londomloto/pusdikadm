@@ -331,6 +331,10 @@
                 super();
                 this.__hidePaginator = true;
             }
+
+            initialize() {
+                this.load({ start: 0 });
+            }
             
             load(options = {}) {
 

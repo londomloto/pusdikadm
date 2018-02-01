@@ -1,5 +1,12 @@
 <?php
 
+Router::group(array(
+    'prefix' => '/system',
+    'handler' => 'App\System\Controllers\SystemController',
+    'middleware' => 'auth'
+))
+->post('/backup', 'backup');
+
 /**
  * module: config
  */
@@ -39,6 +46,7 @@ Router::post('/auth/reset', 'App\Auth\Controllers\AuthController@reset');
  * module: assets
  */
 Router::get('/assets/thumb', 'App\Assets\Controllers\AssetsController@thumb');
+Router::get('/assets/download', 'App\Assets\Controllers\AssetsController@download');
 
 /**
  * module: profile
@@ -65,24 +73,3 @@ Router::group(array(
 Router::get('/users/test', 'App\Users\Controllers\UsersController@test');
 Router::post('/users/validate-activation', 'App\Users\Controllers\UsersController@validateActivation');
 Router::post('/users/activate', 'App\Users\Controllers\UsersController@activate');
-
-/**
- * module: products
- */
-Router::group(array(
-    'prefix' => '/products',
-    'handler' => 'App\Products\Controllers\ProductsController',
-    'middleware' => 'auth'
-))
-->get('/services', 'services');
-
-/**
- * module: kanban
- */
-Router::group(array(
-    'prefix' => '/kanban',
-    'handler' => 'App\Kanban\Controllers\KanbanController',
-))
-->get('/grid','findGrid')
-->put('/gantiapagituh/{id}','gantiapagituh')
-->post('/comment', 'comment');

@@ -85,9 +85,11 @@ class SocketProvider {
         $app = \Micro\App::getDefault();
         $data['__sender'] = $app->request->getHeader('X-Socket-Session');
 
-        $socket->initialize();
-        $socket->emit($event, $data);
-        $socket->close();
+        try {
+            $socket->initialize();
+            $socket->emit($event, $data);
+            $socket->close();
+        } catch(\Exception $e) {}
         
         unset($socket);
     }

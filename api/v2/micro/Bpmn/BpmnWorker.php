@@ -391,10 +391,13 @@ class BpmnWorker {
                         break;
                     case 'like':
                     case 'contains':
+                        $pv = str_replace(array('.'), array('\.'), $pv);
+                        $cv = str_replace(array('.'), array('\.'), $cv);
+
                         if ($op == 'AND') {
-                            $valid = $valid && (preg_match('/'.strtoupper($cv).'/', strtoupper($pv)));
+                            $valid = $valid && (preg_match('#'.strtoupper($cv).'#', strtoupper($pv)));
                         } else {
-                            $valid = $valid || (preg_match('/'.strtoupper($cv).'/', strtoupper($pv)));
+                            $valid = $valid || (preg_match('#'.strtoupper($cv).'#', strtoupper($pv)));
                         }
                         break;
                     case '!=':

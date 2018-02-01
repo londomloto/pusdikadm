@@ -10,6 +10,7 @@ This program is available under Apache License Version 2.0, available at https:/
 <link rel="import" href="../vaadin-themable-mixin/vaadin-themable-mixin.html">
 <link rel="import" href="vaadin-date-picker-overlay.html">
 <link rel="import" href="vaadin-date-picker-mixin.html">
+<link rel="import" href="vaadin-date-picker-styles.html">
 
 <dom-module id="vaadin-date-picker-light">
   <template>
@@ -45,6 +46,7 @@ This program is available under Apache License Version 2.0, available at https:/
         selected-date="{{_selectedDate}}"
         slot="dropdown-content"
         focused-date="{{_focusedDate}}"
+        show-week-numbers="[[showWeekNumbers]]"
         min-date="[[_minDate]]"
         max-date="[[_maxDate]]"
         role="dialog"

@@ -1,19 +1,13 @@
-<link rel="import" href="../../../../../cores/bower_components/paper-input/paper-input.html">
-<link rel="import" href="../../../../../cores/bower_components/paper-button/paper-button.html">
-<link rel="import" href="../../../../../cores/bower_components/vaadin-material-theme/vaadin-date-picker.html">
-<link rel="import" href="../../../../../cores/bower_components/vaadin-date-picker/vaadin-date-picker.html">
-<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-column.html">
-<link rel="import" href="../../../../../cores/elements/kct-combobox/kct-combobox.html">
-<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
-
 <dom-module id="form-pendaftaran">
     <template>
         <style include="form-style"></style>
 
+        <kct-ajax id="ajax"></kct-ajax>
+
         <div class="section">
             <h3 class="section-title">Data Peserta</h3>
             <div>
-                <paper-input label="Nama Lengkap *" value="{{ record.data.su_fullname }}" required auto-validate error-message="Nama lengkap wajib diisi" on-change="__onFullNameChange"></paper-input>
+                <paper-input label="Nama Lengkap *" value="{{ record.data.su_fullname }}" required auto-validate error-message="Nama lengkap wajib diisi"></paper-input>
                 <paper-input label="Jenis Kelamin" value="{{ record.data.su_sex }}"></paper-input>
 
                 <kct-column columns="2">
@@ -34,8 +28,7 @@
                     value="{{ record.data.su_sj_id }}" 
                     page-size="10" 
                     item-label-path="sj_name" 
-                    item-value-path="sj_id" 
-                    autoload></kct-combobox>
+                    item-value-path="sj_id"></kct-combobox>
 
                 <kct-combobox 
                     url="/departments" 
@@ -43,16 +36,14 @@
                     value="{{ record.data.su_sdp_id }}" 
                     page-size="10" 
                     item-label-path="sdp_name" 
-                    item-value-path="sdp_id" 
-                    autoload></kct-combobox>
+                    item-value-path="sdp_id"></kct-combobox>
                 <kct-combobox 
                     url="/company" 
                     label="Organisasi" 
                     value="{{ record.data.su_scp_id }}" 
                     page-size="10" 
                     item-label-path="scp_name" 
-                    item-value-path="scp_id" 
-                    autoload></kct-combobox>
+                    item-value-path="scp_id"></kct-combobox>
 
             </div>
         </div>
@@ -75,10 +66,10 @@
             </div>
         </div>
 
-        <div class="section">
+        <div class="section" hidden>
             <h3 class="section-title">Data Kegiatan</h3>
             <div>
-                <paper-input label="Nama Kegiatan" value="{{ record.task.tt_title }}"></paper-input>    
+                <paper-input label="Nama Kegiatan" value="{{ record.task.tt_title }}"></paper-input> 
             </div>
         </div>
 
@@ -91,8 +82,63 @@
 
             static get observers() {
                 return [
+                    '__fullnameChanged(record.data.su_fullname)',
                     '__validationChanged(record.data.su_fullname, record.data.su_email, record.data.su_sr_id)'
                 ];
+            }
+
+            initialize() {
+                this.shadowRoot.querySelectorAll('kct-combobox[page-size]').forEach(c => c.load());
+
+                if (this.record.status.tts_data_id) {
+                    return this.$.ajax.GET('/users/' + this.record.status.tts_data_id).then(res => {
+                        this.set('record.data', res.data);
+                    });
+                } else {
+                    return this.resolve();
+                }
+            }
+
+            save() {
+                let data = this.record.data;
+
+                if (data.su_id) {
+                    return this.$.ajax.PUT('/users/' + data.su_id, data).then(done.bind(this));
+                } else {
+                    return this.$.ajax.POST('/users', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    this.set('record.data', (res.data || {}));
+
+                    if (res.success) {
+                        this.saveResult({
+                            data: res.data,
+                            author: res.data.su_id
+                        });
+                        
+                        this.set('record.status.tts_data_id', res.data.su_id);
+                    } else {
+                        res.success = false;
+                        this.toast('Warning', res.message, 'warn');
+                    }
+
+                    return res;
+                }   
+            }
+
+            remove() {
+                let key = (this.record.data || {}).su_id;
+
+                if (key) {
+                    return this.$.ajax.DELETE('/users/' + key);
+                } else {
+                    return this.resolve({ success: true });
+                }
+            }
+
+            __fullnameChanged(fullname) {
+                this.set('record.task.tt_title', fullname || '');
             }
 
             __validationChanged(fullname, email, role) {
@@ -103,15 +149,6 @@
                 valid = valid && role;
 
                 this.set('invalid', !valid);
-            }
-            
-            __onFullNameChange(e) {
-                let value = e.target.value;
-                if (value) {
-                    this.set('record.task.tt_title', 'Pendaftaran ' + value);    
-                } else {
-                    this.set('record.task.tt_title', '');    
-                }
             }
         }
         customElements.define(FormPendaftaran.is, FormPendaftaran);

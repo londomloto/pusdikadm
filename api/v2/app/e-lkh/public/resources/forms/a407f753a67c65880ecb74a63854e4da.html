@@ -1,0 +1,25 @@
+
+<dom-module id="form-lkh-view">
+    <template>
+        <style include="form-style"></style>
+        
+        <kct-ajax id="ajax"></kct-ajax>
+
+        
+
+    </template>
+    <script>
+        class FormLkhView extends FormBase {
+            static get is() {
+                return 'form-lkh-view';
+            }
+
+            static get observers() {
+                return [
+                    
+                ];
+            }
+        }
+        customElements.define(FormLkhView.is, FormLkhView);
+    </script>
+</dom-module>

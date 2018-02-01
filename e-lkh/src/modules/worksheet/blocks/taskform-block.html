@@ -1,19 +1,25 @@
-<link rel="import" href="../../../../../cores/bower_components/paper-spinner/paper-spinner.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-spinner/paper-spinner-lite.html">
 <link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../forms/form-style.html">
 <link rel="import" href="../forms/form-base.html">
 
 <!-- hapus on production -->
 <link rel="import" href="../forms/form-surat-keluar.html">
-<link rel="import" href="../forms/form-absensi.html">
 <link rel="import" href="../forms/form-pendaftaran.html">
 <link rel="import" href="../forms/form-pendaftaran-auth.html">
 <link rel="import" href="../forms/form-pendaftaran-view.html">
 <link rel="import" href="../forms/form-pendaftaran-conf.html">
+<link rel="import" href="../forms/form-absensi.html">
 <link rel="import" href="../forms/form-lkh.html">
-<link rel="import" href="../forms/form-lkh-check.html">
-<link rel="import" href="../forms/form-lkh-done.html">
-<link rel="import" href="../forms/task-editor.html">
+<link rel="import" href="../forms/form-lkh-view.html">
+<link rel="import" href="../forms/form-lkh-exam.html">
+<link rel="import" href="../forms/form-lkh-exam-d.html">
+<link rel="import" href="../forms/form-lkh-exam-m.html">
+<link rel="import" href="../forms/form-lkh-exam-y.html">
+<link rel="import" href="../forms/form-skp.html">
+<link rel="import" href="../forms/form-skp-view.html">
+<link rel="import" href="../forms/form-ske-init.html">
+<!-- <link rel="import" href="../forms/task-editor.html"> -->
 <!-- /hapus on production -->
 
 <dom-module id="taskform-block">
@@ -25,6 +31,7 @@
             }
             #mask {
                 text-align: center;
+                --paper-spinner-stroke-width: 2px;
             }
             #mask[hidden] {
                 display: none;
@@ -32,7 +39,7 @@
         </style>
 
         <div id="mask" hidden$="[[ !busy ]]">
-            <paper-spinner active></paper-spinner>
+            <paper-spinner-lite active></paper-spinner-lite>
         </div>
 
         <kct-ajax id="ajax" novalidate></kct-ajax>
@@ -56,10 +63,11 @@
                         project: { type: Object }, 
                         record: { type: Object, notify: true }, 
                         workspace: { type: Object },
-                        action: { type: String },
+                        action: { type: String }, 
                         busy: { type: Boolean, value: false },
                         invalid: { type: Boolean, notify: true },
-                        readonly: { type: Boolean, value: true, notify: true },
+                        readonly: { type: Boolean, value: false, notify: true }, 
+                        removable: { type: Boolean, value: true, notify: true }, 
                         loading: { type: Boolean, value: false, reflectToAttribute: true }
                     };
                 }
@@ -68,6 +76,11 @@
                     return [
                         '__loadingChanged(loading)'
                     ];
+                }
+
+                constructor() {
+                    super();
+                    this.__node = null;
                 }
 
                 mask() {
@@ -79,8 +92,11 @@
                 }
 
                 cleanup() {
-                    this.$.form = null;
-                    this.$['form-container'].innerHTML = '';
+                    if (this.__node) {
+                        this._removeBoundDom(this.__node);
+                        this.__node = undefined;
+                        this.$.form = undefined;
+                    }
                 }
 
                 render() {
@@ -92,7 +108,7 @@
                         reject = b;
                     });
 
-                    this.$['form-container'].innerHTML = '';
+                    this.cleanup();
 
                     if ( ! form.bf_html) {
                         return;
@@ -104,15 +120,18 @@
                     let temp, node;
 
                     if (elem) {
-                        temp = this.__createTemplate(name)
+                        temp = this.__createTemplate(name);
                         node = this._stampTemplate(temp);
 
                         this.$['form-container'].appendChild(node);
                         this.$.form = this.$['form-container'].querySelector('#form');
+                        
+                        this.__node = node;
 
                         resolve();
+                        
                     } else {
-                        this.$.ajax.__resolveUrl('/bpmn/forms/view/' + form.bf_tpl_file).then(url => {
+                        return this.$.ajax.__resolveUrl('/bpmn/forms/view/' + form.bf_tpl_file).then(url => {
                             let token = this.user && this.user.su_access_token;
                             url += token ? '?access_token=' + token : '';
                             
@@ -124,6 +143,8 @@
 
                                 this.$['form-container'].appendChild(node);
                                 this.$.form = this.$['form-container'].querySelector('#form');
+                                
+                                this.__node = node;
 
                                 resolve();
                             });
@@ -133,16 +154,20 @@
                     return promise;
                 }
 
-                initialize() {
-                    if (this.$.form) {
-                        this.$.form.initialize();
-                    }
+                resolve(data = {}) {
+                    return Promise.resolve(data);
                 }
 
-                beforeSave(payload) {
-                    if (this.$.form) {
-                        this.$.form.beforeSave(payload);
-                    }
+                initialize() {
+                    return this.$.form ? this.$.form.initialize() : this.resolve({ success: true });
+                }
+
+                save(options) {
+                    return this.$.form ? this.$.form.save(options) : this.resolve({ success: true });
+                }
+
+                remove() {
+                    return this.$.form ? this.$.form.remove() : this.resolve({ success: true });
                 }
 
                 __createTemplate(name) {
@@ -159,8 +184,10 @@
                                 workspace="[[ workspace ]]" 
                                 action="[[ action ]]" 
                                 user="[[ user ]]" 
+                                route="{{ route }}" 
                                 invalid="{{ invalid }}" 
-                                readonly="{{ readonly }}"></${name}>
+                                readonly="{{ readonly }}" 
+                                removable="{{ removable }}"></${name}>
                         `; 
 
                         cachedTemplates[name] = template;

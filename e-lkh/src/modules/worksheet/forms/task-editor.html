@@ -240,7 +240,7 @@
                     }
                 };
 
-                this.$.ajax.PUT('/kanban/' + record.task.tt_id, payload, options).then(res => {
+                this.$.ajax.PUT('/worksheet/kanban/' + record.task.tt_id, payload, options).then(res => {
                     if (res.success) {
                         let e = new CustomEvent('save', {
                             composed: true,
@@ -284,7 +284,7 @@
                     }
                 };
 
-                this.$.ajax.POST('/kanban', payload, options).then(res => {
+                this.$.ajax.POST('/worksheet/kanban', payload, options).then(res => {
                     if (res.success) {
                         let e = new CustomEvent('save', {
                             composed: true,
@@ -317,7 +317,7 @@
                             }
                         };
 
-                        this.$.ajax.DELETE('/kanban/' + this.record.task.tt_id, null, options).then(res => {
+                        this.$.ajax.DELETE('/worksheet/kanban/' + this.record.task.tt_id, null, options).then(res => {
                             if (res.success) {
                                 let e = new CustomEvent('remove', {
                                     composed: true,

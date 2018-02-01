@@ -2,7 +2,6 @@
 
 Router::get('/', function(){
     $app = \Micro\App::getDefault();
-    print_r($app->config);
     return array(
         'success' => TRUE,
         'message' => 'Welcome to demo application'

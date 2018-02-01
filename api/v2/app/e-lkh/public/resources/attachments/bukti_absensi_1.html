@@ -1,0 +1,174 @@
+<dom-module id="form-pendaftaran-auth">
+    <template>
+        <style include="form-style"></style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="section section-primary">
+            <h3 class="section-title">Data Autentikasi</h3>
+            <div>
+                <paper-input label="Catatan autentikasi" value="{{ record.data.su_validation }}"></paper-input>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h3 class="section-title">Data Peserta</h3>
+            <div>
+                <paper-input label="Nama Lengkap *" value="{{ record.data.su_fullname }}" required auto-validate error-message="Nama lengkap wajib diisi"></paper-input>
+                <paper-input label="Jenis Kelamin" value="{{ record.data.su_sex }}"></paper-input>
+
+                <kct-column columns="2">
+                    <div>
+                        <paper-input label="Tempat Lahir" value="{{ record.data.su_pob }}"></paper-input>
+                    </div>
+                    <div>
+                        <vaadin-date-picker label="Tanggal Lahir" value="{{ record.data.su_dob }}"></vaadin-date-picker>
+                    </div>
+                </kct-column>
+
+                <paper-input label="No. Induk Pagawai" value="{{ record.data.su_no }}"></paper-input>
+                <paper-input label="Pangkat / Gol. Ruang" value="{{ record.data.su_grade }}"></paper-input>
+                
+                <kct-combobox 
+                    url="/jobs" 
+                    label="Jabatan (Pekerjaan)" 
+                    value="{{ record.data.su_sj_id }}" 
+                    page-size="10" 
+                    item-label-path="sj_name" 
+                    item-value-path="sj_id" 
+                    autoload></kct-combobox>
+
+                <kct-combobox 
+                    url="/departments" 
+                    label="Unit Kerja" 
+                    value="{{ record.data.su_sdp_id }}" 
+                    page-size="10" 
+                    item-label-path="sdp_name" 
+                    item-value-path="sdp_id" 
+                    autoload></kct-combobox>
+                <kct-combobox 
+                    url="/company" 
+                    label="Organisasi" 
+                    value="{{ record.data.su_scp_id }}" 
+                    page-size="10" 
+                    item-label-path="scp_name" 
+                    item-value-path="scp_id" 
+                    autoload></kct-combobox>
+
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Data Akun</h3>
+            <div>
+                <paper-input type="email" label="Alamat Email *" value="{{ record.data.su_email }}" required auto-validate error-message="Alamat email harus valid"></paper-input>
+                <kct-combobox 
+                    url="/roles" 
+                    label="Group Akses (Role) *" 
+                    value="{{ record.data.su_sr_id }}" 
+                    page-size="10" 
+                    item-label-path="sr_name" 
+                    item-value-path="sr_id" 
+                    required 
+                    auto-validate 
+                    error-message="Group akses wajib diisi" 
+                    autoload></kct-combobox>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Data Kegiatan</h3>
+            <div>
+                <paper-input label="Nama Kegiatan" value="{{ record.task.tt_title }}"></paper-input>    
+            </div>
+        </div>
+
+    </template>
+    <script>
+        class FormPendaftaranAuth extends FormBase {
+            static get is() {
+                return 'form-pendaftaran-auth';
+            }
+
+            static get observers() {
+                return [
+                    '__fullnameChanged(record.data.su_fullname)',
+                    '__validationChanged(record.data.su_fullname, record.data.su_email, record.data.su_sr_id)'
+                ];
+            }
+
+            initialize() {
+                this.shadowRoot.querySelectorAll('kct-combobox[page-size]').forEach(c => c.load());
+                
+                if (this.record.status.tts_data_id) {
+                    this.$.ajax.GET('/users/' + this.record.status.tts_data_id).then(res => {
+                        this.set('record.data', res.data);
+                    });
+                }
+            }
+
+            save(options) {
+                let payload = this.record.data;
+
+                if (options.send) {
+                    payload.su_invite = true;
+                    payload.su_ticket = this.record.task.tt_id;
+                }
+
+                if (this.action == 'create') {
+                    return this.$.ajax.POST('/users', payload).then(done.bind(this));
+                } else {
+                    return this.$.ajax.PUT('/users/' + payload.su_id, payload).then(done.bind(this));
+                }
+
+                function done(res) {
+                    this.set('record.data', res.data || {});
+
+                    if ( ! res.success) {
+                        res.success = false;
+                        this.toast('Warning', res.message, 'warn');
+                    } else {
+                        let query = {
+                            su_email: "",
+                            su_fullname: "",
+                            su_sex: "",
+                            su_pob: "",
+                            su_dob: "",
+                            su_active: "",
+                            sr_name: "",
+                            sr_description: "",
+                            su_sj_name: "",
+                            su_scp_name: "",
+                            su_sdp_name: ""
+                        };
+
+                        for(let key in query) {
+                            query[key] = res.data[key];
+                        }
+
+                        this.set('record.status.tts_query', JSON.stringify(query));
+                        this.set('record.status.tts_data_id', res.data.su_id);
+                    }
+
+                    return res;
+                }
+            }
+
+            __validationChanged(fullname, email, role) {
+                let valid = true;
+
+                valid = valid && fullname;
+                valid = valid && email;
+                valid = valid && role;
+
+                this.set('invalid', !valid);
+            }
+
+            __fullnameChanged(fullname) {
+                this.set('record.task.tt_title', fullname || '');
+            }
+        }
+
+        customElements.define(FormPendaftaranAuth.is, FormPendaftaranAuth);
+    </script>
+</dom-module>

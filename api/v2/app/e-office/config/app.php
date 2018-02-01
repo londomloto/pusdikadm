@@ -8,7 +8,7 @@ return array(
 
     'env' => 'DEVELOPMENT',
 
-    'author' => 'Kreasindo Cipta Teknologi',
+    'author' => 'PUSDIKADM',
 
     'timezone' => 'Asia/Jakarta',
 

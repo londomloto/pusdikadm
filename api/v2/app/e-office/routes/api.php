@@ -65,24 +65,3 @@ Router::group(array(
 Router::get('/users/test', 'App\Users\Controllers\UsersController@test');
 Router::post('/users/validate-activation', 'App\Users\Controllers\UsersController@validateActivation');
 Router::post('/users/activate', 'App\Users\Controllers\UsersController@activate');
-
-/**
- * module: products
- */
-Router::group(array(
-    'prefix' => '/products',
-    'handler' => 'App\Products\Controllers\ProductsController',
-    'middleware' => 'auth'
-))
-->get('/services', 'services');
-
-/**
- * module: kanban
- */
-Router::group(array(
-    'prefix' => '/kanban',
-    'handler' => 'App\Kanban\Controllers\KanbanController',
-))
-->get('/grid','findGrid')
-->put('/gantiapagituh/{id}','gantiapagituh')
-->post('/comment', 'comment');

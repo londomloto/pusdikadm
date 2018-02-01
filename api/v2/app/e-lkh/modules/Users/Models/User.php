@@ -173,6 +173,7 @@ class User extends \Micro\Model {
     // @Override
     public function toArray($columns =  NULL) {
         $array = parent::toArray($columns);
+        $array['su_dob_formatted'] = date('d M Y', strtotime($this->su_dob));
 
         if (empty($array['su_fullname'])) {
             $array['su_fullname'] = $array['su_email'];
@@ -538,6 +539,15 @@ class User extends \Micro\Model {
                     $query->data->save();
                     $query->data->sendInvitation();
                 }
+            } else {
+                $query->success = FALSE;
+                $query->message = [];
+
+                foreach($query->data->getMessages() as $m) {
+                    $query->message[] = $m;
+                }
+
+                $query->message = implode('<br>', $query->message);
             }
 
         }

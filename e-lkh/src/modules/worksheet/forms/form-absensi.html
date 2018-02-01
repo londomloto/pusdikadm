@@ -1,30 +1,55 @@
-<link rel="import" href="../../../../../cores/bower_components/paper-input/paper-input.html">
-<link rel="import" href="../../../../../cores/bower_components/paper-input/paper-textarea.html">
-<link rel="import" href="../../../../../cores/bower_components/vaadin-material-theme/vaadin-date-picker.html">
-<link rel="import" href="../../../../../cores/bower_components/vaadin-date-picker/vaadin-date-picker.html">
 <link rel="import" href="../../../../../cores/vendors/moment/moment.html">
+<link rel="import" href="../../../../../cores/elements/kct-media/kct-media.html">
 
 <dom-module id="form-absensi">
     <template>
         <style include="form-style"></style>
 
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-media size="{{ responsive }}"></kct-media>
+
         <div class="section">
-            <h3 class="section-title">Data Absensi</h3>
+            <h3 class="section-title">Data Identitas</h3>
             <div>
-                <vaadin-date-picker value="{{ record.data.tap_date }}" label="Tanggal Absen" on-value-changed="__onPresenceDateChange"></vaadin-date-picker>
-                <paper-textarea rows="5" value="{{ record.data.tap_desc }}" label="Uraian Tugas (Kegiatan)">
-                </paper-textarea>
-                <paper-input value="{{ record.data.tap_volume }}" label="Volume"></paper-input>
+                <paper-input label="Nama Lengkap" value="{{ record.data.tpr_su_fullname }}" readonly></paper-input>
+                <paper-input label="Jabatan" value="{{ record.data.tpr_su_sj_name }}" readonly></paper-input>
+                <paper-input label="Unit Kerja" value="{{ record.data.tpr_su_sdp_name }}" readonly></paper-input>
             </div>
         </div>
 
         <div class="section">
-            <h3 class="section-title">Data Kegiatan</h3>
+            <h3 class="section-title">Data Absensi</h3>
             <div>
-                <paper-input value="{{ record.task.tt_title }}" label="Nama Kegiatan"></paper-input>
+                
+                <vaadin-date-picker label="Tanggal Absensi" value="{{ record.data.tpr_date }}"></vaadin-date-picker>
+
+                <div class="form-group">
+                    <label>Absensi (Kehadiran)</label>
+                    <paper-radio-group selected="{{ record.data.tpr_type }}" attr-for-selected="name" class$="hbox [[ responsive ]]">
+                        <paper-radio-button name="Masuk">Masuk</paper-radio-button>
+                        <paper-radio-button name="Izin">Izin</paper-radio-button>
+                        <paper-radio-button name="Sakit">Sakit</paper-radio-button>
+                        <paper-radio-button name="Alfa">Alfa</paper-radio-button>
+                        <paper-radio-button name="Dinas Luar">Dinas Luar</paper-radio-button>
+                        <paper-radio-button name="Lain-lain">Lain-lain</paper-radio-button>
+                    </paper-radio-group>
+                </div>
+
+                <paper-input label="Keterangan" value="{{ record.data.tpr_desc }}" hidden$="[[ __otherHidden ]]"></paper-input>
+
+                <paper-input label="Jam Absensi" value="{{ record.data.tpr_checkin }}" hidden$="[[ __timeHidden ]]"></paper-input>
+                <kct-input-file id="attachment" value="{{ record.data.tpr_file }}" label="Attachment"></kct-input-file>
+
             </div>
         </div>
-        
+
+        <div class="section" hidden>
+            <h3 class="section-title">Data Kegiatan</h3>
+            <div>
+                <paper-input label="Nama Kegiatan" value="{{ record.task.tt_title }}"></paper-input>
+            </div>
+        </div>
+
     </template>
     <script>
         class FormAbsensi extends FormBase {
@@ -32,22 +57,168 @@
                 return 'form-absensi';
             }
 
-            __formatDate(s) {
-                let date = moment(s, 'YYYY-MM-DD');
-                return date.format('DD MMM YYYY');
+            static get observers() {
+                return [
+                    '__typeChanged(record.data.tpr_type)',
+                    '__computeTask(record.data.tpr_su_fullname, record.data.tpr_date)',
+                    '__computeContent(record.data.tpr_type, record.data.tpr_checkin, record.data.tpr_desc)'
+                ];
             }
 
-            __onPresenceDateChange(e) {
-                let value = e.target.value;
-                
-                if (value) {
-                    this.set('record.task.tt_title', this.user.su_fullname + ' - ' + this.__formatDate(value));
+            constructor() {
+                super();
+                this.__timeHidden = true;
+                this.__otherHidden = true;
+            }
+
+            initialize() {
+                if (this.action == 'create')  {
+                    let today = moment();
+
+                    this.set('record.data', {
+                        tpr_date: today.format('YYYY-MM-DD'),
+                        tpr_su_id: this.user.su_id,
+                        tpr_su_fullname: this.user.su_fullname,
+                        tpr_su_sdp_name: this.user.su_sdp_name,
+                        tpr_su_sj_name: this.user.su_sj_name,
+                        tpr_type: 'Masuk',
+                        tpr_checkin: today.format('HH.mm')
+                    });
+
+                    this.set('record.task.tt_due_date', today.format('YYYY-MM-DD'));
+                    this.set('record.task.tt_due_date_formatted', today.format('DD MMM YYYY'));
+
+                    return this.resolve();
                 } else {
-                    // this.set('record.task.tt_title', '');
+                    if (this.record.task.tt_is_authorized) {
+                        if (this.record.status.tts_data_id) {
+                            return this.$.ajax.GET('/presence/' + this.record.status.tts_data_id).then(res => {
+                                this.set('record.data', res.data);
+                            });
+                        } else {
+                            return this.resolve();
+                        }
+                    } else { 
+                        this.set('readonly', true);
+                        this.set('removable', false);
+                        this.toast('Warning', 'Anda tidak memiliki otorisasi membuka kegiatan ini', 'danger');
+                        this.trigger('authorize', { auth: false });
+
+                        return this.resolve();
+                    }
                 }
             }
-        }
 
+            save(options) {
+                if (this.record.data.tpr_type != 'Masuk') {
+                    this.set('record.data.tpr_checkin', '');
+                }
+
+                let data = this.record.data;
+
+                if (data.tpr_id) {
+                    return this.$.ajax.PUT('/presence/' + data.tpr_id, data).then(next.bind(this));
+                } else {
+                    return this.$.ajax.POST('/presence', data).then(next.bind(this));
+                }
+
+                function next(res) {
+                    if (res.success) {
+
+                        this.saveResult({
+                            data: res.data,
+                            date: res.data.tpr_date,
+                            author: res.data.tpr_su_id
+                        });
+                        
+                        this.set('record.status.tts_data_id', res.data.tpr_id);
+
+                        if (this.$.attachment.file) {
+                            return this.$.ajax.UPLOAD('/presence/' + res.data.tpr_id + '/upload', {
+                                files: [{ name: 'userfile', file: this.$.attachment.file }]
+                            }).then(upload => {
+                                if (upload.data) {
+                                    this.set('record.data.tpr_file', upload.data.tpr_file);
+                                }
+                                return done.bind(this)(res);
+                            });
+                        } else {
+                            return done.bind(this)(res);
+                        }
+                    } else {
+                        this.toast('Warning', res.message, 'warn');
+                        return res;
+                    }
+                }
+
+                function done(res) {
+                    if (options.send) {
+                        let payload = {
+                            lkh_tpr_id: this.record.data.tpr_id,
+                            lkh_date: this.record.data.tpr_date,
+                            lkh_su_id: this.record.data.tpr_su_id,
+                            lkh_volume: 1,
+                            lkh_desc: ''
+                        };
+
+                        return this.$.ajax.POST('/lkh', payload).then(r => {
+                            if (r.success) {
+                                this.set('record.status.tts_data_id', r.data.lkh_id);
+                            }
+                            return res;
+                        });
+                    } else {
+                        return res;
+                    }
+                }
+            }
+
+            remove() {
+                let key = (this.record.data || {}).tpr_id;
+
+                if (key) {
+                    return this.$.ajax.DELETE('/presence/' + key);
+                } else {
+                    return this.resolve({ success: true });
+                }
+            }
+
+            __typeChanged(type) {
+                if (type == 'Masuk') {
+                    this.set('__timeHidden', false);
+                    this.set('__otherHidden', true);
+                } else {
+                    this.set('__timeHidden', true);
+                    this.set('__otherHidden', false);
+                }
+            }
+
+            __computeTask(fullname, date) {
+                fullname = fullname || '';
+
+                if (date) {
+                    date = moment(date).format('DD MMM YYYY');
+                } else {
+                    date = moment().format('DD MMM YYYY');
+                }
+
+                this.set('record.task.tt_title', (fullname ? fullname + ' - ' : '') + date);
+            }
+
+            __computeContent(type, time, desc) {
+                let content = '<iron-icon icon="label-outline"></iron-icon>&nbsp;';
+
+                if (type == 'Masuk') {
+                    content += `${type}&nbsp;`;
+                    content += time ? `( ${time} )` : '';
+                } else {
+                    content += `${type}&nbsp;`;
+                    // content += desc ? `( ${desc} )` : '';
+                }
+
+                this.set('record.status.tts_content', content);
+            }
+        }
         customElements.define(FormAbsensi.is, FormAbsensi);
     </script>
 </dom-module>

@@ -2,11 +2,19 @@
     <template>
         <style include="form-style"></style>
 
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="section section-primary">
+            <h3 class="section-title">Data Autentikasi</h3>
+            <div>
+                <paper-input label="Catatan autentikasi" value="{{ record.data.su_validation }}"></paper-input>
+            </div>
+        </div>
         
         <div class="section">
             <h3 class="section-title">Data Peserta</h3>
             <div>
-                <paper-input label="Nama Lengkap *" value="{{ record.data.su_fullname }}" required auto-validate error-message="Nama lengkap wajib diisi" on-change="__onFullNameChange"></paper-input>
+                <paper-input label="Nama Lengkap *" value="{{ record.data.su_fullname }}" required auto-validate error-message="Nama lengkap wajib diisi"></paper-input>
                 <paper-input label="Jenis Kelamin" value="{{ record.data.su_sex }}"></paper-input>
 
                 <kct-column columns="2">
@@ -68,17 +76,10 @@
             </div>
         </div>
 
-        <div class="section">
+        <div class="section" hidden>
             <h3 class="section-title">Data Kegiatan</h3>
             <div>
                 <paper-input label="Nama Kegiatan" value="{{ record.task.tt_title }}"></paper-input>    
-            </div>
-        </div>
-
-        <div class="section section-primary">
-            <h3 class="section-title">Data Autentikasi</h3>
-            <div>
-                <paper-input label="Catatan autentikasi" value="{{ record.data.su_validation }}"></paper-input>
             </div>
         </div>
 
@@ -91,14 +92,53 @@
 
             static get observers() {
                 return [
+                    '__fullnameChanged(record.data.su_fullname)',
                     '__validationChanged(record.data.su_fullname, record.data.su_email, record.data.su_sr_id)'
                 ];
             }
 
-            beforeSave(payload) {
-                if (payload.send) {
-                    payload.record.data.su_invite = true;
-                    payload.record.data.su_ticket = this.record.task.tt_id;
+            initialize() {
+                this.shadowRoot.querySelectorAll('kct-combobox[page-size]').forEach(c => c.load());
+                
+                if (this.record.status.tts_data_id) {
+                    return this.$.ajax.GET('/users/' + this.record.status.tts_data_id).then(res => {
+                        this.set('record.data', res.data);
+                    });
+                } else {
+                    return this.resolve();
+                }
+            }
+
+            save(options) {
+                let payload = this.record.data;
+
+                if (options.send) {
+                    payload.su_invite = true;
+                    payload.su_ticket = this.record.task.tt_id;
+                }
+
+                if (this.action == 'create') {
+                    return this.$.ajax.POST('/users', payload).then(done.bind(this));
+                } else {
+                    return this.$.ajax.PUT('/users/' + payload.su_id, payload).then(done.bind(this));
+                }
+
+                function done(res) {
+                    this.set('record.data', res.data || {});
+
+                    if ( ! res.success) {
+                        res.success = false;
+                        this.toast('Warning', res.message, 'warn');
+                    } else {
+                        this.saveResult({
+                            data: res.data,
+                            author: res.data.su_id
+                        });
+                        
+                        this.set('record.status.tts_data_id', res.data.su_id);
+                    }
+
+                    return res;
                 }
             }
 
@@ -112,13 +152,8 @@
                 this.set('invalid', !valid);
             }
 
-            __onFullNameChange(e) {
-                let value = e.target.value;
-                if (value) {
-                    this.set('record.task.tt_title', 'Pendaftaran ' + value);    
-                } else {
-                    this.set('record.task.tt_title', '');    
-                }
+            __fullnameChanged(fullname) {
+                this.set('record.task.tt_title', fullname || '');
             }
         }
 

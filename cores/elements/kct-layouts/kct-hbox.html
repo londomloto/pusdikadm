@@ -14,7 +14,7 @@
             ::slotted(.flex-2) { @apply --layout-flex-2; }
             ::slotted(.flex-3) { @apply --layout-flex-3; }
         </style>
-        <slot></slot>
+        <slot id="slot"></slot>
     </template>
     <script>
         class KctHbox extends Polymer.Element {
@@ -25,6 +25,13 @@
                 return {
                     fit: { type: Boolean, value: false }
                 }
+            }
+            ready() {
+                super.ready();
+                
+                Polymer.RenderStatus.afterNextRender(this, () => {
+                    this.dispatchEvent(new CustomEvent('ready'));
+                });
             }
         }
         customElements.define(KctHbox.is, KctHbox);

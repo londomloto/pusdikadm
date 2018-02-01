@@ -1,0 +1,85 @@
+<link rel="import" href="../../../../../cores/vendors/moment/moment.html">
+
+<dom-module id="form-absensi">
+    <template>
+        <style include="form-style"></style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="section">
+            <h3 class="section-title">Data Absensi</h3>
+            <div>
+                <vaadin-date-picker label="Tanggal Absen" value="{{ record.data.tpr_date }}"></vaadin-date-picker>
+                <paper-input label="Nama Lengkap" value="{{ record.data.tpr_su_fullname }}" readonly></paper-input>
+                <paper-input label="Jabatan" value="{{ record.data.tpr_su_sj_name }}" readonly></paper-input>
+                <paper-input label="Unit Kerja" value="{{ record.data.tpr_su_sdp_name }}" readonly></paper-input>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Data Kegiatan</h3>
+            <div>
+                <paper-input label="Nama Kegiatan" value="{{ record.task.tt_title }}"></paper-input>
+            </div>
+        </div>
+
+    </template>
+    <script>
+        class FormAbsensi extends FormBase {
+            static get is() {
+                return 'form-absensi';
+            }
+
+            static get observers() {
+                return [
+                    '__dataChanged(record.data.tpr_su_fullname, record.data.tpr_date)'
+                ];
+            }
+
+            initialize() {
+                if (this.action == 'create')  {
+
+                    let today = moment();
+
+                    this.set('record.data', {
+                        tpr_date: today.format('YYYY-MM-DD'),
+                        tpr_su_id: this.user.su_id,
+                        tpr_su_fullname: this.user.su_fullname,
+                        tpr_su_sdp_name: this.user.su_sdp_name,
+                        tpr_su_sj_name: this.user.su_sj_name
+                    });
+
+                    this.set('record.task.tt_due_date', today.format('YYYY-MM-DD'));
+                    this.set('record.task.tt_due_date_formatted', today.format('DD MMM YYYY'));
+                }
+            }
+
+            save(options) {
+                let data = this.record.data;
+
+                if (data.tpr_id) {
+                    return this.$.ajax.PUT('/presence/' + data.tpr_id).then(done.bind(this));
+                } else {
+                    return this.$.ajax.POST('/presence', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    return res;
+                }
+            }
+
+            __dataChanged(fullname, date) {
+                if (date) {
+                    date = moment(date).format('DD MMM YYYY');
+                }
+
+                if (fullname) {
+                    this.set('record.task.tt_title', fullname + ' - ' + date);    
+                } else {
+                    this.set('record.task.tt_title', '');
+                }
+            }
+        }
+        customElements.define(FormAbsensi.is, FormAbsensi);
+    </script>
+</dom-module>

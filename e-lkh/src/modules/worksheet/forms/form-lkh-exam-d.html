@@ -1,0 +1,23 @@
+<dom-module id="form-lkh-exam-d">
+    <template>
+        <kct-ajax id="ajax"></kct-ajax>
+    </template>
+    <script>
+        class FormLkhExamD extends FormBase {
+            static get is() {
+                return 'form-lkh-exam-d';
+            }
+
+            initialize() {
+
+            }
+
+            remove() {
+                return this.$.ajax.POST('/worksheet/kanban/' + this.record.task.tt_id + '/rollback').then(res => {
+                    return res;
+                });
+            }
+        }
+        customElements.define(FormLkhExamD.is, FormLkhExamD);
+    </script>
+</dom-module>

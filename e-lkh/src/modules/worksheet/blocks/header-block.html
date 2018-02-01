@@ -123,6 +123,18 @@
                 border-right: 1px solid #dfdfdf;
                 margin: 0 3px;
             }
+            .col-toolbar ::slotted(paper-spinner),
+            .col-toolbar ::slotted(paper-spinner-lite) {
+                width: 24px;
+                height: 24px;
+                margin: 14px 6px 0 7px;
+                cursor: pointer;
+                --paper-spinner-stroke-width: 2px;
+            }
+            .col-toolbar ::slotted(paper-spinner[hidden]),
+            .col-toolbar ::slotted(paper-spinner-lite[hidden]) {
+                display: none;
+            }
             .col-toolbar task-search,
             .col-toolbar ::slotted(task-search) {
                 margin-top: 10px;

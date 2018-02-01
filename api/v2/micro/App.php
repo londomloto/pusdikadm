@@ -155,12 +155,11 @@ class App extends \Phalcon\Mvc\Micro {
             date_default_timezone_set($this->config->app->timezone);
         }
 
-        if ( ! headers_sent()) {
-            header('App-Name: '.$this->config->app->name);
-            header('App-Version: '.$this->config->app->version);
-            header('App-Author: '.$this->config->app->author);
-            header('App-Platform: Worksaurus');
-        }
+        $this->response
+            ->setHeader('App-Name', $this->config->app->name)
+            ->setHeader('App-Version', $this->config->app->version)
+            ->setHeader('App-Author', $this->config->app->author)
+            ->setHeader('App-Webmaster', 'roso.sasongko@gmail.com');
 
     }
 

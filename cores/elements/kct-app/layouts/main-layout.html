@@ -459,14 +459,18 @@
                             if (eventData.back) {
                                 this.set('route.path', eventData.back);
                             } else {
-                                if (next) {
-                                    this.set('page', next.name);
-                                } else if (prev) {
-                                    this.set('page', prev.name);
+                                if ( ! this.pages.length) {
+                                    this.set('route.path', '/');
+                                } else {
+                                    if (next) {
+                                        this.set('page', next.name);
+                                    } else if (prev) {
+                                        this.set('page', prev.name);
+                                    }    
                                 }
                             }
                         },
-                        0
+                        10
                     );
                 }
             }

@@ -1,0 +1,90 @@
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+
+<dom-module id="kct-input-file">
+    <template>
+        <style>
+            :host {
+                display: block;
+                cursor: pointer;
+            }
+            .container {
+                position: relative;
+            }
+            #browser { display: none; }
+
+            #clear {
+                position: absolute;
+                right: 0;
+                bottom: 8px;
+                --iron-icon-width: 16px;
+                --iron-icon-width: 16px;
+            }
+        </style>
+
+        <div class="container">
+            <input id="browser" on-change="__onBrowserChange" type="file">
+            <paper-input label="[[ label ]]" value="[[ value ]]" on-tap="__onInputFocus" readonly></paper-input>
+            <iron-icon id="clear" icon="close" on-tap="__onClearTap" hidden$="[[ __hideClear(value) ]]"></iron-icon>    
+        </div>
+
+    </template>
+    <script>
+        class KctInputFile extends Polymer.Element {
+            static get is() {
+                return 'kct-input-file';
+            }
+
+            static get observers() {
+                return [
+                    '__valueChanged(value)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__init = true;
+            }
+
+            static get properties() {
+                return {
+                    label: { type: String },
+                    value: { type: String, value: '', notify: true },
+                    file: { type: Object, notify: true }
+                };
+            }
+
+            __valueChanged(value) {
+                if (this.__init) {
+                    this.__init = false;
+                    return;
+                }
+
+                if ( ! value) {
+                    this.$.browser.value = '';
+                    this.set('file', null);
+                }
+            }
+
+            __hideClear(value) {
+                return !(!!value);
+            }
+
+            __onInputFocus() {
+                this.$.browser.click();
+            }
+
+            __onClearTap() {
+                this.set('value', '');
+            }
+
+            __onBrowserChange(e) {
+                let file = e.target.files[0];
+
+                this.set('value', file.name);
+                this.set('file', file);
+            }
+        }
+        customElements.define(KctInputFile.is, KctInputFile);
+    </script>
+</dom-module>

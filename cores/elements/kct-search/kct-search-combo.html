@@ -186,7 +186,7 @@
             on-pagination="__onPagination" 
             paging="[[ paging ]]"
             vertical-offset="4" 
-            paging-enabled$="[[ __pagingEnabled ]]">
+            paging-enabled$="[[ paging.enabled ]]">
         </kct-search-overlay>
 
     </template>
@@ -209,6 +209,7 @@
                             type: Object,
                             notify: true,
                             value: () => ({
+                                enabled: false,
                                 start: 0,
                                 limit: 0,
                                 total: 0
@@ -231,7 +232,7 @@
 
                 constructor() {
                     super();
-                    this.__pagingEnabled = false;
+                    this.__init = true;
                 }
 
                 ready() {
@@ -244,9 +245,15 @@
                 }
 
                 load(config = {}) {
-                    
-                    if ( ! this.__pagingEnabled) {
-                        // console.warn('Pagination feature disabled');
+                        
+                    if (this.__init) {
+                       this.__init = false;
+                       if ( ! this.autoload) {
+                            return Promise.resolve();
+                       }
+                    }
+
+                    if ( ! this.url) {
                         return Promise.resolve();
                     }
 
@@ -281,13 +288,21 @@
                     // save
                     this.__setPayload(payload);
 
-                    let beforeLoadEvt = new CustomEvent('beforeload', {
-                        detail: {
-                            options: payload
+                    if ( ! this.paging.enabled) {
+                        delete payload.start;
+                        delete payload.limit;
+
+                        if ( ! this.paging.enabled) {
+                            if ( ! this.__loaded) {
+                                this.__loaded = true;
+                            } else {
+                                this.__trigger('beforeload', { options: payload });
+                                return Promise.resolve();
+                            }
                         }
-                    });
-                    
-                    this.dispatchEvent(beforeLoadEvt);
+                    }
+
+                    this.__trigger('beforeload', { options: payload });
 
                     if (payload.fields) {
                         if (typeof payload.fields == 'object') {
@@ -306,7 +321,11 @@
                         this.set('items', items);
 
                         this.__setPaging({ total: res.total });
-                        this.dispatchEvent(new CustomEvent('load'));
+                        this.__trigger('load');
+
+                        if ( ! this.paging.enabled) {
+                            this.__items = items.slice();
+                        }
                     });
                 }
 
@@ -320,6 +339,10 @@
 
                 getQueryField() {
                     return this.itemQueryPath || this.itemLabelPath;
+                }
+
+                clear() {
+                    this._clear();
                 }
 
                 _clear() {
@@ -434,6 +457,12 @@
                     this._lastCommittedValue = undefined;
                 }
 
+                __trigger(name, data = {}) {
+                    this.dispatchEvent(new CustomEvent(name, {
+                        detail: data
+                    }));
+                }
+
                 __setPayload(data, reload = false) {
                     let payload = Object.assign({}, this.payload);
 
@@ -459,14 +488,6 @@
                 }
 
                 __request() {
-                    if ( ! this.__pagingEnabled) {
-                        return;
-                    }
-
-                    if ( ! this.url) {
-                        console.warn(`Invalid URL`);
-                        return;
-                    }
 
                     this.__requesting = Polymer.Debouncer.debounce(
                         this.__requesting,
@@ -480,17 +501,20 @@
                 }
 
                 __proxyChanged(url, pageSize) {
-                    let enabled = pageSize !== undefined,
-                        limit = pageSize || 0;
 
-                    this.set('__pagingEnabled', enabled);
+                    this.__loaded = false;
 
-                    this.__setPaging({ limit: limit });
-                    this.__setPayload({ limit: limit });
-
-                    if (enabled && this.autoload) {
+                    if (pageSize !== undefined) {
+                        this.__setPaging({ enabled: true, limit: pageSize });
+                        this.__setPayload({ limit: pageSize });
+                    } else {
+                        this.__setPaging({ enabled: false });
+                    }
+                    
+                    if (this.autoload) {
                         this.__request();
                     }
+
                 }
 
                 __paramsChanged(changed) {
