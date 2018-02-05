@@ -6,7 +6,7 @@
         <style include="form-style"></style>
 
         <kct-ajax id="ajax"></kct-ajax>
-        <kct-media size="{{ responsive }}"></kct-media>
+        <kct-media screen="{{ screen }}"></kct-media>
 
         <div class="section">
             <h3 class="section-title">Data Identitas</h3>
@@ -25,7 +25,7 @@
 
                 <div class="form-group">
                     <label>Absensi (Kehadiran)</label>
-                    <paper-radio-group selected="{{ record.data.tpr_type }}" attr-for-selected="name" class$="hbox [[ responsive ]]">
+                    <paper-radio-group selected="{{ record.data.tpr_type }}" attr-for-selected="name" class$="hbox [[ screen ]]">
                         <paper-radio-button name="Masuk">Masuk</paper-radio-button>
                         <paper-radio-button name="Izin">Izin</paper-radio-button>
                         <paper-radio-button name="Sakit">Sakit</paper-radio-button>

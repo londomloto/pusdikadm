@@ -24,13 +24,13 @@
 
             static get properties() {
                 return {
-                    size: { type: String, notify: true, value: 'xl' }
+                    screen: { type: String, notify: true, value: 'xl' }
                 }
             }
 
             static get observers() {
                 return [
-                    '__sizeChanged(xl, lg, md, sm)'
+                    '__queryChanged(xl, lg, md, sm)'
                 ];
             }
 
@@ -39,24 +39,24 @@
                 this._ensureAttribute('hidden', true);
             }
 
-            __sizeChanged(xl, lg, md, sm) {
+            __queryChanged(xl, lg, md, sm) {
                 this.__resizing = Polymer.Debouncer.debounce(
                     this.__resizing,
                     Polymer.Async.timeOut.after(200),
                     () => {
-                        let size;
+                        let screen;
 
                         if (xl) {
-                            size = 'xl';
+                            screen = 'xl';
                         } else if (lg) {
-                            size = 'lg';
+                            screen = 'lg';
                         } else if (md) {
-                            size = 'md';
+                            screen = 'md';
                         } else {
-                            size = 'sm';
+                            screen = 'sm';
                         }
-
-                        this.set('size', size);
+                        
+                        this.set('screen', screen);
                     }
                 );
                 

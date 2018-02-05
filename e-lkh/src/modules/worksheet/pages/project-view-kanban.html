@@ -39,12 +39,9 @@
 
         <kct-worksheet id="worksheet" columns="3">
             <template is="dom-repeat" items="[[ worksheetRecord.ks_panels ]]" as="panel">
-                <kct-worksheet-panel accent="[[ panel.kp_accent ]]" hide-condensed hide-secondary>
-                    <div slot="panel-title">
-                        <div><span style="font-size: .8em; font-weight: 500;">[[ panel.kp_title ]]</span></div>
-                    </div>
+                <kct-worksheet-panel title="[[ panel.kp_title ]]" accent="[[ panel.kp_accent ]]" hide-condensed hide-secondary>
                     <div class="panel-content">
-                        <template is="dom-repeat" items="[[ panel.kp_data ]]" on-dom-change="__onPanelContentChange">
+                        <template is="dom-repeat" items="[[ panel.kp_data ]]">
                             <task-item-kanban 
                                 class="panel-item" 
                                 record="[[ item ]]" 
@@ -97,14 +94,6 @@
                 if (type != 'kanban') return;
                 
                 this.set('project', project);
-
-                if (this.$.worksheet) {
-                    let timer = setTimeout(() => {
-                        clearTimeout(timer);
-                        timer = null;
-                        this.$.worksheet.resize();
-                    }, 10);
-                }
             }
 
             handleResizing(width, height) {
@@ -146,6 +135,7 @@
 
                 this.__loader.promise.then(() => {
                     this.set('busy', false);
+                    this.$.worksheet.resize();
                 });
 
                 let sheet = this.projectRecord && this.projectRecord.sp_worksheet_id;
@@ -293,8 +283,10 @@
             }
 
             __getPaging(panel) {
-                if (this.__paging[panel.kp_id] === undefined) {
-                    this.__paging[panel.kp_id] = {
+                let token = 'panel_' + this.projectRecord.sp_id + '_' + panel.kp_id;
+
+                if (this.__paging[token] === undefined) {
+                    this.__paging[token] = {
                         // load more paging
                         start: 0,
                         limit: this.pageSize,
@@ -305,7 +297,7 @@
                     };
                 }
 
-                return this.__paging[panel.kp_id];
+                return this.__paging[token];
             }
 
             __installDragDrop() {
@@ -370,12 +362,8 @@
                 this.reload();
             }
 
-            __onPanelContentChange() {
-                this.$.worksheet.resize();
-            }
-
             __onLoadMoreTap(e) {
-                let paging = this.__paging[e.model.panel.kp_id];
+                let paging = this.__getPaging(e.model.panel);
 
                 if (paging) {
                     this.set('busy', true);
@@ -385,6 +373,7 @@
                         limit: paging.limit
                     }).then(() => {
                         this.set('busy', false);
+                        this.$.worksheet.resize();
                     });
                 }
             }

@@ -155,6 +155,7 @@ class Task extends \Micro\Model {
     public function toArray($columns = NULL) {
         $auth = \Micro\App::getDefault()->auth->user();
         $data = parent::toArray($columns);
+
         $data['creator_su_fullname'] = '';
 
         if ($this->creator) {
@@ -167,13 +168,14 @@ class Task extends \Micro\Model {
 
         $data['tt_created_dt_relative'] = self::__relativeTime($this->tt_created_dt);
         $data['tt_created_dt_formatted'] = self::__formatDate($this->tt_created_dt);
+        $data['tt_updated_dt_formatted'] = self::__formatDate($this->tt_updated_dt);
         $data['tt_due_date_relative'] = self::__relativeTime($this->tt_due_date, 'd M Y');
         $data['tt_due_date_formatted'] = self::__formatDate($this->tt_due_date, 'd M Y');
 
-        $data['tt_is_editable'] = FALSE;
+        $data['tt_is_authorized'] = FALSE;
 
         if ($auth['su_id'] == $data['tt_creator_id']) {
-            $data['tt_is_editable'] = TRUE;
+            $data['tt_is_authorized'] = TRUE;
         }
 
         return $data;
@@ -184,6 +186,13 @@ class Task extends \Micro\Model {
             'conditions' => 'tts_deleted = 0',
             'orderBy' => 'tts_created DESC'
         ));
+    }
+
+    public function getPrevStatuses() {
+        $current = $this->getCurrentStatuses();
+        foreach($current as $c) {
+            
+        }
     }
 
     public function next($payload = NULL) {

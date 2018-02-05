@@ -68,10 +68,10 @@
         
         <kct-ajax id="ajax"></kct-ajax>
         <kct-event-publisher id="publisher"></kct-event-publisher>
-        <kct-media size="{{ responsive }}"></kct-media>
+        <kct-media screen="{{ screen }}"></kct-media>
         
         <kct-vbox>
-            <header-block id="header" on-back-tap="__onBackTap" text="Module Kegiatan" hide-header$="[[ __hideHeader(responsive) ]]">
+            <header-block id="header" on-back-tap="__onBackTap" text="Module Kegiatan" hide-header$="[[ __hideHeader(screen) ]]">
                 <h3 slot="header-value">[[ __projectTitle ]]</h3>
 
                 <paper-button hidden$="[[ formReadonly ]]" disabled$="[[ formInvalid ]]" on-tap="__onSaveTap" class="btn-action btn-primary" slot="right-toolbar" style="margin-left: 8px;">
@@ -88,7 +88,7 @@
                 </paper-button>
 
             </header-block>
-            <div id="workspace" class$="workspace flex [[ responsive ]]">
+            <div id="workspace" class$="workspace flex [[ screen ]]">
                 
                 <kct-hbox class="workspace-wrapper">
                     <div class="flex workspace-body">

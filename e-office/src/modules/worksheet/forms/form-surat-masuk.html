@@ -1,0 +1,35 @@
+<dom-module id="form-surat-masuk">
+    <template>
+        <style include="form-style"></style>
+
+        <div class="section">
+            <h3 class="section-title">Registrasi</h3>
+
+            <kct-column columns="3">
+                <div><paper-input label="Nomor Urut"></paper-input></div>
+                <div><vaadin-date-picker label="Tanggal Masuk"></vaadin-date-picker></div>
+                <div><paper-input label="Kode Surat"></paper-input></div>
+            </kct-column>
+            
+        </div>
+        <div class="section">
+            <h3 class="section-title">Dokumen Surat</h3>
+            <kct-column columns="2">
+                <div><paper-input label="Nomor Surat"></paper-input></div>
+                <div><vaadin-date-picker label="Tanggal Surat"></vaadin-date-picker></div>
+            </kct-column>
+            <paper-input label="Pengirim"></paper-input>
+            <paper-input label="Tujuan"></paper-input>
+            <paper-input label="Perihal (Ringkasan)"></paper-input>
+            <paper-input label="Pengolah"></paper-input>
+        </div>
+    </template>
+    <script>
+        class FormSuratMasuk extends FormBase {
+            static get is() {
+                return 'form-surat-masuk';
+            }
+        }
+        customElements.define(FormSuratMasuk.is, FormSuratMasuk);
+    </script>
+</dom-module>

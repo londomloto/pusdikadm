@@ -134,11 +134,11 @@
 
         <kct-auth id="auth" config="[[ config ]]" on-load="__onAuthLoaded"></kct-auth>
         <kct-ajax id="ajax" config="[[ config ]]"></kct-ajax>
-        <kct-media size="{{ __responsive }}"></kct-media>
+        <kct-media screen="{{ screen }}"></kct-media>
         
         <div class="container">
 
-            <div class$="column-left [[ __responsive ]]">
+            <div class$="column-left [[ screen ]]">
                 <div class="cover">
                     <div class="story">
                         <h3>[[ config.app_title ]]</h3>
@@ -147,7 +147,7 @@
                 </div>    
             </div>
 
-            <div class$="column-right [[ __responsive ]]"  hidden$="[[ !__valid ]]">
+            <div class$="column-right [[ screen ]]"  hidden$="[[ !__valid ]]">
                 <div class="login-logo">
                     <img src$="[[ _resolveUrl('../../../images/logo/worksaurus-1.png') ]]" alt="" class="logo">
                 </div>

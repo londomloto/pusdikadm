@@ -1,4 +1,5 @@
-<link rel="import" href="../../mixins/resolver.html">
+<link rel="import" href="../../bower_components/polymer/lib/utils/flattened-nodes-observer.html">
+<link rel="import" href="../../mixins/dom.html">
 <link rel="import" href="../kct-layouts/kct-vbox.html">
 <link rel="import" href="../kct-worksheet/kct-worksheet-panel.html">
 <link rel="import" href="../kct-media/kct-media.html">
@@ -11,103 +12,172 @@
                 height: 100%; 
             }
 
-            .kanban {
-                background-color: var(--paper-grey-100);
+            .clear {
+                clear: both;
             }
 
-            .kanban::before {
-                /*content: '';
+            #kanban {
+                background-color: var(--paper-grey-100);
+            }
+            
+            #kanban-header {
+                padding: 0;
+                position: relative;
+                height: 34px;
+                overflow: hidden;
+            }
+
+            #header-scroller {
+                position: relative;
+                overflow-y: hidden;
+                overflow-x: hidden;
+            }
+
+            #kanban-body {
+                padding: 0;
+                overflow: auto;
+                overflow-y: scroll;
+            }
+            
+            #panel-container {
+                height: 100%;
+            }
+
+            #panel-container ::slotted(kct-worksheet-panel:nth-child(even)) {
+                --panel-body-background: #f9f9f9;
+            }
+
+            #header-container::before {
+                content: '';
+                display: block;
+                bottom: 0;
                 position: absolute;
                 left: 0;
                 right: 0;
-                height: 46px;
-                background-color: #f9f9f9;*/
-                /*top: 99px;
-                border-bottom: 1px solid #eee;*/
+                height: 2px;
+                background-color: #999;
+                z-index: 1;
+                box-shadow: 0 3px 3px rgba(0,0,0,.3);
+            }
+
+            .header {
+                float: left;
+                padding-left: 16px;
+                height: 34px;
+                box-sizing: border-box;
+                border-bottom: 2px solid #dfdfdf;
+                position: relative;
+                z-index: 2;
+                background-color: var(--panel-body-background, var(--paper-grey-200));
+                @apply --layout-horizontal;
             }
             
-            .kanban-header {
-                padding: 0 6px;
-                background-color: var(--kanban-header-background, var(--paper-blue-grey-500));
-                color: var(--kanban-header-color, #ffffff);
+            .header:nth-child(even) {
+                background-color: #f9f9f9;
             }
-
-            .kanban-body {
-                padding: 0;
-                overflow: auto;
-            }
-
-            .kanban-body-top-space {
-                height: 18px;
-                width: 100%;
-                background-color: #fff;
-            }
-            .panel-container {
-                height: 100%;
-            }
-            .panel-container ::slotted(kct-worksheet-panel:nth-child(even)) {
-                --panel-body-background: #f9f9f9;
+            .header > div {
+                line-height: 34px;
+                font-weight: 500;
+                font-size: 0.9em;
+                @apply --layout-flex;
             }
         </style>
 
-        <kct-media size="{{ responsive }}"></kct-media>
+        <kct-media screen="{{ screen }}"></kct-media>
 
-        <kct-vbox class="kanban">
-            <div class="kanban-header">
-                <slot name="header"></slot>        
+        <kct-vbox id="kanban">
+            <div id="kanban-header">
+                <div id="header-scroller">
+                    <div id="header-container">
+                        <template is="dom-repeat" items="[[ headers ]]">
+                            <div class="header" style$="width: [[ item.width ]]; border-color: [[ item.accent ]]">
+                                <div>[[ item.title ]]</div>
+                            </div>
+                        </template>
+                        <div class="clear"></div>
+                    </div>
+                </div>
+                
             </div>
-            <div id="kanban-body" class="kanban-body flex">
-                <div id="panel-container" class="panel-container">
+            <div id="kanban-body" class="flex">
+                <div id="panel-container">
                     <slot id="panel"></slot>
                 </div>
             </div>
         </kct-vbox>
     </template>
     <script>
-        class KctWorksheet extends Mixins(Polymer.Element).use(Mixins.Resolver) {
+        class KctWorksheet extends Mixins(Polymer.Element).use(Mixins.DOM) {
             static get is() {
                 return 'kct-worksheet';
             }
             static get properties() {
                 return {
                     columns: { type: Number, value: 3 },
-                    responsive: { type: Number }
+                    panels: { type: Array, value: () => ([]) },
+                    headers: { type: Array, value: () => ([]) },
+                    screen: { type: Number }
                 };
             }
             static get observers() {
                 return [
                     '__columnsChanged(columns)',
-                    '__responsiveChanged(responsive)'
+                    '__screenChanged(screen)'
                 ];
             }
             constructor() {
                 super();
                 this.__columns = null;
+                this.__scrollHandler = this.__onScroll.bind(this);
             }
+            connectedCallback() {
+                super.connectedCallback();
+
+                this.__observer = new Polymer.FlattenedNodesObserver(this.$.panel, info => {
+                    let panels = [];
+                    let headers = [];
+
+                    this.set('panels', panels);
+                    this.set('headers', headers);
+
+                    this.$.panel.assignedNodes({flaten: true}).forEach(node => {
+
+                        if (node.nodeType && node.nodeType == Node.ELEMENT_NODE && node.localName == 'kct-worksheet-panel') {
+
+                            let header = {
+                                title: node.title,
+                                width: isNaN(node.width) ? node.width : node.width + 'px',
+                                accent: node.accent
+                            };
+
+                            headers.push(header);
+                            panels.push(node);
+                        }
+                    });
+
+                    this.set('headers', headers);
+                    this.set('panels', panels);
+                });
+
+                this.$['kanban-body'].addEventListener('scroll', this.__scrollHandler);
+            }
+
+            disconnectedCallback() {
+                this.__observer.disconnect();
+                this.$['kanban-body'].removeEventListener('scroll', this.__scrollHandler);
+                super.disconnectedCallback();
+            }
+
             resize() {
                 this.__resizePanelContainer();
-            }
-            scroll(dir) {
-                switch(dir) {
-                    case 'right':
-                        let timer = setTimeout(() => {
-                            this.$['kanban-body'].scrollLeft = this.$['kanban-body'].scrollWidth;
-                            clearTimeout(timer);
-                            timer = null;
-                        }, 0);
-                        break;
-                    case 'left':
-                        this.$['kanban-body'].scrollLeft = 0;
-                        break;
-                }
             }
             __columnsChanged(columns) {
                 if (columns !== undefined && this.__columns === null) {
                     this.__columns = columns;
                 }
             }
-            __responsiveChanged(size) {
-                switch(size) {
+            __screenChanged(screen) {
+                switch(screen) {
                     case 'sm':
                     case 'md':
                         this.set('columns', 1);
@@ -120,48 +190,6 @@
                         break;
                 }
             }
-            __getBodySize() {
-                let elem = this.$['kanban-body'];
-
-                let size = {
-                    width: elem.clientWidth,
-                    height: elem.clientHeight
-                }
-
-                return size;
-            }
-            __getScrollbarHeight() {
-                let height = this.constructor.__scrollbarHeight;
-
-                if (height === undefined) {
-                    let outer, inner, width1, width2;
-                    
-                    outer = document.createElement('div');
-                    outer.style.visibility = 'hidden';
-                    outer.style.width = '100px';
-                    outer.style.msOverflowStyle = 'scrollbar';
-                    
-                    document.body.appendChild(outer);
-                    
-                    width1 = outer.offsetWidth;
-
-                    outer.style.overflow = 'scroll';
-
-                    inner = document.createElement('div');
-                    inner.style.width = '100%';
-                    
-                    outer.appendChild(inner);
-
-                    width2 = inner.offsetWidth;
-
-                    outer.parentNode.removeChild(outer);
-
-                    height = width1 - width2;
-                    this.constructor.__scrollbarHeight = height;
-                }
-
-                return height;
-            }
             __resizePanelContainer() {
 
                 this.__resizing = Polymer.Debouncer.debounce(
@@ -173,36 +201,54 @@
                 Polymer.enqueueDebouncer(this.__resizing);
 
                 function resize() {
+                    let sizes = this._getElementSize(this.$['kanban-body']);
 
-                    // let gutter = 15;
+                    // element is hidden
+                    if (sizes.width == 0) {
+                        return;
+                    }
+
                     let gutter = 0;
-
-                    let panels = this.$.panel.assignedNodes().filter(node => { return node.localName == 'kct-worksheet-panel'; }),
-                        sizes = this.__getBodySize(),
-                        columnWidth = ((sizes.width - this.columns * gutter) - gutter) / this.columns,
-                        totalWidth = 0;
-                        
+                    let extra = this._getScrollerSize();
+                    let panels = this.panels;
+                    let columnWidth = ((sizes.width - this.columns * gutter) - gutter) / this.columns;
                     let columnHeight = sizes.height;
+                    let totalWidth = 0;
 
-                    panels.forEach(panel => {
-                        if (panel.clientHeight > columnHeight) {
-                            columnHeight = panel.clientHeight;
-                        }
-                        totalWidth += (columnWidth + gutter);
-                    });
+                    if (panels.length) {
+                        panels.forEach((panel, index) => {
+                            panel.height = sizes.height;
+
+                            if (panel.clientHeight > columnHeight) {
+                                columnHeight = panel.clientHeight;
+                            }
+
+                            totalWidth += (columnWidth + gutter);
+
+                            this.set('headers.' + index + '.width', columnWidth + 'px');
+                            this.set('headers.' + index + '.title', panel.title);
+                            this.set('headers.' + index + '.accent', panel.accent);
+                        });
+                    } else {
+                        totalWidth = sizes.width;
+                    }
+
+                    totalWidth += gutter;
+
+                    this.$['panel-container'].style.width = totalWidth + 'px';
+                    this.$['header-container'].style.width = (totalWidth + extra) + 'px';
 
                     panels.forEach(panel => {
                         panel.width = columnWidth;
                         panel.height = columnHeight;
                     });
 
-                    totalWidth += gutter;
-
-                    this.$['panel-container'].style.width = totalWidth + 'px';
-                    this.$['panel-container'].style.minHeight = columnHeight + 'px';
                 }
+            }
 
-                
+            __onScroll(e) {
+                let left = e.target.scrollLeft;
+                this.$['header-scroller'].scrollLeft = left;
             }
         }
         customElements.define(KctWorksheet.is, KctWorksheet);

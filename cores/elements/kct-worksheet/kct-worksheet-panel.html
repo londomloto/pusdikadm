@@ -42,8 +42,8 @@
                 position: relative;
             }
             [main-title] {
-                font-weight: 300;
-                font-size: 16px;
+                font-size: .8em; 
+                font-weight: 500;
             }
             .panel-title {
                 font-weight: 300;
@@ -69,7 +69,7 @@
             
         </style>
         <div class="panel">
-            <div>
+            <!-- <div>
                 <app-toolbar class="primary-toolbar" hidden$="[[ hidePrimary ]]">
                     <div class="panel-title">
                         <div main-title>
@@ -80,7 +80,7 @@
                         <slot name="primary-toolbar"></slot>
                     </div>
                 </app-toolbar>
-            </div>
+            </div> -->
             <div class="panel-content">
                 <slot></slot>
             </div>
@@ -94,8 +94,8 @@
             static get properties() {
                 return {
                     title: { type: String, notify: true, value: 'Panel' },
-                    width: { type: String }, 
-                    height: { type: String },
+                    width: { type: String, value: '300px' }, 
+                    height: { type: String, value: '100%' },
                     accent: { type: String, value: 'transparent' },
                     hideHeader: { type: Boolean, value: false },
                     hidePrimary: { type: Boolean, value: false }
@@ -117,16 +117,24 @@
                 });
             }
             __sizeChanged(width, height) {
-                if (width === undefined) return;
-                if (height === undefined) return;
+                let style = {},
+                    valid = false;
 
-                width = ! isNaN(width) ? width + 'px' : width;
-                height = ! isNaN(height) ? height + 'px' : height;
+                if (width !== undefined) {
+                    width = isNaN(width) ? width : width + 'px';
+                    style['--panel-width'] = width;
+                    valid = true;
+                }
 
-                this.updateStyles({
-                    '--panel-width': width,
-                    '--panel-height': height
-                });
+                if (height !== undefined) {
+                    height = isNaN(height) ? height : height + 'px';
+                    style['--panel-height'] = height;
+                    valid = true;
+                }
+
+                if (valid) {
+                    this.updateStyles(style);
+                }
             }
         }
         customElements.define(KctWorksheetPanel.is, KctWorksheetPanel);

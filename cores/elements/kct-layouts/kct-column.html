@@ -48,7 +48,7 @@
 
         <slot></slot>
 
-        <kct-media size="{{ size }}"></kct-media>
+        <kct-media screen="{{ screen }}"></kct-media>
     </template>
     <script>
         {
@@ -76,7 +76,7 @@
                 static get observers() {
                     return [
                         '__propsChanged(columns, gutter, spacer)',
-                        '__sizeChanged(size)'
+                        '__screenChanged(screen)'
                     ];
                 }
                 constructor() {
@@ -132,10 +132,10 @@
                     this.updateStyles(styles);
                 }
 
-                __sizeChanged(size) {
-                    if (size) {
+                __screenChanged(screen) {
+                    if (screen) {
                         let columns;
-                        switch(size) {
+                        switch(screen) {
                             case 'sm':
                                 columns = this.__q1;
                                 break;

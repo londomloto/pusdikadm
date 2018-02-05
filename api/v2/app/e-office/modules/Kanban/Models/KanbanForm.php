@@ -6,5 +6,4 @@ class KanbanForm extends \Micro\Model {
     public function getSource() {
         return 'kanban_forms';
     }
-    
 }

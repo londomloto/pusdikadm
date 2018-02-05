@@ -61,6 +61,12 @@ class Form extends \Micro\Model {
         return 'bpm_forms';
     }
 
+    public function toArray($columns = NULL) {
+        $data = parent::toArray($columns);
+        $data['bf_download_url'] = \Micro\App::getDefault()->url->getSiteUrl('assets/download').'?s=public/resources/forms/'.$this->bf_tpl_file;
+        return $data;
+    }
+
     public function saveRoles($items) {
         $create = array();
         $update = array();

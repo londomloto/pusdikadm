@@ -375,11 +375,11 @@
             }
         </style>
         
-        <kct-media size="{{ __responsive }}"></kct-media>
+        <kct-media screen="{{ screen }}"></kct-media>
 
         <slot id="slot"></slot>
 
-        <div class$="grid-panel [[ __responsive ]]">
+        <div class$="grid-panel [[ screen ]]">
             
             <div class="grid-header container" hidden$="[[ hideHeader ]]">
                 <kct-hbox class="columns-container">
@@ -436,8 +436,8 @@
                         <div class="grid-statusbar">
                             <paper-menu-button horizontal-align="right" vertical-align="bottom">
                                 <paper-button slot="dropdown-trigger">
-                                    <span class$="paging-text-full [[ __responsive ]]">Display [[ pageSize ]] rows</span>
-                                    <span class$="paging-text-mini [[ __responsive ]]">[[ pageSize ]] rows</span>
+                                    <span class$="paging-text-full [[ screen ]]">Display [[ pageSize ]] rows</span>
+                                    <span class$="paging-text-mini [[ screen ]]">[[ pageSize ]] rows</span>
                                     <iron-icon icon="arrow-drop-up" style="position: relative; top: 1px;"></iron-icon>
                                 </paper-button>
                                 <paper-listbox selected="{{ pageSize }}" attr-for-selected="value" slot="dropdown-content">

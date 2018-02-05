@@ -9,8 +9,10 @@
 <link rel="import" href="../../../../../cores/bower_components/paper-menu-button/paper-menu-button.html">
 <link rel="import" href="../../../../../cores/bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="../../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../../cores/vendors/moment/moment.html">
 <link rel="import" href="../../../../../cores/elements/kct-layouts/kct-hbox.html">
 <link rel="import" href="../../../../../cores/elements/kct-search/kct-search-combo.html">
+<link rel="import" href="../../../../../cores/elements/kct-search/kct-search-date.html">
 
 <dom-module id="task-search">
     <template>
@@ -23,7 +25,7 @@
                 position: relative;
                 overflow: hidden;
                 scroll-behavior: smooth;
-                width: var(--scroller-width);
+                width: var(--scroller-width, 200px);
             }
             .scroller-nav {
                 width: 24px;
@@ -58,7 +60,7 @@
                 cursor: pointer;
             }
             .selectable .label {
-                padding: 5px 7px;
+                padding: 4px 7px;
                 background-color: var(--paper-yellow-300);
                 margin-right: 1px;
                 border-radius: 3px 0 0 3px;
@@ -78,7 +80,7 @@
             }
             .selectable .item-value {
                 float: left;
-                padding: 5px;
+                padding: 4px;
                 display: block;
             }
             .selectable .item-value + .item-value {
@@ -158,7 +160,7 @@
                 font-weight: 400;
                 background-color: #fff;
                 border-radius: 0 3px 3px 0;
-                padding: 8px 10px 9px 10px;
+                padding: 7px 10px 8px 10px;
                 border: 1px solid #dfdfdf;
                 font-size: 12px;
                 text-transform: none;
@@ -196,7 +198,7 @@
             }
         </style>
 
-        <kct-hbox class="container">
+        <kct-hbox class="container" on-ready="__onContainerReady">
             <div class="column-history">
                 <paper-icon-button icon="search"></paper-icon-button>
             </div>
@@ -295,38 +297,9 @@
                                         </template>        
                                     </kct-search-combo>
 
-                                    <!-- <kct-search-combo 
-                                        name="assignee" 
-                                        url="/users" 
-                                        item-value-path="su_id" 
-                                        item-label-path="su_fullname" 
-                                        item-query-path="su_fullname" 
-                                        page-size="10" 
-                                        on-change="__onComboChange" 
-                                        on-beforeload="__onComboBeforeload">
-                                        
-                                        <template>
-                                            <style>
-                                                paper-item {
-                                                    --paper-item-min-height: 34px;
-                                                    font-size: 13px;
-                                                    font-weight: 400;
-                                                }
-                                                paper-item iron-icon {
-                                                    --iron-icon-width: 16px;
-                                                    --iron-icon-height: 16px;
-                                                    margin-right: 5px;
-                                                }
-                                            </style>
-
-                                            <paper-item>
-                                                <iron-icon icon="face"></iron-icon>
-                                                <paper-item-body>[[ item.su_fullname ]]</paper-item-body>    
-                                            </paper-item>
-
-                                        </template>
-
-                                    </kct-search-combo> -->
+                                    <kct-search-date 
+                                        name="date" 
+                                        on-change="__onDatePickerChange"></kct-search-date>
 
                                     <kct-search-combo 
                                         name="label" 
@@ -410,8 +383,8 @@
                         type: Array,
                         value: () => ([
                             { field: 'search', label: 'Search', icon: 'search', hint: 'Tekan enter untuk pencarian' },
-                            // { field: 'assignee', label: 'Assignee', icon: 'social:sentiment-very-satisfied', hint: 'Filter dengan pelaksana: <b>@assignee</b>' },
                             { field: 'author', label: 'Pembuat', icon: 'social:person-outline', hint: 'Filter data pembuat: <b>@pembuat</b>' },
+                            { field: 'date', label: 'Tanggal', icon: 'today', hint: 'Filter dengan tanggal: <b>&tanggal</b>' },
                             { field: 'label', label: 'Label', icon: 'label-outline', hint: 'Filter data label: <b>~label</b>' }
                         ])
                     },
@@ -430,7 +403,8 @@
                         ])
                     },
 
-                    selectedSorter: { type: Object }
+                    selectedSorter: { type: Object },
+                    project: { type: String }
                 };
             }
 
@@ -456,18 +430,12 @@
 
             ready() {
                 super.ready();
-
                 this.set('selectedSorter', this.sorters[2]);
                 this.set('sorters.2.checked', true);
+            }
 
-                Polymer.RenderStatus.afterNextRender(this, () => {
-                    let timer = setTimeout(() => {
-                        clearTimeout();
-                        timer = null;
-                        this.resize();
-                    }, 100);
-                });
-                
+            __onContainerReady() {
+                this.resize();
             }
 
             open() {
@@ -695,9 +663,27 @@
 
                 if (filter) {
                     let excludes = filter.values.map(f => f.value);
+                    
+                    if ( ! combo.paging.enabled && combo.__items !== undefined) {
+                        combo.items = combo.__items.slice();
+                    }
+
                     if (excludes.length) {
-                        options.params = options.params || {};
-                        options.params[combo.itemValuePath] = ['NOT IN', excludes];
+                        if (combo.paging.enabled) {
+                            options.params = options.params || {};
+                            options.params[combo.itemValuePath] = ['NOT IN', excludes];    
+                        } else {
+                            let items = [];
+                            
+                            combo.items.forEach(e => {
+                                let v = e[combo.itemValuePath];
+                                if (excludes.indexOf(v) === -1) {
+                                    items.push(e);
+                                }
+                            });
+
+                            combo.items = items;
+                        }
                     }
                 }
 
@@ -735,10 +721,44 @@
 
                 this.__buildSearch();
                 this.set('selectedFeature', 'search');
-                combo._clear();
+                combo.clear();
 
                 this.__doLayout().then(() => {
                     this.focus();    
+                });
+            }
+
+            __onDatePickerChange(e) {
+                let picker = e.target;
+
+                let value = {
+                    value: picker.value,
+                    label: moment(picker.value).format('DD MMM YYYY')
+                };
+
+                let filter = this.__getFilterModel(this.selectedFeature);
+
+                if (filter) {
+                    let index = this.filters.indexOf(filter);
+                    if (index !== -1) {
+                        this.push('filters.' + index + '.values', value);
+                    }
+                } else {
+                    let feature = this.__getFeatureModel(this.selectedFeature);
+                    if (feature) {
+                        this.push('filters', {
+                            field: feature.field,
+                            label: feature.label,
+                            values: [value]
+                        });
+                    }
+                }
+
+                this.__buildSearch();
+                this.set('selectedFeature', 'search');
+
+                this.__doLayout().then(() => {
+                    this.focus();
                 });
             }
 
@@ -759,7 +779,7 @@
                 this.set('filters', []);
 
                 this.shadowRoot.querySelectorAll('kct-search-combo').forEach(combo => {
-                    combo._clear();
+                    combo.clear();
                 });
 
                 this.set('selectedFeature', 'search');

@@ -1,5 +1,12 @@
 <?php
 
+Router::group(array(
+    'prefix' => '/system',
+    'handler' => 'App\System\Controllers\SystemController',
+    'middleware' => 'auth'
+))
+->post('/backup', 'backup');
+
 /**
  * module: config
  */
@@ -39,6 +46,7 @@ Router::post('/auth/reset', 'App\Auth\Controllers\AuthController@reset');
  * module: assets
  */
 Router::get('/assets/thumb', 'App\Assets\Controllers\AssetsController@thumb');
+Router::get('/assets/download', 'App\Assets\Controllers\AssetsController@download');
 
 /**
  * module: profile

@@ -1,6 +1,5 @@
 <link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
 <link rel="import" href="../../../../cores/elements/kct-pages/kct-pages.html">
-<link rel="import" href="../../../../cores/elements/kct-socket/kct-socket-manager.html">
 <link rel="import" href="../../../../cores/vendors/hopscotch/hopscotch.html">
 
 <dom-module id="worksheet-page">
@@ -15,8 +14,6 @@
                 height: 100%;
             }
         </style>
-
-        <kct-socket-manager id="socket" name="worksheet-socket"></kct-socket-manager>
 
         <kct-pages id="switcher" attr-for-selected="name" selected="[[ page ]]" on-itemactivate="__onPageItemActivate" lazy-load>
             <project-tour import="pages/project-tour.html" name="tour" route="{{ route }}" state="[[ state ]]"></project-tour>
@@ -43,11 +40,6 @@
                 return [
                     '__openedChanged(opened)'
                 ];
-            }
-
-            connectedCallback() {
-                super.connectedCallback();
-                this.$.socket.connect();
             }
 
             disconnectedCallback() {

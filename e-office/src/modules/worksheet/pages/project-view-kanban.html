@@ -17,31 +17,29 @@
             .panel-item + .panel-item {
                 margin-top: 8px;
             }
-            .spinner {
-                width: 24px;
-                height: 24px;
+            .panel-paging {
+                margin-top: 15px;
+                text-align: center;
+            }
+            .panel-paging > paper-button {
+                display: block;
+                text-transform: none;
+                font-size: 12px;
+            }
+            .panel-paging > paper-button iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
                 position: relative;
-                top: 5px;
-                /*--paper-spinner-color: #fff;*/
+                top: -1px;
             }
         </style>
         
         <kct-ajax id="ajax"></kct-ajax>
-        <kct-event-subscriber 
-            on-task-save="__onTaskSave" 
-            on-task-remove="__onTaskRemove"></kct-event-subscriber>
+        <kct-event-subscriber on-notify="__onNotify"></kct-event-subscriber>
 
         <kct-worksheet id="worksheet" columns="3">
             <template is="dom-repeat" items="[[ worksheetRecord.ks_panels ]]" as="panel">
-                <kct-worksheet-panel accent="[[ panel.kp_accent ]]" hide-condensed hide-secondary>
-                    <div slot="panel-title">
-                        <template is="dom-if" if="[[ panel.kp_busy ]]">
-                            <paper-spinner-lite hidden class="spinner" active$="[[ panel.kp_busy ]]"></paper-spinner-lite>    
-                        </template>
-                        <template is="dom-if" if="[[ !panel.kp_busy ]]">
-                            <div><span style="font-size: .8em; font-weight: 500;">[[ panel.kp_title ]]</span></div>
-                        </template>
-                    </div>
+                <kct-worksheet-panel title="[[ panel.kp_title ]]" accent="[[ panel.kp_accent ]]" hide-condensed hide-secondary>
                     <div class="panel-content">
                         <template is="dom-repeat" items="[[ panel.kp_data ]]">
                             <task-item-kanban 
@@ -50,6 +48,9 @@
                                 accent="[[ panel.kp_accent ]]" 
                                 on-item-tap="__onTaskItemTap" draggable></task-item-kanban>
                         </template>
+                        <div class="panel-paging" hidden$="[[ !panel.kp_more ]]">
+                            <paper-button on-tap="__onLoadMoreTap">Load more items&nbsp;<iron-icon icon="arrow-drop-down"></iron-icon></paper-button>
+                        </div>
                     </div>
                 </kct-worksheet-panel>
             </template>
@@ -69,7 +70,10 @@
                     worksheetRecord: { type: Object },
                     workspaces: { type: Array },
                     workspaceRecord: { type: Object },
-                    params: { type: Object, value: () => ({}) }
+                    params: { type: Object, value: () => ({}) },
+                    busy: { type: Boolean, value: false, notify: true },
+                    pageSize: { type: Number, value: 5 },
+                    maxPageSize: { type: Number, value: 100 }
                 };
             }
 
@@ -79,20 +83,17 @@
                 ];
             }
 
+            constructor() {
+                super();
+                this.__paging = {};
+            }
+
             handleRouteParams(project, action, type) {
                 if (project === undefined  || project == 'tour' || project == 'create') return;
                 if (action != 'view') return;
                 if (type != 'kanban') return;
                 
                 this.set('project', project);
-
-                if (this.$.worksheet) {
-                    let timer = setTimeout(() => {
-                        clearTimeout(timer);
-                        timer = null;
-                        this.$.worksheet.resize();
-                    }, 10);
-                }
             }
 
             handleResizing(width, height) {
@@ -102,7 +103,7 @@
             }
 
             reload() {
-                this.__loadWorksheet();
+                return this.__loadWorksheet();
             }
             
             __projectChanged(project) {
@@ -114,16 +115,18 @@
             __loadProject() {
                 if ( ! this.project) return;
                 
-                this.$.ajax.GET('/projects/load/' + this.project ).then(res => {
+                this.$.ajax.GET('/projects/' + this.project + '/load').then(res => {
                     this.set('projectRecord', res.data);
                     this.__loadWorksheet();
                 });
             } 
 
             __loadWorksheet() {
+                this.set('busy', true);
                 this.set('workspaces', []);
 
                 if ( ! this.projectRecord) {
+                    this.set('busy', false);
                     this.set('worksheetRecord', {});
                     return;
                 }
@@ -131,11 +134,8 @@
                 this.__loader = this._defer();
 
                 this.__loader.promise.then(() => {
-                    let timer = setTimeout(() => {
-                        clearTimeout(timer);
-                        timer = null;
-                        this.__installDragDrop();
-                    }, 1);
+                    this.set('busy', false);
+                    this.$.worksheet.resize();
                 });
 
                 let sheet = this.projectRecord && this.projectRecord.sp_worksheet_id;
@@ -174,6 +174,7 @@
                     this.set('worksheetRecord', {});
                 }
 
+                return this.__loader.promise;
             }
 
             __loadWorkspaces() {
@@ -208,26 +209,95 @@
                     });
                 }
             }
-            
-            __loadPanelData(panel) {
+
+            __loadPanelData(panel, options = {}) {
                 let statuses = (panel.kp_statuses || []).map(s => s.kst_status),
-                    panelIndex = (this.worksheetRecord.ks_panels || []).indexOf(panel),
+                    index = (this.worksheetRecord.ks_panels || []).indexOf(panel),
                     defer = this._defer();
 
-                let params = Object.assign({}, this.params);
+                let payload = Object.assign({}, this.params, options);
 
-                params.statuses = JSON.stringify(statuses);
-                params.project = this.projectRecord.sp_id;
+                payload.statuses = JSON.stringify(statuses);
+                payload.project = this.projectRecord.sp_id;
 
-                this.set('worksheetRecord.ks_panels.' + panelIndex + '.kp_busy', true);
+                let paging = this.__getPaging(panel);
 
-                this.$.ajax.GET('/kanban', params).then((res) => {
-                    this.set('worksheetRecord.ks_panels.' + panelIndex + '.kp_data', res.data);
-                    this.set('worksheetRecord.ks_panels.' + panelIndex + '.kp_busy', false);
+                if (payload.start === undefined) {
+                    payload.start = paging.__start;
+                }
+
+                if (payload.limit === undefined) {
+                    payload.limit = paging.__limit;
+                }
+
+                if (payload.start == 0 && payload.limit > this.maxPageSize) {
+                    payload.limit = this.maxPageSize;
+
+                    this.__setPaging(panel, { 
+                        __start: 0,
+                        __limit: payload.limit 
+                    });
+                }
+
+                this.set('worksheetRecord.ks_panels.' + index + '.kp_busy', true);
+
+                this.$.ajax.GET('/worksheet/kanban', payload).then((res) => {
+                    let items;
+
+                    if (payload.start == 0) {
+                        items = res.data;
+                    } else {
+                        items = (this.worksheetRecord.ks_panels[index].kp_data || []).slice();
+                        Array.prototype.push.apply(items, res.data);
+                    }
+                        
+                    this.set('worksheetRecord.ks_panels.' + index + '.kp_data', items);
+                    this.set('worksheetRecord.ks_panels.' + index + '.kp_busy', false);
+
+                    let count = items.length,
+                        total = +res.total;
+
+                    if (count >= res.total) {
+                        this.set('worksheetRecord.ks_panels.' + index + '.kp_more', false);
+                    } else {
+                        this.set('worksheetRecord.ks_panels.' + index + '.kp_more', true);
+                    }
+
+                    this.__setPaging(panel, {
+                        start: payload.start + payload.limit,
+                        limit: this.pageSize,
+                        __start: 0,
+                        __limit: count > this.pageSize ? count : this.pageSize
+                    });
+
                     defer.resolve();
+                    
                 });
 
                 return defer.promise;
+            }
+
+            __setPaging(panel, params) {
+                let paging = this.__getPaging(panel);
+                Object.assign(paging, params);
+            }
+
+            __getPaging(panel) {
+                let token = 'panel_' + this.projectRecord.sp_id + '_' + panel.kp_id;
+
+                if (this.__paging[token] === undefined) {
+                    this.__paging[token] = {
+                        // load more paging
+                        start: 0,
+                        limit: this.pageSize,
+
+                        // reload paging
+                        __start: 0,
+                        __limit: this.pageSize
+                    };
+                }
+
+                return this.__paging[token];
             }
 
             __installDragDrop() {
@@ -288,14 +358,24 @@
                 this.set('route.path', '/worksheet/' + this.project + '/task/update/' + task.status.tts_id);
             }
 
-            __onTaskSave(e) {
-                let info = e.detail;
-                // sementara direload semua
+            __onNotify() {
                 this.reload();
             }
 
-            __onTaskRemove() {
-                this.reload();
+            __onLoadMoreTap(e) {
+                let paging = this.__getPaging(e.model.panel);
+
+                if (paging) {
+                    this.set('busy', true);
+
+                    this.__loadPanelData(e.model.panel, {
+                        start: paging.start,
+                        limit: paging.limit
+                    }).then(() => {
+                        this.set('busy', false);
+                        this.$.worksheet.resize();
+                    });
+                }
             }
         }
 

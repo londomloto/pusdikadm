@@ -33,6 +33,7 @@ class Diagram extends \Micro\Model {
                 )
             )
         );
+
     }
 
     public function getSource() {
@@ -228,8 +229,23 @@ class Diagram extends \Micro\Model {
         $diagram = self::findFirst($diagramId);
 
         if ($diagram) {
+            
+            $oldslug = $diagram->slug;
+
             $success = $diagram->save($options['props']);
+
             if ($success) {
+
+                if ($oldslug != $diagram->slug) {
+                    // we need to update task statuses here...
+                    \App\Tasks\Models\TaskStatus::find(array(
+                        'tts_worker = :slug:',
+                        'bind' => array( 'slug' => $oldslug )
+                    ))->update(array(
+                        'tts_worker' => $diagram->slug
+                    ));    
+                }
+                
                 if (isset($options['shapes']) && count($options['shapes']) > 0) {
                     $exists = array();
                     $shapes = array();

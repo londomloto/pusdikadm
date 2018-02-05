@@ -48,7 +48,7 @@
                 top: 0;
                 right: 0;
                 bottom: 0;
-                background-color: rgba(0,0,0,.7);
+                background-color: rgba(0,0,0,.5);
                 z-index: 1;
             }
 
@@ -181,12 +181,12 @@
 
         <kct-auth id="auth" config="[[ config ]]" on-load="__onAuthLoaded"></kct-auth>
         <kct-ajax id="ajax" config="[[ config ]]"></kct-ajax>
-        <kct-media size="{{ __responsive }}"></kct-media>
+        <kct-media screen="{{ screen }}"></kct-media>
         
         <div class="container">
             <div class="overlay"></div>
 
-            <div class$="column-left [[ __responsive ]]">
+            <div class$="column-left [[ screen ]]">
                 <div class="cover">
                     <div class="story">
                         <h3>[[ config.app_title ]]</h3>
@@ -195,7 +195,7 @@
                 </div>    
             </div>
 
-            <div class$="column-right [[ __responsive ]]">
+            <div class$="column-right [[ screen ]]">
                 <div class="login-logo">
                     <div class="icon"><iron-icon icon="lock-outline"></iron-icon></div>
                     <h3>e-lkh</h3>

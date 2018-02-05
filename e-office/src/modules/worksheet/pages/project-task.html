@@ -8,6 +8,7 @@
 <link rel="import" href="../../../../../cores/elements/kct-layouts/kct-hbox.html">
 <link rel="import" href="../../../../../cores/elements/kct-event/kct-event-publisher.html">
 <link rel="import" href="../../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../../cores/elements/kct-media/kct-media.html">
 
 <link rel="import" href="../blocks/header-block.html">
 <link rel="import" href="../blocks/activity-block.html">
@@ -61,25 +62,33 @@
                 width: 280px;
             }
 
+            .workspace.sm .hidden-sm { display: none;  }
+            .workspace.md .hidden-md { display: none;  }
         </style>
         
         <kct-ajax id="ajax"></kct-ajax>
-        <kct-event-publisher id="event-pulisher"></kct-event-publisher>
+        <kct-event-publisher id="publisher"></kct-event-publisher>
+        <kct-media screen="{{ screen }}"></kct-media>
         
         <kct-vbox>
-            <header-block id="header" on-back-tap="__onBackTap" text="Kegiatan">
+            <header-block id="header" on-back-tap="__onBackTap" text="Module Kegiatan" hide-header$="[[ __hideHeader(screen) ]]">
                 <h3 slot="header-value">[[ __projectTitle ]]</h3>
 
                 <paper-button hidden$="[[ formReadonly ]]" disabled$="[[ formInvalid ]]" on-tap="__onSaveTap" class="btn-action btn-primary" slot="right-toolbar" style="margin-left: 8px;">
-                    <iron-icon icon="done"></iron-icon>&nbsp;[[ __computeSaveLabel(recordAction) ]]
+                    <iron-icon icon="done"></iron-icon>&nbsp;[[ __computeSaveLabel(actionRecord) ]]
                 </paper-button>
+
                 
-                <paper-button hidden$="[[ __hideSend(recordAction, formReadonly) ]]" disabled$="[[ formInvalid ]]"  on-tap="__onSendTap" class="btn-action btn-blue" slot="right-toolbar">
-                    <iron-icon icon="send"></iron-icon>&nbsp;Simpan &amp; Teruskan
+                <paper-button hidden$="[[ __hideSend(actionRecord, formReadonly) ]]" disabled$="[[ formInvalid ]]"  on-tap="__onSendTap" class="btn-action btn-blue" slot="right-toolbar">
+                    <iron-icon icon="arrow-forward"></iron-icon>&nbsp;Lanjut
+                </paper-button>
+
+                <paper-button hidden$="[[ __hideRemove(actionRecord, formRemovable) ]]" on-tap="__onRemoveTap" class="btn-action btn-danger" slot="right-toolbar">
+                    <iron-icon icon="close"></iron-icon>&nbsp;Hapus
                 </paper-button>
 
             </header-block>
-            <div id="workspace" class="flex">
+            <div id="workspace" class$="workspace flex [[ screen ]]">
                 
                 <kct-hbox class="workspace-wrapper">
                     <div class="flex workspace-body">
@@ -88,15 +97,17 @@
                             project="[[ projectRecord ]]" 
                             record="{{ taskRecord }}" 
                             workspace="[[ workspaceRecord ]]" 
-                            action="[[ recordAction ]]" 
+                            action="[[ actionRecord ]]" 
                             form="[[ formRecord ]]" 
                             user="[[ user ]]" 
+                            route="{{ route }}" 
                             invalid="{{ formInvalid }}" 
                             readonly="{{ formReadonly }}" 
-                            on-save="__onFormSave" 
-                            on-cancel="__onFormCancel" 
-                            on-remove="__onFormRemove" 
-                            loading="[[ loading ]]"></taskform-block>
+                            removable="{{ formRemovable }}" 
+                            loading="[[ loading ]]" 
+                            on-before-update="__onFormBeforeUpdate" 
+                            on-after-update="__onFormAfterUpdate" 
+                            on-authorize="__onFormAuthorize"></taskform-block>
 
                         <activity-block 
                             id="activity" 
@@ -104,60 +115,22 @@
                             hidden$="[[ __phantom ]]" 
                             loading="[[ loading ]]"></activity-block> 
                     </div>
-                    <div class="workspace-side">
+                    <div class="workspace-side hidden-sm hidden-md">
                         <taskprop-block 
                             id="taskprop" 
                             project="[[ projectRecord ]]" 
+                            action="[[ actionRecord ]]" 
                             record="{{ taskRecord }}" 
                             workspace="[[ workspaceRecord ]]" 
                             user="[[ user ]]" 
-                            on-save="__onPropSave" loading="[[ loading ]]"></taskprop-block>
+                            route="{{ route }}"
+                            loading="[[ loading ]]" 
+                            on-after-update="__onPropAfterUpdate"></taskprop-block>
                     </div>
                 </kct-hbox>
 
             </div>
         </kct-vbox>
-
-        <kct-dialog id="flag-editor" title="Send Task" width="400">
-            
-            <template preserve-content>
-                <style include="theme-helper">
-                    paper-radio-group {
-                        display: block;
-                    }
-                    paper-radio-button {
-                        display: block;
-                        border: 1px solid #dfdfdf;
-                        border-radius: 4px;
-                        background-color: #fff;
-                        font-size: 13px;
-                    }
-                    paper-radio-button:hover {
-                        background-color: var(--paper-grey-100);
-                        box-shadow:0 2px 2px rgba(0,0,0,0.03),0 1px 0 rgba(0,0,0,0.03);
-                    }
-                    paper-radio-button + paper-radio-button {
-                        margin-top: 10px;
-                    }
-                    paper-radio-button b {
-                        font-weight: 500;
-                    }
-                </style>
-                <div slot="dialog-body">
-                    <paper-radio-group selected="{{ flag }}"> 
-                        <template is="dom-repeat" items="[[ statuses ]]">
-                            <paper-radio-button name="[[ item.text ]]">
-                                Send to <b>[[ item.text ]]</b>
-                            </paper-radio-button>
-                        </template>
-                    </paper-radio-group>
-                </div>
-                <div slot="dialog-footer">
-                    <paper-button on-tap="__onApplyFlagTap">Continue</paper-button>
-                </div>
-            </template>
-
-        </kct-dialog>
 
     </template>
     <script>
@@ -169,14 +142,12 @@
             static get properties() {
                 return {
                     recordId: { type: Number },
-                    recordAction: { type: String },
-                    returnAction: { type: String },
+                    actionRecord: { type: String },
+                    actionBack: { type: String },
                     project: { type: String },
                     projectRecord: { type: Object },
                     workspaces: { type: Array },
                     workspaceRecord: { type: Object },
-                    statuses: { type: Array },
-                    flag: { type: String },
                     formRecord: { type: Object },
                     taskRecord: { type: Object },
                     loading: { type: Boolean, value: false }
@@ -186,7 +157,7 @@
             static get observers() {
                 return [
                     '__projectRecordChanged(projectRecord.*)',
-                    '__recordActionChanged(recordAction)'
+                    '__actionRecordChanged(actionRecord)'
                 ];
             }
 
@@ -195,44 +166,37 @@
 
                 this.__phantom = true;
                 this.__projectTitle = 'Loading...';
-                this.__flagDefiner = this._defer();
             }
 
             handleRouteParams(project, action, type, id) {
                 if (project === undefined  || project == 'tour' || project == 'create') return;
                 if (action != 'task') return;
 
-                let returnAction = '/worksheet/' + project + '/view/kanban';
+                let actionBack = '/worksheet/' + project + '/view/kanban';
 
-                // has back data?
+                this.set('taskRecord', {});
+
                 if (this.route.data) {
+                    if (this.route.data.task) {
+                        this.set('taskRecord', this.route.data.task);
+                        this.set('route.data.task', null);
+                    }
+
                     if (this.route.data.back) {
-                        returnAction = this.route.data.back;    
+                        actionBack = this.route.data.back;    
                     }
                 }
-
-                this.set('returnAction', returnAction);
-                this.set('recordAction', type);
+                
+                this.set('actionBack', actionBack);
+                this.set('actionRecord', type);
                 this.set('recordId', id);
-                this.set('taskRecord', {});
 
                 this.set('project', project);
                 this.set('loading', true);
+
                 this.__loadProject();
 
                 this.$.taskprop.stopEditing();
-            }
-
-            handleResizing(width, height) {
-                let headerHeight = this.$.header.clientHeight;
-                let workspaceHeight = height - headerHeight;
-
-                let styles = {
-                    '--workspace-height': workspaceHeight + 'px',
-                    '--workspace-gutter': this.__computeGutter() + 'px'
-                };
-
-                this.updateStyles(styles);
             }
 
             __loadProject() {
@@ -240,10 +204,14 @@
 
                 this.set('__projectTitle', 'Loading...');
 
-                this.$.ajax.GET('/projects/load/' + this.project ).then(res => {
+                this.$.ajax.GET('/projects/' + this.project + '/load' ).then(res => {
                     this.set('projectRecord', res.data);
                     this.__loadWorkspaces();
                 });
+            }
+
+            __hideHeader(size) {
+                return size != 'xl' ? true : false;
             }
 
             __computeProjectTitle(title) {
@@ -251,60 +219,36 @@
             }
 
             __computeSaveLabel() {
-                return this.recordAction == 'create' ? 'Simpan Data Baru' : 'Simpan';
+                return this.actionRecord == 'create' ? 'Simpan Data' : 'Update';
             }
 
             __hideActivity() {
-                return this.recordAction == 'create' ? true : false;
+                return this.actionRecord == 'create' ? true : false;
             }
 
             __hideSave() {
                 let readonly = this.formReadonly === undefined ? false : this.formReadonly;
-                console.log(this.formReadonly);
                 return readonly;
             }
 
-            __hideSend() {
-                let readonly = this.formReadonly === undefined ? false : this.formReadonly;
-                
+            __hideSend(action, readonly) {
+                readonly = readonly === undefined ? false : readonly;
+
                 if (readonly) {
                     return true;
-                } else {
-                    return this.recordAction == 'create' ? true : false;    
                 }
+
+                return action == 'create' ? true : false;
             }
 
-            __computeGutter() {
-                let gutter = this.__workspaceGutter;
-                if (gutter === undefined) {
+            __hideRemove(action, removable) {
+                removable = removable === undefined ? true : removable;
 
-                    let outer, inner, width1, width2;
-                    
-                    outer = document.createElement('div');
-                    outer.style.visibility = 'hidden';
-                    outer.style.width = '100px';
-                    outer.style.msOverflowStyle = 'scrollbar';
-                    
-                    document.body.appendChild(outer);
-                    
-                    width1 = outer.offsetWidth;
-
-                    outer.style.overflow = 'scroll';
-
-                    inner = document.createElement('div');
-                    inner.style.width = '100%';
-                    
-                    outer.appendChild(inner);
-
-                    width2 = inner.offsetWidth;
-
-                    outer.parentNode.removeChild(outer);
-
-                    gutter = width1 - width2;
-                    this.__workspaceGutter = gutter;
+                if ( ! removable) {
+                    return true;
                 }
 
-                return gutter;
+                return action == 'create' ? true : false;
             }
 
             __projectRecordChanged(changed) {
@@ -313,7 +257,7 @@
                 }
             }
 
-            __recordActionChanged(action) {
+            __actionRecordChanged(action) {
                 this.set('__phantom', action != 'update');
             }
 
@@ -327,7 +271,7 @@
                     this.set('workspaces', res.data);
                     this.set('workspaceRecord', {});
 
-                    if (this.recordAction == 'create') {
+                    if (this.actionRecord == 'create') {
                         this.__handleCreate();
                     } else {
                         this.__handleUpdate();
@@ -341,8 +285,6 @@
                     role = this.user && this.user.su_sr_id;
 
                 if (workspace) {
-
-                    this.__loadStatuses(workspace.worker);
 
                     this.set('workspaceRecord', workspace);
 
@@ -376,18 +318,21 @@
                     this.set('taskRecord', {
                         task: {},
                         data: {},
+                        status: {},
                         labels: [],
                         users: []
                     });
 
                     if (form) {
                         this.$.form.render().then(() => {
-                            this.set('loading', false);
-                            this.$.activity.load({start: 0});
+                            this.$.activity.initialize();
                             this.$.taskprop.initialize();
+
+                            this.$.form.initialize().then(() => {
+                                this.set('loading', false);
+                            });
                         });
                     } else {
-                        // this.toast('Warning', `This document doesn't have form`, 'warn');
                         this.$.form.cleanup();
                         this.set('loading', false);
                     }
@@ -401,36 +346,38 @@
             __handleUpdate() {
                 if ( ! this.recordId) return;
 
-                let payload = {
-                    params: {
-                        tts_id: this.recordId
-                    }
-                };
+                if (this.taskRecord && this.taskRecord.task) {
+                    handle.bind(this)(this.taskRecord);
+                } else {
+                    let payload = {
+                        params: {
+                            tts_id: this.recordId
+                        }
+                    };
 
-                this.$.ajax.GET('/kanban', payload).then(res => {
-                    let record = res.data.length ? res.data[0] : null;
-                    handle.bind(this)(record);
-                });
+                    this.$.ajax.GET('/worksheet/kanban', payload).then(res => {
+                        let record = res.data.length ? res.data[0] : null;
+                        this.set('taskRecord', record);
+
+                        handle.bind(this)(this.taskRecord);
+                    });
+                }
 
                 function handle(record) {
                     if ( ! record) {
                         this.toast('Warning', 'Data tidak ditemukan', 'warn');
-                        this.set('route.path', this.returnAction);
+                        this.set('route.path', this.actionBack);
                         return;
                     }
 
                     let user = this.user && this.user.su_id;
                     let role = this.user && this.user.su_sr_id;
 
-                    this.set('taskRecord', record);
-
                     let workspace = (this.workspaces || []).find(item => {
                         return item.worker == record.status.tts_worker;
                     });
 
                     if (workspace) {
-                        this.__loadStatuses(workspace.worker, record.status.tts_status);
-                        
                         this.set('workspaceRecord', workspace);
 
                         let form = workspace.forms.find(f => {
@@ -465,10 +412,10 @@
                         if (form) {
                             this.$.form.render().then(() => {
                                 this.set('loading', false);
-                                this.$.activity.load({start: 0});
+                                this.$.activity.initialize();
+                                this.$.form.initialize();
                             });
                         } else {
-                            // this.toast('Warning', `This document doesn't have form`, 'warn');
                             this.$.form.cleanup();
                             this.set('loading', false);
                         }
@@ -481,53 +428,55 @@
 
             }
 
-            save(send = false, back = false) {
+            save(options = {}) {
+
                 if ( ! this.workspaceRecord.worker) return;
                 if ( ! this.projectRecord) return;
 
-                let record = this.taskRecord;
-                record.task.tt_sp_id = this.projectRecord.sp_id;
+                let send = options.send === undefined ? false : options.send,
+                    back = options.back === undefined ? false : options.back;
 
-                if (this.recordAction == 'create') {
-                    send = true;
-                }
-
-                let payload = {
-                    worker: this.workspaceRecord.worker,
-                    record: record,
-                    send: send
-                };
-
-                this.$.form.beforeSave(payload);
                 this.mask('Sedang menyimpan...');
 
-                if (this.recordAction == 'create') {
-                    this.$.ajax.POST('/kanban', payload).then(done.bind(this));
-                } else {
-                    this.$.ajax.PUT('/kanban/' + record.task.tt_id, payload).then(done.bind(this));
-                }
+                this.$.form.save(options).then(res => {
+
+                    if ( ! res.success) {
+                        this.unmask();
+                        return;
+                    }
+
+                    let record = this.taskRecord;
+                    record.task.tt_sp_id = this.projectRecord.sp_id;
+
+                    let payload = {
+                        worker: this.workspaceRecord.worker,
+                        record: record,
+                        send: send
+                    };
+
+                    if (this.actionRecord == 'create') {
+                        this.$.ajax.POST('/worksheet/kanban', payload).then(done.bind(this));
+                    } else {
+                        this.$.ajax.PUT('/worksheet/kanban/' + record.task.tt_id, payload).then(done.bind(this));
+                    }
+
+                });
 
                 function done(res) {
                     
                     this.unmask();
 
-                    // let back = send || (this.recordAction == 'create');
                     if (back) {
-                        this.set('route.path', this.returnAction);    
+                        this.set('route.path', this.actionBack);    
                     }
 
                     if (res.success) {
+                        this.$.publisher.publish('notify');
+
                         if ( ! back) {
-                            this.toast('Success', 'Data has been saved', 'info');
-                            this.$['activity'].load({start: 0});
+                            this.toast('Sukses', 'Data berhasil disimpan', 'info');
+                            this.$.activity.initialize();
                         }
-                        
-                        this.$['event-pulisher'].publish('task-save', {
-                            recordAction: this.recordAction,
-                            affected: res.data.affected,
-                            send: send,
-                            back: back
-                        });
 
                         if (res.message) {
                             this.toast('Warning', res.message, 'warn');
@@ -536,145 +485,77 @@
                 }
             }
 
-            __defineFlag(action, send) {
-                this.__flagDefiner = this._defer();
-
-                if (action == 'create' || send) {
-                    let statuses = this.statuses || [];
-
-                    if (statuses.length) {
-                        if (statuses.length == 1) {
-                            this.__flagDefiner.resolve(statuses[0].text);
-                        } else {
-                            this.set('flag', statuses[0].text);
-                            this.$['flag-editor'].open();    
-                        }
-                    } else {
-                        this.__flagDefiner.resolve(null);
-                    }
-                } else {
-                    this.__flagDefiner.resolve(null);
-                }
-                
-                return this.__flagDefiner.promise;
-            }
-
-            __loadStatuses(worker, current) {
-                this.set('statuses', []);
-
-                this.$.ajax.GET('/bpmn/statuses/' + worker).then(res => {
-                    let statuses = [];
-
-                    if (res.data && res.data.length) {
-                        if (current) {
-                            let curr, next;
-
-                            curr = res.data.find(item => {
-                                return item.id == current;
-                            });
-
-                            if (curr && curr.next) {
-                                (curr.next || []).forEach(stat => {
-                                    if (stat.text) {
-                                        statuses.push({
-                                            id: stat.id,
-                                            text: stat.text
-                                        });    
-                                    }
-                                });
-                            }
-                        } else {
-                            let stat = res.data[0];
-                            if (stat.text) {
-                                statuses.push({
-                                    id: stat.id,
-                                    text: stat.text
-                                });    
-                            }
-                            
-                        }
-                    }
-
-                    this.set('statuses', statuses);
-                });
-            }
-
-            __onApplyFlagTap() {
-                this.__flagDefiner.resolve(this.flag);
-                this.$['flag-editor'].close();
-            }
-
             __onSaveTap() {
-                let back = this.recordAction == 'create';
-                this.save(false, back);
+                let back = this.actionRecord == 'create';
+                this.save({ send: false, back: back });
             }
 
             __onSendTap() {
-                this.save(true, true);
-            }
-
-            __onFormSave(e) {
-                let send = e.detail.send,
-                    back = e.detail.back,
-                    response = e.detail.response;
-
-                if (back) {
-                    this.set('route.path', this.returnAction);    
-                } else {
-                    this.toast('Sukses', 'Data berhasil disimpan', 'info');
-                    this.$['activity'].load({start: 0});
-                }
-
-                this.$['event-pulisher'].publish('task-save', {
-                    recordAction: this.recordAction,
-                    affected: response.data.affected,
-                    send: send,
-                    back: back
+                this.confirm('Konfirmasi', 'Lanjutkan ke tahap berikutnya?').then(y => {
+                    if (y) {
+                        this.save({ send: true, back: true });        
+                    }
                 });
-            }
-
-            __onFormCancel(e) {
-                let back = e.detail.back;
-                if (back) {
-                    this.set('route.path', this.returnAction);
-                }
-            }
-
-            __onFormRemove(e) {
-                let back = e.detail.back;
-
-                if (back) {
-                    this.set('route.path', this.returnAction);
-                    this.$['event-pulisher'].publish('task-remove');
-                }
-            }
-
-            __onPropSave(e) {
-                this.$['activity'].load({start: 0});
-
-                let send = e.detail.send,
-                    back = e.detail.back;
-                    
-                this.$['event-pulisher'].publish('task-save', {
-                    // recordAction: this.recordAction,
-                    // affected: res.data.affected,
-                    send: send,
-                    back: back
-                });
-
-                if (back) {
-                    this.set('route.path', this.returnAction);
-                }
                 
             }
 
+            __onRemoveTap() {
+                this.confirm('Konfirmasi', 'Apakah Anda yakin akan menghapus kegiatan ini?').then(y => {
+                    if (y) {
+                        this.mask('Sedang menghapus...');
+
+                        this.$.form.remove().then(res => {
+                            if (res.success) {
+                                this.$.ajax.DELETE('/worksheet/kanban/' + this.taskRecord.task.tt_id).then(() => {
+                                    this.unmask();
+                                    this.$.publisher.publish('notify');
+                                    this.set('route.path', this.actionBack);
+                                });
+                            } else {
+                                this.unmask();
+                            }
+                        });
+                    }
+                }); 
+            }
+
+            __onFormBeforeUpdate() {
+                this.mask('Sedang menyimpan...');
+            }
+
+            __onFormAfterUpdate(e) {
+                this.unmask();
+
+                this.$.activity.initialize();
+                this.$.publisher.publish('notify');
+
+                if (e.detail.back) {
+                    this.set('route.path', this.actionBack);
+                }
+            }
+
+            __onFormAuthorize(e) {
+                if ( ! e.detail.auth) {
+                    this.set('route.path', this.actionBack);
+                }
+            }
+
+            __onPropAfterUpdate(e) {
+                this.$.activity.initialize();
+                this.$.publisher.publish('notify');
+                
+                if (e.detail.back) {
+                    this.set('route.path', this.actionBack);
+                }
+            }
+
             __onCancelTap() {
-                this.set('route.path', this.returnAction);
+                this.set('route.path', this.actionBack);
             }
 
             __onBackTap() {
                 this.set('route.data.back', null);
-                this.set('route.path', this.returnAction);
+                this.set('route.path', this.actionBack);
             }
         }
 

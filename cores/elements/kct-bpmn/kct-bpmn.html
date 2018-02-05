@@ -6,7 +6,6 @@
 <link rel="import" href="../../bower_components/paper-card/paper-card.html">
 <link rel="import" href="../../bower_components/paper-radio-group/paper-radio-group.html">
 <link rel="import" href="../../bower_components/paper-radio-button/paper-radio-button.html">
-<link rel="import" href="../../bower_components/neon-animation/web-animations.html">
 <link rel="import" href="../../bower_components/paper-menu-button/paper-menu-button.html">
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
@@ -50,7 +49,7 @@
                 border-bottom: 1px solid var(--paper-grey-300);
             }
             .pallet-container {
-                width: 60px;
+                width: 44px;
                 position: relative;
                 background-color: var(--paper-grey-200);
                 border-right: 1px solid var(--paper-grey-300);
@@ -275,10 +274,10 @@
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
-        <kct-media size="{{ __responsive }}"></kct-media>
+        <kct-media screen="{{ screen }}"></kct-media>
 
         <!-- PANEL -->
-        <kct-vbox id="panel" class$="panel [[ __responsive ]]">
+        <kct-vbox id="panel" class$="panel [[ screen ]]">
             <div class="panel-header">
                 <kct-hbox fit>
                     <div class="column-0">
@@ -297,7 +296,7 @@
                     </div>
                     <div class="flex column-2">
                         <div class="tools">
-                            <paper-menu-button class="menu-responsive" horizontal-align="right" allow-outside-scroll>
+                            <paper-menu-button class="menu-responsive" horizontal-align="right" allow-outside-scroll no-animations>
                                 <paper-icon-button icon="menu" slot="dropdown-trigger"></paper-icon-button>
                                 <paper-listbox class="list-group" slot="dropdown-content" selected="{{ tool }}" attr-for-selected="name">
                                     <dom-repeat items="[[ tools ]]">
@@ -400,7 +399,7 @@
                         <div id="pallet"></div>
                     </div>
                     <div class="flex paper-container">
-                        <div id="paper"></div>        
+                        <div id="paper"></div>
                     </div>
                 </kct-hbox>
             </div>
@@ -636,15 +635,18 @@
 
             __createPallete() {
                 return `
-                    <g class="graph-pallet-item" data-shape="Graph.shape.activity.Start" transform="matrix(1,0,0,1,10,0)">  
-                        <circle cx="20" cy="32" r="16"/>  
+                    <g class="graph-pallet-item" data-shape="Graph.shape.activity.Start" transform="matrix(1,0,0,1,2,0)">  
+                        <circle cx="20" cy="24" r="16" style="stroke: transparent"/> 
+                        <circle cx="20" cy="24" r="10" style="pointer-events: none"/>  
                     </g>  
-                    <g class="graph-pallet-item" data-shape="Graph.shape.activity.Final" transform="matrix(1,0,0,1,10,46)">  
-                        <circle cx="20" cy="32" r="16"/>  
-                        <circle cx="20" cy="32" r="12" class="full"/>
+                    <g class="graph-pallet-item" data-shape="Graph.shape.activity.Final" transform="matrix(1,0,0,1,2,0)">  
+                        <circle cx="20" cy="60" r="16" style="stroke: transparent"/>  
+                        <circle cx="20" cy="60" r="10" style="pointer-events: none"/>  
+                        <circle cx="20" cy="60" r="6" class="full" style="pointer-events: none"/>
                     </g>  
-                    <g class="graph-pallet-item" data-shape="Graph.shape.activity.Action" transform="matrix(1,0,0,1,10,105)">  
-                        <rect x="4" y="4" width="32" height="32" rx="0" ry="0"/>
+                    <g class="graph-pallet-item" data-shape="Graph.shape.activity.Action" transform="matrix(1,0,0,1,2,0)">  
+                        <rect x="4" y="82" width="32" height="32" rx="0" ry="0" style="stroke: transparent"/>
+                        <rect x="10" y="88" width="20" height="20" rx="0" ry="0" style="pointer-events: none"/>
                     </g>  
                 `;
                     // <g class="graph-pallet-item" data-shape="Graph.shape.activity.Router" transform="matrix(1,0,0,1,10,160)">  

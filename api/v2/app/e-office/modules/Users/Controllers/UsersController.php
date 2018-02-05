@@ -7,7 +7,57 @@ use App\Users\Models\User,
 class UsersController extends \Micro\Controller {
 
     public function testAction() {
-        
+        $data = \App\Lkh\Models\Lkh::get(1)->data;
+        $post = $data->toArray();
+
+        $flag = array();
+        $date = $post['lkh_date'];
+        $user = $post['lkh_su_id'];
+        $time = strtotime($date);
+
+        $m = date('m', $time);
+        $y = date('Y', $time);
+
+        $exam = \App\Lkh\Models\Exam::findFirst(array(
+            'lke_su_id = :user: AND YEAR(lke_date) = :y:',
+            'bind' => array(
+                'user' => $user,
+                'y' => $y
+            )
+        ));
+
+        if ( ! $exam) {
+            $flag[] = 'Y';
+        }
+
+        $exam = \App\Lkh\Models\Exam::findFirst(array(
+            'lke_su_id = :user: AND MONTH(lke_date) = :m: AND YEAR(lke_date) = :y:',
+            'bind' => array(
+                'user' => $user,
+                'y' => $y,
+                'm' => $m
+            )
+        ));
+
+        if ( ! $exam) {
+            $flag[] = 'M';
+        }
+
+        $exam = \App\Lkh\Models\Exam::findFirst(array(
+            'lke_su_id = :user: AND lke_date = :d:',
+            'bind' => array(
+                'user' => $user,
+                'd' => $date
+            )
+        ));
+
+        if ( ! $exam) {
+            $flag[] = 'D';
+        }
+
+        $flag = implode('', $flag);
+
+        print_r($flag);
     }
 
     public function findAction() {
@@ -217,10 +267,9 @@ class UsersController extends \Micro\Controller {
             if ($user->save($post)) {
                 if ( ! empty($user->su_ticket)) {
                     $task = \App\Tasks\Models\Task::get($user->su_ticket)->data;
+                    
                     if ($task) {
-                        
                         $task->next($user->toArray());
-
                         $user->su_ticket = NULL;
                         $user->save();
                     }

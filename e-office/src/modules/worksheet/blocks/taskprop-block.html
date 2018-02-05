@@ -133,7 +133,7 @@
         </style>
         
         <kct-ajax id="ajax"></kct-ajax>
-        <kct-socket manager="worksheet-socket" session="{{ socketSession }}"></kct-socket>
+        <kct-socket manager="global-socket" session="{{ socketSession }}"></kct-socket>
 
         <div class="scroller">
 
@@ -154,10 +154,10 @@
                             on-change="__onComboStatusChange"></task-combo-status>
                     </div> -->
                     <div class="display">
-                        <div class="empty" hidden$="[[ __hideEmptyStatus(record.task.tt_flag) ]]">Belum ada</div>
-                        <div class="value" hidden$="[[ !__hideEmptyStatus(record.task.tt_flag) ]]">
+                        <div class="empty" hidden$="[[ __hideEmptyStatus(record.status.tts_status) ]]">Belum ada</div>
+                        <div class="value" hidden$="[[ !__hideEmptyStatus(record.status.tts_status) ]]">
                             <iron-icon icon="info-outline" class="value-icon"></iron-icon>    
-                            <span class="value-text">[[ record.task.tt_flag ]]</span>
+                            <span class="value-text">[[ record.status.status_text ]]</span>
                         </div>
                     </div>
                 </div>
@@ -169,11 +169,11 @@
                     <div class="display">
                         <div class="user-item">
                             <div class="icon">
-                                <img src$="[[ user.su_avatar_thumb ]]&w=40&h=40"> 
+                                <img src$="[[ record.task.creator_su_avatar_thumb ]]&w=40&h=40"> 
                             </div>
                             <div class="text">
-                                <div>[[ user.su_fullname ]]</div>
-                                <div class="meta">[[ user.sr_name ]]</div>
+                                <div>[[ record.task.creator_su_fullname ]]</div>
+                                <div class="meta">[[ record.task.creator_sr_name ]]</div>
                             </div>
                             <div class="clearfix"></div>
                         </div>
@@ -301,6 +301,13 @@
                 this.stopEditing();
                 // this.assignSelf();
 
+                // set creator
+                
+                this.set('record.task.tt_creator_id', this.user.su_id);
+                this.set('record.task.creator_su_avatar_thumb', this.user.su_avatar_thumb);
+                this.set('record.task.creator_su_fullname', this.user.su_fullname);
+                this.set('record.task.creator_sr_name', this.user.sr_name);
+
                 if (this.project) {
                     this.set('record.task.tt_due_date', this.project.sp_end_date);
                     this.set('record.task.tt_due_date_formatted', this.project.sp_end_date_formatted);
@@ -409,7 +416,8 @@
                     let indicator = prop + '-indicator';
                     this.$[indicator].busy = true;
 
-                    this.$.ajax.PUT('/kanban/' + this.record.task.tt_id, payload, options).then(res => {
+                    this.$.ajax.PUT('/worksheet/kanban/' + this.record.task.tt_id, payload, options).then(res => {
+                        this.$[indicator].busy = false;
 
                         if (res.success) {
                             if (prop == 'due') {
@@ -417,16 +425,13 @@
                             }
                         }
 
-                        let e = new CustomEvent('save', {
+                        this.dispatchEvent(new CustomEvent('after-update', {
                             detail: {
                                 send: send,
                                 back: back
                             }
-                        });
-
-                        this.dispatchEvent(e);
-                        this.$[indicator].busy = false;
-
+                        }));
+                        
                         resolve(res);
                     });
 

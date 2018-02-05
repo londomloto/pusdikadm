@@ -60,6 +60,7 @@
                     columns="{{ columns }}" 
                     selected="{{ selected }}" 
                     page-size="100" 
+                    selection-model="row" 
                     hide-header></kct-grid>
             </div>
         </kct-vbox>
@@ -99,7 +100,7 @@
                         </kct-checkbox>
 
                         <kct-checkbox value="{{ editing.smn_default }}" true-value="1" false-value="0">
-                            <label>Buka otomatis pada saat aplikasi dimulai</label>
+                            <label>Jadikan halaman utama (homepage)</label>
                         </kct-checkbox>
 
                     </kct-form-validator>
@@ -169,7 +170,7 @@
                                     }
                                 },
                                 { 
-                                    text: 'Otomatis',
+                                    text: 'Home',
                                     width: 80, 
                                     align: 'center',
                                     dataIndex: 'smn_default',

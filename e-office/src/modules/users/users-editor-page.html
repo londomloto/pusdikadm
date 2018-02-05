@@ -216,6 +216,7 @@
                 this.mask('Sedang menyimpan...');
 
                 if (phantom) {
+                    data.su_invite = true;
                     this.$.ajax.POST('/users', data).then(done.bind(this));
                 } else {
                     this.$.ajax.PUT('/users/' + data.su_id, data).then(done.bind(this));

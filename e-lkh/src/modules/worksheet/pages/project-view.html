@@ -3,7 +3,6 @@
 <link rel="import" href="../../../../../cores/elements/kct-pages/kct-pages.html">
 <link rel="import" href="../../../../../cores/elements/kct-layouts/kct-vbox.html">
 <link rel="import" href="../../../../../cores/elements/kct-combobox/kct-combobox.html">
-<link rel="import" href="../../../../../cores/elements/kct-socket/kct-socket.html">
 <link rel="import" href="../../../../../cores/elements/kct-media/kct-media.html">
 <link rel="import" href="../blocks/header-block.html">
 <link rel="import" href="../plugins/task-search.html">
@@ -76,11 +75,10 @@
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
-        <kct-socket manager="worksheet-socket" on-notify="__onSocketNotify"></kct-socket>
-        <kct-media size="{{ responsive }}"></kct-media>
+        <kct-media screen="{{ screen }}"></kct-media>
 
-        <kct-vbox class$="container [[ responsive ]]">
-            <header-block text="Module Kegiatan" on-back-tap="__onBackTap" hide-header$="[[ __hideHeader(responsive) ]]">
+        <kct-vbox class$="container [[ screen ]]">
+            <header-block text="Module Kegiatan" on-back-tap="__onBackTap" hide-header$="[[ __hideHeader(screen) ]]">
                 <kct-combobox 
                     id="combo-project" 
                     slot="header-value" 
@@ -182,10 +180,6 @@
                 };
             }
 
-            __onSocketNotify() {
-                this.set('notify', true);
-            }
-
             handleRouteParams(project, action, type) {
                 if (project === undefined  || project == 'tour' || project == 'create') return;
                 if (action != 'view') return;
@@ -221,8 +215,8 @@
                 return this.$['view-switcher'].selectedItem;
             }
 
-            __hideHeader(size) {
-                return size != 'xl' ? true : false;
+            __hideHeader(screen) {
+                return screen != 'xl' ? true : false;
             }
 
             __startTour() {

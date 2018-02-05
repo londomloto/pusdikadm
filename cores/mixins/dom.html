@@ -1,0 +1,51 @@
+<link rel="import" href="mixins.html">
+<script>
+    {
+        let cached = {};
+
+        Mixins.DOM = Polymer.dedupingMixin((superclass) => {
+
+            return class extends superclass {
+
+                _getElementSize(elem) {
+                    let size = {
+                        width: elem.clientWidth,
+                        height: elem.clientHeight
+                    }
+                    return size;
+                }
+
+                _getScrollerSize() {
+                    if (cached.scrollSize === undefined) {
+                        let outer, inner, width1, width2;
+                    
+                        outer = document.createElement('div');
+                        outer.style.visibility = 'hidden';
+                        outer.style.width = '100px';
+                        outer.style.msOverflowStyle = 'scrollbar';
+                        
+                        document.body.appendChild(outer);
+                        
+                        width1 = outer.offsetWidth;
+
+                        outer.style.overflow = 'scroll';
+
+                        inner = document.createElement('div');
+                        inner.style.width = '100%';
+                        
+                        outer.appendChild(inner);
+
+                        width2 = inner.offsetWidth;
+
+                        outer.parentNode.removeChild(outer);
+                        cached.scrollSize = width1 - width2;
+                    }
+
+                    return cached.scrollSize;
+                }
+
+            };
+        });
+    }
+    
+</script>

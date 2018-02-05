@@ -422,7 +422,7 @@
 
                 this.set('projectRecord', {});
                 
-                this.$.ajax.GET('/projects/load/' + this.project).then(res => {
+                this.$.ajax.GET('/projects/' + this.project + '/load').then(res => {
                     this.set('projectRecord', res.data);
                     this.__loadMembers();
                 });

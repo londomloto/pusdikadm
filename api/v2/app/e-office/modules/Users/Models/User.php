@@ -103,6 +103,33 @@ class User extends \Micro\Model {
             )
         );
 
+        $this->hasOne(
+            'su_sj_id',
+            'App\Jobs\Models\Job',
+            'sj_id',
+            array(
+                'alias' => 'Job'
+            )
+        );
+
+        $this->hasOne(
+            'su_scp_id',
+            'App\Company\Models\Company',
+            'scp_id',
+            array(
+                'alias' => 'Company'
+            )
+        );
+
+        $this->hasOne(
+            'su_sdp_id',
+            'App\Departments\Models\Department',
+            'sdp_id',
+            array(
+                'alias' => 'Department'
+            )
+        );
+
     }
 
     public function getSource() {
@@ -146,6 +173,7 @@ class User extends \Micro\Model {
     // @Override
     public function toArray($columns =  NULL) {
         $array = parent::toArray($columns);
+        $array['su_dob_formatted'] = date('d M Y', strtotime($this->su_dob));
 
         if (empty($array['su_fullname'])) {
             $array['su_fullname'] = $array['su_email'];
@@ -169,6 +197,18 @@ class User extends \Micro\Model {
 
         if ($this->role) {
             $array = array_merge($array, $this->role->toArray());
+        }
+
+        if ($this->job) {
+            $array['su_sj_name'] = $this->job->sj_name;
+        }
+
+        if ($this->company) {
+            $array['su_scp_name'] = $this->company->scp_name;
+        }
+
+        if ($this->department) {
+            $array['su_sdp_name'] = $this->department->sdp_name;
         }
 
         // need to reinvite
@@ -499,6 +539,15 @@ class User extends \Micro\Model {
                     $query->data->save();
                     $query->data->sendInvitation();
                 }
+            } else {
+                $query->success = FALSE;
+                $query->message = [];
+
+                foreach($query->data->getMessages() as $m) {
+                    $query->message[] = $m;
+                }
+
+                $query->message = implode('<br>', $query->message);
             }
 
         }

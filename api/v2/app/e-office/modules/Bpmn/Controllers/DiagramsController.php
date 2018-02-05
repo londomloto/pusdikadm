@@ -48,9 +48,11 @@ class DiagramsController extends \Micro\Controller {
     public function updateAction($id) {
         $query = Diagram::get($id);
         $data = $this->request->getJson();
+
         if ($query->data) {
             $query->data->save($data);
         }
+
         return $query;
     }
 

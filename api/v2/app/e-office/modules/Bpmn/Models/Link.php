@@ -1,7 +1,8 @@
 <?php
 namespace App\Bpmn\Models;
 
-use Micro\Helpers\Text;
+use Micro\Helpers\Text,
+    Phalcon\Mvc\Model\Relation;
 
 class Link extends \Micro\Model {
 
@@ -21,6 +22,18 @@ class Link extends \Micro\Model {
             'id',
             array(
                 'alias' => 'Target'
+            )
+        );
+
+        $this->hasMany(
+            'id',
+            'App\Kanban\Models\KanbanStatus',
+            'kst_status',
+            array(
+                'alias' => 'KanbanStatuses',
+                'foreignKey' => array(
+                    'action' => Relation::ACTION_CASCADE
+                )
             )
         );
     }

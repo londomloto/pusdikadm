@@ -28,6 +28,15 @@ class AssetsController extends \Micro\Controller {
      * GET
      */
     public function downloadAction() {
-        $q = $this->request->getQuery();
+        $source = $this->request->getQuery('s');
+
+        $file = APPPATH.$source;
+        
+        if (file_exists($file) && is_file($file)) {
+            $this->file->download($file);    
+        } else {
+            $this->response->setStatusCode('404', 'Not Found');
+            $this->response->send();
+        }
     }
 }

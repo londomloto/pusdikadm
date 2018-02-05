@@ -15,7 +15,10 @@
 <link rel="import" href="../../kct-message/kct-confirm.html">
 <link rel="import" href="../../kct-media/kct-media.html">
 <link rel="import" href="../../kct-auth/kct-auth.html">
+<link rel="import" href="../../kct-socket/kct-socket-manager.html">
+<link rel="import" href="../../kct-socket/kct-socket.html">
 <link rel="import" href="../blocks/navigation-block.html">
+<link rel="import" href="../blocks/notification-block.html">
 
 <link rel="import" href="base-layout.html">
 
@@ -58,6 +61,7 @@
 
             .primary-toolbar {
                 @apply --app-primary-toolbar;
+                z-index: 2;
                 padding-right: 5px;
             }
 
@@ -67,9 +71,7 @@
             .secondary-toolbar::before {
                 display: block;
                 content: '';
-                /*border-top: 1px solid #dfdfdf;*/
                 border-bottom: 1px solid #dfdfdf;
-                /*border-bottom: 3px solid var(--paper-indigo-500);*/
                 position: absolute;
                 left: 0;
                 right: 0;
@@ -87,12 +89,6 @@
             [main-title] .logo-powered {
                 font-size: 10px;
                 text-transform: uppercase;
-                position: relative;
-                top: 2px;
-            }
-
-            [main-title] .logo-powered.sm {
-                display: none;
             }
 
             kct-tabs { 
@@ -121,80 +117,100 @@
                 border-left: 1px solid #dfdfdf;
                 border-right: 1px solid #dfdfdf;
             }
-            .spinner {
-                --paper-spinner-color: var(--paper-indigo-500);
-                /*width: 20px;
-                height: 20px;  */
-            }
             
-            .navbar > div {
-                float: left;
+            .navbar {
                 height: 42px;
-                padding: 0;
+                @apply --layout-horizontal;
+            }
+            .navbar > .nav-item {
+                height: 100%;
+                padding: 0 2px;
                 color: var(--paper-indigo-500);
             }
-            .nav-spinner {
-                position: relative;
-                margin-right: 3px;
-                top: 7px;
+
+            .navbar > .nav-item.nav-flex {
+                @apply --layout-flex;
             }
-            .nav-profile {
+
+            .navbar > .nav-item > * {
                 position: relative;
                 top: 2px;
             }
-            .nav-profile a {
+
+            .nav-message {
+                background-color: var(--paper-blue-500);
                 color: #fff;
-                text-decoration: none;
-                display: inline-block;
+                padding: 6px 12px 5px 12px;
+                border-radius: 15px;
+                font-size: 12px;
                 position: relative;
-                z-index: 2;
+                top: 8px !important;
+            }
+
+            .nav-message > a {
+                color: var(--paper-yellow-500);
+            }
+            .nav-profile {
+                cursor: pointer;
+            }
+            .nav-profile > div {
+                float: left;
+                color: #fff;
+                position: relative;
                 background-color: var(--paper-blue-grey-300);
             }
-            .nav-profile a.text {
+            .nav-profile > .nav-profile-name {
                 height: 26px;
                 padding: 0 15px;
                 line-height: 24px;
                 border-radius: 15px 0 0 15px;
-                top: -8px;
                 right: -10px;
+                margin-left: -10px;
+                top: 6px;
                 z-index: 1;
                 font-size: 13px;
             }
-            .nav-profile a.avatar {
+            .nav-profile > .nav-profile-icon {
                 width: 36px;
                 height: 36px;
                 border-radius: 50%;
                 text-align: center;
-                top: 2px;
+                overflow: hidden;
+                z-index: 2;
+                top: 1px;
             }
-            .nav-profile a.avatar img {
+            .nav-profile > .nav-profile-icon img {
                 display: inline-block;
-                border-radius: 50%;
                 width: 32px;
                 height: 32px;
+                border-radius: 50%;
                 position: relative;
                 top: 2px;
             }
-            .nav-profile a.icon {
+            .nav-profile > .nav-profile-edit {
                 height: 26px;
                 padding: 0 10px;
                 border-radius: 0 15px 15px 0;
-                top: -9px;
                 left: -10px;
-                z-index: 1;
+                margin-right: -10px;
+                top: 6px;
                 --iron-icon-width: 18px;
                 --iron-icon-height: 18px;
             }
+            
             .nav-power {
-                position: relative;
-                top: 2px;
+                color: var(--paper-red-300);
+                --paper-icon-button-ink-color: var(--paper-red-500);
             }
-            .primary-toolbar.sm .nav-profile a.text,
-            .primary-toolbar.sm .nav-profile a.icon { display: none; }
+
+            .layout.sm .hidden-sm { display: none;  }
+            .layout.md .hidden-md { display: none;  }
         </style>
         
         <kct-auth id="auth" config="[[ config ]]" user="{{ user }}" on-load="__onAuthLoad"></kct-auth>
-        <kct-media size="{{ __responsive }}"></kct-media>
+        <kct-media screen="{{ screen }}"></kct-media>
+        <kct-socket-manager id="socket" name="global-socket"></kct-socket-manager>
+        <kct-socket manager="global-socket" on-notify="__onSocketNotify"></kct-socket>
 
         <app-drawer-layout id="viewport" class="unresolved" fullbleed>
             
@@ -202,29 +218,24 @@
                 <navigation-block id="navigation" config="{{ config }}" route="{{ route }}" user="{{ user }}" on-tap="__onNavigationTap"></navigation-block>
             </app-drawer>
             
-            <app-header-layout has-scrolling-region>
+            <app-header-layout class$="layout [[ screen ]]" has-scrolling-region>
                 <app-header slot="header" fixed effects="waterfall">
-                    <app-toolbar class$="primary-toolbar [[ __responsive ]]">
+                    <app-toolbar class="primary-toolbar">
                         <paper-icon-button icon="menu" drawer-toggle></paper-icon-button>
                         <div main-title>
                             <div class="logo">
                                 <span class="logo-text">[[ config.app_title ]]</span>
-                                <span class$="logo-powered [[ __responsive ]]">powered by <b style="color: var(--paper-blue-700)">PUSDIKADM</b></span>
-                                <!-- <img alt="WORKSAURUS" src="images/logo/worksaurus-2.png">     -->
+                                <span class="logo-powered hidden-sm hidden-md">powered by <b style="color: var(--paper-blue-700)">PUSDIKADM</b></span>
                             </div>
                         </div>
-                        <!-- <div class="navbar">
-                            <div class="nav-spinner"><paper-spinner-lite class="spinner" active$="[[ busy ]]"></paper-spinner-lite></div>
-                            <div class="nav-profile">
-                                <a on-click="__onProfileClick" href="javascript:;" class="text">&nbsp;[[ user.su_fullname ]]</a>
-                                <a on-click="__onProfileClick" href="javascript:;" class="avatar"><img class="avatar" src$="[[ user.su_avatar_thumb ]]&w=32&h=32" alt="."></a>
-                                <a on-click="__onProfileClick" href="javascript:;" class="icon"><iron-icon icon="create"></iron-icon></a>
+                        <div class="navbar">
+                            <div class="nav-item nav-flex">
+                                
                             </div>
-                            <div class="nav-power">
-                                <paper-icon-button on-tap="__onLogoutTap" icon="power-settings-new"></paper-icon-button>
+                            <div class="nav-item">
+                                <notification-block id="notification" user="[[ user ]]" route="{{ route }}" class="nav-notif" screen="[[ screen ]]" ></notification-block>
                             </div>
-                        </div> -->
-                        <!-- <paper-icon-button icon="search" on-tap="__onSearchTap"></paper-icon-button> -->
+                        </div>
                     </app-toolbar>
                     <app-toolbar class="secondary-toolbar">
                         <kct-tabs id="tabs" selected="{{ page }}" attr-for-selected="name" align-bottom scrollable>
@@ -320,6 +331,8 @@
                         this.$.viewport.classList.remove('unresolved');
                         this.__doLayout();
                         this.$.navigation.loadMenus();
+                        this.$.socket.connect();
+                        this.$.notification.load();
                     },
                     1000
                 );
@@ -485,20 +498,12 @@
                 });
             }
 
-            __onSearchTap() {
-                this.$.drawer2.toggle();
-            }
-
             __onNavigationTap() {
                 // this.$.drawer1.toggle();
             }
 
-            __onNotificationTap() {
-                this.set('route.path','/billing');
-            }
-
-            __displayGlobalNotif() {
-                return this.config.notif_global && this.config.notif_global != '';
+            __onSocketNotify() {
+                this.$.notification.load();
             }
 
         }
