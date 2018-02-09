@@ -155,34 +155,38 @@ class App extends \Phalcon\Mvc\Micro {
             date_default_timezone_set($this->config->app->timezone);
         }
 
-        $this->response
-            ->setHeader('App-Name', $this->config->app->name)
-            ->setHeader('App-Version', $this->config->app->version)
-            ->setHeader('App-Author', $this->config->app->author)
-            ->setHeader('App-Webmaster', 'roso.sasongko@gmail.com');
+        if ( ! headers_sent()) {
+            header('App-Name: '.$this->config->app->name);
+            header('App-Version: '.$this->config->app->version);
+            header('App-Author: '.$this->config->app->author);
+            header('App-Platform: Worksaurus');
+        }
 
     }
 
     private function _initLoader() {
+
+        // composer loader
+        $composer = $this->config->sys->path . '/../vendor/autoload.php';
+        require_once $composer;
+
+        // internal loader
         $loader = new \Phalcon\Loader();
 
         $namespaces = array(
             'Micro' => array(__DIR__)
         );
 
-        // composer
-        $composer = $this->config->sys->path . '/../vendor/composer/';
-
-        if (file_exists($composer) && is_dir($composer)) {
-            $psr4 = require_once($composer . 'autoload_psr4.php');
-
-            foreach($psr4 as $key => $val) {
-                $key = rtrim($key, '\\');
-                $psr4[$key] = $val;
-            }
-
-            $namespaces = array_merge($namespaces, $psr4);
-        }
+        // $composer = $this->config->sys->path . '/../vendor/composer/';
+        
+        // if (file_exists($composer) && is_dir($composer)) {
+        //     $psr4 = require_once($composer . 'autoload_psr4.php');
+        //     foreach($psr4 as $key => $val) {
+        //         $key = rtrim($key, '\\');
+        //         $psr4[$key] = $val;
+        //     }
+        //     $namespaces = array_merge($namespaces, $psr4);
+        // }
 
         $loader->registerNamespaces($namespaces)->register();
 
@@ -195,24 +199,22 @@ class App extends \Phalcon\Mvc\Micro {
         class_alias(\Micro\Http\Response::class, 'Response');
 
         $this->getDI()->set('loader', $loader, TRUE);
-        if(isset($this->config->mailer)) $this->getDI()->set('mailer', new Mailer($this->config->mailer), TRUE);
 
-        // initialize moment
-        if (class_exists('Moment\Moment')) {
-            \Moment\Moment::setLocale($this->config->app->locale);
+        if(isset($this->config->mailer)) {
+            $this->getDI()->set('mailer', new Mailer($this->config->mailer), TRUE);
         }
     }
 
     private function _initModule() {
-        $folder = new \DirectoryIterator($this->config->app->path . 'modules/');
+        $folders = new \DirectoryIterator($this->config->app->path . 'modules/');
         $namespaces = array();
         $modules = array();
 
-        foreach($folder as $item) {
+        foreach($folders as $item) {
             $name = $item->getFilename();
             $path = $item->getPath();
 
-            if ($name[0] == '.') continue;
+            if ($name[0] == '.' || $name[0] == '..') continue;
 
             if ($item->isDir()) {
                 $controllers = 'App\\' . $name . '\Controllers';
@@ -221,19 +223,21 @@ class App extends \Phalcon\Mvc\Micro {
                 $namespaces[$controllers] = array($path . '/' . $name . '/Controllers/');
                 $namespaces[$models] = array($path . '/' . $name . '/Models/');
 
-                $prefix = '/' . strtolower($name);
+                $prefix = '/' . \Phalcon\Text::uncamelize($name, '-');
                 
                 foreach(scandir($namespaces[$controllers][0]) as $file) {
-                    if ($file[0] == '.') continue;
-                    $module = str_replace('Controller', '', basename($file, '.php'));
-                    $module = \Phalcon\Text::uncamelize($module, '-');
-                    $route = $prefix;
-
-                    if ($module != strtolower($name)) {
-                        $route = $prefix . '/' . $module;
+                    if ($file[0] == '.' || $file[0] == '..') {
+                        continue;
                     }
 
-                    $modules[$route] = $controllers . '\\' . basename($file, '.php');
+                    $handler = basename($file, '.php');
+                    $route = '/'.\Phalcon\Text::uncamelize(str_replace('Controller', '', $handler), '-');
+
+                    if ($route != $prefix) {
+                        $route = $prefix.$route;
+                    }
+
+                    $modules[$route] = $controllers . '\\' . $handler;
                 }
             }
         }
@@ -243,12 +247,16 @@ class App extends \Phalcon\Mvc\Micro {
 
         // aliases from config
         if ($this->config->app->offsetExists('aliases')) {
-            foreach($this->config->app->aliases as $alias => $class) {
-                class_alias($class, $alias);
+            $aliases = $this->config->app->aliases->toArray();
+            if (count($aliases) > 0) {
+                foreach($aliases as $alias => $class) {
+                    class_alias($class, $alias);
+                }
             }
         }
 
         $this->registry->modules = $modules;
+        
     }
 
     private function _initRouter() {
@@ -327,7 +335,7 @@ class App extends \Phalcon\Mvc\Micro {
             $database = new $adapter($options);
 
             // enabling nested transaction (mysql:innodb)
-            $database->setNestedTransactionsWithSavepoints(TRUE);
+            // $database->setNestedTransactionsWithSavepoints(TRUE);
             
             $di->set($name, $database);
         }

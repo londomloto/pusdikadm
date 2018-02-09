@@ -1,13 +1,17 @@
+<link rel="import" href="../../../../../cores/vendors/moment/moment.html">
+
 <dom-module id="form-surat-masuk">
     <template>
         <style include="form-style"></style>
+
+        <kct-ajax id="ajax"></kct-ajax>
 
         <div class="section">
             <h3 class="section-title">Registrasi</h3>
 
             <kct-column columns="3">
-                <div><paper-input label="Nomor Urut"></paper-input></div>
-                <div><vaadin-date-picker label="Tanggal Masuk"></vaadin-date-picker></div>
+                <div><paper-input value="{{ record.data.tsm_seq }}" label="Nomor Urut"></paper-input></div>
+                <div><vaadin-date-picker value="{{ record.data.tsm_receive_date }}" label="Tanggal Masuk"></vaadin-date-picker></div>
                 <div><paper-input label="Kode Surat"></paper-input></div>
             </kct-column>
             
@@ -15,12 +19,12 @@
         <div class="section">
             <h3 class="section-title">Dokumen Surat</h3>
             <kct-column columns="2">
-                <div><paper-input label="Nomor Surat"></paper-input></div>
-                <div><vaadin-date-picker label="Tanggal Surat"></vaadin-date-picker></div>
+                <div><paper-input value="{{ record.data.tsm_no }}" label="Nomor Surat"></paper-input></div>
+                <div><vaadin-date-picker value="{{ record.data.tsm_date }}" label="Tanggal Surat"></vaadin-date-picker></div>
             </kct-column>
-            <paper-input label="Pengirim"></paper-input>
-            <paper-input label="Tujuan"></paper-input>
-            <paper-input label="Perihal (Ringkasan)"></paper-input>
+            <paper-input value="{{ record.data.tsm_from }}" label="Pengirim"></paper-input>
+            <paper-input value="{{ record.data.tsm_to }}" label="Tujuan"></paper-input>
+            <paper-input value="{{ record.data.tsm_subject }}" label="Perihal (Ringkasan)"></paper-input>
             <paper-input label="Pengolah"></paper-input>
         </div>
     </template>
@@ -29,6 +33,71 @@
             static get is() {
                 return 'form-surat-masuk';
             }
+
+            static get observers() {
+                return [
+                    '__computeTask(record.data.*)'
+                ];
+            }
+
+            initialize() {
+                if (this.action == 'create') {
+                    
+                    return this.$.ajax.GET('/surat-masuk/sequence').then(res => {
+                        let today = moment();
+
+                        this.set('record.data', {
+                            tsm_seq: res.data.sequence,
+                            tsm_receive_date: today.format('YYYY-MM-DD')
+                        });    
+
+                        return this.resolve({ success: true });
+                    });
+                } else {
+                    return this.$.ajax.GET('/surat-masuk/' + this.record.status.tts_data_id).then(res => {
+                        this.set('record.data', res.data || {});
+                        return res;
+                    });
+                }
+            }
+
+            save() {
+                let payload = this.record.data;
+                if (payload.tsm_id) {
+                    return this.$.ajax.PUT('/surat-masuk/' + payload.tsm_id, payload).then(done.bind(this));
+                } else {
+                    return this.$.ajax.POST('/surat-masuk', payload).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.set('record.status.tts_data_id', res.data.tsm_id);
+                    }
+                    return res;
+                }
+            }
+
+            __computeTask(changed) {
+                let data;
+
+                if ((data = this.record.data)) {
+                    let title = (data.tsm_no || '') + (data.tsm_date ? ' (' + data.tsm_date + ')' : '');
+                    this.set('record.status.tt_title', title);
+
+                    let content = '';
+
+                    if (data.tsm_from) {
+                        content += `Dikirim oleh ${data.tsm_from} `;
+                    }
+
+                    if (data.tsm_subject) {
+                        content += `perihal ${data.tsm_subject}`;
+                    }
+
+                    this.set('record.status.tts_content', content);
+                }
+            }
+
         }
         customElements.define(FormSuratMasuk.is, FormSuratMasuk);
     </script>

@@ -13,11 +13,11 @@ return array(
     // 'smtp_host' => 'mail.smartfren.com',
     // 'smtp_port' => 25,
 
-    'smtp_host' => 'pusdikadm.xyz',
+    'smtp_host' => 'mail.pusdikadm.xyz',
     'smtp_port' => 587,
 
     'smtp_auth' => true,
-    'smtp_user' => 'admin',
-    'smtp_pass' => 'secret',
+    'smtp_user' => 'support',
+    'smtp_pass' => 'pu5d1k4dm123',
     'smtp_secure' => 'tls'
 );

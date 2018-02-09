@@ -163,8 +163,10 @@
 
             load() {
                 this.$.ajax.GET('/notifications?display=top').then(res => {
-                    this.set('total', res.data.length);
-                    this.set('items', res.data);
+                    let data = (res.data || []);
+
+                    this.set('total', data.length);
+                    this.set('items', data);
 
                     if (this.total > 0) {
                         this.set('dirty', true);

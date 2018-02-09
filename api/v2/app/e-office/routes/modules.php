@@ -23,26 +23,15 @@ Router::group(array(
 ->post('/save', 'save');
 
 Router::group(array(
-    'prefix' => '/presence',
-    'handler' => 'App\Presence\Controllers\PresenceController',
+    'prefix' => '/surat-masuk',
+    'handler' => 'App\SuratMasuk\Controllers\SuratMasukController',
     'middleware' => 'auth'
 ))
-->post('/{id}/upload', 'upload')
-->post('/{id}/download', 'download');
+->get('/sequence', 'sequence');
 
 Router::group(array(
-    'prefix' => '/lkh/exam',
-    'handler' => 'App\Lkh\Controllers\ExamController',
+    'prefix' => '/surat-keluar',
+    'handler' => 'App\SuratKeluar\Controllers\SuratKeluarController',
     'middleware' => 'auth'
 ))
-->get('/modules', 'modules')
-->get('/{id}/flag', 'flag')
-->post('/init', 'init');
-
-Router::group(array(
-    'prefix' => '/skp/exam',
-    'handler' => 'App\Skp\Controllers\ExamController',
-    'middleware' => 'auth'
-))
-->get('/modules', 'modules')
-->post('/init', 'init');
+->get('/sequence', 'sequence');

@@ -19,7 +19,7 @@ class SocketProvider {
         }
 
         if ( ! $this->_config->offsetExists('host')) {
-            if (preg_match('/worksaurus\.com/', $_SERVER['SERVER_NAME'])) {
+            if (preg_match('/pusdikadm\.xyz/', $_SERVER['SERVER_NAME'])) {
                 $host = $_SERVER['SERVER_NAME'];
             } else {
                 $host = $_SERVER['SERVER_ADDR'];
