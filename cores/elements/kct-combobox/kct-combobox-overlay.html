@@ -165,6 +165,7 @@
 
                 static get properties() {
                     return {
+                        width: { type: Number },
                         paging: { type: Object, value: () => ({}), readonly: true },
                         noresult: { type: Boolean, value: false },
                         hasToolbar: { type: Boolean, value: false },
@@ -175,7 +176,8 @@
 
                 static get observers() {
                     return [
-                        '__pagingChanged(paging.*)'
+                        '__pagingChanged(paging.*)',
+                        '__sizeChanged(width)'
                     ];
                 }
 
@@ -253,8 +255,12 @@
                     this._translateY = Math.round(this._translateY * _devicePixelRatio) / _devicePixelRatio;
                     this.translate3d(this._translateX + 'px', this._translateY + 'px', '0');
 
-                    this.style.width = this.positionTarget.clientWidth + 'px';
-
+                    if (this.width !== undefined) {
+                        this.style.width = this.width + 'px';    
+                    } else {
+                        this.style.width = this.positionTarget.clientWidth + 'px';
+                    }
+                    
                     this.updateViewportBoundaries();
                 }
 
@@ -302,6 +308,12 @@
                             this.set('__lastDisabled', true);
                         }
                         
+                    }
+                }
+
+                __sizeChanged(width) {
+                    if (width !== undefined) {
+                        this.style.width = width + 'px';    
                     }
                 }
 

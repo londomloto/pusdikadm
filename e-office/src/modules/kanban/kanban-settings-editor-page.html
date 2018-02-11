@@ -30,7 +30,7 @@
                 z-index: 2;
             }
             kct-kanban {
-                width: var(--kanban-width, auto);
+                width: var(--kanban-width, 100%);
             }
             .panel-content {
                 padding: 5px;
@@ -101,16 +101,14 @@
                 <kct-hbox fit>
                     <div class="west">
                         <div class="p-a">
+                            <vaadin-combo-box 
+                                label="Tipe Template" 
+                                items="[[ purposes ]]" 
+                                value="{{ record.ks_purpose }}" 
+                                item-label-path="label" 
+                                item-value-path="value"></vaadin-combo-box>
                             <paper-input value="{{ record.ks_name }}" label="Nama Template" required auto-validate error-message="Name is required"></paper-input>
                             <paper-input value="{{ record.ks_description }}" label="Keterangan"></paper-input>
-                            <!-- <div class="form-group">
-                                <label>Fungsi Template</label>
-                                <paper-radio-group selected="{{ record.ks_purpose }}" attr-for-selected="name">
-                                    <paper-radio-button name="1">Pemeriksaan LKH</paper-radio-button>
-                                    <paper-radio-button name="2">Pemeriksaan SKP</paper-radio-button>
-                                    <paper-radio-button name="0">Umum</paper-radio-button>
-                                </paper-radio-group>
-                            </div> -->
                         </div>
                     </div>
                     <div class="flex center">
@@ -132,7 +130,7 @@
                                                 </div>
                                                 <div class="box-body">
                                                     <div class="f-500 m-b-xs">[[ status.kst_label ]]</div>
-                                                    <div class="text-muted text-sm">[[ status.kst_diagrams_name ]]</div>
+                                                    <div style="font-size: 12px; color: #999">Dari [[ status.kst_source_label ]]</div>
                                                 </div>
                                             </div>
                                         </template>
@@ -289,7 +287,15 @@
                     selectedPanel: { type: Object },
                     workers: { type: Array },
                     statuses: { type: Array },
-                    invalid: { type: Boolean, value: false }
+                    invalid: { type: Boolean, value: false },
+                    purposes: {
+                        type: Array,
+                        value: () => ([
+                            { value: '1', label: 'Administrasi Surat Masuk' },
+                            { value: '2', label: 'Administrasi Surat Keluar' },
+                            { value: '0', label: 'Standard' }
+                        ])
+                    }
                 }
             }
             static get observers() {
@@ -316,19 +322,14 @@
                 this.__dirty = false;
             }
 
-            activate() {
-                if (this.$.kanban) {
-                    this.$.kanban.resize();
-                }
-                this.__loadWorkers();
-            }
-
             handleRouteParams(...params) {
                 let [setting, action, id] = params;
                 
                 if (setting != this.constructor.setting) {
                     return;
                 }
+
+                this.__loadWorkers();
 
                 if (id) {
                     this.__dirty = false;
@@ -439,6 +440,8 @@
                     });
                 }
 
+                this.mask('Sedang menyimpan...');
+
                 if (data.ks_id) {
                     xhr.PUT('/kanban/kanban-settings/' + data.ks_id, data).then(done.bind(this));
                 } else {
@@ -446,6 +449,8 @@
                 }
 
                 function done(res) {
+                    this.unmask();
+
                     if (res.success) {
                         this.toast('Success', 'Kanban settings has been saved');
                         this.__loadRecord(res.data.ks_id);

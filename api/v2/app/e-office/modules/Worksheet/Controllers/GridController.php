@@ -12,18 +12,20 @@ class GridController extends \Micro\Controller {
 
     public function findAction() {
         $params = $this->request->getQuery();
+        $columns = array(
+            'task.tt_id'
+        );
         $query = Task::get()
-            ->alias('b')
-            ->columns('b.tt_id')
-            ->join('App\Tasks\Models\TaskStatus', 'b.tt_id = a.tts_tt_id', 'a', 'left')
-            ->join('App\Users\Models\User', 'b.tt_creator_id = c.su_id', 'c', 'left')
-            ->join('App\Tasks\Models\TaskLabel', 'b.tt_id = d.ttl_tt_id', 'd', 'left')
-            ->groupBy('b.tt_id');
+            ->alias('task')
+            ->columns($columns)
+            ->join('App\Tasks\Models\TaskStatus', 'task.tt_id = task_status.tts_tt_id', 'task_status', 'left')
+            ->join('App\Tasks\Models\TaskLabel', 'task.tt_id = task_label.ttl_tt_id', 'task_label', 'left')
+            ->groupBy('task.tt_id');
 
         $colors = FALSE;
 
         if (isset($params['project'])) {
-            $query->andWhere('b.tt_sp_id = :project:', array('project' => $params['project']));
+            $query->andWhere('task.tt_sp_id = :project:', array('project' => $params['project']));
 
             $project = Project::findFirst($params['project']);
 
@@ -49,7 +51,7 @@ class GridController extends \Micro\Controller {
 
         self::applySearch($query, $params);
         self::applyFilter($query, $params);
-        self::applySorter($query, $params, array('b.tt_id'));
+        self::applySorter($query, $params, $columns);
 
         $result = $query->paginate()->map(function($row) use ($colors){
             $task = Task::findFirst($row->tt_id);
@@ -75,7 +77,7 @@ class GridController extends \Micro\Controller {
     public static function applySearch($query, $params) {
         if (isset($params['query'], $params['fields']) && $params['query'] != '') {
             $search = strtoupper($params['query']);
-            $query->andWhere('( a.tts_result LIKE :search: )', array('search' => '%'.$search.'%' ));
+            $query->andWhere('( task_status.tts_result LIKE :search: )', array('search' => '%'.$search.'%' ));
         }
     }
 
@@ -84,21 +86,17 @@ class GridController extends \Micro\Controller {
             $json = json_decode($params['params']);
 
             if (isset($json->tts_id)) {
-                $query->andWhere('(a.tts_id = :tts_id:)', array('tts_id' => $json->tts_id));
+                $query->andWhere('(task_status.tts_id = :tts_id:)', array('tts_id' => $json->tts_id));
             } else {
-                if (isset($json->author) && count($json->author) > 0) {
-                    $query->inWhere('b.tt_creator_id', $json->author[1]);
-                }
-                
                 if (isset($json->label) && count($json->label) > 0) {
-                    $query->inWhere('d.ttl_sl_id', $json->label[1]);
+                    $query->inWhere('task_label.ttl_sl_id', $json->label[1]);
                 }
 
                 if (isset($json->date) && count($json->date) > 0) {
                     $likes = array();
 
                     foreach($json->date[1] as $d) {
-                        $likes[] = "a.tts_result LIKE '%|date=$d|%'";
+                        $likes[] = "task_status.tts_result LIKE '%|date=$d|%'";
                     }
                     
                     if (count($likes) > 0) {
@@ -111,7 +109,7 @@ class GridController extends \Micro\Controller {
 
     public static function applySorter($query, $params, $cols) {
         if ( ! isset($params['sort'])) {
-            $cols[] = 'MAX(b.tt_created_dt) AS tt_created_dt';
+            $cols[] = 'MAX(task.tt_created_dt) AS tt_created_dt';
             $query->columns($cols);
             $query->orderBy('tt_created_dt DESC');
         } else {
@@ -130,13 +128,10 @@ class GridController extends \Micro\Controller {
                 if (isset($maps[$e->property])) {
                     $name = $maps[$e->property];
                     $sort[] = $name.' '.$dirs;
-                    $cols[] = $aggr.'(b.'.$name.') AS '.$name;
+                    $cols[] = $aggr.'(task.'.$name.') AS '.$name;
                 } else if ($e->property == 'created') {
                     $sort[] = 'tt_created_dt '.$dirs;
-                    $cols[] = $aggr.'(b.tt_created_dt) AS tt_created_dt';
-                } else if ($e->property == 'creator') {
-                    $sort[] = 'su_fullname '.$dirs;
-                    $cols[] = $aggr.'(c.su_fullname) AS su_fullname';
+                    $cols[] = $aggr.'(task.tt_created_dt) AS tt_created_dt';
                 }
             }
 

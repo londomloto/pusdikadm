@@ -1,5 +1,6 @@
 <link rel="import" href="../../bower_components/polymer/lib/utils/flattened-nodes-observer.html">
 <link rel="import" href="../../mixins/resolver.html">
+<link rel="import" href="../../mixins/dom.html">
 <link rel="import" href="../kct-layouts/kct-vbox.html">
 <link rel="import" href="../kct-kanban/kct-kanban-panel.html">
 
@@ -18,15 +19,9 @@
             }
 
             .kanban-body {
-                padding: 0 0 15px 0;
+                padding: 15px 0 15px 0;
                 overflow-x: scroll;
                 overflow-y: hidden;
-            }
-
-            .kanban-body-top-space {
-                height: 18px;
-                width: 100%;
-                background-color: #fff;
             }
             .panel-container {
                 height: 100%;
@@ -36,7 +31,6 @@
             <div class="kanban-header">
                 <slot name="header"></slot>        
             </div>
-            <div class="kanban-body-top-space"></div>
             <div id="kanban-body" class="kanban-body flex">
                 <div id="panel-container" class="panel-container">
                     <slot id="panel"></slot>
@@ -45,7 +39,7 @@
         </kct-vbox>
     </template>
     <script>
-        class KctKanban extends Mixins(Polymer.Element).use(Mixins.Resolver) {
+        class KctKanban extends Mixins(Polymer.Element).use(Mixins.DOM, Mixins.Resolver) {
             static get is() {
                 return 'kct-kanban';
             }
@@ -62,7 +56,7 @@
 
                 Polymer.RenderStatus.afterNextRender(this, () => {
                     this.__panelObservers = new Polymer.FlattenedNodesObserver(this.$.panel, info => {
-                        this.__resizePanelContainer();
+                        this.resize();
                     });
                 });
             }
@@ -82,24 +76,6 @@
                         this.$['kanban-body'].scrollLeft = 0;
                         break;
                 }
-            }
-            __getBodySize() {
-                let style, width, height;
-
-                style  = window.getComputedStyle(this.$['kanban-body'], null);
-                width  = parseFloat(style.getPropertyValue('width'), 10);
-                height = parseFloat(style.getPropertyValue('height'), 10);
-
-                return {
-                    width: width,
-                    height: height
-                };
-            }
-            __getBodyHeight() {
-                let computed = window.getComputedStyle(this.$['kanban-body'], null);
-                let height = parseFloat(computed.getPropertyValue('height'), 10);
-
-                return height;
             }
             __getScrollbarHeight() {
                 let height = this.constructor.__scrollbarHeight;
@@ -134,25 +110,29 @@
                 return height;
             }
             __resizePanelContainer() {
-                let gutter = 15;
+                let gutter = 15,
+                    sizes = this._getElementSize(this.$['kanban-body']),
+                    panels = this.$.panel.assignedNodes().filter(node => {
+                        return node.nodeType && node.nodeType == Node.ELEMENT_NODE && node.localName == 'kct-kanban-panel';
+                    });
 
-                let panels = this.$.panel.assignedNodes().filter(node => {
-                        return node.localName == 'kct-kanban-panel';
-                    }),
-                    sizes = this.__getBodySize(),
-                    columnWidth = ((sizes.width - this.columns * 15) - 15) / this.columns,
-                    height = this.__getBodyHeight(),
-                    width = 0;
+                if ( ! panels.length) {
+                    return;
+                }
+
+                let columnWidth = ((sizes.width - this.columns * gutter) - gutter) / this.columns,
+                    totalHeight = sizes.height - (gutter * 2),
+                    totalWidth = 0;
 
                 panels.forEach(panel => {
                     panel.width = columnWidth;
-                    width += (columnWidth + 15);
+                    totalWidth += (columnWidth + gutter);
                 });
 
-                width += 15;
+                totalWidth += gutter;
 
-                this.$['panel-container'].style.width = width + 'px';
-                this.$['panel-container'].style.height = height + 'px';
+                this.$['panel-container'].style.width = totalWidth + 'px';
+                this.$['panel-container'].style.height = totalHeight + 'px';
             }
         }
         customElements.define(KctKanban.is, KctKanban);

@@ -24,9 +24,6 @@ class TaskActivity extends \Micro\Model {
                 'alias' => 'Sender'
             )
         );
-        
-        \Moment\Moment::setLocale(self::__language());
-        \Moment\Moment::setDefaultTimezone(self::__timezone());
     }
 
     public function getSource() {
@@ -281,33 +278,6 @@ class TaskActivity extends \Micro\Model {
         }
         
         return FALSE;
-    }
-
-    private static function __language() {
-        static $lang;
-
-        if (is_null($lang)) {
-            $conf = \Micro\App::getDefault()->config->app;
-            $lang = 'id_ID';
-            if ($conf->offsetExists('locale')) {
-                $lang = $conf->locale;
-            }
-        }
-
-        return $lang;
-    }
-
-    private static function __timezone() {
-        static $zone;
-        
-        if (is_null($zone)) {
-            $conf = \Micro\App::getDefault()->config->app;
-            $zone = 'Asia/Jakarta';
-            if ($conf->offsetExists('timezone')) {
-                $zone = $conf->timezone;
-            }
-        }
-        return $zone;
     }
 
     private static function __formatDate($date, $format = "M dS, Y h:i a") {

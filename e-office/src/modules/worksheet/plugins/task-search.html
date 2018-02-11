@@ -267,12 +267,13 @@
                                     </kct-search-combo>
 
                                     <kct-search-combo 
-                                        name="author" 
-                                        url="/users" 
+                                        name="sender" 
+                                        url$="/references/sender?project=[[ project ]]" 
                                         class="popup" 
-                                        item-value-path="su_id" 
-                                        item-label-path="su_fullname" 
-                                        item-query-path="su_fullname" 
+                                        item-value-path="tsn_name" 
+                                        item-label-path="tsn_name" 
+                                        item-query-path="tsn_name" 
+                                        list-width="400" 
                                         page-size="10" 
                                         on-change="__onComboChange" 
                                         on-beforeload="__onComboBeforeload">
@@ -287,12 +288,53 @@
                                                     --iron-icon-width: 16px;
                                                     --iron-icon-height: 16px;
                                                     margin-right: 5px;
+                                                    position: relative;
+                                                    top: -1px;
                                                 }
                                             </style>
 
                                             <paper-item>
-                                                <iron-icon icon="face"></iron-icon>
-                                                <paper-item-body>[[ item.su_fullname ]]</paper-item-body>    
+                                                <div>
+                                                    <iron-icon icon="social:person-outline"></iron-icon>
+                                                    <span>[[ item.tsn_name ]]</span>
+                                                </div>
+                                            </paper-item>
+
+                                        </template>        
+                                    </kct-search-combo>
+
+                                    <kct-search-combo 
+                                        name="receiver" 
+                                        url$="/references/receiver?project=[[ project ]]" 
+                                        class="popup" 
+                                        item-value-path="trc_name" 
+                                        item-label-path="trc_name" 
+                                        item-query-path="trc_name" 
+                                        list-width="400" 
+                                        page-size="10" 
+                                        on-change="__onComboChange" 
+                                        on-beforeload="__onComboBeforeload">
+                                        <template>
+                                            <style>
+                                                paper-item {
+                                                    --paper-item-min-height: 34px;
+                                                    font-size: 13px;
+                                                    font-weight: 400;
+                                                }
+                                                paper-item iron-icon {
+                                                    --iron-icon-width: 16px;
+                                                    --iron-icon-height: 16px;
+                                                    margin-right: 5px;
+                                                    position: relative;
+                                                    top: -1px;
+                                                }
+                                            </style>
+
+                                            <paper-item>
+                                                <div>
+                                                    <iron-icon icon="social:person-outline"></iron-icon>
+                                                    <span>[[ item.trc_name ]]</span>
+                                                </div>
                                             </paper-item>
 
                                         </template>        
@@ -385,8 +427,9 @@
                         type: Array,
                         value: () => ([
                             { field: 'search', label: 'Search', icon: 'search', hint: 'Tekan enter untuk pencarian' },
-                            { field: 'author', label: 'Pembuat', icon: 'social:person-outline', hint: 'Filter data pembuat: <b>@pembuat</b>' },
-                            { field: 'date', label: 'Tanggal', icon: 'today', hint: 'Filter tanggal surat: <b>&tanggal</b>' },
+                            { field: 'sender', label: 'Pengirim', icon: 'social:person-outline', hint: 'Filter pengirim: <b>@pengirim</b>' },
+                            { field: 'receiver', label: 'Tujuan', icon: 'communication:mail-outline', hint: 'Filter tujuan: <b>$tujuan</b>' },
+                            { field: 'date', label: 'Tanggal', icon: 'today', hint: 'Filter tanggal surat: <b>!tanggal</b>' },
                             { field: 'label', label: 'Label', icon: 'label-outline', hint: 'Filter data label: <b>~label</b>' }
                         ])
                     },
@@ -396,12 +439,9 @@
                     sorters: {
                         type: Array,
                         value: () => ([
-                            { field: 'title', sort: 'ASC', label: 'Judul' },
+                            { field: 'title', sort: 'ASC', label: 'Nomor' },
                             { field: 'created', sort: 'ASC', label: 'Terlama' },
-                            { field: 'created', sort: 'DESC', label: 'Terbaru' },
-                            { field: 'due', sort: 'ASC', label: 'Deadline' },
-                            { field: 'due', sort: 'DESC', label: 'Segera' },
-                            { field: 'creator', sort: 'ASC', label: 'Pembuat' }
+                            { field: 'created', sort: 'DESC', label: 'Terbaru' }
                         ])
                     },
 

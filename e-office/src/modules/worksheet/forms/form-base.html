@@ -11,6 +11,8 @@
 <link rel="import" href="../../../../../cores/elements/kct-message/kct-confirm.html">
 <link rel="import" href="../../../../../cores/mixins/resolver.html">
 <link rel="import" href="../../../../../cores/mixins/types.html">
+<link rel="import" href="../plugins/form-combo-sender.html">
+<link rel="import" href="../plugins/form-combo-receiver.html">
 
 <dom-module id="form-base">
     <script>
@@ -44,16 +46,21 @@
                 let result = [];
 
                 Object.keys(options).forEach(k => {
-                    if (k == 'date' || k == 'author') {
-                        result.push(k + '=' + options[k]);
-                    } else if (k == 'result') {
-                        let data = options[k] || {};
-                        Object.keys(data).forEach(f => {
-                            let v = data[f];
-                            if ( ! this._isArray(v) && ! this._isObject(v)) {
-                                result.push(f + '=' + v);
+                    let v = options[k];
+                    if (v !== null && v != '') {
+                        if (typeof v === 'object') {
+                            let t = [];
+                            Object.keys(v).forEach(e => {
+                                if (v[e] !== null && v[e] != '') {
+                                    t.push(v[e]);
+                                }
+                            });
+                            if (t.length) {
+                                result.push(k + '=' + t.join(';'));
                             }
-                        });
+                        } else {
+                            result.push(k + '=' + v);
+                        }
                     }
                 });
 
@@ -61,7 +68,7 @@
 
                 if (result) {
                     result = '|' + result + '|';
-                    this.set('record.status.tts_result', result);
+                    this.set('record.status.tts_data_result', result);
                 }
             }
 

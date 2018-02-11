@@ -77,8 +77,11 @@ class Project extends \Micro\Model {
             $data['sp_creator_fullname'] = $this->creator->su_fullname;
         }
         
+        $data['sp_worksheet_purpose'] = 0;
+
         if ($this->worksheet) {
             $data['sp_worksheet_name'] = $this->worksheet->ks_name;
+            $data['sp_worksheet_purpose'] = $this->worksheet->ks_purpose;
         }
 
         return $data;

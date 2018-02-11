@@ -15,33 +15,29 @@
 
         <kct-ajax id="ajax"></kct-ajax>
 
-        <div class="page-actions">
-            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to Setting" on-tap="__onBackTap"></paper-fab>
-        </div>
-
         <kct-grid 
             id="grid" 
             url="/system/autonumber" 
             selected="{{ selectedRecord }}"
             columns="{{ columns }}" 
-            icon="image:filter-5" 
-            title="Application" 
-            description="Autonumber Settings">
+            header-icon="image:filter-5" 
+            header-text="Konfigurasi" 
+            header-desc="Penomoran" 
+            selection-model="row" 
+            pagination>
 
-            <div slot="grid-toolbar">
-                <paper-button on-tap="__onEditTap"><iron-icon icon="done"></iron-icon>&nbsp;Edit</paper-button>
-            </div>
+            <paper-button on-tap="__onEditTap" slot="left-toolbar"><iron-icon icon="done"></iron-icon>&nbsp;Sunting</paper-button>
 
         </kct-grid>
 
         <kct-dialog id="editor" height="100%" width="400">
             <template preserve-content>
                 <div slot="dialog-body">
-                    <paper-input label="Serial Name" value="{{ selectedRecord.sn_name }}"></paper-input>
-                    <paper-input label="Current Value" value="{{ selectedRecord.sn_value }}"></paper-input>
-                    <paper-input label="Zero Length" value="{{ selectedRecord.sn_length }}"></paper-input>
-                    <paper-input label="Prefix" value="{{ selectedRecord.sn_prefix }}"></paper-input>
-                    <paper-input label="Suffix" value="{{ selectedRecord.sn_suffix }}"></paper-input>
+                    <paper-input label="Kode Serial" value="{{ selectedRecord.sn_name }}"></paper-input>
+                    <paper-input label="Nilai" value="{{ selectedRecord.sn_value }}"></paper-input>
+                    <paper-input label="Panjang" value="{{ selectedRecord.sn_length }}"></paper-input>
+                    <paper-input label="Awalan" value="{{ selectedRecord.sn_prefix }}"></paper-input>
+                    <paper-input label="Akhiran" value="{{ selectedRecord.sn_suffix }}"></paper-input>
                 </div>
                 <div slot="dialog-footer">
                     <paper-button on-tap="__onEditorSave">Save</paper-button>
@@ -62,11 +58,12 @@
                     columns: {
                         type: Array,
                         value: () => ([
-                            { text: 'Serial Name', dataIndex: 'sn_name' },
-                            { text: 'Current Value', dataIndex: 'sn_value' },
-                            { text: 'Zero Length', dataIndex: 'sn_length' },
-                            { text: 'Prefix', dataIndex: 'sn_prefix' },
-                            { text: 'Suffix', dataIndex: 'sn_suffix' }
+                            { type: 'rownumber' },
+                            { text: 'Kode Serial', dataIndex: 'sn_name' },
+                            { text: 'Nilai', dataIndex: 'sn_value', width: 100, align: 'right' },
+                            { text: 'Panjang', dataIndex: 'sn_length', width: 100, align: 'right' },
+                            { text: 'Awalan', dataIndex: 'sn_prefix' },
+                            { text: 'Akhiran', dataIndex: 'sn_suffix' }
                         ])
                     },
                     selectedRecord: { type: Object }

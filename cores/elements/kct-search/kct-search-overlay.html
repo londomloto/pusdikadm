@@ -119,7 +119,8 @@
                 static get properties() {
                     return {
                         paging: { type: Object, value: () => ({}), readonly: true },
-                        pagingEnabled: { type: Boolean, value: false }
+                        pagingEnabled: { type: Boolean, value: false },
+                        width: { type: Number } 
                     };
                 }
 
@@ -181,7 +182,12 @@
                     this._translateY = Math.round(this._translateY * _devicePixelRatio) / _devicePixelRatio;
                     this.translate3d(this._translateX + 'px', this._translateY + 'px', '0');
 
-                    this.style.width = this.positionTarget.clientWidth + 'px';
+                    if (this.width !== undefined) {
+                        this.style.width = this.width + 'px';    
+                    } else {
+                        this.style.width = this.positionTarget.clientWidth + 'px';
+                    }
+                    
 
                     this.updateViewportBoundaries();
                 }

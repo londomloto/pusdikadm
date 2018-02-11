@@ -15,7 +15,7 @@
                 float: left;
             }
             .panel {
-                width: var(--panel-width, 300px);
+                width: var(--panel-width, 250px);
                 margin: 0 0 0 15px;
                 /*margin: 0 -4px 0 0;*/
                 height: 100%;
@@ -119,7 +119,7 @@
             static get properties() {
                 return {
                     title: { type: String, notify: true, value: 'Panel' },
-                    width: { type: String, notify: true, value: 'auto' },
+                    width: { type: String, notify: true },
                     accent: { type: String, value: 'transparent' },
                     hideHeader: { type: Boolean, value: false },
                     hidePrimary: { type: Boolean, value: false },

@@ -83,9 +83,10 @@
                     id="combo-project" 
                     slot="header-value" 
                     url="/projects?display=granted" 
-                    label="Pilih atau cari module..." 
+                    label="Pilih module kegiatan..." 
                     value="[[ project ]]" 
                     page-size="10" 
+                    list-width="400" 
                     item-label-path="sp_title" 
                     item-value-path="sp_name" 
                     on-beforeload="__onComboProjectBeforeload" 
@@ -125,7 +126,7 @@
                             <div class="logo" style$="background-color: [[ item.sp_accent ]]">[[ item.sp_logo ]]</div>
                             <div class="text">
                                 <div class="name">[[ item.sp_title ]]</div>
-                                <div class="time">Oleh <b>[[ item.sp_creator_fullname ]]</b> pada <br>[[ item.sp_created_date_formatted ]]</div>
+                                <div class="time">Oleh <b>[[ item.sp_creator_fullname ]]</b> pada [[ item.sp_created_date_formatted ]]</div>
                             </div>
                         </div>
                     </template>        

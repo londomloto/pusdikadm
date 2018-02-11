@@ -12,7 +12,7 @@
             :host {
                 display:block;
                 padding:8px 0;
-                min-width: 250px;
+                min-width: 100px;
             }
             :host>#overlay {
                 display:none;
@@ -178,7 +178,8 @@
         </paper-input-container>
 
         <kct-combobox-overlay 
-            id="overlay"
+            id="overlay" 
+            width="[[ listWidth ]]" 
             opened$=[[opened]]
             position-target="[[_getPositionTarget()]]"
             _focused-index="[[_focusedIndex]]"
@@ -238,7 +239,8 @@
                         hideArrow: { type: Boolean, value: false },
                         overlayVerticalOffset: { type: Number, value: 2 },
                         toolbar: { type: Array },
-                        itemQueryPath: { type: String }
+                        itemQueryPath: { type: String },
+                        listWidth: { type: Number }
                     }
                 }
 
@@ -419,13 +421,22 @@
                             } else {
                                 this.selectedItem = null;
 
+                                let params = {};
+                                params[this.itemValuePath] = value
+
                                 this.__setPayload({ 
                                     start: 0,  
-                                    fields: [ this.itemValuePath ],
-                                    query: value
+                                    limit: 1,
+                                    params: params
+                                    //fields: [ this.itemValuePath ],
+                                    //query: value
                                 });
 
                                 this.load().then(() => {
+                                    this.__setPayload({
+                                        limit: this.pageSize,
+                                        params: {}
+                                    });
                                     let valueIndex = this._indexOfValue(value, this.filteredItems);
                                     if (valueIndex >= 0) {
                                         this.selectedItem = this.filteredItems[valueIndex];    

@@ -200,8 +200,13 @@ class App extends \Phalcon\Mvc\Micro {
 
         $this->getDI()->set('loader', $loader, TRUE);
 
-        if(isset($this->config->mailer)) {
+        if (isset($this->config->mailer)) {
             $this->getDI()->set('mailer', new Mailer($this->config->mailer), TRUE);
+        }
+
+        if (class_exists('Moment\Moment')) {
+            \Moment\Moment::setLocale($this->config->app->locale);
+            \Moment\Moment::setDefaultTimezone($this->config->app->timezone);
         }
     }
 

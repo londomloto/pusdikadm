@@ -1,9 +1,42 @@
+<link rel="import" href="../../../../../cores/vendors/moment/moment.html">
+
 <dom-module id="form-surat-keluar">
     <template>
         <style include="form-style"></style>
 
+        <kct-ajax id="ajax"></kct-ajax>
+
         <div class="section">
-            <h3 class="section-title">Identias Surat</h3>
+            <h3 class="section-title">Pembuatan</h3>
+            <kct-column columns="3">
+                <div>
+                    <vaadin-date-picker value="{{ record.data.tsk_create_date }}" label="Tanggal Pembuatan"></vaadin-date-picker>
+                </div>
+                <div>
+                    <paper-input label="Nomor Urut" value="{{ record.data.tsk_seq }}"></paper-input>
+                </div>
+                <div>
+                    <paper-input label="Kode Surat" value="{{ record.data.tsk_code }}"></paper-input>
+                </div>
+            </kct-column>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Surat Keluar</h3>
+            <kct-column columns="2">
+                <div>
+                    <paper-input label="Nomor Surat *" value="{{ record.data.tsk_no }}" required auto-validate error-message="Nomor surat wajib diisi"></paper-input>
+                </div>
+                <div>
+                    <vaadin-date-picker value="{{ record.data.tsk_date }}" label="Tanggal Surat"></vaadin-date-picker>
+                </div>
+            </kct-column>
+
+            <paper-input value="{{ record.data.tsk_subject }}" label="Perihal"></paper-input>
+            
+            <form-combo-sender value="{{ record.data.tsk_from }}" group="surat-keluar"></form-combo-sender>
+            <form-combo-receiver value="{{ record.data.tsk_to }}" group="surat-keluar"></form-combo-receiver>
+
         </div>
 
     </template>
@@ -11,6 +44,88 @@
         class FormSuratKeluar extends FormBase {
             static get is() {
                 return 'form-surat-keluar';
+            }
+
+            static get observers() {
+                return [
+                    '__computeTask(record.data.*)',
+                    '__computeValidation(record.data.tsk_no)'
+                ];
+            }
+
+            initialize() {
+                if (this.action == 'create') {
+                    let today = moment();
+
+                    return this.$.ajax.GET('/surat-keluar/sequence').then(res => {
+                        this.set('record.data', {
+                            tsk_seq: res.data,
+                            tsk_create_date: today.format('YYYY-MM-DD'),
+                            tsk_date: today.format('YYYY-MM-DD')
+                        });
+                    });
+                } else {
+                    return this.$.ajax.GET('/surat-keluar/' + this.record.status.tts_data_id).then(res => {
+                        this.set('record.data', res.data || {});
+                    });
+                }
+            }
+
+            save() {
+                let payload = this.record.data;
+
+                if (payload.tsk_id) {
+                    return this.$.ajax.PUT('/surat-keluar/' + payload.tsk_id, payload).then(done.bind(this));
+                } else {
+                    return this.$.ajax.POST('/surat-keluar', payload).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+
+                        this.saveResult({
+                            date: res.data.tsk_date,
+                            sender: res.data.tsk_from,
+                            receiver: res.data.tsk_to,
+                            result: res.data
+                        });
+
+                        this.set('record.status.tts_data_id', res.data.tsk_id);
+                    }   
+
+                    return res;
+                }
+            }
+
+            remove() {
+                return this.$.ajax.DELETE('/surat-keluar/' + this.record.data.tsk_id);
+            }
+
+            __computeValidation(tsk_no) {
+                let valid = true;
+                valid = valid && tsk_no;
+                this.set('invalid', !valid);
+            }
+
+            __computeTask() {
+                let data = this.record.data;
+                if (data) {
+                    let title = data.tsk_no || 'Surat Keluar';
+                    let content = '';
+
+                    this.set('record.task.tt_title', title);
+
+                    if (data.tsk_to) {
+                        content += `
+                            <div class="item-content-group">
+                                <div class="item-content-label">Tujuan</div>
+                                <div class="item-content-value">${data.tsk_to}</div>
+                            </div>
+                        `;
+                    }
+
+                    this.set('record.task.tt_content', content);
+                }
             }
         }
         customElements.define(FormSuratKeluar.is, FormSuratKeluar);

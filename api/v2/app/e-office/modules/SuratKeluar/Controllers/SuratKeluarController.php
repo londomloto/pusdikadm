@@ -1,35 +1,38 @@
 <?php
-namespace App\SuratMasuk\Controllers;
+namespace App\SuratKeluar\Controllers;
 
-use App\SuratMasuk\Models\SuratMasuk,
-    App\Sequence\Models\Sequence;
+use App\SuratKeluar\Models\SuratKeluar;
 
-class SuratMasukController extends \Micro\Controller {
+class SuratKeluarController extends \Micro\Controller {
 
     public function sequenceAction() {
         return array(
             'success' => TRUE,
-            'data' => \App\System\Models\Autonumber::generate('SM_SEQUENCE')
+            'data' => \App\System\Models\Autonumber::generate('SK_SEQUENCE')
         );
     }
 
+    public function findAction() {
+        return SuratKeluar::get()->paginate();
+    }
+
     public function findByIdAction($id) {
-        return SuratMasuk::get($id);
+        return SuratKeluar::get($id);
     }
 
     public function createAction() {
         $post = $this->request->getJson();
-        $data = new SuratMasuk();
+        $data = new SuratKeluar();
 
         if ($data->save($post)) {
-            return SuratMasuk::get($data->tsm_id);
+            return SuratKeluar::get($data->tsk_id);
         }
 
-        return SuratMasuk::none();
+        return SuratKeluar::none();
     }
 
     public function updateAction($id) {
-        $query = SuratMasuk::get($id);
+        $query = SuratKeluar::get($id);
         $post = $this->request->getJson();
 
         if ($query->data) {
@@ -40,14 +43,13 @@ class SuratMasukController extends \Micro\Controller {
     }
 
     public function deleteAction($id) {
-        $data = SuratMasuk::get($id)->data;
+        $data = SuratKeluar::get($id)->data;
         $done = FALSE;
 
         if ($data) {
             $done = $data->delete();
         }
-
+        
         return array('success' => $done);
     }
-
 }

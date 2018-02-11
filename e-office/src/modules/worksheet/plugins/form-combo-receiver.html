@@ -1,0 +1,93 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../../cores/elements/kct-combobox/kct-combobox.html">
+<link rel="import" href="../../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+
+<dom-module id="form-combo-receiver">
+    <template>
+        <kct-combobox 
+            id="combo" 
+            url="/receiver" 
+            value="{{ value }}" 
+            page-size="10" 
+            label="Tujuan" 
+            item-label-path="trc_name" 
+            item-value-path="trc_name" 
+            on-beforeload="__onBeforeLoad" 
+            invalid$="[[ invalid ]]" 
+            required$="[[ required ]]" 
+            auto-validate$="[[ autoValidate ]]" 
+            error-message="Nama tujuan wajib diisi" 
+            autoload>
+            <paper-button on-tap="__onAddTap" slot="toolbar"><iron-icon icon="add"></iron-icon>&nbsp;Tambah Tujuan</paper-button>
+        </kct-combobox>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-dialog id="editor" title="Tambah Tujuan" width="400">
+            <template preserve-content>
+                <style include="theme-helper"></style>
+                <div slot="dialog-body">
+                    <paper-input value="{{ editingRecord.trc_name }}" label="Nama Tujuan (Instansi)"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onSaveTap">Simpan</paper-button>
+                    <paper-button on-tap="__onCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class FormComboReceiver extends Polymer.Element {
+            static get is() {
+                return 'form-combo-receiver';
+            }
+            static get properties() {
+                return {
+                    value: { type: String, notify: true }, 
+                    invalid: { type: Boolean, value: false, notify: true }, 
+                    required: { type: Boolean, value: false },
+                    autoValidate: { type: Boolean, value: false },
+                    group: { type: String }, 
+                    editingRecord: { type: Object }
+                };
+            }
+            load() {
+                return this.$.combo.load();
+            }
+            __onBeforeLoad(e) {
+                e.detail.options.params = e.detail.options.params || {};
+                e.detail.options.params.trc_group = this.group == 'surat-masuk' ? 1 : 2;
+            }
+            __onAddTap() {
+                this.set('editingRecord', {});
+                this.$.editor.open();
+            }
+            __onSaveTap() {
+                this.$.editor.close();
+
+                let payload = this.editingRecord;
+                
+                if ( ! payload.trc_name ) {
+                    return;
+                }
+
+                payload.trc_group = this.group == 'surat-masuk' ? 1 : 2;
+
+                this.$.ajax.POST('/receiver', payload).then(res => {
+                    if (res.success) {
+                        this.$.combo.load().then(() => {
+                            this.set('value', res.data.trc_name);
+                        });
+                    }
+                });
+            }
+            __onCloseTap() {
+                this.$.editor.close();
+            }
+        }
+        customElements.define(FormComboReceiver.is, FormComboReceiver);
+    </script>
+</dom-module>

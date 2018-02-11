@@ -181,7 +181,7 @@ class ModelQuery {
                             case '>':
                             case '>=':
                                 $bind[$pkey] = $val[1];
-                                $this->__builder->where($attr['field']." $oper :{$pkey}:", $bind);
+                                $this->__builder->andWhere($attr['field']." $oper :{$pkey}:", $bind);
                                 break;
                             case 'not in':
                                 $this->__builder->notInWhere($attr['field'], $val[1]);
@@ -189,7 +189,7 @@ class ModelQuery {
                         }
                     } else {
                         $bind[$pkey] = $val;
-                        $this->__builder->where($attr['field']." $oper :{$pkey}:", $bind);
+                        $this->__builder->andWhere($attr['field']." $oper :{$pkey}:", $bind);
                     }
                 }
             }
@@ -227,6 +227,8 @@ class ModelQuery {
                 $this->__start = $start;
             }
         }
+
+        //print_r($this->__builder->getQuery()->getSql());
 
         $columns = $this->__builder->getColumns();
         $pageset = new ModelPageset($this);

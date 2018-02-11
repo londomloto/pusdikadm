@@ -16,33 +16,32 @@ class KanbanController extends \Micro\Controller {
         $statuses = isset($params['statuses']) ? json_decode($params['statuses']) : FALSE;
         
         $columns = array(
-            'a.tts_id',
-            'a.tts_tt_id',
-            'a.tts_status',
-            'a.tts_target',
-            'a.tts_worker',
-            'a.tts_data_id',
-            'a.tts_deleted',
-            'a.tts_created'
+            'task_status.tts_id',
+            'task_status.tts_tt_id',
+            'task_status.tts_status',
+            'task_status.tts_target',
+            'task_status.tts_worker',
+            'task_status.tts_data_id',
+            'task_status.tts_deleted',
+            'task_status.tts_created'
         );
 
         $query = TaskStatus::get()
-            ->alias('a')
+            ->alias('task_status')
             ->columns($columns) 
-            ->join('App\Tasks\Models\Task', 'a.tts_tt_id = b.tt_id', 'b')
-            ->join('App\Users\Models\User', 'b.tt_creator_id = c.su_id', 'c', 'left')
-            ->join('App\Tasks\Models\TaskLabel', 'b.tt_id = d.ttl_tt_id', 'd', 'left')
-            ->groupBy('a.tts_id');
+            ->join('App\Tasks\Models\Task', 'task_status.tts_tt_id = task.tt_id', 'task')
+            ->join('App\Tasks\Models\TaskLabel', 'task.tt_id = task_label.ttl_tt_id', 'task_label', 'left') 
+            ->groupBy('task_status.tts_id');
 
         if ($project) {
-            $query->andWhere('b.tt_sp_id = :project:', array('project' => $project));
+            $query->andWhere('task.tt_sp_id = :project:', array('project' => $project));
         }
 
         if ($statuses && count($statuses) > 0) {
-            $query->inWhere('a.tts_status', $statuses);
+            $query->inWhere('task_status.tts_status', $statuses);
         }
 
-        $query->andWhere('a.tts_deleted = 0');
+        $query->andWhere('task_status.tts_deleted = 0');
 
         self::applySearch($query, $params);
         self::applyFilter($query, $params);
@@ -124,9 +123,9 @@ class KanbanController extends \Micro\Controller {
                         if ( ! isset($form['status']['tts_content'])) {
                             $form['status']['tts_content'] = NULL;
                         }
-
-                        if ( ! isset($form['status']['tts_result'])) {
-                            $form['status']['tts_result'] = NULL;
+                        
+                        if ( ! isset($form['status']['tts_data_result'])) {
+                            $form['status']['tts_data_result'] = NULL;
                         }
 
                         if ( ! isset($form['status']['tts_data_id'])) {
@@ -140,7 +139,7 @@ class KanbanController extends \Micro\Controller {
                             'tts_worker' => $worker->name(),
                             'tts_deleted' => 0,
                             'tts_created' => date('Y-m-d H:i:s'),
-                            'tts_result' => $form['status']['tts_result'],
+                            'tts_data_result' => $form['status']['tts_data_result'],
                             'tts_data_id' => $form['status']['tts_data_id']
                         );
 
@@ -212,8 +211,8 @@ class KanbanController extends \Micro\Controller {
                         $form['status']['tts_content'] = NULL;
                     }
 
-                    if ( ! isset($form['status']['tts_result'])) {
-                        $form['status']['tts_result'] = NULL;
+                    if ( ! isset($form['status']['tts_data_result'])) {
+                        $form['status']['tts_data_result'] = NULL;
                     }
 
                     if ( ! isset($form['status']['tts_data_id'])) {
@@ -257,7 +256,7 @@ class KanbanController extends \Micro\Controller {
                                         'tts_worker' => $worker->name(),
                                         'tts_deleted' => 0,
                                         'tts_created' => date('Y-m-d H:i:s'),
-                                        'tts_result' => $form['status']['tts_result'],
+                                        'tts_data_result' => $form['status']['tts_data_result'],
                                         'tts_data_id' => $form['status']['tts_data_id']
                                     );
                                     
@@ -282,7 +281,7 @@ class KanbanController extends \Micro\Controller {
                     $curr = $task->getCurrentStatuses();
 
                     foreach ($curr as $c) {
-                        $c->tts_result = $form['status']['tts_result'];
+                        $c->tts_data_result = $form['status']['tts_data_result'];
                         $c->tts_data_id = $form['status']['tts_data_id'];
                         
                         $c->save();
@@ -342,7 +341,7 @@ class KanbanController extends \Micro\Controller {
     public static function applySearch($query, $params) {
         if (isset($params['query'], $params['fields']) && $params['query'] != '') {
             $search = strtoupper($params['query']);
-            $query->andWhere('( a.tts_result LIKE :search: )', array('search' => '%'.$search.'%' ));
+            $query->andWhere('( task_status.tts_data_result LIKE :search: )', array('search' => '%'.$search.'%' ));
         }
     }
 
@@ -351,21 +350,42 @@ class KanbanController extends \Micro\Controller {
             $json = json_decode($params['params']);
 
             if (isset($json->tts_id)) {
-                $query->andWhere('(a.tts_id = :tts_id:)', array('tts_id' => $json->tts_id));
+                $query->andWhere('(task_status.tts_id = :tts_id:)', array('tts_id' => $json->tts_id));
             } else {
-                if (isset($json->author) && count($json->author) > 0) {
-                    $query->inWhere('b.tt_creator_id', $json->author[1]);
-                }
                 
                 if (isset($json->label) && count($json->label) > 0) {
-                    $query->inWhere('d.ttl_sl_id', $json->label[1]);
+                    $query->inWhere('task_label.ttl_sl_id', $json->label[1]);
+                }
+
+                if (isset($json->sender) && count($json->sender) > 0) {
+                    $likes = array();
+
+                    foreach($json->sender[1] as $v) {
+                        $likes[] = "task_status.tts_data_result LIKE '%|sender=$v|%'";
+                    }
+                    
+                    if (count($likes) > 0) {
+                        $query->andWhere('('. implode(' OR ', $likes) .')');
+                    }
+                }
+
+                if (isset($json->receiver) && count($json->receiver) > 0) {
+                    $likes = array();
+
+                    foreach($json->receiver[1] as $v) {
+                        $likes[] = "task_status.tts_data_result LIKE '%|receiver=$v|%'";
+                    }
+                    
+                    if (count($likes) > 0) {
+                        $query->andWhere('('. implode(' OR ', $likes) .')');
+                    }
                 }
 
                 if (isset($json->date) && count($json->date) > 0) {
                     $likes = array();
 
-                    foreach($json->date[1] as $d) {
-                        $likes[] = "a.tts_result LIKE '%|date=$d|%'";
+                    foreach($json->date[1] as $v) {
+                        $likes[] = "task_status.tts_data_result LIKE '%|date=$v|%'";
                     }
                     
                     if (count($likes) > 0) {
@@ -378,7 +398,7 @@ class KanbanController extends \Micro\Controller {
 
     public static function applySorter($query, $params, $cols) {
         if ( ! isset($params['sort'])) {
-            $cols[] = 'MAX(b.tt_created_dt) AS tt_created_dt';
+            $cols[] = 'MAX(task.tt_created_dt) AS tt_created_dt';
             $query->columns($cols);
             $query->orderBy('tt_created_dt DESC');
         } else {
@@ -397,13 +417,10 @@ class KanbanController extends \Micro\Controller {
                 if (isset($maps[$e->property])) {
                     $name = $maps[$e->property];
                     $sort[] = $name.' '.$dirs;
-                    $cols[] = $aggr.'(b.'.$name.') AS '.$name;
+                    $cols[] = $aggr.'(task.'.$name.') AS '.$name;
                 } else if ($e->property == 'created') {
                     $sort[] = 'tt_created_dt '.$dirs;
-                    $cols[] = $aggr.'(b.tt_created_dt) AS tt_created_dt';
-                } else if ($e->property == 'creator') {
-                    $sort[] = 'su_fullname '.$dirs;
-                    $cols[] = $aggr.'(c.su_fullname) AS su_fullname';
+                    $cols[] = $aggr.'(task.tt_created_dt) AS tt_created_dt';
                 }
             }
 

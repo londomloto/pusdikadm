@@ -1,0 +1,93 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../../cores/elements/kct-combobox/kct-combobox.html">
+<link rel="import" href="../../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+
+<dom-module id="form-combo-sender">
+    <template>
+        <kct-combobox 
+            id="combo" 
+            url="/sender" 
+            value="{{ value }}" 
+            page-size="10" 
+            label="Pengirim" 
+            item-label-path="tsn_name" 
+            item-value-path="tsn_name" 
+            on-beforeload="__onBeforeLoad" 
+            invalid$="[[ invalid ]]" 
+            required$="[[ required ]]" 
+            auto-validate$="[[ autoValidate ]]" 
+            error-message="Nama pengirim wajib diisi" 
+            autoload>
+            <paper-button on-tap="__onAddTap" slot="toolbar"><iron-icon icon="add"></iron-icon>&nbsp;Tambah Pengirim</paper-button>
+        </kct-combobox>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-dialog id="editor" title="Tambah Pengirim" width="400">
+            <template preserve-content>
+                <style include="theme-helper"></style>
+                <div slot="dialog-body">
+                    <paper-input value="{{ editingRecord.tsn_name }}" label="Nama Pengirim (Instansi)"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onSaveTap">Simpan</paper-button>
+                    <paper-button on-tap="__onCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class FormComboSender extends Polymer.Element {
+            static get is() {
+                return 'form-combo-sender';
+            }
+            static get properties() {
+                return {
+                    value: { type: String, notify: true }, 
+                    invalid: { type: Boolean, value: false, notify: true }, 
+                    required: { type: Boolean, value: false },
+                    autoValidate: { type: Boolean, value: false },
+                    group: { type: String }, 
+                    editingRecord: { type: Object }
+                };
+            }
+            load() {
+                return this.$.combo.load();
+            }
+            __onBeforeLoad(e) {
+                e.detail.options.params = e.detail.options.params || {};
+                e.detail.options.params.tsn_group = this.group == 'surat-masuk' ? 1 : 2;
+            }
+            __onAddTap() {
+                this.set('editingRecord', {});
+                this.$.editor.open();
+            }
+            __onSaveTap() {
+                this.$.editor.close();
+
+                let payload = this.editingRecord;
+                
+                if ( ! payload.tsn_name ) {
+                    return;
+                }
+
+                payload.tsn_group = this.group == 'surat-masuk' ? 1 : 2;
+
+                this.$.ajax.POST('/sender', payload).then(res => {
+                    if (res.success) {
+                        this.$.combo.load().then(() => {
+                            this.set('value', res.data.tsn_name);
+                        });
+                    }
+                });
+            }
+            __onCloseTap() {
+                this.$.editor.close();
+            }
+        }
+        customElements.define(FormComboSender.is, FormComboSender);
+    </script>
+</dom-module>

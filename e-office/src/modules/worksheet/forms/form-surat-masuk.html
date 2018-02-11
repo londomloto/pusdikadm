@@ -10,22 +10,29 @@
             <h3 class="section-title">Registrasi</h3>
 
             <kct-column columns="3">
-                <div><paper-input value="{{ record.data.tsm_seq }}" label="Nomor Urut"></paper-input></div>
                 <div><vaadin-date-picker value="{{ record.data.tsm_receive_date }}" label="Tanggal Masuk"></vaadin-date-picker></div>
-                <div><paper-input label="Kode Surat"></paper-input></div>
+                <div><paper-input value="{{ record.data.tsm_seq }}" label="Nomor Urut"></paper-input></div>
+                <div><paper-input value="{{ record.data.tsm_code }}" label="Kode Surat"></paper-input></div>
             </kct-column>
             
         </div>
         <div class="section">
             <h3 class="section-title">Surat Masuk</h3>
+
             <kct-column columns="2">
-                <div><paper-input value="{{ record.data.tsm_no }}" label="Nomor Surat"></paper-input></div>
+                <div><paper-input value="{{ record.data.tsm_no }}" label="Nomor Surat *" required auto-validate error-message="Nomor surat wajib diisi"></paper-input></div>
                 <div><vaadin-date-picker value="{{ record.data.tsm_date }}" label="Tanggal Surat"></vaadin-date-picker></div>
             </kct-column>
-            <paper-input value="{{ record.data.tsm_from }}" label="Pengirim"></paper-input>
-            <paper-input value="{{ record.data.tsm_to }}" label="Tujuan"></paper-input>
-            <paper-input value="{{ record.data.tsm_subject }}" label="Perihal (Ringkasan)"></paper-input>
-            <paper-input label="Pengolah"></paper-input>
+
+            <form-combo-sender value="{{ record.data.tsm_from }}" group="surat-masuk"></form-combo-sender>
+
+            <paper-input value="{{ record.data.tsm_subject }}" label="Perihal"></paper-input>
+
+            <form-combo-receiver value="{{ record.data.tsm_to }}" group="surat-masuk"></form-combo-receiver>
+
+            <paper-input value="{{ record.data.tsm_admin }}" label="Pengolah"></paper-input>    
+            
+            
         </div>
     </template>
     <script>
@@ -36,7 +43,8 @@
 
             static get observers() {
                 return [
-                    '__computeTask(record.data.*)'
+                    '__computeTask(record.data.*)',
+                    '__computeValidation(record.data.tsm_no)'
                 ];
             }
 
@@ -47,7 +55,7 @@
                         let today = moment();
 
                         this.set('record.data', {
-                            tsm_seq: res.data.sequence,
+                            tsm_seq: res.data,
                             tsm_receive_date: today.format('YYYY-MM-DD')
                         });    
 
@@ -75,6 +83,8 @@
                         
                         this.saveResult({
                             date: res.data.tsm_date,
+                            sender: res.data.tsm_from,
+                            receiver: res.data.tsm_to,
                             result: res.data
                         });
 
@@ -82,6 +92,16 @@
                     }
                     return res;
                 }
+            }
+
+            remove() {
+                return this.$.ajax.DELETE('/surat-masuk/' + this.record.status.tts_data_id);
+            }
+
+            __computeValidation(tsm_no) {
+                let valid = true;
+                valid = valid && tsm_no;
+                this.set('invalid', !valid);
             }
 
             __computeTask(changed) {
@@ -105,7 +125,6 @@
                     this.set('record.task.tt_content', content);
                 }
             }
-
         }
         customElements.define(FormSuratMasuk.is, FormSuratMasuk);
     </script>

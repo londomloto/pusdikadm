@@ -186,6 +186,7 @@
             on-pagination="__onPagination" 
             paging="[[ paging ]]"
             vertical-offset="4" 
+            width="[[ listWidth ]]" 
             paging-enabled$="[[ paging.enabled ]]">
         </kct-search-overlay>
 
@@ -219,7 +220,8 @@
                         autoload: { type: Boolean, value: false },
                         delay: { type: Number, value: 300  },
                         hideTrigger: { type: Boolean, value: false },
-                        itemQueryPath: { type: String }
+                        itemQueryPath: { type: String },
+                        listWidth: { type: Number } 
                     }
                 }
 
