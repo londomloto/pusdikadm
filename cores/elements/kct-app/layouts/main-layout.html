@@ -303,6 +303,7 @@
             constructor() {
                 super();
                 this.__workspaceResizeHandler = this.__onWorkspaceResize.bind(this);
+                this.__activePage = null;
 
                 // KctAjax.interceptor({
                 //     request: () => {
@@ -332,7 +333,6 @@
                         this.__doLayout();
                         this.$.navigation.loadMenus();
                         this.$.socket.connect();
-                        this.$.notification.load();
                     },
                     1000
                 );
@@ -399,7 +399,20 @@
                 if (name) {
                     let page = this.pages.find(p => p.name == name);
                     if (page) {
+                        let index;
+                        if (this.__activePage) {
+                            index = this.pages.indexOf(this.__activePage);
+                            if (index !== -1) {
+                                this.set('pages.' + index + '.state.active', false);
+                            }
+                        }
+
+                        index = this.pages.indexOf(page);
+
+                        this.set('pages.' + index + '.state.active', true);
                         this.set('route.addr', page.state.path);
+
+                        this.set('__activePage', page);
                     }
                 }
             }
@@ -461,6 +474,7 @@
                     eventData = e.detail;
 
                 if (pageIndex !== -1) {
+                    this.set('pages.' + pageIndex + '.state.active', false);
                     this.splice('pages', pageIndex, 1);
 
                     this._debounce(

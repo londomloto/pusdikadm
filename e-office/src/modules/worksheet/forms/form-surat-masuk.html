@@ -17,7 +17,7 @@
             
         </div>
         <div class="section">
-            <h3 class="section-title">Dokumen Surat</h3>
+            <h3 class="section-title">Surat Masuk</h3>
             <kct-column columns="2">
                 <div><paper-input value="{{ record.data.tsm_no }}" label="Nomor Surat"></paper-input></div>
                 <div><vaadin-date-picker value="{{ record.data.tsm_date }}" label="Tanggal Surat"></vaadin-date-picker></div>
@@ -63,6 +63,7 @@
 
             save() {
                 let payload = this.record.data;
+
                 if (payload.tsm_id) {
                     return this.$.ajax.PUT('/surat-masuk/' + payload.tsm_id, payload).then(done.bind(this));
                 } else {
@@ -71,6 +72,12 @@
 
                 function done(res) {
                     if (res.success) {
+                        
+                        this.saveResult({
+                            date: res.data.tsm_date,
+                            result: res.data
+                        });
+
                         this.set('record.status.tts_data_id', res.data.tsm_id);
                     }
                     return res;
@@ -81,20 +88,21 @@
                 let data;
 
                 if ((data = this.record.data)) {
-                    let title = (data.tsm_no || '') + (data.tsm_date ? ' (' + data.tsm_date + ')' : '');
-                    this.set('record.status.tt_title', title);
-
+                    let title = data.tsm_no || '';
                     let content = '';
 
+                    this.set('record.task.tt_title', title);
+
                     if (data.tsm_from) {
-                        content += `Dikirim oleh ${data.tsm_from} `;
+                        content += `
+                            <div class="item-content-group">
+                                <div class="item-content-label">Pengirim</div>
+                                <div class="item-content-value">${data.tsm_from}</div>
+                            </div> 
+                        `;
                     }
 
-                    if (data.tsm_subject) {
-                        content += `perihal ${data.tsm_subject}`;
-                    }
-
-                    this.set('record.status.tts_content', content);
+                    this.set('record.task.tt_content', content);
                 }
             }
 

@@ -269,6 +269,7 @@
                                     <kct-search-combo 
                                         name="author" 
                                         url="/users" 
+                                        class="popup" 
                                         item-value-path="su_id" 
                                         item-label-path="su_fullname" 
                                         item-query-path="su_fullname" 
@@ -304,6 +305,7 @@
                                     <kct-search-combo 
                                         name="label" 
                                         url="/labels" 
+                                        class="popup" 
                                         item-value-path="sl_id" 
                                         item-label-path="sl_label" 
                                         item-query-path="sl_label" 
@@ -384,7 +386,7 @@
                         value: () => ([
                             { field: 'search', label: 'Search', icon: 'search', hint: 'Tekan enter untuk pencarian' },
                             { field: 'author', label: 'Pembuat', icon: 'social:person-outline', hint: 'Filter data pembuat: <b>@pembuat</b>' },
-                            { field: 'date', label: 'Tanggal', icon: 'today', hint: 'Filter dengan tanggal: <b>&tanggal</b>' },
+                            { field: 'date', label: 'Tanggal', icon: 'today', hint: 'Filter tanggal surat: <b>&tanggal</b>' },
                             { field: 'label', label: 'Label', icon: 'label-outline', hint: 'Filter data label: <b>~label</b>' }
                         ])
                     },

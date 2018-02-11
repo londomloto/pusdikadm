@@ -194,12 +194,6 @@
 
                 this.__loadReferences().then(() => {
                     this.set('project', project);
-                    this._debounce('tour', () => {
-                        if ( ! this.__tour) {
-                            this.__tour = true;
-                            this.__startTour();
-                        }
-                    }, 100);
                 });
 
             }
@@ -217,38 +211,6 @@
 
             __hideHeader(screen) {
                 return screen != 'xl' ? true : false;
-            }
-
-            __startTour() {
-                if ( ! this.opened) {
-                    return;
-                }
-
-                let enabled = this.config.app_tour_enabled;
-
-                if ( ! enabled) {
-                    return;
-                }
-
-                let options = {
-                    id: 'tour-project-view',
-                    steps: [
-                        {
-                            title: 'Buat Dokumen',
-                            content: 'Klik tombol ini untuk memulai bekerja dengan dokumen baru',
-                            target: this.$['button-create-task'],
-                            showNextButton: false,
-                            placement: 'bottom'
-                        }
-                    ]
-                }
-
-                hopscotch.startTour(options);
-            }
-
-            __stopTour() {
-                hopscotch.endTour(true);
-                this.set('config.app_tour_enabled', false);
             }
 
             __loadReferences() {
@@ -285,7 +247,6 @@
             }
 
             __onCreateTaskTap() {
-                this.__stopTour();
 
                 this.set('route.data.back', '/worksheet/' + this.project + '/view/' + this.view);
                 this.set('route.path', '/worksheet/' + this.project + '/task/create');

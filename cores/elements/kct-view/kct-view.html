@@ -37,7 +37,8 @@
                 return [
                     '_heightChanged(height)',
                     '_nameChanged(name)',
-                    '_stateParamsChanged(state.params)'
+                    '_stateParamsChanged(state.params)',
+                    '_stateActiveChanged(state.active)'
                 ];
             }
 
@@ -120,6 +121,10 @@
             
             activate() {}
 
+            handleRouteEnter() {}
+
+            handleRouteLeave() {} 
+
             handleRouteParams(...params) {}
 
             handleResizing(width, height) {}
@@ -194,6 +199,16 @@
             _stateParamsChanged(params) {
                 Polymer.RenderStatus.afterNextRender(this, () => {
                     this.handleRouteParams.apply(this, params);
+                });
+            }
+
+            _stateActiveChanged(active) {
+                Polymer.RenderStatus.afterNextRender(this, () => {
+                    if (active) {
+                        this.handleRouteEnter();
+                    } else {
+                        this.handleRouteLeave();
+                    }
                 });
             }
 

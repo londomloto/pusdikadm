@@ -11,7 +11,10 @@ class NotificationsController extends \Micro\Controller {
 
         switch($display) {
             case 'top':
-                return Notification::top();
+                return Notification::items(0, 6);
+                
+            default:
+                return Notification::items();
         }
 
     }

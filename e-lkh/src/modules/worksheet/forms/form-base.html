@@ -41,27 +41,27 @@
             }
 
             saveResult(options = {}) {
-                let query = [];
+                let result = [];
 
                 Object.keys(options).forEach(k => {
                     if (k == 'date' || k == 'author') {
-                        query.push(k + '=' + options[k]);
-                    } else if (k == 'data') {
+                        result.push(k + '=' + options[k]);
+                    } else if (k == 'result') {
                         let data = options[k] || {};
                         Object.keys(data).forEach(f => {
                             let v = data[f];
                             if ( ! this._isArray(v) && ! this._isObject(v)) {
-                                query.push(f + '=' + v);
+                                result.push(f + '=' + v);
                             }
                         });
                     }
                 });
 
-                query = query.join('|');
+                result = result.join('|');
 
-                if (query) {
-                    query = '|' + query + '|';
-                    this.set('record.status.tts_query', query);
+                if (result) {
+                    result = '|' + result + '|';
+                    this.set('record.status.tts_result', result);
                 }
             }
 

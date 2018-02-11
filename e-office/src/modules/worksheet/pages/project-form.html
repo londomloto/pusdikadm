@@ -162,8 +162,7 @@
                     attr-for-selected="name" 
                     selected="[[ step ]]" 
                     entry-animation="[[ entryAnimation ]]" 
-                    exit-animation="[[ exitAnimation ]]" 
-                    on-neon-animation-finish="__onSlideEnd">
+                    exit-animation="[[ exitAnimation ]]">
 
                     <neon-animatable name="step-1">
                         <h4>Detail Module</h4>
@@ -240,7 +239,6 @@
                                                 item-label-path="su_email" 
                                                 item-value-path="su_id" 
                                                 on-change="__onComboUserChange" 
-                                                on-vaadin-dropdown-closed="__onComboUserClose"
                                                 hide-clear 
                                                 no-label-float>
 
@@ -398,13 +396,6 @@
                 this.set('step', 'step-1');
 
                 this.__loadWorksheets();
-
-                this._debounce('tour', () => {
-                    if ( ! this.__tour) {
-                        this.__tour = true;
-                        this.__startTour();
-                    }
-                }, 100);
             }
 
             __projectTitleChanged(value) {
@@ -432,64 +423,6 @@
                     let chr = title.substr(0, (total - pos));
                     this.set('projectRecord.sp_title', chr);
                 }, 100);
-            }
-
-            __startTour(step) {
-                if ( ! this.opened) {
-                    return;
-                }
-
-                let enabled = this.config.app_tour_enabled;
-
-                if ( ! enabled) {
-                    return;
-                }
-
-                if (step === undefined) {
-                    step = 0;
-                }
-
-                let options = {
-                    id: 'tour-project-form',
-                    steps: [
-                        {
-                            title: 'Nama Kegiatan',
-                            content: 'Tulis nama kegiatan Anda di sini',
-                            target: this.$['project-title-container'],
-                            placement: 'top'/*,
-                            onShow: () => {
-                                this.__autoTyping();
-                            }*/
-                        },
-                        {
-                            title: 'Anggota Kegiatan',
-                            content: 'Klik tombol ini untuk menambahkan anggota',
-                            target: this.$['button-add-member'],
-                            showNextButton: false,
-                            placement: 'top'
-                        },
-                        {
-                            title: 'Selanjutnya',
-                            content: 'Klik tombol ini untuk lanjut ke halaman berikutnya',
-                            target: this.$['button-goto-step2'],
-                            showNextButton: false,
-                            placement: 'top'
-                        },
-                        {
-                            title: 'Simpan Kegiatan',
-                            content: 'Klik tombol ini untuk menyimpan kegiatan Anda dan mulai bekerja',
-                            target: this.$['button-save-project'],
-                            showNextButton: false,
-                            placement: 'top'
-                        }
-                    ]
-                };
-
-                hopscotch.startTour(options, step);
-            }
-
-            __stopTour() {
-                hopscotch.endTour(true);
             }
 
             __goback() {
@@ -535,17 +468,8 @@
                 });
             }
 
-            __onSlideEnd() {
-                
-                if (this.step == 'step-2') {
-                    this.__startTour(3);
-                }
-            }
-
             __onStepTap(e) {
                 let step = e.target.dataset.step;
-                
-                this.__stopTour();
 
                 if (step != 'step-3') {
 
@@ -568,7 +492,6 @@
             }
 
             __onAddMemberTap() {
-                this.__stopTour();
 
                 let combo = this.$['combo-user'];
                 this.set('__hideComboUser', false);
@@ -623,10 +546,6 @@
             __onComboUserCloseTap() {
                 this.$['combo-user'].close();
                 this.set('__hideComboUser', true);
-            }
-
-            __onComboUserClose() {
-                this.__startTour(2);
             }
 
             __onBackTap() {

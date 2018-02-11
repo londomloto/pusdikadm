@@ -192,14 +192,7 @@
 
                 if ( ! this.__projectLoaded) {
                     this.__projectLoaded = true;
-                    this.__loadProjects().then(() => {
-                        this._debounce('tour', () => {
-                            if ( ! this.__tour) {
-                                this.__tour = true;
-                                this.__startTour();
-                            }
-                        }, 100);
-                    });
+                    this.__loadProjects();
                 }
                 
             }
@@ -216,78 +209,11 @@
                 });
             }
 
-            __startTour() {
-                if ( ! this.opened) {
-                    return;
-                }
-
-                let enabled;
-
-                if (this.config.app_tour_enabled === undefined) {
-                    this.set('config.app_tour_enabled', true);
-                }
-
-                enabled = this.config.app_tour_enabled;
-
-                if (enabled) {
-                    if (this.projects.length) {
-                        let created = (this.projects || []).find(e => {
-                            return e.sp_creator_id == this.user.su_id;
-                        });
-                        enabled = !(!!created);
-                    }
-                }
-
-                if ( ! enabled) {
-                    return;
-                }
-
-                let buttonCreate = this.shadowRoot.querySelector('#button-create');
-                
-                let options = {
-                    id: 'tour-project-list',
-                    steps: [
-                        {
-                            title: 'Getting Started',
-                            target: buttonCreate,
-                            content: 'Click on create button to start creating new project',
-                            placement: 'right',
-                            yOffset: 40,
-                            showNextButton: false,
-                            showCTAButton: true,
-                            ctaLabel: 'Disable',
-                            onCTA: () => {
-                                this.set('config.app_tour_enabled', false);
-                                this.__stopTour();
-                            },
-                            onShow: () => {
-                                buttonCreate.classList.add('bounce');
-                            }
-                        }
-                    ],
-                    onClose: () => {
-                        buttonCreate.classList.remove('bounce');
-                    },
-                    onEnd: () => {
-                        buttonCreate.classList.remove('bounce');
-                    }
-                };
-                
-                hopscotch.startTour(options);
-            }
-
-            __stopTour() {
-                this.shadowRoot.querySelector('#button-create').classList.remove('bounce');
-                hopscotch.endTour(true);
-            }
-
             __onCreateProjectTap() {
-                this.__stopTour();
                 this.set('route.path', '/worksheet/create');
             }
 
             __onOpenProjectTap(e) {
-                this.__stopTour();
                 let projectRecord = e.model.item;
                 this.set('route.path', '/worksheet/' + projectRecord.sp_name + '/view/kanban');
             }

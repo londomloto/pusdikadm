@@ -6,44 +6,37 @@ use App\Users\Models\User,
 
 class Notification extends \App\Tasks\Models\TaskActivity {
 
-    public static function top() {
+    public static function items($start = NULL, $limit = NULL) {
         $auth = \Micro\App::getDefault()->auth->user();
-
-        $rows = self::get()
+        $query = self::get()
             ->alias('a')
             ->join('App\Tasks\Models\Task', 'b.tt_id = a.tta_tt_id', 'b', 'left') 
             ->join('App\Projects\Models\Project', 'c.sp_id = b.tt_sp_id', 'c', 'left')
             ->join('App\Projects\Models\ProjectUser', 'd.spu_sp_id = c.sp_id', 'd', 'left')
             ->where('d.spu_su_id = :user:', array('user' => $auth['su_id']))
-            ->limit(6, 0)
-            ->orderBy('a.tta_created DESC') 
-            ->execute();
+            ->orderBy('a.tta_created DESC');
 
-        $data = array();
-
-        foreach($rows as $elem) {
-            $item = array();
-            $time = $elem->getRelativeTime();
-            $time = str_replace(array('about ', 'at '), '', $time);
-            $icon = $elem->getIcon();
-
-            $item['tta_verb'] = $elem->getVerb();
-            $item['tta_time'] = ucfirst($time);
-            $item['tta_icon'] = $icon;
-            $item['tta_tt_id'] = $elem->tta_tt_id;
-            $item['tta_link'] = $elem->getLink();
-
-            $data[] = $item;
+        if ( ! is_null($start) && ! is_null($limit)) {
+            $query->limit($limit, $start);
+            return $query->paginate(FALSE);
+        } else {
+            return $query->paginate();
         }
-
-        return array(
-            'success' => TRUE,
-            'data' => $data
-        );
     }
 
-    public function all() {
+    public function toArray($columns = NULL) {
+        $data = array();
+        $time = $this->getRelativeTime();
+        $time = str_replace(array('about ', 'at '), '', $time);
+        $icon = $this->getIcon();
 
+        $data['tta_verb'] = $this->getVerb();
+        $data['tta_time'] = ucfirst($time);
+        $data['tta_icon'] = $icon;
+        $data['tta_tt_id'] = $this->tta_tt_id;
+        $data['tta_link'] = $this->getLink();
+
+        return $data;
     }
 
     // @Override
@@ -63,7 +56,7 @@ class Notification extends \App\Tasks\Models\TaskActivity {
         switch($type) {
             case 'comment':
                 $verb = sprintf(
-                    '**%s** commented on task: "%s"',
+                    '**%s** mengomentari kegiatan: "%s"',
                     $sender_name,
                     $task->tt_title
                 );
@@ -72,14 +65,14 @@ class Notification extends \App\Tasks\Models\TaskActivity {
             case 'update_title':
             case 'update_description':
                 $verb = sprintf(
-                    '**%s** changed detail on task: "%s"',
+                    '**%s** merubah detail kegiatan: "%s"',
                     $sender_name,
                     $task->tt_title
                 );
                 break;
             case 'update_flag':
                 $verb = sprintf(
-                    '**%s** changed status to **%s** on task: "%s"',
+                    '**%s** merubah tahapan menjadi **%s** untuk kegiatan: "%s"',
                     $sender_name,
                     $this->tta_data,
                     $task->tt_title
@@ -87,7 +80,7 @@ class Notification extends \App\Tasks\Models\TaskActivity {
                 break;
             case 'update_due':
                 $verb = sprintf(
-                    '**%s** changed due date to **%s** on task: "%s"',
+                    '**%s** merubah tanggal deadline menjadi **%s** untuk kegiatan: "%s"',
                     $sender_name,
                     self::_formatDate($this->tta_data, 'M d, Y'),
                     $task->tt_title

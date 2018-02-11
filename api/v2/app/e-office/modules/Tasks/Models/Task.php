@@ -102,6 +102,9 @@ class Task extends \Micro\Model {
                 )
             )
         );
+
+        \Moment\Moment::setLocale(self::__language());
+        \Moment\Moment::setDefaultTimezone(self::__timezone());
     }
 
     public function getSource() {
@@ -384,19 +387,29 @@ class Task extends \Micro\Model {
         return $zone;
     }
 
+    private static function __language() {
+        static $lang;
+
+        if (is_null($lang)) {
+            $conf = \Micro\App::getDefault()->config->app;
+            $lang = 'id_ID';
+            if ($conf->offsetExists('locale')) {
+                $lang = $conf->locale;
+            }
+        }
+        return $lang;
+    }
+
     private static function __formatDate($date, $format = "d M Y H:i") {
         if (empty($date)) {
             return '';
         }
-        
-        $zone = self::__timezone();
-        $date = new \Moment\Moment(strtotime($date), $zone);
+        $date = new \Moment\Moment(strtotime($date));
         return $date->format($format);
     }
 
     private static function __relativeTime($date, $format = "d M Y H:i") {
-        $zone = self::__timezone();
-        $date = new \Moment\Moment(strtotime($date), $zone);
+        $date = new \Moment\Moment(strtotime($date));
         $diff = $date->fromNow();
 
         if ($diff->getDirection() == 'past') {

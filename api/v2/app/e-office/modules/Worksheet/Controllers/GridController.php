@@ -75,7 +75,7 @@ class GridController extends \Micro\Controller {
     public static function applySearch($query, $params) {
         if (isset($params['query'], $params['fields']) && $params['query'] != '') {
             $search = strtoupper($params['query']);
-            $query->andWhere('( a.tts_query LIKE :search: )', array('search' => '%'.$search.'%' ));
+            $query->andWhere('( a.tts_result LIKE :search: )', array('search' => '%'.$search.'%' ));
         }
     }
 
@@ -92,6 +92,18 @@ class GridController extends \Micro\Controller {
                 
                 if (isset($json->label) && count($json->label) > 0) {
                     $query->inWhere('d.ttl_sl_id', $json->label[1]);
+                }
+
+                if (isset($json->date) && count($json->date) > 0) {
+                    $likes = array();
+
+                    foreach($json->date[1] as $d) {
+                        $likes[] = "a.tts_result LIKE '%|date=$d|%'";
+                    }
+                    
+                    if (count($likes) > 0) {
+                        $query->andWhere('('. implode(' OR ', $likes) .')');
+                    }
                 }
             }
         }

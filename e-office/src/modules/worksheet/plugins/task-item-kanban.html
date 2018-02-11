@@ -53,16 +53,26 @@
                 color: var(--paper-blue-grey-500);
                 font-size: 15px;
             }
-            .item-desc {
+            .item-content {
                 color: var(--paper-blue-grey-500);
                 margin-top: 10px;
-                font-size: 13px;
+                padding-right: 36px;
+                font-size: 12px;
             }
-            .item-desc iron-icon {
+            .item-content iron-icon {
                 --iron-icon-width: 16px;
                 --iron-icon-height: 16px;
                 position: relative;
                 top: -1px;
+            }
+            .item-content-group + .item-content-group {
+                margin-top: 5px;
+            }
+            .item-content-label {
+                color: #999;   
+            }
+            .item-content-value {
+                font-weight: 500;
             }
             .item-meta {
                 font-size: 11px;
@@ -103,7 +113,7 @@
                     </template>
                     <span class="item-clear"></span>
                 </div>
-                <div class="item-desc" inner-h-t-m-l="[[ record.status.tts_content ]]" hidden$="[[ !record.status.tts_has_content ]]"></div>
+                <div class="item-content" inner-h-t-m-l="[[ record.task.tt_content ]]"></div>
             </div>
             <div class="box-user">
                 <div class="item-user" title$="Dibuat oleh [[ record.task.creator_su_fullname ]]">

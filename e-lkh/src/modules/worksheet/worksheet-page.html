@@ -1,6 +1,5 @@
 <link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
 <link rel="import" href="../../../../cores/elements/kct-pages/kct-pages.html">
-<link rel="import" href="../../../../cores/vendors/hopscotch/hopscotch.html">
 
 <dom-module id="worksheet-page">
     <template>
@@ -15,7 +14,7 @@
             }
         </style>
 
-        <kct-pages id="switcher" attr-for-selected="name" selected="[[ page ]]" on-itemactivate="__onPageItemActivate" lazy-load>
+        <kct-pages id="switcher" attr-for-selected="name" selected="[[ page ]]" lazy-load>
             <project-tour import="pages/project-tour.html" name="tour" route="{{ route }}" state="[[ state ]]"></project-tour>
             <project-list import="pages/project-list.html" name="list" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" config="{{ config }}"></project-list>
             <project-form import="pages/project-form.html" name="form" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" config="{{ config }}"></project-form>
@@ -34,17 +33,6 @@
                     title: { type: String, value: 'Module', notify: true },
                     page: { type: String }
                 };
-            }
-
-            static get observers() {
-                return [
-                    '__openedChanged(opened)'
-                ];
-            }
-
-            disconnectedCallback() {
-                this.__stopTour();
-                super.disconnectedCallback();
             }
 
             handleRouteParams(project) {
@@ -71,38 +59,6 @@
                 if (pageItem && pageItem.handleResizing) {
                     pageItem.handleResizing(width, height);
                 }
-            }
-
-            __stopTour() {
-                hopscotch.endTour(true);
-            }
-
-            __openedChanged(opened) {
-                let timer = setTimeout(() => {
-                    clearTimeout(timer);
-                    timer = null;
-
-                    if ( ! opened) {
-                        this.__stopTour();
-                        this.$.switcher.items.forEach(item => {
-                            item.opened = false;
-                        });
-                    } else {
-                        if (this.$.switcher.selectedItem) {
-                            this.$.switcher.selectedItem.opened = true;
-                        }
-                    }
-                }, 10);
-            }
-
-            __onPageItemActivate(e) {
-                let activeItem = e.detail.activeItem;
-                
-                this.$.switcher.items.forEach(item => {
-                    item.opened = false;
-                });
-
-                activeItem.opened = true;
             }
         }
 

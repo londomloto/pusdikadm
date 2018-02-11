@@ -77,7 +77,7 @@
                 display: block;
                 position: absolute;
                 top: 5px;
-                right: 6px;
+                right: 10px;
                 padding: 2px 3px;
                 font-size: 11px;
                 line-height: 1;
@@ -115,7 +115,7 @@
                 <paper-icon-button slot="dropdown-trigger" class="nav-notif" icon="social:notifications"></paper-icon-button>    
                 <div class="popup" slot="dropdown-content">
                     <div class="header">
-                        Anda memiliki [[ total ]] notifikasi baru
+                        Anda memiliki notifikasi baru
                     </div>
                     <template is="dom-repeat" items="[[ items ]]">
                         <paper-item on-tap="__onItemTap">
@@ -130,11 +130,11 @@
                     </template>
                     
                     <div class="footer">
-                        <a href="javascript:;" on-tap="__onReadAllTap">Lihat semua</a>
+                        <a href="javascript:;" on-tap="__onReadAllTap">Lihat semua notifikasi</a>
                     </div>
                 </div>
             </paper-menu-button>
-            <span class="badge">[[ total ]]</span>
+            <span class="badge">!</span>
         </div>
         
     </template>
@@ -163,14 +163,10 @@
 
             load() {
                 this.$.ajax.GET('/notifications?display=top').then(res => {
-                    let data = (res.data || []);
+                    this.set('total', res.data.length);
+                    this.set('items', res.data);
 
-                    this.set('total', data.length);
-                    this.set('items', data);
-
-                    if (this.total > 0) {
-                        this.set('dirty', true);
-                    }
+                    this.$.menu.$.dropdown.notifyResize();
                 });
             }
 
@@ -201,6 +197,7 @@
             }
 
             __onReadAllTap() {
+                this.$.menu.close();
                 this.set('route.path', '/notifications');
             }
 
@@ -217,6 +214,7 @@
 
             __onPopupOpen() {
                 this.set('dirty', false);
+                this.load();
             }
         }
         customElements.define(NotificationBlock.is, NotificationBlock);

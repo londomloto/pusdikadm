@@ -24,6 +24,9 @@ class TaskActivity extends \Micro\Model {
                 'alias' => 'Sender'
             )
         );
+        
+        \Moment\Moment::setLocale(self::__language());
+        \Moment\Moment::setDefaultTimezone(self::__timezone());
     }
 
     public function getSource() {
@@ -44,8 +47,8 @@ class TaskActivity extends \Micro\Model {
             $data['sender_su_fullname'] = $this->sender->su_fullname;
         }
 
-        // $data['tta_verb'] = $this->tta_verb;
-        // $data['tta_icon'] = $this->tta_icon;
+        $data['tta_verb'] = $this->getVerb();
+        $data['tta_icon'] = $this->getIcon();
         
         // parse attachment
         $data['tta_text'] = '';
@@ -87,18 +90,37 @@ class TaskActivity extends \Micro\Model {
     }
 
     public function getRelativeTime($date = NULL) {
+
         if (is_null($date)) {
             $date = $this->tta_created;
         }
 
-        $zone = self::__timezone();
-        $date = new \Moment\Moment(strtotime($date), $zone);
+        $date = new \Moment\Moment(strtotime($date));
         $diff = $date->fromNow();
 
         if ($diff->getDirection() == 'past') {
             return $diff->getRelative();
         } else {
             return $date->format('M dS, Y h:m a');
+        }
+    }
+
+    public function getIcon() {
+        switch($this->tta_type) {
+            case 'comment':
+                return 'communication:chat-bubble-outline';
+            case 'update':
+                return 'image:edit';
+            case 'update_flag':
+                return 'info-outline';
+            case 'update_due':
+                return 'today';
+            case 'add_user':
+            case 'remove_user':
+                return 'face';
+            case 'add_label':
+            case 'remove_label':
+                return 'label-outline';
         }
     }
 
@@ -225,37 +247,24 @@ class TaskActivity extends \Micro\Model {
         $data['tta_type'] = $type;
         $data['tta_created'] = date('Y-m-d H:i:s');
         $data['tta_sender'] = $auth['su_id'];
-        $data['tta_icon'] = self::__getIcon($type);
 
         $activity = new TaskActivity();
 
         if ($activity->save($data)) {
-            // update verb
-            $activity->tta_verb = $activity->getVerb();
             $activity->save();
-
             return $activity->get($activity->tta_id);
         }
 
         return TaskActivity::none();
     }
 
-    private static function __getIcon($type) {
-        switch($type) {
-            case 'comment':
-                return 'communication:chat-bubble-outline';
-            case 'update':
-                return 'image:edit';
-            case 'update_flag':
-                return 'info-outline';
-            case 'update_due':
-                return 'today';
-            case 'add_user':
-            case 'remove_user':
-                return 'face';
-            case 'add_label':
-            case 'remove_label':
-                return 'label-outline';
+    public function getLink() {
+        $stat = $this->task->getCurrentStatuses()->getFirst();
+        
+        if ($stat) {
+            return '/worksheet/'.$this->task->project->sp_name.'/task/update/'.$stat->tts_id;
+        } else {
+            return NULL;
         }
     }
 
@@ -272,6 +281,20 @@ class TaskActivity extends \Micro\Model {
         }
         
         return FALSE;
+    }
+
+    private static function __language() {
+        static $lang;
+
+        if (is_null($lang)) {
+            $conf = \Micro\App::getDefault()->config->app;
+            $lang = 'id_ID';
+            if ($conf->offsetExists('locale')) {
+                $lang = $conf->locale;
+            }
+        }
+
+        return $lang;
     }
 
     private static function __timezone() {
@@ -292,9 +315,7 @@ class TaskActivity extends \Micro\Model {
             return '';
         }
 
-        $zone = self::__timezone();
-        $date = new \Moment\Moment(strtotime($date), $zone);
-        
+        $date = new \Moment\Moment(strtotime($date));
         return $date->format($format);
     }
 }

@@ -22,7 +22,6 @@ class KanbanController extends \Micro\Controller {
             'a.tts_target',
             'a.tts_worker',
             'a.tts_data_id',
-            'a.tts_query',
             'a.tts_content',
             'a.tts_deleted',
             'a.tts_created'
@@ -128,8 +127,8 @@ class KanbanController extends \Micro\Controller {
                             $form['status']['tts_content'] = NULL;
                         }
 
-                        if ( ! isset($form['status']['tts_query'])) {
-                            $form['status']['tts_query'] = NULL;
+                        if ( ! isset($form['status']['tts_result'])) {
+                            $form['status']['tts_result'] = NULL;
                         }
 
                         if ( ! isset($form['status']['tts_data_id'])) {
@@ -143,7 +142,7 @@ class KanbanController extends \Micro\Controller {
                             'tts_worker' => $worker->name(),
                             'tts_deleted' => 0,
                             'tts_created' => date('Y-m-d H:i:s'),
-                            'tts_query' => $form['status']['tts_query'],
+                            'tts_result' => $form['status']['tts_result'],
                             'tts_data_id' => $form['status']['tts_data_id'],
                             'tts_content' => $form['status']['tts_content']
                         );
@@ -216,8 +215,8 @@ class KanbanController extends \Micro\Controller {
                         $form['status']['tts_content'] = NULL;
                     }
 
-                    if ( ! isset($form['status']['tts_query'])) {
-                        $form['status']['tts_query'] = NULL;
+                    if ( ! isset($form['status']['tts_result'])) {
+                        $form['status']['tts_result'] = NULL;
                     }
 
                     if ( ! isset($form['status']['tts_data_id'])) {
@@ -262,7 +261,7 @@ class KanbanController extends \Micro\Controller {
                                         'tts_deleted' => 0,
                                         'tts_created' => date('Y-m-d H:i:s'),
                                         'tts_content' => $form['status']['tts_content'],
-                                        'tts_query' => $form['status']['tts_query'],
+                                        'tts_result' => $form['status']['tts_result'],
                                         'tts_data_id' => $form['status']['tts_data_id']
                                     );
                                     
@@ -287,7 +286,7 @@ class KanbanController extends \Micro\Controller {
                     $curr = $task->getCurrentStatuses();
 
                     foreach ($curr as $c) {
-                        $c->tts_query = $form['status']['tts_query'];
+                        $c->tts_result = $form['status']['tts_result'];
                         $c->tts_data_id = $form['status']['tts_data_id'];
                         $c->tts_content = $form['status']['tts_content'];
 
@@ -348,7 +347,7 @@ class KanbanController extends \Micro\Controller {
     public static function applySearch($query, $params) {
         if (isset($params['query'], $params['fields']) && $params['query'] != '') {
             $search = strtoupper($params['query']);
-            $query->andWhere('( a.tts_query LIKE :search: )', array('search' => '%'.$search.'%' ));
+            $query->andWhere('( a.tts_result LIKE :search: )', array('search' => '%'.$search.'%' ));
         }
     }
 
@@ -371,7 +370,7 @@ class KanbanController extends \Micro\Controller {
                     $likes = array();
 
                     foreach($json->date[1] as $d) {
-                        $likes[] = "a.tts_query LIKE '%|date=$d|%'";
+                        $likes[] = "a.tts_result LIKE '%|date=$d|%'";
                     }
                     
                     if (count($likes) > 0) {

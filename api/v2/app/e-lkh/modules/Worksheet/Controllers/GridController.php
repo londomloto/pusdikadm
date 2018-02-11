@@ -75,7 +75,7 @@ class GridController extends \Micro\Controller {
     public static function applySearch($query, $params) {
         if (isset($params['query'], $params['fields']) && $params['query'] != '') {
             $search = strtoupper($params['query']);
-            $query->andWhere('( a.tts_query LIKE :search: )', array('search' => '%'.$search.'%' ));
+            $query->andWhere('( a.tts_result LIKE :search: )', array('search' => '%'.$search.'%' ));
         }
     }
 
