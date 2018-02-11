@@ -1,0 +1,115 @@
+<dom-module id="form-surat-keluar-kapus">
+    <template>
+        <style include="form-style"></style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="section">
+            <h3 class="section-title">Pembuatan Surat</h3>
+            <kct-column columns="3">
+                <div>
+                    <paper-input label="Tanggal Pembuatan" value="[[ record.data.tsk_create_date_formatted ]]" readonly></paper-input>
+                </div>
+                <div>
+                    <paper-input label="Nomor Urut" value="[[ record.data.tsk_seq ]]" readonly></paper-input>
+                </div>
+                <div>
+                    <paper-input label="Kode Surat" value="[[ record.data.tsk_code ]]" readonly></paper-input>
+                </div>
+            </kct-column>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Identitas Surat</h3>
+            <kct-column columns="2">
+                <div>
+                    <paper-input label="Nomor Surat" value="[[ record.data.tsk_no ]]" readonly></paper-input>
+                </div>
+                <div>
+                    <paper-input label="Tanggal Surat" value="[[ record.data.tsk_date_formatted ]]" readonly></paper-input>
+                </div>
+            </kct-column>
+
+            <paper-input label="Tujuan" value="[[ record.data.tsk_to ]]" readonly></paper-input>
+            <paper-input label="Pengirim" value="[[ record.data.tsk_from ]]" readonly></paper-input>
+            <paper-input label="Perihal" value="[[ record.data.tsk_subject ]]" readonly></paper-input>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Dokumen Surat</h3>
+            <div class="list-group">
+                <template is="dom-repeat" items="[[ record.data.documents ]]">
+                    <div class="list-group-item">
+                        <iron-icon icon="done"></iron-icon><a target="_blank" href$="[[ item.tskd_download_url ]]">[[ item.tskd_orig ]]</a>
+                    </div>    
+                </template>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Pemeriksaan I</h3>
+            <paper-input value="[[ record.data.tsk_eselon_4_flag ]]" label="Status Pemeriksaan" readonly></paper-input>
+            <paper-input value="[[ record.data.tsk_eselon_4_note ]]" label="Catatan" readonly></paper-input>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Pemeriksaan II</h3>
+            <paper-input value="[[ record.data.tsk_eselon_3_flag ]]" label="Status Pemeriksaan" readonly></paper-input>
+            <paper-input value="[[ record.data.tsk_eselon_3_note ]]" label="Catatan" readonly></paper-input>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Pemeriksaan III</h3>
+            <vaadin-combo-box   
+                label="Status Pemeriksaan" 
+                value="{{ record.data.tsk_kapus_flag }}" 
+                items="[[ flags ]]" 
+                item-label-path="label" 
+                item-value-path="value"></vaadin-combo-box>
+            <paper-input value="{{ record.data.tsk_kapus_note }}" label="Catatan Pemeriksaan"></paper-input>
+        </div>
+
+    </template>
+    <script>
+        class FormSuratKeluarKapus extends FormBase {
+            static get is() {
+                return 'form-surat-keluar-kapus';
+            }
+
+            static get properties() {
+                return {
+                    flags: {
+                        type: Array,
+                        value: () => ([
+                            { label: 'Tidak Ada', value: 'NONE' },
+                            { label: 'Approve', value: 'APPROVE' },
+                            { label: 'Revisi', value: 'REVISI' }
+                        ])
+                    }
+                };
+            }
+
+            initialize() {
+                this.set('invalid', false);
+
+                return this.$.ajax.GET('/surat-keluar/' + this.record.status.tts_data_id).then(res => {
+                    this.set('record.data', res.data || {});
+                });
+            }
+
+            save(options) {
+                let payload = this.record.data;
+
+                if (options.send) {
+                    if ( ! payload.tsk_kapus_flag) {
+                        this.toast('Warning', 'Status pemeriksaan harus diisi', 'warn');
+                        return this.resolve({ success: false });
+                    }
+                }
+
+                return this.$.ajax.PUT('/surat-keluar/' + payload.tsk_id, payload);
+            }
+        }
+        customElements.define(FormSuratKeluarKapus.is, FormSuratKeluarKapus);
+    </script>
+</dom-module>

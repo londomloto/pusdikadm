@@ -27,11 +27,13 @@ Router::group(array(
     'handler' => 'App\SuratMasuk\Controllers\SuratMasukController',
     'middleware' => 'auth'
 ))
-->get('/sequence', 'sequence');
+->get('/sequence', 'sequence')
+->post('/upload', 'upload');
 
 Router::group(array(
     'prefix' => '/surat-keluar',
     'handler' => 'App\SuratKeluar\Controllers\SuratKeluarController',
     'middleware' => 'auth'
 ))
-->get('/sequence', 'sequence');
+->get('/sequence', 'sequence')
+->post('/upload', 'upload');

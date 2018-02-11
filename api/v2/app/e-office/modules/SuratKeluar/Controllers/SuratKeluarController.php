@@ -1,7 +1,8 @@
 <?php
 namespace App\SuratKeluar\Controllers;
 
-use App\SuratKeluar\Models\SuratKeluar;
+use App\SuratKeluar\Models\SuratKeluar,
+    App\SuratKeluar\Models\Document;
 
 class SuratKeluarController extends \Micro\Controller {
 
@@ -17,7 +18,16 @@ class SuratKeluarController extends \Micro\Controller {
     }
 
     public function findByIdAction($id) {
-        return SuratKeluar::get($id);
+        $query = SuratKeluar::get($id);
+        
+        if ($query->data) {
+            $data = $query->data->toArray();
+            $data['documents'] = $query->data->documents->filter(function($e){ return $e->toArray(); });
+
+            $query->data = $data;
+        }
+
+        return $query;
     }
 
     public function createAction() {
@@ -25,6 +35,14 @@ class SuratKeluarController extends \Micro\Controller {
         $data = new SuratKeluar();
 
         if ($data->save($post)) {
+            if (isset($post['documents'])) {
+
+                foreach($post['documents'] as $item) {
+                    $doc = new Document();
+                    $item['tskd_tsk_id'] = $data->tsk_id;
+                    $doc->save($item);
+                }
+            }
             return SuratKeluar::get($data->tsk_id);
         }
 
@@ -36,7 +54,11 @@ class SuratKeluarController extends \Micro\Controller {
         $post = $this->request->getJson();
 
         if ($query->data) {
-            $query->data->save($post);
+            if ($query->data->save($post)) {
+                if (isset($post['documents'])) {
+                    $query->data->saveDocuments($post['documents']);
+                }
+            }
         }
 
         return $query;
@@ -49,7 +71,33 @@ class SuratKeluarController extends \Micro\Controller {
         if ($data) {
             $done = $data->delete();
         }
-        
+
         return array('success' => $done);
+    }
+
+    public function uploadAction() {
+        if ($this->request->hasFiles()) {
+            $files = $this->request->getFiles();
+            $file = $files[0];
+            $orig = $file->getName();
+            $mime = $file->getType();
+            $code = 'doc_'.md5_file($file->getTempname()).'.'.$file->getExtension();
+            $path = APPPATH.'public/resources/documents/'.$code;
+
+            if (@$file->moveTo($path)) {
+                return array(
+                    'success' => TRUE,
+                    'data' => array(
+                        'mime' => $mime,
+                        'orig' => $orig,
+                        'file' => $code
+                    )
+                );
+            }
+        }
+
+        return array(
+            'success' => FALSE
+        );
     }
 }

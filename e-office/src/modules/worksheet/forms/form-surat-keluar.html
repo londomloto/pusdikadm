@@ -2,12 +2,24 @@
 
 <dom-module id="form-surat-keluar">
     <template>
-        <style include="form-style"></style>
+        <style include="form-style">
+            .list-group .list-group-item {
+                padding: 5px 0;
+            }
+            .list-group iron-icon {
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
+                margin-right: 5px;
+                position: relative;
+                top: -2px;
+            }
+        </style>
 
         <kct-ajax id="ajax"></kct-ajax>
+        <kct-file id="file" on-change="__onFileChange"></kct-file>
 
         <div class="section">
-            <h3 class="section-title">Pembuatan</h3>
+            <h3 class="section-title">Pembuatan Surat</h3>
             <kct-column columns="3">
                 <div>
                     <vaadin-date-picker value="{{ record.data.tsk_create_date }}" label="Tanggal Pembuatan"></vaadin-date-picker>
@@ -22,7 +34,7 @@
         </div>
 
         <div class="section">
-            <h3 class="section-title">Surat Keluar</h3>
+            <h3 class="section-title">Identitas Surat</h3>
             <kct-column columns="2">
                 <div>
                     <paper-input label="Nomor Surat *" value="{{ record.data.tsk_no }}" required auto-validate error-message="Nomor surat wajib diisi"></paper-input>
@@ -37,6 +49,21 @@
             <form-combo-sender value="{{ record.data.tsk_from }}" group="surat-keluar"></form-combo-sender>
             <form-combo-receiver value="{{ record.data.tsk_to }}" group="surat-keluar"></form-combo-receiver>
 
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Dokumen Surat</h3>
+            <div class="m-t m-b">
+                <paper-button on-tap="__onAttachmentTap" class="btn-default btn-sm"><iron-icon icon="add"></iron-icon>&nbsp;Tambah Dokumen</paper-button>    
+            </div>
+            <div class="list-group">
+                <template is="dom-repeat" items="[[ record.data.documents ]]">
+                    <div class="list-group-item">
+                        <iron-icon icon="done"></iron-icon> [[ item.tskd_orig ]] - <a href="javascript:void(0)" on-tap="__onRemoveDocumentTap">hapus</a>
+                    </div>
+                </template>
+            </div>
+            
         </div>
 
     </template>
@@ -61,7 +88,8 @@
                         this.set('record.data', {
                             tsk_seq: res.data,
                             tsk_create_date: today.format('YYYY-MM-DD'),
-                            tsk_date: today.format('YYYY-MM-DD')
+                            tsk_date: today.format('YYYY-MM-DD'),
+                            documents: []
                         });
                     });
                 } else {
@@ -126,6 +154,48 @@
 
                     this.set('record.task.tt_content', content);
                 }
+            }
+
+            __onAttachmentTap() {
+                this.$.file.browse();
+            }
+
+            __onFileChange() {
+                let file = this.$.file.file().files[0];
+
+                if (file) {
+                    
+                    this.$.file.reset();
+
+                    this.$.ajax.UPLOAD('/surat-keluar/upload', {
+                        files: [
+                            { name: 'userfile', file: file }
+                        ]
+                    }).then(res => {
+                        if (res.success) {
+                            this.push('record.data.documents', {
+                                tskd_orig: res.data.orig,
+                                tskd_file: res.data.file,
+                                tskd_mime: res.data.mime
+                            });
+                        }
+                    });
+                }
+                
+                
+            }
+
+            __onRemoveDocumentTap(e) {
+                e.stopPropagation();
+
+                this.confirm(
+                    'Konfirmasi',
+                    'Anda yakin akan menghapus dokumen tersebut'
+                ).then(y => {
+                    if (y) {
+                        this.splice('record.data.documents', e.model.index, 1);
+                    }
+                });
             }
         }
         customElements.define(FormSuratKeluar.is, FormSuratKeluar);
