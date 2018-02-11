@@ -13,7 +13,7 @@ class KanbanSettingsController extends \Micro\Controller {
 
     public function findByIdAction($id) {
         $result = KanbanSetting::get($id);
-        print_r($result);
+        print_r($result->toArray());
         
         $request = $this->request->getQuery('request');
         $project = $this->request->getQuery('project');
