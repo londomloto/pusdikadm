@@ -132,7 +132,7 @@ class FormsController extends \Micro\Controller {
                 foreach($this->request->getFiles() as $file) {
                     $type = $file->getExtension();
                     $orig = $file->getName();
-                    $name = md5($orig.date('YmdHis')).'.'.$type;
+                    $name = md5($orig.'_'.date('YmdHis')).'.'.$type;
 
                     $path = APPPATH.'public/resources/forms/'.$name;
 

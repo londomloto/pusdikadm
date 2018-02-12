@@ -382,11 +382,18 @@ class BpmnWorker {
                             $valid = $valid || ($pv == $cv);
                         }
                         break;
+                    case 'is empty':
+                        if ($op == 'AND') {
+                            $valid = $valid && ($pv == '' || is_null($pv));
+                        } else {
+                            $valid = $valid || ($pv == '' || is_null($pv));
+                        }
+                        break;
                     case 'is not null':
                         if ($op == 'AND') {
-                            $valid = $valid && ($pv != '');
+                            $valid = $valid && ($pv != '' && ! is_null($pv));
                         } else {
-                            $valid = $valid || ($pv != '');
+                            $valid = $valid || ($pv != '' && ! is_null($pv));
                         }
                         break;
                     case 'like':

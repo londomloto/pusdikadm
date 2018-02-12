@@ -1,0 +1,136 @@
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
+
+<dom-module id="flags-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-grid 
+            id="grid" 
+            url="/flags" 
+            columns="[[ columns ]]" 
+            selected="{{ selectedRecord }}" 
+            header-text="Referensi" 
+            header-desc="Status Pemeriksaan" 
+            header-icon="av:web" 
+            selection-model="row" 
+            on-back-tap="__onBackTap" 
+            pagination>
+            <paper-button slot="left-toolbar" on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Tambah</paper-button>
+            <paper-button slot="left-toolbar" on-tap="__onEditTap"><iron-icon icon="done"></iron-icon>&nbsp;Sunting</paper-button>
+            <paper-button slot="left-toolbar" on-tap="__onRemoveTap"><iron-icon icon="close"></iron-icon>&nbsp;Hapus</paper-button>
+        </kct-grid>
+
+        <kct-dialog id="editor" title="Editor Status" width="400">
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <paper-input label="Nama Status" value="{{ editingRecord.tfg_name }}"></paper-input>
+                    <paper-input label="Keterangan" value="{{ editingRecord.tfg_desc }}"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap">Simpan</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class FlagsPage extends KctView {
+            static get is() {
+                return 'flags-page';
+            }
+
+            static get properties() {
+                return {
+                    selectedRecord: { type: Object },
+                    editingRecord: { type: Object },
+                    columns: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'rownumber' },
+                            { text: 'Nama Status', dataIndex: 'tfg_name'},
+                            { text: 'Keterangan', dataIndex: 'tfg_desc', width: 400 }
+                        ])
+                    }
+                };
+            }
+
+            handleRouteParams(setting) {
+                if (setting != 'flags') return;
+                this.$.grid && this.$.grid.load();
+            }
+
+            handleResizing() {
+                if (this.$.grid) {
+                    this.$.grid.resize();
+                }
+            }
+
+            __onAddTap() {
+                this.set('editingRecord', {});
+                this.$.editor.open();
+            }
+
+            __onEditTap() {
+                if ( ! this.selectedRecord) {
+                    return;
+                }
+
+                this.set('editingRecord', Object.assign({}, this.selectedRecord));
+                this.$.editor.open();
+            }
+
+            __onRemoveTap() {
+                if ( ! this.selectedRecord) {
+                    return;
+                }
+
+                this.confirm('Konfirmasi', 'Apakah Anda yakin akan menghapus data ini?').then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/flags/' + e.data.tfg_id).then(() => {
+                            this.$.grid.load();
+                        });
+                    }
+                });
+            }
+
+            __onEditorCloseTap() {
+                this.$.editor.close();
+            }
+
+            __onEditorSaveTap() {
+                this.$.editor.close();
+                let payload = this.editingRecord;
+
+                if (payload.tfg_id) {
+                    this.$.ajax.PUT('/flags/' + payload.tfg_id, payload).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/flags', payload).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.$.grid.load();
+                    }
+                }
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+
+        customElements.define(FlagsPage.is, FlagsPage);
+    </script>
+</dom-module>

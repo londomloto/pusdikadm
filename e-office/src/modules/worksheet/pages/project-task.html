@@ -22,8 +22,29 @@
                 height: 100%;
             }
 
+            .btn-action {
+                color: #999;
+                border: 1px solid #999;
+            }
+
+            .btn-action.primary {
+                color: var(--app-primary);
+                border-color: var(--app-primary);
+            }
+
+            .btn-action.danger {
+                color: var(--app-danger);
+                border-color: var(--app-danger);
+            }
+
+            .btn-action.info {
+                color: var(--app-info);
+                border-color: var(--app-info);
+            }
+
             .btn-action[disabled] {
-                background-color: var(--paper-grey-500);
+                color: var(--paper-grey-500);
+                border-color: var(--paper-grey-500);
             }
             
             #workspace {
@@ -74,16 +95,16 @@
             <header-block id="header" on-back-tap="__onBackTap" text="Module Kegiatan" hide-header$="[[ __hideHeader(screen) ]]">
                 <h3 slot="header-value">[[ __projectTitle ]]</h3>
 
-                <paper-button hidden$="[[ formReadonly ]]" disabled$="[[ formInvalid ]]" on-tap="__onSaveTap" class="btn-action btn-primary" slot="right-toolbar" style="margin-left: 8px;">
+                <paper-button hidden$="[[ formReadonly ]]" disabled$="[[ formInvalid ]]" on-tap="__onSaveTap" class="btn-action primary" slot="right-toolbar" style="margin-left: 8px;">
                     <iron-icon icon="done"></iron-icon>&nbsp;[[ __computeSaveLabel(actionRecord) ]]
                 </paper-button>
 
                 
-                <paper-button hidden$="[[ __hideSend(actionRecord, formReadonly) ]]" disabled$="[[ formInvalid ]]"  on-tap="__onSendTap" class="btn-action btn-default" slot="right-toolbar">
-                    <iron-icon icon="arrow-forward"></iron-icon>&nbsp;Lanjut
+                <paper-button hidden$="[[ __hideSend(actionRecord, formReadonly) ]]" disabled$="[[ formInvalid ]]"  on-tap="__onSendTap" class="btn-action info" slot="right-toolbar">
+                    <iron-icon icon="arrow-forward"></iron-icon>&nbsp;Proses
                 </paper-button>
 
-                <paper-button hidden$="[[ __hideRemove(actionRecord, formRemovable) ]]" on-tap="__onRemoveTap" class="btn-action btn-danger" slot="right-toolbar">
+                <paper-button hidden$="[[ __hideRemove(actionRecord, formRemovable) ]]" on-tap="__onRemoveTap" class="btn-action danger" slot="right-toolbar">
                     <iron-icon icon="close"></iron-icon>&nbsp;Hapus
                 </paper-button>
 

@@ -30,11 +30,13 @@ class Notification extends \App\Tasks\Models\TaskActivity {
         $time = str_replace(array('about ', 'at '), '', $time);
         $icon = $this->getIcon();
 
+        $data['tta_id'] = $this->tta_id;
         $data['tta_verb'] = $this->getVerb();
         $data['tta_time'] = ucfirst($time);
         $data['tta_icon'] = $icon;
         $data['tta_tt_id'] = $this->tta_tt_id;
         $data['tta_link'] = $this->getLink();
+        $data['tta_sender'] = $this->tta_sender;
 
         return $data;
     }
@@ -54,9 +56,27 @@ class Notification extends \App\Tasks\Models\TaskActivity {
         }
 
         switch($type) {
+            case 'create':
+                $verb = sprintf(
+                    '**%s** membuat dokumen: "%s"',
+                    $sender_name,
+                    $task->tt_title
+                );
+                break;
+            case 'send':
+                $flags = json_decode($this->tta_data);
+                $flags = implode(', ', $flags);
+
+                $verb = sprintf(
+                    '**%s** merubah status dokumen: %s" ke **%s**',
+                    $sender_name,
+                    $task->tt_title,
+                    $flags
+                );
+                break;
             case 'comment':
                 $verb = sprintf(
-                    '**%s** mengomentari kegiatan: "%s"',
+                    '**%s** mengomentari dokumen: "%s"',
                     $sender_name,
                     $task->tt_title
                 );
@@ -65,14 +85,14 @@ class Notification extends \App\Tasks\Models\TaskActivity {
             case 'update_title':
             case 'update_description':
                 $verb = sprintf(
-                    '**%s** merubah detail kegiatan: "%s"',
+                    '**%s** menyunting dokumen: "%s"',
                     $sender_name,
                     $task->tt_title
                 );
                 break;
             case 'update_flag':
                 $verb = sprintf(
-                    '**%s** merubah tahapan menjadi **%s** untuk kegiatan: "%s"',
+                    '**%s** merubah status menjadi **%s** untuk dokumen: "%s"',
                     $sender_name,
                     $this->tta_data,
                     $task->tt_title
@@ -80,7 +100,7 @@ class Notification extends \App\Tasks\Models\TaskActivity {
                 break;
             case 'update_due':
                 $verb = sprintf(
-                    '**%s** merubah tanggal deadline menjadi **%s** untuk kegiatan: "%s"',
+                    '**%s** merubah tanggal deadline menjadi **%s** untuk dokumen: "%s"',
                     $sender_name,
                     self::_formatDate($this->tta_data, 'M d, Y'),
                     $task->tt_title
@@ -138,7 +158,7 @@ class Notification extends \App\Tasks\Models\TaskActivity {
                 $action = $type == 'add_label' ? 'add' : 'remove';
 
                 $verb = sprintf(
-                    '**%s** %s %s %s on task: "%s"',
+                    '**%s** %s %s %s untuk dokumen: "%s"',
                     $sender_name,
                     $action,
                     $labels,

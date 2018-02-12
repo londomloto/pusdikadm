@@ -10,6 +10,7 @@ use App\Tasks\Models\TaskLabel,
 class Task extends \Micro\Model {
 
     private $__snapshot = NULL;
+    private $__loggable = TRUE;
 
     public function initialize() {
         
@@ -111,47 +112,62 @@ class Task extends \Micro\Model {
         return 'trx_tasks';
     }
 
+    public function pauseLogging() {
+        $this->__loggable = FALSE;
+    }
+
+    public function resumeLogging() {
+        $this->__loggable = TRUE;
+    }
+
     public function afterFetch() {
         
         if (isset(
             $this->tt_id, 
-            $this->tt_title,
-            $this->tt_due_date,
-            $this->tt_flag
+            $this->tt_due_date
         )) {
             $this->__snapshot = array(
                 'tt_id' => $this->tt_id,
-                'tt_title' => $this->tt_title,
-                'tt_due_date' => $this->tt_due_date,
-                'tt_flag' => $this->tt_flag
-            );    
+                'tt_due_date' => $this->tt_due_date
+            );
         }
     }
 
-    public function afterSave() {
-        $snapshot = $this->__snapshot;
-        if ( ! is_null($snapshot) && ! empty($snapshot['tt_id'])) {
-            if ($snapshot['tt_due_date'] != $this->tt_due_date) {
-                TaskActivity::log('update_due', array(
-                    'tta_tt_id' => $this->tt_id,
-                    'tta_data' => $this->tt_due_date
-                ));
-            }
+    public function afterCreate() {
+        if ($this->__loggable) {
+            TaskActivity::log('create', array(
+                'tta_tt_id' => $this->tt_id,
+                'tta_data' => $this->tt_title
+            ));    
+        }
+    }
 
-            if ($snapshot['tt_flag'] != $this->tt_flag) {
-                TaskActivity::log('update_flag', array(
-                    'tta_tt_id' => $this->tt_id,
-                    'tta_data' => $this->tt_flag
-                ));
-            }
+    public function afterUpdate() {
+        if ($this->__loggable) {
+            $snapshot = $this->__snapshot;
 
-            if ($snapshot['tt_title'] != $this->tt_title) {
-                TaskActivity::log('update', array(
-                    'tta_tt_id' => $this->tt_id,
-                    'tta_data' => $this->tt_title
-                ));
-            }
+            if ( ! is_null($snapshot) && ! empty($snapshot['tt_id'])) {
 
+                $detail = TRUE;
+
+                if ($snapshot['tt_due_date'] != $this->tt_due_date) {
+                    
+                    $detail = FALSE;
+
+                    TaskActivity::log('update_due', array(
+                        'tta_tt_id' => $this->tt_id,
+                        'tta_data' => $this->tt_due_date
+                    ));
+                }
+
+                if ($detail) {
+
+                    TaskActivity::log('update', array(
+                        'tta_tt_id' => $this->tt_id,
+                        'tta_data' => $this->tt_title
+                    ));
+                }
+            }
         }
     }
 

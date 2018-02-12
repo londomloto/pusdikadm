@@ -123,7 +123,7 @@ class KanbanController extends \Micro\Controller {
                         if ( ! isset($form['status']['tts_content'])) {
                             $form['status']['tts_content'] = NULL;
                         }
-                        
+
                         if ( ! isset($form['status']['tts_data_result'])) {
                             $form['status']['tts_data_result'] = NULL;
                         }
@@ -191,7 +191,13 @@ class KanbanController extends \Micro\Controller {
 
             $affected = array();
 
+            if ($send) {
+                $task->pauseLogging();
+            }
+
             if ($task->save($form['task'])) {
+
+                $task->resumeLogging();
 
                 if (isset($form['labels'])) {
                     $task->saveLabels($form['labels']);
@@ -203,6 +209,7 @@ class KanbanController extends \Micro\Controller {
 
                 if ($send) {
                     $move = array();
+                    $send = array();
                     $curr = $task->getCurrentStatuses();
 
                     $worker = $this->bpmn->worker($post['worker']);
@@ -261,6 +268,7 @@ class KanbanController extends \Micro\Controller {
                                     );
                                     
                                     if ($status->save($create)) {
+                                        $send[] = $status->status->label;
                                         $move[] = $c;
                                     }
                                 } else {
@@ -277,6 +285,13 @@ class KanbanController extends \Micro\Controller {
                             $m->save(array('tts_deleted' => 1));
                         }
                     }
+
+                    if (count($send) > 0) {
+                        \App\Tasks\Models\TaskActivity::log('send', array(
+                            'tta_tt_id' => $task->tt_id,
+                            'tta_data' => json_encode($send)
+                        ));
+                    }
                 } else {
                     $curr = $task->getCurrentStatuses();
 
@@ -289,6 +304,8 @@ class KanbanController extends \Micro\Controller {
                         $affected[] = $c->tts_status;                 
                     }
                 }
+            } else {
+                $task->resumeLogging();
             }
 
             $affected = array_values(array_unique($affected));

@@ -1,22 +1,17 @@
 <link rel="import" href="../../../../../cores/vendors/moment/moment.html">
+<link rel="import" href="../plugins/form-combo-sender.html">
+<link rel="import" href="../plugins/form-combo-receiver.html">
+<link rel="import" href="../plugins/file-viewer.html">
 
 <dom-module id="form-surat-keluar">
     <template>
         <style include="form-style">
-            .list-group .list-group-item {
-                padding: 5px 0;
-            }
-            .list-group iron-icon {
-                --iron-icon-width: 18px;
-                --iron-icon-height: 18px;
-                margin-right: 5px;
-                position: relative;
-                top: -2px;
-            }
+
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
         <kct-file id="file" on-change="__onFileChange"></kct-file>
+        <file-viewer id="viewer"></file-viewer>
 
         <div class="section">
             <h3 class="section-title">Pembuatan Surat</h3>
@@ -52,18 +47,59 @@
         </div>
 
         <div class="section">
+            
             <h3 class="section-title">Dokumen Surat</h3>
+            <p>Unggah dokumen-dokumen yang berkaitan dengan surat yang dibuat seperti dokumen word, pdf maupun gambar.</p>
             <div class="m-t m-b">
-                <paper-button on-tap="__onAttachmentTap" class="btn-default btn-sm"><iron-icon icon="add"></iron-icon>&nbsp;Tambah Dokumen</paper-button>    
+                <paper-button on-tap="__onAttachmentTap" class="btn-cyan btn-sm"><iron-icon icon="file-upload"></iron-icon>&nbsp;Upload Dokumen</paper-button>    
             </div>
-            <div class="list-group">
+            <div>
                 <template is="dom-repeat" items="[[ record.data.documents ]]">
-                    <div class="list-group-item">
-                        <iron-icon icon="done"></iron-icon> [[ item.tskd_orig ]] - <a href="javascript:void(0)" on-tap="__onRemoveDocumentTap">hapus</a>
-                    </div>
+                    <paper-card class="document-item">
+                        <div class="card-content">
+                            <div class="tool">
+                                <paper-button on-tap="__onRemoveDocumentTap"><iron-icon icon="close"></iron-icon>&nbsp;Hapus</paper-button>
+                            </div>
+                            <div class="name">
+                                <a on-tap="__onOpenDocumentTap" href="javascript:;">[[ item.tskd_orig ]]</a>
+                            </div>
+                            <div class="meta">
+                                <span>[[ item.tskd_size_formatted ]] - [[ item.tskd_mime ]]</span>
+                            </div>
+                        </div>
+                    </paper-card>
                 </template>
             </div>
-            
+        </div>
+
+        <div class="section" hidden$="[[ __hideSection('tsk_exam1_flag', record.data) ]]">
+            <h3 class="section-title">Pemeriksaan I</h3>
+            <kct-column columns="3">
+                <div><paper-input value="[[ record.data.tsk_exam1_user_name ]]" label="Pegawai Pemeriksa" readonly></paper-input></div>
+                <div><paper-input value="[[ record.data.tsk_exam1_date_formatted ]]" label="Tanggal Pemeriksaan" readonly></paper-input></div>
+                <div><paper-input value="[[ record.data.tsk_exam1_flag_desc ]]" label="Status Pemeriksaan" readonly></paper-input></div>
+            </kct-column>
+            <paper-input value="[[ record.data.tsk_exam1_note ]]" label="Catatan Pemeriksaan" readonly></paper-input>
+        </div>
+
+        <div class="section" hidden$="[[ __hideSection('tsk_exam2_flag', record.data) ]]">
+            <h3 class="section-title">Pemeriksaan II</h3>
+            <kct-column columns="3">
+                <div><paper-input value="[[ record.data.tsk_exam2_user_name ]]" label="Pegawai Pemeriksa" readonly></paper-input></div>
+                <div><paper-input value="[[ record.data.tsk_exam2_date_formatted ]]" label="Tanggal Pemeriksaan" readonly></paper-input></div>
+                <div><paper-input value="[[ record.data.tsk_exam2_flag_desc ]]" label="Status Pemeriksaan" readonly></paper-input></div>
+            </kct-column>
+            <paper-input value="[[ record.data.tsk_exam2_note ]]" label="Catatan Pemeriksaan" readonly></paper-input>
+        </div>
+
+        <div class="section" hidden$="[[ __hideSection('tsk_exam3_flag', record.data) ]]">
+            <h3 class="section-title">Pemeriksaan III</h3>
+            <kct-column columns="3">
+                <div><paper-input value="[[ record.data.tsk_exam3_user_name ]]" label="Pegawai Pemeriksa" readonly></paper-input></div>
+                <div><paper-input value="[[ record.data.tsk_exam3_date_formatted ]]" label="Tanggal Pemeriksaan" readonly></paper-input></div>
+                <div><paper-input value="[[ record.data.tsk_exam3_flag_desc ]]" label="Status Pemeriksaan" readonly></paper-input></div>
+            </kct-column>
+            <paper-input value="[[ record.data.tsk_exam3_note ]]" label="Catatan Pemeriksaan" readonly></paper-input>
         </div>
 
     </template>
@@ -129,6 +165,12 @@
                 return this.$.ajax.DELETE('/surat-keluar/' + this.record.data.tsk_id);
             }
 
+            __hideSection(key, data) {
+                data = data || {};
+                let val = data[key];
+                return val ? false : true;
+            }
+
             __computeValidation(tsk_no) {
                 let valid = true;
                 valid = valid && tsk_no;
@@ -137,6 +179,7 @@
 
             __computeTask() {
                 let data = this.record.data;
+
                 if (data) {
                     let title = data.tsk_no || 'Surat Keluar';
                     let content = '';
@@ -176,13 +219,27 @@
                             this.push('record.data.documents', {
                                 tskd_orig: res.data.orig,
                                 tskd_file: res.data.file,
-                                tskd_mime: res.data.mime
+                                tskd_mime: res.data.mime,
+                                tskd_size: res.data.size,
+                                tskd_size_formatted: res.data.size_formatted,
+                                tskd_file_url: res.data.file_url
                             });
+                        } else {
+                            this.toast('Warning', res.message, 'warn');
                         }
                     });
                 }
                 
                 
+            }
+
+            __onOpenDocumentTap(e) {
+                e.stopPropagation();
+
+                this.$.viewer.open(
+                    e.model.item.tskd_file_url,
+                    e.model.item.tskd_mime
+                );
             }
 
             __onRemoveDocumentTap(e) {

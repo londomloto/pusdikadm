@@ -61,7 +61,7 @@ class TaskActivity extends \Micro\Model {
         $text = $this->tta_data;
         $URL = \Micro\App::getDefault()->url;
 
-        $text = preg_replace_callback('/\[image:(.*)\]/', function($m) use ($URL){
+        $text = preg_replace_callback('/\[image:([^\]]+)\]/', function($m) use ($URL){
             $name = $m[1];
             $code = sprintf(
                 '![%s](%s "%s")',
@@ -73,7 +73,7 @@ class TaskActivity extends \Micro\Model {
             return $code;
         }, $text);
 
-        $text = preg_replace_callback('/\[attachment:(.*)\]/', function($m) use ($URL){
+        $text = preg_replace_callback('/\[attachment:([^\]]+)\]/', function($m) use ($URL){
             $name = $m[1];
             $code = sprintf(
                 '<iron-icon icon="attachment"></iron-icon>&nbsp;[%s](%s)',
@@ -106,8 +106,11 @@ class TaskActivity extends \Micro\Model {
         switch($this->tta_type) {
             case 'comment':
                 return 'communication:chat-bubble-outline';
+            case 'create':
             case 'update':
                 return 'image:edit';
+            case 'send':
+                return 'done';
             case 'update_flag':
                 return 'info-outline';
             case 'update_due':
@@ -134,11 +137,28 @@ class TaskActivity extends \Micro\Model {
         }
 
         switch($type) {
+            case 'create':
+                $verb = sprintf(
+                    '**%s** membuat dokumen ini %s',
+                    $sender_name,
+                    $time
+                );
+                break;
+            case 'send':
+                $steps = json_decode($this->tta_data);
+                $steps = implode(', ', $steps);
+
+                $verb = sprintf(
+                    '**%s** merubah status ke **%s** %s',
+                    $sender_name,
+                    $steps,
+                    $time
+                );
+                break;
             case 'comment':
                 $verb = sprintf(
-                    '**[%s](profile/%d)** berkomentar %s',
+                    '**%s** berkomentar %s',
                     $sender_name,
-                    $sender,
                     $time
                 );
                 break;
@@ -146,26 +166,23 @@ class TaskActivity extends \Micro\Model {
             case 'update_title':
             case 'update_description':
                 $verb = sprintf(
-                    '**[%s](profile/%d)** mengubah kegiatan %s',
+                    '**%s** menyunting dokumen %s',
                     $sender_name,
-                    $sender,
                     $time
                 );
                 break;
             case 'update_flag':
                 $verb = sprintf(
-                    '**[%s](profile/%d)** mengubah status ke **%s** %s',
+                    '**%s** mengubah status dokumen ke **%s** %s',
                     $sender_name,
-                    $sender,
                     $this->tta_data,
                     $time
                 );
                 break;
             case 'update_due':
                 $verb = sprintf(
-                    '**[%s](profile/%d)** mengubah deadline ke **%s** %s',
+                    '**%s** mengubah deadline ke **%s** %s',
                     $sender_name,
-                    $sender,
                     self::__formatDate($this->tta_data, 'd M Y'),
                     $time
                 );
@@ -183,7 +200,7 @@ class TaskActivity extends \Micro\Model {
 
                     foreach($data as $e) {
                         $name = empty($e->su_fullname) ? $e->su_email : $e->su_fullname;
-                        $assignee[] = "**[$name](profile/$e->su_id)**";
+                        $assignee[] = "**$name**";
                     }
 
                     $assignee = implode(', ', $assignee);
@@ -192,9 +209,8 @@ class TaskActivity extends \Micro\Model {
                 $action = $type == 'add_user' ? 'assigned' : 'removed';
 
                 $verb = sprintf(
-                    '**[%s](profile/%d)** %s %s %s',
+                    '**%s** %s %s %s',
                     $sender_name,
-                    $sender,
                     $action,
                     $assignee,
                     $time
@@ -223,9 +239,8 @@ class TaskActivity extends \Micro\Model {
                 $action = $type == 'add_label' ? 'menambahkan' : 'menghapus';
 
                 $verb = sprintf(
-                    '**[%s](profile/%d)** %s %s %s %s',
+                    '**%s** %s %s %s %s',
                     $sender_name,
-                    $sender,
                     $action,
                     $plural,
                     $labels,

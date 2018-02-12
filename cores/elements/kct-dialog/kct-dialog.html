@@ -233,8 +233,11 @@
                         
                         this.shadowRoot.appendChild(dialogInstance);
 
+                        this.dispatchEvent(new CustomEvent('ready'));
+
                         this.$.dialog.addEventListener('iron-overlay-closed', this.__closedHandler);
                         this.$.dialog.addEventListener('iron-overlay-opened', this.__openedHandler);
+
                     }
 
                     this.__stamp.done = true;

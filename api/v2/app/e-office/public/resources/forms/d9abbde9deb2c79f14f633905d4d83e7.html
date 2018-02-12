@@ -1,0 +1,236 @@
+<link rel="import" href="../../../../../cores/vendors/moment/moment.html">
+<link rel="import" href="../plugins/form-combo-sender.html">
+<link rel="import" href="../plugins/form-combo-receiver.html">
+<link rel="import" href="../plugins/file-viewer.html">
+
+<dom-module id="form-surat-keluar">
+    <template>
+        <style include="form-style">
+
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-file id="file" on-change="__onFileChange"></kct-file>
+        <file-viewer id="viewer"></file-viewer>
+
+        <div class="section">
+            <h3 class="section-title">Pembuatan Surat</h3>
+            <kct-column columns="3">
+                <div>
+                    <vaadin-date-picker value="{{ record.data.tsk_create_date }}" label="Tanggal Pembuatan"></vaadin-date-picker>
+                </div>
+                <div>
+                    <paper-input label="Nomor Urut" value="{{ record.data.tsk_seq }}"></paper-input>
+                </div>
+                <div>
+                    <paper-input label="Kode Surat" value="{{ record.data.tsk_code }}"></paper-input>
+                </div>
+            </kct-column>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Identitas Surat</h3>
+            <kct-column columns="2">
+                <div>
+                    <paper-input label="Nomor Surat *" value="{{ record.data.tsk_no }}" required auto-validate error-message="Nomor surat wajib diisi"></paper-input>
+                </div>
+                <div>
+                    <vaadin-date-picker value="{{ record.data.tsk_date }}" label="Tanggal Surat"></vaadin-date-picker>
+                </div>
+            </kct-column>
+
+            <paper-input value="{{ record.data.tsk_subject }}" label="Perihal"></paper-input>
+            
+            <form-combo-sender value="{{ record.data.tsk_from }}" group="surat-keluar"></form-combo-sender>
+            <form-combo-receiver value="{{ record.data.tsk_to }}" group="surat-keluar"></form-combo-receiver>
+
+        </div>
+
+        <div class="section">
+            
+            <h3 class="section-title">Dokumen Surat</h3>
+            <p>Unggah dokumen-dokumen yang berkaitan dengan surat yang dibuat seperti dokumen word, pdf maupun gambar.</p>
+            <div class="m-t m-b">
+                <paper-button on-tap="__onAttachmentTap" class="btn-cyan btn-sm"><iron-icon icon="file-upload"></iron-icon>&nbsp;Upload Dokumen</paper-button>    
+            </div>
+            <div>
+                <template is="dom-repeat" items="[[ record.data.documents ]]">
+                    <paper-card class="document-item">
+                        <div class="card-content">
+                            <div class="tool">
+                                <paper-button on-tap="__onRemoveDocumentTap"><iron-icon icon="close"></iron-icon>&nbsp;Hapus</paper-button>
+                            </div>
+                            <div class="name">
+                                <a on-tap="__onOpenDocumentTap" href="javascript:;">[[ item.tskd_orig ]]</a>
+                            </div>
+                            <div class="meta">
+                                <span>[[ item.tskd_size_formatted ]] - [[ item.tskd_mime ]]</span>
+                            </div>
+                        </div>
+                    </paper-card>
+                </template>
+            </div>
+        </div>
+
+        <div class="section" hidden$="[[ __hideSection('tsk_eselon_4_flag', record.data) ]]">
+            <h3 class="section-title">Pemeriksaan I</h3>
+            <kct-column columns="2">
+                <div><paper-input value="[[ record.data.tsk_eselon_4_user ]]" label="Pegawai Pemeriksa" readonly></paper-input></div>
+                <div><paper-input value="[[ record.data.tsk_eselon_4_date ]]" label="Tanggal Pemeriksaan" readonly></paper-input></div>
+            </kct-column>
+            <paper-input value="[[ record.data.tsk_eselon_4_flag ]]" label="Status Pemeriksaan" readonly></paper-input>
+            <paper-input value="[[ record.data.tsk_eselon_4_note ]]" label="Catatan Pemeriksaan" readonly></paper-input>
+        </div>
+
+    </template>
+    <script>
+        class FormSuratKeluar extends FormBase {
+            static get is() {
+                return 'form-surat-keluar';
+            }
+
+            static get observers() {
+                return [
+                    '__computeTask(record.data.*)',
+                    '__computeValidation(record.data.tsk_no)'
+                ];
+            }
+
+            initialize() {
+                if (this.action == 'create') {
+                    let today = moment();
+
+                    return this.$.ajax.GET('/surat-keluar/sequence').then(res => {
+                        this.set('record.data', {
+                            tsk_seq: res.data,
+                            tsk_create_date: today.format('YYYY-MM-DD'),
+                            tsk_date: today.format('YYYY-MM-DD'),
+                            documents: []
+                        });
+                    });
+                } else {
+                    return this.$.ajax.GET('/surat-keluar/' + this.record.status.tts_data_id).then(res => {
+                        this.set('record.data', res.data || {});
+                    });
+                }
+            }
+
+            save() {
+                let payload = this.record.data;
+
+                if (payload.tsk_id) {
+                    return this.$.ajax.PUT('/surat-keluar/' + payload.tsk_id, payload).then(done.bind(this));
+                } else {
+                    return this.$.ajax.POST('/surat-keluar', payload).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+
+                        this.saveResult({
+                            date: res.data.tsk_date,
+                            sender: res.data.tsk_from,
+                            receiver: res.data.tsk_to,
+                            result: res.data
+                        });
+
+                        this.set('record.status.tts_data_id', res.data.tsk_id);
+                    }   
+
+                    return res;
+                }
+            }
+
+            remove() {
+                return this.$.ajax.DELETE('/surat-keluar/' + this.record.data.tsk_id);
+            }
+
+            __hideSection(key, data) {
+                data = data || {};
+                let val = data[key];
+                return val ? false : true;
+            }
+
+            __computeValidation(tsk_no) {
+                let valid = true;
+                valid = valid && tsk_no;
+                this.set('invalid', !valid);
+            }
+
+            __computeTask() {
+                let data = this.record.data;
+                if (data) {
+                    let title = data.tsk_no || 'Surat Keluar';
+                    let content = '';
+
+                    this.set('record.task.tt_title', title);
+
+                    if (data.tsk_to) {
+                        content += `
+                            <div class="item-content-group">
+                                <div class="item-content-label">Tujuan</div>
+                                <div class="item-content-value">${data.tsk_to}</div>
+                            </div>
+                        `;
+                    }
+
+                    this.set('record.task.tt_content', content);
+                }
+            }
+
+            __onAttachmentTap() {
+                this.$.file.browse();
+            }
+
+            __onFileChange() {
+                let file = this.$.file.file().files[0];
+
+                if (file) {
+                    
+                    this.$.file.reset();
+
+                    this.$.ajax.UPLOAD('/surat-keluar/upload', {
+                        files: [
+                            { name: 'userfile', file: file }
+                        ]
+                    }).then(res => {
+                        if (res.success) {
+                            this.push('record.data.documents', {
+                                tskd_orig: res.data.orig,
+                                tskd_file: res.data.file,
+                                tskd_mime: res.data.mime,
+                                tskd_size: res.data.size,
+                                tskd_size_formatted: res.data.size_formatted
+                            });
+                        }
+                    });
+                }
+                
+                
+            }
+
+            __onOpenDocumentTap(e) {
+                e.stopPropagation();
+
+                this.$.viewer.open(
+                    e.model.item.tskd_file_url,
+                    e.model.item.tskd_mime
+                );
+            }
+
+            __onRemoveDocumentTap(e) {
+                e.stopPropagation();
+
+                this.confirm(
+                    'Konfirmasi',
+                    'Anda yakin akan menghapus dokumen tersebut'
+                ).then(y => {
+                    if (y) {
+                        this.splice('record.data.documents', e.model.index, 1);
+                    }
+                });
+            }
+        }
+        customElements.define(FormSuratKeluar.is, FormSuratKeluar);
+    </script>
+</dom-module>

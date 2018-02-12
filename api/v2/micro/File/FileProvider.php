@@ -18,6 +18,17 @@ class FileProvider {
         return FALSE;
     }
 
+    public function formatSize($bytes, $precision = 2) {
+        $units = array('B', 'KB', 'MB', 'GB', 'TB');
+        $bytes = max($bytes, 0);
+        $power = floor(($bytes ? log($bytes) : 0) / log(1024));
+        $power = min($power, count($units) - 1);
+
+        $bytes /= (1 << (10 * $power)); 
+
+        return round($bytes, $precision) . ' ' . $units[$power];
+    }
+
     public function exists($path) {
         return file_exists($path) && ! is_dir($path);
     }

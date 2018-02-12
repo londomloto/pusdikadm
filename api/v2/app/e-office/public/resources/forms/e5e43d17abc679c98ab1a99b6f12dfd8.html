@@ -1,0 +1,170 @@
+<link rel="import" href="../plugins/file-viewer.html">
+
+<dom-module id="form-surat-keluar-print">
+    <template>
+        <style include="form-style"></style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <file-viewer id="viewer"></file-viewer>
+
+        <div class="section">
+            <h3 class="section-title">Pembuatan Surat</h3>
+            <kct-column columns="3">
+                <div>
+                    <paper-input label="Tanggal Pembuatan" value="[[ record.data.tsk_create_date_formatted ]]" readonly></paper-input>
+                </div>
+                <div>
+                    <paper-input label="Nomor Urut" value="[[ record.data.tsk_seq ]]" readonly></paper-input>
+                </div>
+                <div>
+                    <paper-input label="Kode Surat" value="[[ record.data.tsk_code ]]" readonly></paper-input>
+                </div>
+            </kct-column>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Identitas Surat</h3>
+            <kct-column columns="2">
+                <div>
+                    <paper-input label="Nomor Surat" value="[[ record.data.tsk_no ]]" readonly></paper-input>
+                </div>
+                <div>
+                    <paper-input label="Tanggal Surat" value="[[ record.data.tsk_date_formatted ]]" readonly></paper-input>
+                </div>
+            </kct-column>
+
+            <paper-input label="Tujuan" value="[[ record.data.tsk_to ]]" readonly></paper-input>
+            <paper-input label="Pengirim" value="[[ record.data.tsk_from ]]" readonly></paper-input>
+            <paper-input label="Perihal" value="[[ record.data.tsk_subject ]]" readonly></paper-input>
+        </div>
+
+        <div class="section">
+            
+            <h3 class="section-title">Dokumen Surat</h3>
+            <p>Daftar dokumen-dokumen yang berkaitan dengan surat yang dibuat seperti dokumen word, pdf maupun gambar.</p>
+            <div class="m-t">
+                <template is="dom-repeat" items="[[ record.data.documents ]]">
+                    <paper-card class="document-item">
+                        <div class="card-content">
+                            <div class="name">
+                                <a on-tap="__onOpenDocumentTap" href="javascript:;">[[ item.tskd_orig ]]</a>
+                            </div>
+                            <div class="meta">
+                                <span>[[ item.tskd_size_formatted ]] - [[ item.tskd_mime ]]</span>
+                            </div>
+                        </div>
+                    </paper-card>
+                </template>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Pemeriksaan I</h3>
+            <kct-column columns="3">
+                <div><paper-input value="[[ record.data.tsk_exam1_user_name ]]" label="Pegawai Pemeriksa" readonly></paper-input></div>
+                <div><paper-input value="[[ record.data.tsk_exam1_date_formatted ]]" label="Tanggal Pemeriksaan" readonly></paper-input></div>
+                <div><paper-input value="[[ record.data.tsk_exam1_flag_desc ]]" label="Status Pemeriksaan" readonly></paper-input></div>
+            </kct-column>
+            <paper-input value="[[ record.data.tsk_exam1_note ]]" label="Catatan Pemeriksaan" readonly></paper-input>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Pemeriksaan II</h3>
+            <kct-column columns="3">
+                <div><paper-input value="[[ record.data.tsk_exam2_user_name ]]" label="Pegawai Pemeriksa" readonly></paper-input></div>
+                <div><paper-input value="[[ record.data.tsk_exam2_date_formatted ]]" label="Tanggal Pemeriksaan" readonly></paper-input></div>
+                <div><paper-input value="[[ record.data.tsk_exam2_flag_desc ]]" label="Status Pemeriksaan" readonly></paper-input></div>
+            </kct-column>
+            <paper-input value="[[ record.data.tsk_exam2_note ]]" label="Catatan Pemeriksaan" readonly></paper-input>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Pemeriksaan III</h3>
+            <kct-column columns="3">
+                <div><paper-input value="[[ record.data.tsk_exam3_user_name ]]" label="Pegawai Pemeriksa" readonly></paper-input></div>
+                <div><paper-input value="[[ record.data.tsk_exam3_date_formatted ]]" label="Tanggal Pemeriksaan" readonly></paper-input></div>
+                <div><paper-input value="[[ record.data.tsk_exam3_flag_desc ]]" label="Status Pemeriksaan" readonly></paper-input></div>
+            </kct-column>
+            <paper-input value="[[ record.data.tsk_exam3_note ]]" label="Catatan Pemeriksaan" readonly></paper-input>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Pendandatanganan (Paraf)</h3>
+            <kct-column columns="3">
+                <div><paper-input value="[[ record.data.tsk_sign_user_name ]]" label="Pegawai Penandatangan" readonly></paper-input></div>
+                <div><paper-input value="[[ record.data.tsk_sign_date_formatted ]]" label="Tanggal Penandatanganan" readonly></paper-input></div>
+            </kct-column>
+        </div>
+
+    </template>
+    <script>
+        class FormSuratKeluarPrint extends FormBase {
+            static get is() {
+                return 'form-surat-keluar-print';
+            }
+
+            static get observers() {
+                return [
+                    '__computeTask(record.data.*)'
+                ];
+            }
+
+            initialize() {
+                this.set('invalid', false);
+
+                return this.$.ajax.GET('/surat-keluar/' + this.record.status.tts_data_id).then(res => {
+                    let data = res.data || {};
+                    this.set('record.data', res.data || {});
+                });
+            }
+
+            save(options) {
+                let payload = this.record.data;
+
+                return this.$.ajax.PUT('/surat-keluar/' + payload.tsk_id, payload).then(res => {
+                    if (res.success) {
+                        this.saveResult({
+                            date: res.data.tsk_date,
+                            sender: res.data.tsk_from,
+                            receiver: res.data.tsk_to,
+                            result: res.data
+                        });
+                    }
+                    return res;
+                });
+            }
+
+            __computeTask() {
+                let data = this.record.data;
+                
+                if (data) {
+                    let title = data.tsk_no || 'Surat Keluar';
+                    let content = '';
+
+                    this.set('record.task.tt_title', title);
+
+                    if (data.tsk_to) {
+                        content += `
+                            <div class="item-content-group">
+                                <div class="item-content-label">Tujuan</div>
+                                <div class="item-content-value">${data.tsk_to}</div>
+                            </div>
+                        `;
+                    }
+
+                    this.set('record.task.tt_content', content);
+                }
+            }
+
+            __onOpenDocumentTap(e) {
+                e.stopPropagation();
+
+                this.$.viewer.open(
+                    e.model.item.tskd_file_url,
+                    e.model.item.tskd_mime
+                );
+            }
+        }
+        customElements.define(FormSuratKeluarPrint.is, FormSuratKeluarPrint);
+    </script>
+</dom-module>

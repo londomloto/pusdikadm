@@ -157,17 +157,71 @@
 
             static get observers() {
                 return [
-                    '__screenChanged(screen)'
+                    '__screenChanged(screen)',
+                    '__userChanged(user.*)'
                 ];
             }
 
-            load() {
+            ready() {
+                super.ready();
+                this.verify();
+            }
+
+            __userChanged(changed) {
+                if (changed.path == 'user' && this.user && this.user.su_id) {
+                    this.verify();
+                }
+            }
+
+            verify() {
+                
                 this.$.ajax.GET('/notifications?display=top').then(res => {
+                    let keys = (res.data || []).map(e => e.tta_id + ':' + e.tta_sender);
+                    if (keys.length) {
+                        let feed = this.user.su_feed ? JSON.parse(this.user.su_feed) : false;
+                        
+                        if ( ! feed) {
+                            this.set('dirty', true);
+                        } else {
+                            let d = diff(keys, feed);
+                            if (d.length) {
+                                d = d.filter(e => {
+                                    let p = e.split(':');
+                                    return p[1] != this.user.su_id;
+                                });
+                                if (d.length) {
+                                    this.set('dirty', true);    
+                                }
+                            }
+                        }
+                    }
+                });    
+
+                function diff(a, b) {
+                    if (a.length >= b.length) {
+                        return a.filter(e => b.indexOf(e) < 0);
+                    } else {
+                        return b.filter(e => a.indexOf(e) < 0);
+                    }
+                }
+            }
+
+            load() {
+                return this.$.ajax.GET('/notifications?display=top').then(res => {
                     this.set('total', res.data.length);
                     this.set('items', res.data);
-
                     this.$.menu.$.dropdown.notifyResize();
+
+                    let keys = (res.data || []).map(e => e.tta_id + ':' + e.tta_sender);
+                    this.__save(keys);
                 });
+            }
+
+            __save(feed) {
+                feed = JSON.stringify(feed);
+
+                this.set('user.su_feed', feed);
+                this.$.ajax.PUT('/users/' + this.user.su_id, { su_feed: feed });
             }
 
             __screenChanged(screen) {

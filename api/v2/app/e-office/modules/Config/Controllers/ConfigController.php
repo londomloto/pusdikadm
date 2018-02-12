@@ -7,7 +7,7 @@ class ConfigController extends \Micro\Controller {
 
     public function loadAction() {
         $data = Config::data();
-        $data['app_version'] = '2.0.5';
+        $data['app_version'] = '2.0.6';
         $data['app_push_server'] = $this->socket->host;
 
         // handle package info

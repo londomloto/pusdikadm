@@ -1,4 +1,7 @@
-<dom-module id="form-surat-keluar-eselon4">
+<link rel="import" href="../../../../../cores/vendors/moment/moment.html">
+<link rel="import" href="../plugins/file-viewer.html">
+
+<dom-module id="form-surat-keluar-exam1">
     <template>
         <style include="form-style">
             .list-group .list-group-item {
@@ -14,6 +17,7 @@
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
+        <file-viewer id="viewer"></file-viewer>
 
         <div class="section">
             <h3 class="section-title">Pembuatan Surat</h3>
@@ -47,32 +51,61 @@
         </div>
 
         <div class="section">
+            
             <h3 class="section-title">Dokumen Surat</h3>
-            <div class="list-group">
+            <p>Daftar dokumen-dokumen yang berkaitan dengan surat yang dibuat seperti dokumen word, pdf maupun gambar.</p>
+            <div class="m-t">
                 <template is="dom-repeat" items="[[ record.data.documents ]]">
-                    <div class="list-group-item">
-                        <iron-icon icon="done"></iron-icon><a target="_blank" href$="[[ item.tskd_download_url ]]">[[ item.tskd_orig ]]</a>
-                    </div>    
+                    <paper-card class="document-item">
+                        <div class="card-content">
+                            <div class="name">
+                                <a on-tap="__onOpenDocumentTap" href="javascript:;">[[ item.tskd_orig ]]</a>
+                            </div>
+                            <div class="meta">
+                                <span>[[ item.tskd_size_formatted ]] - [[ item.tskd_mime ]]</span>
+                            </div>
+                        </div>
+                    </paper-card>
                 </template>
             </div>
         </div>
 
         <div class="section">
             <h3 class="section-title">Pemeriksaan</h3>
-            <vaadin-combo-box   
+            <kct-column columns="2">
+                <div>
+                    <kct-combobox 
+                        id="combo-user" 
+                        url="/projects/projects-users" 
+                        label="Pegawai Pemeriksa" 
+                        value="{{ record.data.tsk_eselon_4_user }}" 
+                        item-value-path="su_id" 
+                        item-label-path="su_fullname" 
+                        on-beforeload="__onComboUserBeforeLoad" 
+                        page-size="10"></kct-combobox>
+                </div>
+                <div>
+                    <vaadin-date-picker 
+                        label="Tanggal Pemeriksaan" 
+                        value="{{ record.data.tsk_eselon_4_date }}"></vaadin-date-picker>
+                </div>
+            </kct-column>
+            <kct-combobox 
+                url="/flags" 
                 label="Status Pemeriksaan" 
                 value="{{ record.data.tsk_eselon_4_flag }}" 
-                items="[[ flags ]]" 
-                item-label-path="label" 
-                item-value-path="value"></vaadin-combo-box>
+                item-label-path="tfg_desc" 
+                item-value-path="tfg_name" 
+                page-size="10"
+                autoload></kct-combobox>
             <paper-input value="{{ record.data.tsk_eselon_4_note }}" label="Catatan Pemeriksaan"></paper-input>
         </div>
 
     </template>
     <script>
-        class FormSuratKeluarEselon4 extends FormBase {
+        class FormSuratKeluarExam1 extends FormBase {
             static get is() {
-                return 'form-surat-keluar-eselon4';
+                return 'form-surat-keluar-exam1';
             }
 
             static get properties() {
@@ -93,7 +126,20 @@
                 this.set('invalid', false);
 
                 return this.$.ajax.GET('/surat-keluar/' + this.record.status.tts_data_id).then(res => {
-                    this.set('record.data', res.data || {});
+                    let data = res.data || {};
+                    
+                    this.$['combo-user'].load().then(() => {
+                        if ( ! data.tsk_eselon_4_user) {
+                            data.tsk_eselon_4_user = this.user.su_id;
+                        }    
+
+                        if ( ! data.tsk_eselon_4_date) {
+                            data.tsk_eselon_4_date = moment().format('YYYY-MM-DD');
+                        }
+
+                        this.set('record.data', res.data || {});
+                    });
+                    
                 });
             }
 
@@ -114,7 +160,22 @@
                     return res;
                 });
             }
+
+            __onComboUserBeforeLoad(e) {
+                if (this.project && this.project.sp_id) {
+                    e.detail.options.project = this.project.sp_id;
+                }
+            }
+
+            __onOpenDocumentTap(e) {
+                e.stopPropagation();
+
+                this.$.viewer.open(
+                    e.model.item.tskd_file_url,
+                    e.model.item.tskd_mime
+                );
+            }
         }
-        customElements.define(FormSuratKeluarEselon4.is, FormSuratKeluarEselon4);
+        customElements.define(FormSuratKeluarExam1.is, FormSuratKeluarExam1);
     </script>
 </dom-module>

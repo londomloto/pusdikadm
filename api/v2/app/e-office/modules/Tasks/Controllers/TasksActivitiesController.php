@@ -31,52 +31,32 @@ class TasksActivitiesController extends \Micro\Controller {
     }
 
     public function uploadAction() {
-        $result = array(
-            'success' => FALSE,
-            'data' => NULL
-        );
+        $success = $this->uploader->initialize(array(
+            'path' => APPPATH.'public/resources/attachments/',
+            'encrypt' => TRUE
+        ))->upload();
+        
+        if ($success) {
+            $result = $this->uploader->getResult();
 
-        if ($this->request->hasFiles()) {
-            $request = $this->request->getFiles();
-            $file = $request[0];
-            $type = $file->getExtension();
-            $name = md5('attachment_'.date('ymdhis')).'.'.$type;
-            $path = APPPATH.'public/resources/attachments/'.$name;
-
-            if (@$file->moveTo($path)) {
-                $code = '';
-                if ($this->file->isImage($path)) {
-                    /*$code = sprintf(
-                        '<p>![%s](%s "%s")</p>',
-                        $this->url->getBaseUrl().'public/resources/attachments/'.$name,
-                        $this->url->getSiteUrl('/assets/thumb').'?s=public/resources/attachments/'.$name.'&w=100&h=100',
-                        $name,
-                        $name
-                    );*/
-                    $code .= sprintf(
-                        '<p>[image:%s]</p>',
-                        $name
-                    );
-                } else {
-                    /*$code .= sprintf(
-                        '<p><iron-icon icon="attachment"></iron-icon>&nbsp;[%s](%s)</p>',
-                        $name,
-                        $this->url->getBaseUrl().'public/resources/attachments/'.$name
-                    );*/
-                    $code .= sprintf(
-                        '<p>[attachment:%s]</p>',
-                        $name
-                    );
-                }
-
-                $result['success'] = TRUE;
-                $result['data'] = array(
-                    'code' => $code
-                );
+            if (preg_match('/image/', $result->filetype)) {
+                $code = sprintf('[image:%s]', $result->filename);
+            } else {
+                $code = sprintf('[attachment:%s]', $result->filename);
             }
-        }
 
-        return $result;
+            return array(
+                'success' => TRUE,
+                'data' => array(
+                    'code' => $code
+                )
+            );
+        } else {
+            return array(
+                'success' => FALSE,
+                'data' => NULL
+            );
+        }
     }
     
     public function deleteAction($id) {

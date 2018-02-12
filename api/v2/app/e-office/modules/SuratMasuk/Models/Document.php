@@ -9,11 +9,11 @@ class Document extends \Micro\Model {
 
     public function toArray($columns = NULL) {
         $data = parent::toArray($columns);
-        $data['tsmd_download_url'] = $this->getDownloadUrl();
+        $data['tsmd_file_url'] = $this->getFileUrl();
         return $data;
     }
 
-    public function getDownloadUrl() {
+    public function getFileUrl() {
         $app = \Micro\App::getDefault();
         return $app->url->getBaseUrl().'public/resources/documents/'.$this->tsmd_file;
     }

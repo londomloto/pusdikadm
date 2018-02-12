@@ -334,7 +334,10 @@
                         let items = res.data;
                         this.set('items', items);
 
-                        this.__setPaging({ total: res.total });
+                        this.__setPaging({ 
+                            total: res.total 
+                        });
+
                         this.dispatchEvent(new CustomEvent('load'));
                     });
                 }

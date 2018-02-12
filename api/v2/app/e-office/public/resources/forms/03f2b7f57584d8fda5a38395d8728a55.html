@@ -1,4 +1,4 @@
-<dom-module id="form-surat-keluar-kapus">
+<dom-module id="form-surat-keluar-exam2">
     <template>
         <style include="form-style"></style>
 
@@ -54,26 +54,20 @@
 
         <div class="section">
             <h3 class="section-title">Pemeriksaan II</h3>
-            <paper-input value="[[ record.data.tsk_eselon_3_flag ]]" label="Status Pemeriksaan" readonly></paper-input>
-            <paper-input value="[[ record.data.tsk_eselon_3_note ]]" label="Catatan" readonly></paper-input>
-        </div>
-
-        <div class="section">
-            <h3 class="section-title">Pemeriksaan III</h3>
             <vaadin-combo-box   
                 label="Status Pemeriksaan" 
-                value="{{ record.data.tsk_kapus_flag }}" 
+                value="{{ record.data.tsk_eselon_3_flag }}" 
                 items="[[ flags ]]" 
                 item-label-path="label" 
                 item-value-path="value"></vaadin-combo-box>
-            <paper-input value="{{ record.data.tsk_kapus_note }}" label="Catatan Pemeriksaan"></paper-input>
+            <paper-input value="{{ record.data.tsk_eselon_3_note }}" label="Catatan Pemeriksaan"></paper-input>
         </div>
 
     </template>
     <script>
-        class FormSuratKeluarKapus extends FormBase {
+        class FormSuratKeluarExam2 extends FormBase {
             static get is() {
-                return 'form-surat-keluar-kapus';
+                return 'form-surat-keluar-exam2';
             }
 
             static get properties() {
@@ -101,7 +95,7 @@
                 let payload = this.record.data;
 
                 if (options.send) {
-                    if ( ! payload.tsk_kapus_flag) {
+                    if ( ! payload.tsk_eselon_3_flag) {
                         this.toast('Warning', 'Status pemeriksaan harus diisi', 'warn');
                         return this.resolve({ success: false });
                     }
@@ -110,6 +104,6 @@
                 return this.$.ajax.PUT('/surat-keluar/' + payload.tsk_id, payload);
             }
         }
-        customElements.define(FormSuratKeluarKapus.is, FormSuratKeluarKapus);
+        customElements.define(FormSuratKeluarExam2.is, FormSuratKeluarExam2);
     </script>
 </dom-module>

@@ -1,6 +1,9 @@
 <dom-module id="form-style">
     <template>
         <style include="theme-helper">
+            kct-column kct-combobox {
+                padding: 3px 0;
+            }
             .section {
                 padding: 20px;
                 border: 1px solid var(--paper-grey-300);
@@ -19,15 +22,21 @@
                 font-size: 15px;
                 font-weight: 500;
                 margin: 0 0 8px 0;
+                color: var(--paper-cyan-500);
+            }
+            .section-tools {
+                text-align: right;
             }
             .section.section-primary {
-                background-color: var(--paper-green-100);
+                border-width: 2px;
+                border-color: var(--paper-cyan-300);
             }
             .section.section-warning {
                 background-color: var(--paper-yellow-100);
                 border-color: var(--paper-yellow-300);
             }
             paper-button {
+                font-weight: 500;
                 /*font-size: 13px;
                 padding: 5px 8px;*/
             }
@@ -69,6 +78,39 @@
             paper-radio-group.hbox.sm paper-radio-button + paper-radio-button,
             paper-radio-group.hbox.md paper-radio-button + paper-radio-button {
                 padding-top: 8px;
+            }
+
+            .document-item {
+                display: block;
+                background-color: var(--paper-grey-100);
+                box-shadow: none;
+                position: relative;
+            }
+            .document-item .meta {
+                font-size: 12px;
+            }
+            .document-item .tool {
+                position: absolute;
+                right: 8px;
+                top: 8px;
+            }
+            .document-item .tool paper-button {
+                border: 1px solid #dfdfdf;
+                font-size: 11px;
+                padding: 3px 5px;
+                font-weight: normal;
+                text-transform: none;
+            }
+            .document-item .tool paper-button iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
+
+            }
+            .document-item .card-content {
+                padding: 10px;
+            }
+            .document-item + .document-item {
+                margin-top: 8px;
             }
         </style>
     </template>

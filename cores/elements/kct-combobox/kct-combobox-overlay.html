@@ -265,6 +265,7 @@
                 }
 
                 __pagingChanged(changed) {
+
                     if (changed.path == 'paging') {
                         let paging =  (this.paging || {});
 
@@ -278,7 +279,7 @@
                         if (limit > 0) {
                             pages = Math.ceil(total / limit);
                         }
-                        
+
                         page = Math.ceil((start - 1) / limit) + 1;
 
                         this.set('paging.pages', pages);

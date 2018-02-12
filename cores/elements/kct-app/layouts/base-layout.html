@@ -4,11 +4,8 @@
 
 <dom-module id="base-layout">
     <script>
-        
-        class BaseLayout extends Mixins(Polymer.Element).use(
-            Mixins.Location, 
-            Mixins.Resolver
-        ) {
+
+        class BaseLayout extends Mixins(Polymer.Element).use(Mixins.Location, Mixins.Resolver) {
 
             static get is() { return 'base-layout'; }
 
@@ -31,44 +28,49 @@
             
             _resolvePageFromState(state) {
                 let d = this._defer();
-                let module, type, file, base, part, dots;
 
-                base = this._baseuri().replace(/^\/|\/$/g, '');
-                part = base.split(/\//);
-
-                module = state.module;
-                
-                if (state.page) {
-                    type = state.page.replace(/\.html?$/, '');
+                if (BaseLayout.resolvedPages[state.path] !== undefined) {
+                    d.resolve(BaseLayout.resolvedPages[state.path]);
                 } else {
-                    if (module) {
-                        type = module + '-page';
+                    let module, type, file, base, part, dots;
+
+                    base = this._baseuri().replace(/^\/|\/$/g, '');
+                    part = base.split(/\//);
+
+                    module = state.module;
+                    
+                    if (state.page) {
+                        type = state.page.replace(/\.html?$/, '');
                     } else {
-                        type = 'index-page';
+                        if (module) {
+                            type = module + '-page';
+                        } else {
+                            type = 'index-page';
+                        }
                     }
-                }
 
-                if (part && part.length > 1) {
-                    dots = '../../../../../';
-                } else {
-                    dots = '../../../../';
-                }
-                
-                if (module) {
-                    name = module + '-' + type;
-                    // file = this.resolveUrl('../../../modules/' + module + '/' + type + '.html');
-                    file = this.resolveUrl(dots + base + '/src/modules/' + module + '/' + type + '.html');
-                } else {
-                    name = type;
-                    // file = this.resolveUrl('../../../modules/' + type + '.html');
-                    file = this.resolveUrl(dots + base + '/src/modules/' + type + '.html');
-                }
+                    if (part && part.length > 1) {
+                        dots = '../../../../../';
+                    } else {
+                        dots = '../../../../';
+                    }
+                    
+                    if (module) {
+                        name = module + '-' + type;
+                        file = this.resolveUrl(dots + base + '/src/modules/' + module + '/' + type + '.html');
+                    } else {
+                        name = type;
+                        file = this.resolveUrl(dots + base + '/src/modules/' + type + '.html');
+                    }
 
-                d.resolve({ 
-                    name: name,
-                    file: file,
-                    type: type
-                });
+                    let info = BaseLayout.resolvedPages[state.path] = {
+                        name: name,
+                        file: file,
+                        type: type
+                    };
+
+                    d.resolve(info);
+                }
 
                 return d.promise;
             }
@@ -84,6 +86,8 @@
 
             _layoutActive() {}
         }
+
+        BaseLayout.resolvedPages = {};
 
         customElements.define(BaseLayout.is, BaseLayout);
     </script>
