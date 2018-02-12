@@ -7,7 +7,7 @@
         <kct-ajax id="ajax"></kct-ajax>
 
         <div class="section">
-            <h3 class="section-title">Registrasi</h3>
+            <h3 class="section-title">Registrasi Surat</h3>
 
             <kct-column columns="3">
                 <div><vaadin-date-picker value="{{ record.data.tsm_receive_date }}" label="Tanggal Masuk"></vaadin-date-picker></div>
@@ -17,7 +17,7 @@
             
         </div>
         <div class="section">
-            <h3 class="section-title">Surat Masuk</h3>
+            <h3 class="section-title">Identitas Surat</h3>
 
             <kct-column columns="2">
                 <div><paper-input value="{{ record.data.tsm_no }}" label="Nomor Surat *" required auto-validate error-message="Nomor surat wajib diisi"></paper-input></div>
@@ -34,6 +34,7 @@
             
             
         </div>
+        
     </template>
     <script>
         class FormSuratMasuk extends FormBase {

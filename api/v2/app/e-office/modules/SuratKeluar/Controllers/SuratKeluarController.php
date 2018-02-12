@@ -81,7 +81,7 @@ class SuratKeluarController extends \Micro\Controller {
             $file = $files[0];
             $orig = $file->getName();
             $mime = $file->getType();
-            $code = 'doc_'.md5_file($file->getTempname()).'.'.$file->getExtension();
+            $code = 'tskd_'.md5_file($file->getTempname()).'.'.$file->getExtension();
             $path = APPPATH.'public/resources/documents/'.$code;
 
             if (@$file->moveTo($path)) {

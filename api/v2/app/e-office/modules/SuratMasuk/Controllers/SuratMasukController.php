@@ -2,7 +2,7 @@
 namespace App\SuratMasuk\Controllers;
 
 use App\SuratMasuk\Models\SuratMasuk,
-    App\Sequence\Models\Sequence;
+    App\SuratMasuk\Models\Document;
 
 class SuratMasukController extends \Micro\Controller {
 
@@ -14,7 +14,16 @@ class SuratMasukController extends \Micro\Controller {
     }
 
     public function findByIdAction($id) {
-        return SuratMasuk::get($id);
+        $query = SuratMasuk::get($id);
+        
+        if ($query->data) {
+            $data = $query->data->toArray();
+            $data['documents'] = $query->data->documents->filter(function($e){ return $e->toArray(); });
+
+            $query->data = $data;
+        }
+
+        return $query;
     }
 
     public function createAction() {
@@ -33,7 +42,11 @@ class SuratMasukController extends \Micro\Controller {
         $post = $this->request->getJson();
 
         if ($query->data) {
-            $query->data->save($post);
+            if ($query->data->save($post)) {
+                if (isset($post['documents'])) {
+                    $query->data->saveDocuments($post['documents']);
+                }
+            }
         }
 
         return $query;
@@ -50,4 +63,29 @@ class SuratMasukController extends \Micro\Controller {
         return array('success' => $done);
     }
 
+    public function uploadAction() {
+        if ($this->request->hasFiles()) {
+            $files = $this->request->getFiles();
+            $file = $files[0];
+            $orig = $file->getName();
+            $mime = $file->getType();
+            $code = 'tsmd_'.md5_file($file->getTempname()).'.'.$file->getExtension();
+            $path = APPPATH.'public/resources/documents/'.$code;
+
+            if (@$file->moveTo($path)) {
+                return array(
+                    'success' => TRUE,
+                    'data' => array(
+                        'mime' => $mime,
+                        'orig' => $orig,
+                        'file' => $code
+                    )
+                );
+            }
+        }
+
+        return array(
+            'success' => FALSE
+        );
+    }
 }
