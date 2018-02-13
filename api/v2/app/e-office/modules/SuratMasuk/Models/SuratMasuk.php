@@ -17,6 +17,24 @@ class SuratMasuk extends \Micro\Model {
                 )
             )
         );
+
+        $this->hasOne(
+            'tsm_tcs_id',
+            'App\Classifications\Models\Classification',
+            'tcs_id',
+            array(
+                'alias' => 'Classification'
+            )
+        );
+
+        $this->hasOne(
+            'tsm_reg_user',
+            'App\Users\Models\User',
+            'su_id',
+            array(
+                'alias' => 'Registrar'
+            )
+        );
     }
 
     public function getSource() {
@@ -27,7 +45,16 @@ class SuratMasuk extends \Micro\Model {
         $data = parent::toArray($columns);
         $data['tsm_code'] = empty($this->tsm_code) ? '-' : $this->tsm_code;
         $data['tsm_date_formatted'] = self::__formatDate($this->tsm_date);
-        $data['tsm_receive_date_formatted'] = self::__formatDate($this->tsm_receive_date);
+        $data['tsm_reg_date_formatted'] = self::__formatDate($this->tsm_reg_date);
+
+        if ($this->registrar) {
+            $data['tsm_reg_user_name'] = $this->registrar->getName();
+        }
+
+        if ($this->classification) {
+            $data['tsm_tcs_name'] = $this->classification->tcs_name;
+            $data['tsm_tcs_label'] = $this->classification->tcs_code.' - '.$this->classification->tcs_name;
+        }
 
         return $data;
     }

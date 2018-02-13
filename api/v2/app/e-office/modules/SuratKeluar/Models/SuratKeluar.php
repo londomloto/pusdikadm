@@ -6,6 +6,15 @@ use Phalcon\Mvc\Model\Relation;
 class SuratKeluar extends \Micro\Model {
 
     public function initialize() {
+        $this->hasOne(
+            'tsk_tcs_id',
+            'App\Classifications\Models\Classification',
+            'tcs_id',
+            array(
+                'alias' => 'Classification'
+            )
+        );
+
         $this->hasMany(
             'tsk_id',
             'App\SuratKeluar\Models\Document',
@@ -92,6 +101,11 @@ class SuratKeluar extends \Micro\Model {
         $data['tsk_code'] = empty($this->tsk_code) ? '-' : $this->tsk_code;
         $data['tsk_date_formatted'] = self::__formatDate($this->tsk_date);
         $data['tsk_create_date_formatted'] = self::__formatDate($this->tsk_create_date);
+
+        if ($this->classification) {
+            $data['tsk_tcs_name'] = $this->classification->tcs_name;
+            $data['tsk_tcs_label'] = $this->classification->tcs_code.' - '.$this->classification->tcs_name;
+        }
 
         $data['tsk_exam1_date_formatted'] = date('d M Y', strtotime($this->tsk_exam1_date));
         $data['tsk_exam2_date_formatted'] = date('d M Y', strtotime($this->tsk_exam2_date));

@@ -8,6 +8,7 @@
                 padding: 20px;
                 border: 1px solid var(--paper-grey-300);
                 border-radius: 0;
+                position: relative;
                 /*background-color: var(--paper-grey-100);*/
                 /*@apply --shadow-elevation-2dp;*/
             }
@@ -25,7 +26,18 @@
                 color: var(--paper-cyan-500);
             }
             .section-tools {
-                text-align: right;
+                position: absolute;
+                top: 16px;
+                right: 16px;
+            }
+            .section-tools paper-button {
+                font-size: 12px;
+                background: var(--paper-cyan-400);
+                color: #fff;
+            }
+            .section-tools paper-button iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
             }
             .section.section-primary {
                 border-width: 2px;

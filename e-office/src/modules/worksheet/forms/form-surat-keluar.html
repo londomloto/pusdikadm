@@ -2,6 +2,7 @@
 <link rel="import" href="../plugins/form-combo-sender.html">
 <link rel="import" href="../plugins/form-combo-receiver.html">
 <link rel="import" href="../plugins/file-viewer.html">
+<link rel="import" href="../plugins/form-combo-class.html">
 
 <dom-module id="form-surat-keluar">
     <template>
@@ -15,17 +16,18 @@
 
         <div class="section">
             <h3 class="section-title">Pembuatan Surat</h3>
-            <kct-column columns="3">
+            <div class="section-tools">
+                <paper-button on-tap="__onReloadSequenceTap"><iron-icon icon="refresh"></iron-icon>&nbsp;Nomor Urut</paper-button>
+            </div>
+            <kct-column columns="2">
                 <div>
                     <vaadin-date-picker value="{{ record.data.tsk_create_date }}" label="Tanggal Pembuatan"></vaadin-date-picker>
                 </div>
                 <div>
                     <paper-input label="Nomor Urut" value="{{ record.data.tsk_seq }}"></paper-input>
                 </div>
-                <div>
-                    <paper-input label="Kode Surat" value="{{ record.data.tsk_code }}"></paper-input>
-                </div>
             </kct-column>
+            <form-combo-class value="{{ record.data.tsk_tcs_id }}"></form-combo-class>
         </div>
 
         <div class="section">
@@ -119,15 +121,13 @@
             initialize() {
                 if (this.action == 'create') {
                     let today = moment();
-
-                    return this.$.ajax.GET('/surat-keluar/sequence').then(res => {
-                        this.set('record.data', {
-                            tsk_seq: res.data,
-                            tsk_create_date: today.format('YYYY-MM-DD'),
-                            tsk_date: today.format('YYYY-MM-DD'),
-                            documents: []
-                        });
+                    this.set('record.data', {
+                        tsk_create_date: today.format('YYYY-MM-DD'),
+                        tsk_date: today.format('YYYY-MM-DD'),
+                        documents: []
                     });
+
+                    return this.resolve({ success: true });
                 } else {
                     return this.$.ajax.GET('/surat-keluar/' + this.record.status.tts_data_id).then(res => {
                         this.set('record.data', res.data || {});
@@ -135,8 +135,15 @@
                 }
             }
 
-            save() {
+            save(options) {
                 let payload = this.record.data;
+
+                if (options.send) {
+                    if ( ! payload.tsk_seq) {
+                        this.toast('Warning', 'Nomor urut belum diisi', 'warn');
+                        return this.resolve({ success: false });
+                    }
+                }
 
                 if (payload.tsk_id) {
                     return this.$.ajax.PUT('/surat-keluar/' + payload.tsk_id, payload).then(done.bind(this));
@@ -197,6 +204,12 @@
 
                     this.set('record.task.tt_content', content);
                 }
+            }
+
+            __onReloadSequenceTap() {
+                this.$.ajax.GET('/surat-keluar/sequence').then(res => {
+                    this.set('record.data.tsk_seq', res.data);
+                });
             }
 
             __onAttachmentTap() {

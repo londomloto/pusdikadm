@@ -1,6 +1,7 @@
 <link rel="import" href="../../../../../cores/vendors/moment/moment.html">
+<link rel="import" href="../plugins/form-combo-class.html">
 
-<dom-module id="form-surat-masuk">
+<dom-module id="form-surat-masuk-code">
     <template>
         <style include="form-style"></style>
 
@@ -28,6 +29,17 @@
             <paper-input value="{{ record.data.tsm_admin }}" label="Pengolah"></paper-input>  
 
         </div>
+
+        <div class="section section-primary">
+            <h3 class="section-title">Kodefikasi</h3>
+            <div class="section-tools">
+                <paper-button on-tap="__onReloadSequenceTap"><iron-icon icon="refresh"></iron-icon>&nbsp;Nomor Urut</paper-button>
+            </div>
+            <paper-input label="Nomor Urut" value="{{ record.data.tsm_seq }}"></paper-input>
+            <form-combo-class value="{{ record.data.tsm_tcs_id }}"></form-combo-class>
+            <paper-input label="Nomor Arsip" value="{{ record.data.tsm_reg_no }}"></paper-input>
+        </div>
+
         <div class="section">
             <h3 class="section-title">Identitas Surat</h3>
 
@@ -49,9 +61,9 @@
         
     </template>
     <script>
-        class FormSuratMasuk extends FormBase {
+        class FormSuratMasukCode extends FormBase {
             static get is() {
-                return 'form-surat-masuk';
+                return 'form-surat-masuk-code';
             }
 
             static get observers() {
@@ -85,6 +97,13 @@
 
             save(options) {
                 let payload = this.record.data;
+
+                if (options.send) {
+                    if ( ! payload.tsm_seq) {
+                        this.toast('Warning', 'Nomor urut belum diisi', 'warn');
+                        return this.resolve({ success: false });
+                    }
+                }
 
                 if (payload.tsm_id) {
                     return this.$.ajax.PUT('/surat-masuk/' + payload.tsm_id, payload).then(done.bind(this));
@@ -140,12 +159,18 @@
                 }
             }
 
+            __onReloadSequenceTap(e) {
+                this.$.ajax.GET('/surat-masuk/sequence').then(res => {
+                    this.set('record.data.tsm_seq', res.data);
+                });
+            }
+
             __onComboUserBeforeLoad(e) {
                 if (this.project && this.project.sp_id) {
                     e.detail.options.project = this.project.sp_id;
                 }
             }
         }
-        customElements.define(FormSuratMasuk.is, FormSuratMasuk);
+        customElements.define(FormSuratMasukCode.is, FormSuratMasukCode);
     </script>
 </dom-module>

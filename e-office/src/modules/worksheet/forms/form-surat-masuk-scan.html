@@ -1,18 +1,26 @@
 <dom-module id="form-surat-masuk-scan">
     <template>
         <style include="form-style"></style>
+
         <kct-ajax id="ajax"></kct-ajax>
         <kct-file id="file" on-change="__onFileChange"></kct-file>
+        <file-viewer id="viewer"></file-viewer>
 
         <div class="section">
             <h3 class="section-title">Registrasi Surat</h3>
 
-            <kct-column columns="3">
-                <div><paper-input value="[[ record.data.tsm_receive_date_formatted ]]" label="Tanggal Masuk" readonly></paper-input></div>
-                <div><paper-input value="[[ record.data.tsm_seq ]]" label="Nomor Urut" readonly></paper-input></div>
-                <div><paper-input value="[[ record.data.tsm_code ]]" label="Kode Surat" readonly></paper-input></div>
+            <kct-column columns="2">
+                <div><paper-input value="[[ record.data.tsm_reg_date_formatted ]]" label="Tanggal Registrasi" readonly></paper-input></div>
+                <div><paper-input value="[[ record.data.tsm_reg_user_name ]]" label="Petugas Registrasi" readonly></paper-input></div>
             </kct-column>
-            
+            <paper-input value="[[ record.data.tsm_admin ]]" label="Pengolah Surat" readonly></paper-input>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Kodefikasi</h3>
+            <paper-input value="[[ record.data.tsm_seq ]]" label="Nomor Urut" readonly></paper-input>
+            <paper-input value="[[ record.data.tsm_tcs_label ]]" label="Klasifikasi" readonly></paper-input>
+            <paper-input value="[[ record.data.tsm_reg_no ]]" label="Nomor Arsip" readonly></paper-input>
         </div>
 
         <div class="section">
@@ -26,24 +34,33 @@
             <paper-input value="[[ record.data.tsm_from ]]" label="Pengirim" readonly></paper-input>
             <paper-input value="[[ record.data.tsm_subject ]]" label="Perihal" readonly></paper-input>
             <paper-input value="[[ record.data.tsm_to ]]" label="Tujuan" readonly></paper-input>
-            <paper-input value="[[ record.data.tsm_admin ]]" label="Pengolah" readonly></paper-input>    
-            
             
         </div>
 
         <div class="section">
+            
             <h3 class="section-title">Dokumen Surat</h3>
+            <p>Unggah dokumen-dokumen yang berkaitan dengan surat yang sudah dipindai (scan) dalam bentuk pdf maupun gambar.</p>
             <div class="m-t m-b">
-                <paper-button on-tap="__onAttachmentTap" class="btn-default btn-sm"><iron-icon icon="add"></iron-icon>&nbsp;Tambah Dokumen</paper-button>    
+                <paper-button on-tap="__onAttachmentTap" class="btn-cyan btn-sm"><iron-icon icon="file-upload"></iron-icon>&nbsp;Upload Dokumen</paper-button>    
             </div>
-            <div class="list-group">
+            <div>
                 <template is="dom-repeat" items="[[ record.data.documents ]]">
-                    <div class="list-group-item">
-                        <iron-icon icon="done"></iron-icon> [[ item.tsmd_orig ]] - <a href="javascript:void(0)" on-tap="__onRemoveDocumentTap">hapus</a>
-                    </div>
+                    <paper-card class="document-item">
+                        <div class="card-content">
+                            <div class="tool">
+                                <paper-button on-tap="__onRemoveDocumentTap"><iron-icon icon="close"></iron-icon>&nbsp;Hapus</paper-button>
+                            </div>
+                            <div class="name">
+                                <a on-tap="__onOpenDocumentTap" href="javascript:;">[[ item.tsmd_orig ]]</a>
+                            </div>
+                            <div class="meta">
+                                <span>[[ item.tsmd_size_formatted ]] - [[ item.tsmd_mime ]]</span>
+                            </div>
+                        </div>
+                    </paper-card>
                 </template>
             </div>
-            
         </div>
 
     </template>
@@ -103,7 +120,10 @@
                             this.push('record.data.documents', {
                                 tsmd_orig: res.data.orig,
                                 tsmd_file: res.data.file,
-                                tsmd_mime: res.data.mime
+                                tsmd_mime: res.data.mime,
+                                tsmd_size: res.data.size,
+                                tsmd_size_formatted: res.data.size_formatted,
+                                tsmd_file_url: res.data.file_url
                             });
                         }
                     });
@@ -117,6 +137,15 @@
                         this.splice('record.data.documents', e.model.index, 1);
                     }
                 });
+            }
+
+            __onOpenDocumentTap(e) {
+                e.stopPropagation();
+
+                this.$.viewer.open(
+                    e.model.item.tsmd_file_url,
+                    e.model.item.tsmd_mime
+                );
             }
 
         }

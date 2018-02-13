@@ -1,6 +1,6 @@
 <link rel="import" href="../../../../../cores/vendors/moment/moment.html">
 
-<dom-module id="form-surat-masuk">
+<dom-module id="form-surat-masuk-code">
     <template>
         <style include="form-style"></style>
 
@@ -8,13 +8,25 @@
 
         <div class="section">
             <h3 class="section-title">Registrasi Surat</h3>
-
-            <kct-column columns="3">
-                <div><vaadin-date-picker value="{{ record.data.tsm_receive_date }}" label="Tanggal Masuk"></vaadin-date-picker></div>
-                <div><paper-input value="{{ record.data.tsm_seq }}" label="Nomor Urut"></paper-input></div>
-                <div><paper-input value="{{ record.data.tsm_code }}" label="Kode Surat"></paper-input></div>
+            <kct-column columns="2">
+                <div>
+                    <vaadin-date-picker value="{{ record.data.tsm_reg_date }}" label="Tanggal Registrasi"></vaadin-date-picker>
+                </div>
+                <div>
+                    <kct-combobox 
+                        id="combo-user" 
+                        url="/projects/projects-users" 
+                        label="Petugas Registrasi" 
+                        value="{{ record.data.tsm_reg_user }}" 
+                        item-value-path="su_id" 
+                        item-label-path="su_fullname" 
+                        on-beforeload="__onComboUserBeforeLoad" 
+                        page-size="10"></kct-combobox>
+                </div>
             </kct-column>
             
+            <paper-input value="{{ record.data.tsm_admin }}" label="Pengolah"></paper-input>  
+
         </div>
         <div class="section">
             <h3 class="section-title">Identitas Surat</h3>
@@ -30,16 +42,16 @@
 
             <form-combo-receiver value="{{ record.data.tsm_to }}" group="surat-masuk"></form-combo-receiver>
 
-            <paper-input value="{{ record.data.tsm_admin }}" label="Pengolah"></paper-input>    
+              
             
             
         </div>
         
     </template>
     <script>
-        class FormSuratMasuk extends FormBase {
+        class FormSuratMasukCode extends FormBase {
             static get is() {
-                return 'form-surat-masuk';
+                return 'form-surat-masuk-code';
             }
 
             static get observers() {
@@ -51,32 +63,40 @@
 
             initialize() {
                 if (this.action == 'create') {
-                    
-                    return this.$.ajax.GET('/surat-masuk/sequence').then(res => {
+                    return this.$['combo-user'].load().then(() => {
                         let today = moment();
 
                         this.set('record.data', {
-                            tsm_seq: res.data,
-                            tsm_receive_date: today.format('YYYY-MM-DD')
-                        });    
+                            tsm_reg_date: today.format('YYYY-MM-DD'),
+                            tsm_reg_user: this.user.su_id
+                        });
 
                         return this.resolve({ success: true });
                     });
                 } else {
                     return this.$.ajax.GET('/surat-masuk/' + this.record.status.tts_data_id).then(res => {
-                        this.set('record.data', res.data || {});
-                        return res;
+                        return this.$['combo-user'].load().then(() => {
+                            this.set('record.data', res.data || {});
+                            return res;
+                        });
                     });
                 }
             }
 
-            save() {
+            save(options) {
                 let payload = this.record.data;
 
-                if (payload.tsm_id) {
-                    return this.$.ajax.PUT('/surat-masuk/' + payload.tsm_id, payload).then(done.bind(this));
+                if (options.send) {
+                    return this.$.ajax.GET('/surat-masuk/sequence').then(res => {
+                        payload.tsm_seq = res.data;
+                        return this.$.ajax.PUT('/surat-masuk/' + payload.tsm_id, payload).then(done.bind(this));
+                    });
                 } else {
-                    return this.$.ajax.POST('/surat-masuk', payload).then(done.bind(this));
+                    if (payload.tsm_id) {
+                        return this.$.ajax.PUT('/surat-masuk/' + payload.tsm_id, payload).then(done.bind(this));
+                    } else {
+                        return this.$.ajax.POST('/surat-masuk', payload).then(done.bind(this));
+                    }
                 }
 
                 function done(res) {
@@ -126,7 +146,13 @@
                     this.set('record.task.tt_content', content);
                 }
             }
+
+            __onComboUserBeforeLoad(e) {
+                if (this.project && this.project.sp_id) {
+                    e.detail.options.project = this.project.sp_id;
+                }
+            }
         }
-        customElements.define(FormSuratMasuk.is, FormSuratMasuk);
+        customElements.define(FormSuratMasukCode.is, FormSuratMasukCode);
     </script>
 </dom-module>

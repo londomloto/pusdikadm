@@ -25,6 +25,7 @@
             header-icon="av:web" 
             selection-model="row" 
             on-back-tap="__onBackTap" 
+            autoload 
             pagination>
             <paper-button slot="left-toolbar" on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Tambah</paper-button>
             <paper-button slot="left-toolbar" on-tap="__onEditTap"><iron-icon icon="done"></iron-icon>&nbsp;Sunting</paper-button>
@@ -98,7 +99,7 @@
 
                 this.confirm('Konfirmasi', 'Apakah Anda yakin akan menghapus data ini?').then(y => {
                     if (y) {
-                        this.$.ajax.DELETE('/flags/' + e.data.tfg_id).then(() => {
+                        this.$.ajax.DELETE('/flags/' + this.selectedRecord.tfg_id).then(() => {
                             this.$.grid.load();
                         });
                     }

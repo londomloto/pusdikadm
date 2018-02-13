@@ -9,6 +9,7 @@ class Document extends \Micro\Model {
 
     public function toArray($columns = NULL) {
         $data = parent::toArray($columns);
+        $data['tsmd_size_formatted'] = \Micro\App::getDefault()->file->formatSize($this->tsmd_size);
         $data['tsmd_file_url'] = $this->getFileUrl();
         return $data;
     }

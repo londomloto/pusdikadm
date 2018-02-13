@@ -5,7 +5,7 @@
 <link rel="import" href="../../../../cores/elements/kct-grid/kct-grid.html">
 <link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
 
-<dom-module id="jobs-page">
+<dom-module id="classifications-page">
     <template>
         <style include="theme-helper">
             :host {
@@ -17,24 +17,27 @@
 
         <kct-grid 
             id="grid" 
-            url="/jobs" 
+            url="/classifications"
             columns="[[ columns ]]" 
             selected="{{ selectedRecord }}" 
             header-text="Referensi" 
-            header-desc="Daftar Jabatan" 
+            header-desc="Klasifikasi Surat" 
             header-icon="av:web" 
             selection-model="row" 
             on-back-tap="__onBackTap" 
+            autoload 
             pagination>
             <paper-button slot="left-toolbar" on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Tambah</paper-button>
             <paper-button slot="left-toolbar" on-tap="__onEditTap"><iron-icon icon="done"></iron-icon>&nbsp;Sunting</paper-button>
             <paper-button slot="left-toolbar" on-tap="__onRemoveTap"><iron-icon icon="close"></iron-icon>&nbsp;Hapus</paper-button>
         </kct-grid>
 
-        <kct-dialog id="editor" title="Editor Jabatan" width="400">
+        <kct-dialog id="editor" title="Klasifikasi" width="400">
             <template preserve-content>
                 <div slot="dialog-body">
-                    <paper-input label="Nama Jabatan" value="{{ editingRecord.sj_name }}"></paper-input>
+                    <paper-input label="Kode" value="{{ editingRecord.tcs_code }}"></paper-input>
+                    <paper-input label="Nama" value="{{ editingRecord.tcs_name }}"></paper-input>
+                    <paper-input label="Keterangan" value="{{ editingRecord.tcs_desc }}"></paper-input>
                 </div>
                 <div slot="dialog-footer">
                     <paper-button on-tap="__onEditorSaveTap">Simpan</paper-button>
@@ -45,27 +48,30 @@
 
     </template>
     <script>
-        class JobsPage extends KctView {
+        class ClassificationsPage extends KctView {
             static get is() {
-                return 'jobs-page';
+                return 'classifications-page';
             }
 
             static get properties() {
                 return {
+                    title: { type: String, value: 'Klasifikasi', notify: true },
                     selectedRecord: { type: Object },
                     editingRecord: { type: Object },
                     columns: {
                         type: Array,
                         value: () => ([
                             { type: 'rownumber' },
-                            { text: 'Nama Jabatan', dataIndex: 'sj_name', width: 400 }
+                            { text: 'Kode', dataIndex: 'tcs_code'},
+                            { text: 'Nama', dataIndex: 'tcs_name'},
+                            { text: 'Keterangan', dataIndex: 'tcs_desc', width: 400 }
                         ])
                     }
                 };
             }
 
             handleRouteParams(setting) {
-                if (setting != 'jobs') return;
+                if (setting != 'flags') return;
                 this.$.grid && this.$.grid.load();
             }
 
@@ -96,7 +102,7 @@
 
                 this.confirm('Konfirmasi', 'Apakah Anda yakin akan menghapus data ini?').then(y => {
                     if (y) {
-                        this.$.ajax.DELETE('/jobs/' + this.selectedRecord.sj_id).then(() => {
+                        this.$.ajax.DELETE('/classifications/' + this.selectedRecord.tcs_id).then(() => {
                             this.$.grid.load();
                         });
                     }
@@ -111,10 +117,10 @@
                 this.$.editor.close();
                 let payload = this.editingRecord;
 
-                if (payload.sj_id) {
-                    this.$.ajax.PUT('/jobs/' + payload.sj_id, payload).then(done.bind(this));
+                if (payload.tcs_id) {
+                    this.$.ajax.PUT('/classifications/' + payload.tcs_id, payload).then(done.bind(this));
                 } else {
-                    this.$.ajax.POST('/jobs', payload).then(done.bind(this));
+                    this.$.ajax.POST('/classifications', payload).then(done.bind(this));
                 }
 
                 function done(res) {
@@ -129,6 +135,6 @@
             }
         }
 
-        customElements.define(JobsPage.is, JobsPage);
+        customElements.define(ClassificationsPage.is, ClassificationsPage);
     </script>
 </dom-module>

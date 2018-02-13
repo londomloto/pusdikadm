@@ -64,28 +64,32 @@ class SuratMasukController extends \Micro\Controller {
     }
 
     public function uploadAction() {
-        if ($this->request->hasFiles()) {
-            $files = $this->request->getFiles();
-            $file = $files[0];
-            $orig = $file->getName();
-            $mime = $file->getType();
-            $code = 'tsmd_'.md5_file($file->getTempname()).'.'.$file->getExtension();
-            $path = APPPATH.'public/resources/documents/'.$code;
+        $success = $this->uploader->initialize(array(
+            'path' => APPPATH.'public/resources/documents/',
+            'encrypt' => TRUE
+        ))->upload();
 
-            if (@$file->moveTo($path)) {
-                return array(
-                    'success' => TRUE,
-                    'data' => array(
-                        'mime' => $mime,
-                        'orig' => $orig,
-                        'file' => $code
-                    )
-                );
-            }
+        if ($success) {
+            
+            $result = $this->uploader->getResult();
+            
+            return array(
+                'success' => TRUE,
+                'data' => array(
+                    'orig' => $result->origname,
+                    'mime' => $result->filetype,
+                    'file' => $result->filename,
+                    'size' => $result->filesize,
+                    'size_formatted' => $this->file->formatSize($result->filesize),
+                    'file_url' => $this->url->getBaseUrl().'public/resources/documents/'.$result->filename
+                )
+            );
+        } else {
+            return array(
+                'success' => FALSE,
+                'message' => $this->uploader->getMessage()
+            );
         }
 
-        return array(
-            'success' => FALSE
-        );
     }
 }

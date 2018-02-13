@@ -1,0 +1,88 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../../cores/elements/kct-combobox/kct-combobox.html">
+<link rel="import" href="../../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+
+<dom-module id="form-combo-class">
+    <template>
+        <kct-combobox 
+            id="combo" 
+            url="/classifications" 
+            value="{{ value }}" 
+            page-size="10" 
+            label="Klasifikasi" 
+            item-label-path="tcs_label" 
+            item-value-path="tcs_id" 
+            invalid$="[[ invalid ]]" 
+            required$="[[ required ]]" 
+            auto-validate$="[[ autoValidate ]]" 
+            error-message="Klasifikasi wajib diisi" 
+            autoload>
+            <paper-button on-tap="__onAddTap" slot="toolbar"><iron-icon icon="add"></iron-icon>&nbsp;Tambah Klasifikasi</paper-button>
+        </kct-combobox>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-dialog id="editor" title="Tambah Klasifikasi" width="400">
+            <template preserve-content>
+                <style include="theme-helper"></style>
+                <div slot="dialog-body">
+                    <paper-input value="{{ editingRecord.tcs_code }}" label="Kode"></paper-input>
+                    <paper-input value="{{ editingRecord.tcs_name }}" label="Nama"></paper-input>
+                    <paper-input value="{{ editingRecord.tcs_desc }}" label="Keterangan"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onSaveTap">Simpan</paper-button>
+                    <paper-button on-tap="__onCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class FormComboClass extends Polymer.Element {
+            static get is() {
+                return 'form-combo-class';
+            }
+            static get properties() {
+                return {
+                    value: { type: String, notify: true }, 
+                    invalid: { type: Boolean, value: false, notify: true }, 
+                    required: { type: Boolean, value: false },
+                    autoValidate: { type: Boolean, value: false },
+                    group: { type: String }, 
+                    editingRecord: { type: Object }
+                };
+            }
+            load() {
+                return this.$.combo.load();
+            }
+            __onAddTap() {
+                this.set('editingRecord', {});
+                this.$.editor.open();
+            }
+            __onSaveTap() {
+                this.$.editor.close();
+
+                let payload = this.editingRecord;
+                
+                if ( ! payload.tcs_name ) {
+                    return;
+                }
+
+                this.$.ajax.POST('/classifications', payload).then(res => {
+                    if (res.success) {
+                        this.$.combo.load().then(() => {
+                            this.set('value', res.data.tcs_id);
+                        });
+                    }
+                });
+            }
+            __onCloseTap() {
+                this.$.editor.close();
+            }
+        }
+        customElements.define(FormComboClass.is, FormComboClass);
+    </script>
+</dom-module>

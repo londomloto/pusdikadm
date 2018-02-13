@@ -7,12 +7,18 @@
         <div class="section">
             <h3 class="section-title">Registrasi Surat</h3>
 
-            <kct-column columns="3">
-                <div><paper-input value="[[ record.data.tsm_receive_date_formatted ]]" label="Tanggal Masuk" readonly></paper-input></div>
-                <div><paper-input value="[[ record.data.tsm_seq ]]" label="Nomor Urut" readonly></paper-input></div>
-                <div><paper-input value="[[ record.data.tsm_code ]]" label="Kode Surat" readonly></paper-input></div>
+            <kct-column columns="2">
+                <div><paper-input value="[[ record.data.tsm_reg_date_formatted ]]" label="Tanggal Registrasi" readonly></paper-input></div>
+                <div><paper-input value="[[ record.data.tsm_reg_user_name ]]" label="Petugas Registrasi" readonly></paper-input></div>
             </kct-column>
-            
+            <paper-input value="[[ record.data.tsm_admin ]]" label="Pengolah Surat" readonly>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Kodefikasi</h3>
+            <paper-input value="[[ record.data.tsm_seq ]]" label="Nomor Urut" readonly>
+            <paper-input value="[[ record.data.tsm_tcs_label ]]" label="Klasifikasi" readonly>
+            <paper-input value="[[ record.data.tsm_reg_no ]]" label="Nomor Arsip" readonly>
         </div>
 
         <div class="section">

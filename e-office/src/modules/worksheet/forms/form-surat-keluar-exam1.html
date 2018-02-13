@@ -21,17 +21,15 @@
 
         <div class="section">
             <h3 class="section-title">Pembuatan Surat</h3>
-            <kct-column columns="3">
+            <kct-column columns="2">
                 <div>
                     <paper-input label="Tanggal Pembuatan" value="[[ record.data.tsk_create_date_formatted ]]" readonly></paper-input>
                 </div>
                 <div>
                     <paper-input label="Nomor Urut" value="[[ record.data.tsk_seq ]]" readonly></paper-input>
                 </div>
-                <div>
-                    <paper-input label="Kode Surat" value="[[ record.data.tsk_code ]]" readonly></paper-input>
-                </div>
             </kct-column>
+            <paper-input label="Klasifikasi Surat" value="[[ record.data.tsk_tcs_label ]]" readonly></paper-input>
         </div>
 
         <div class="section">
