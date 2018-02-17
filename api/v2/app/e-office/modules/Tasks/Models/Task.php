@@ -103,20 +103,17 @@ class Task extends \Micro\Model {
                 )
             )
         );
-
-        \Moment\Moment::setLocale(self::__language());
-        \Moment\Moment::setDefaultTimezone(self::__timezone());
     }
 
     public function getSource() {
         return 'trx_tasks';
     }
 
-    public function pauseLogging() {
+    public function suspendLog() {
         $this->__loggable = FALSE;
     }
 
-    public function resumeLogging() {
+    public function resumeLog() {
         $this->__loggable = TRUE;
     }
 
@@ -286,6 +283,7 @@ class Task extends \Micro\Model {
     }
 
     public function saveLabels($post) {
+
         $created = array();
         $updated = array();
         $current = array();
@@ -338,6 +336,7 @@ class Task extends \Micro\Model {
     }
 
     public function saveUsers($post) {
+        
         $created = array();
         $updated = array();
         $current = array();
@@ -388,32 +387,6 @@ class Task extends \Micro\Model {
                 'tta_data' => json_encode($indexes)
             ));
         }
-    }
-
-    private static function __timezone() {
-        static $zone;
-
-        if (is_null($zone)) {
-            $conf = \Micro\App::getDefault()->config->app;
-            $zone = 'Asia/Jakarta';
-            if ($conf->offsetExists('timezone')) {
-                $zone = $conf->timezone;
-            }
-        }
-        return $zone;
-    }
-
-    private static function __language() {
-        static $lang;
-
-        if (is_null($lang)) {
-            $conf = \Micro\App::getDefault()->config->app;
-            $lang = 'id_ID';
-            if ($conf->offsetExists('locale')) {
-                $lang = $conf->locale;
-            }
-        }
-        return $lang;
     }
 
     private static function __formatDate($date, $format = "d M Y H:i") {

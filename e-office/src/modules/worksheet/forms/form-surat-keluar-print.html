@@ -96,19 +96,12 @@
 
     </template>
     <script>
-        class FormSuratKeluarPrint extends FormBase {
+        class FormSuratKeluarPrint extends Mixins(FormBase).use(Mixins.FormSuratKeluarBehavior) {
             static get is() {
                 return 'form-surat-keluar-print';
             }
 
-            static get observers() {
-                return [
-                    '__computeTask(record.data.*)'
-                ];
-            }
-
             initialize() {
-                this.set('invalid', false);
 
                 return this.$.ajax.GET('/surat-keluar/' + this.record.status.tts_data_id).then(res => {
                     let data = res.data || {};
@@ -130,28 +123,6 @@
                     }
                     return res;
                 });
-            }
-
-            __computeTask() {
-                let data = this.record.data;
-                
-                if (data) {
-                    let title = data.tsk_no || 'Surat Keluar';
-                    let content = '';
-
-                    this.set('record.task.tt_title', title);
-
-                    if (data.tsk_to) {
-                        content += `
-                            <div class="item-content-group">
-                                <div class="item-content-label">Tujuan</div>
-                                <div class="item-content-value">${data.tsk_to}</div>
-                            </div>
-                        `;
-                    }
-
-                    this.set('record.task.tt_content', content);
-                }
             }
 
             __onOpenDocumentTap(e) {

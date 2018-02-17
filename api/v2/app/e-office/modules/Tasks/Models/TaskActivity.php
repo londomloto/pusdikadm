@@ -109,8 +109,10 @@ class TaskActivity extends \Micro\Model {
             case 'create':
             case 'update':
                 return 'image:edit';
-            case 'send':
-                return 'done';
+            case 'update_status':
+                return 'bookmark-border';
+            case 'disposition':
+                return 'send';
             case 'update_flag':
                 return 'info-outline';
             case 'update_due':
@@ -144,7 +146,7 @@ class TaskActivity extends \Micro\Model {
                     $time
                 );
                 break;
-            case 'send':
+            case 'update_status':
                 $steps = json_decode($this->tta_data);
                 $steps = implode(', ', $steps);
 
@@ -229,7 +231,7 @@ class TaskActivity extends \Micro\Model {
                         ->execute();
 
                     foreach($data as $e) {
-                        $labels[] = '<span style="padding: 3px 10px; color: #fff; border-radius: 12px; background-color:'.$e->sl_color.'">'.$e->sl_label.'</span>';
+                        $labels[] = '<span style="padding: 2px 8px; color: #fff; border-radius: 2px; background-color:'.$e->sl_color.'">'.$e->sl_label.'</span>';
                     }
 
                     $plural = count($labels) > 1 ? 'label' : 'label';

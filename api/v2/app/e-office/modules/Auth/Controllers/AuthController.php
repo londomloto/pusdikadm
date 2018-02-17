@@ -11,17 +11,17 @@ class AuthController extends \Micro\Controller {
         $post = $this->request->getJson();
         
         if ( ! isset($post['email']) || ! isset($post['password'])) {
-            throw new \Phalcon\Exception('Invalid parameters');
+            throw new \Phalcon\Exception('Parameter login tidak valid');
         }
 
         if ($this->auth->isCaptchaEnabled()) {
             if ( ! isset($post['captcha'])) {
-                throw new \Phalcon\Exception('Invalid parameters');
+                throw new \Phalcon\Exception('Parameter login tidak valid');
             }
 
             // validate captcha first
             if ( $post['captcha'] !== FALSE && ! $this->security->verifyCaptcha($post['captcha'])) {
-                throw new \Phalcon\Exception('Invalid security code');
+                throw new \Phalcon\Exception('Kode keamanan salah');
             }
         }
         
@@ -38,7 +38,7 @@ class AuthController extends \Micro\Controller {
             $this->auth->logout();
             return array(
                 'success' => FALSE,
-                'message' => 'You are not allowed to login through this device'
+                'message' => 'Anda tidak dapat login menggunakan perangkat ini'
             );
         }
 

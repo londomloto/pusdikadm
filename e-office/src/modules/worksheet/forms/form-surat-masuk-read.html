@@ -1,0 +1,319 @@
+<link rel="import" href="../../../../../cores/vendors/moment/moment.html">
+<link rel="import" href="../../../../../cores/elements/kct-dialog/kct-dialog.html">
+
+<dom-module id="form-surat-masuk-read">
+    <template>
+        <style include="form-style"></style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <file-viewer id="viewer"></file-viewer>
+
+        <div class="section">
+            <h3 class="section-title">Registrasi Surat</h3>
+
+            <kct-column columns="2">
+                <div><paper-input value="[[ record.data.tsm_reg_date_formatted ]]" label="Tanggal Registrasi" readonly></paper-input></div>
+                <div><paper-input value="[[ record.data.tsm_seq ]]" label="Nomor Agenda (Urut)" readonly></paper-input></div>
+            </kct-column>
+            <paper-input value="[[ record.data.tsm_reg_user_name ]]" label="Petugas Registrasi" readonly></paper-input>
+            <paper-input value="[[ record.data.tsm_admin ]]" label="Pengolah Surat" readonly></paper-input>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Kodefikasi</h3>
+            <paper-input value="[[ record.data.tsm_tcs_label ]]" label="Klasifikasi" readonly></paper-input>
+            <paper-input value="[[ record.data.tsm_reg_no ]]" label="Nomor Arsip" readonly></paper-input>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Identitas Surat</h3>
+
+            <kct-column columns="2">
+                <div><paper-input value="[[ record.data.tsm_no ]]" label="Nomor Surat" readonly></paper-input></div>
+                <div><paper-input value="[[ record.data.tsm_date_formatted ]]" label="Tanggal Surat" readonly></paper-input></div>
+            </kct-column>
+
+            <paper-input value="[[ record.data.tsm_from ]]" label="Pengirim" readonly></paper-input>
+            <paper-input value="[[ record.data.tsm_subject ]]" label="Perihal" readonly></paper-input>
+            <paper-input value="[[ record.data.tsm_to ]]" label="Tujuan" readonly></paper-input>
+            
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Dokumen Surat</h3>
+            <p>Daftar dokumen-dokumen yang berkaitan dengan surat yang dibuat seperti dokumen word, pdf maupun gambar.</p>
+            <div class="m-t">
+                <template is="dom-repeat" items="[[ record.data.documents ]]">
+                    <paper-card class="document-item">
+                        <div class="card-content">
+                            <div class="name">
+                                <a on-tap="__onOpenDocumentTap" href="javascript:;">[[ item.tsmd_orig ]]</a>
+                            </div>
+                            <div class="meta">
+                                <span>[[ item.tsmd_size_formatted ]] - [[ item.tsmd_mime ]]</span>
+                            </div>
+                        </div>
+                    </paper-card>
+                </template>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Disposisi Surat</h3>
+            <p>Tambahkan dokumen disposisi surat masuk jika diperlukan.</p>
+            <div class="m-t m-b">
+                <paper-button on-tap="__onAddDispositionTap" class="btn-cyan"><iron-icon icon="add"></iron-icon>&nbsp;Disposisi Surat</paper-button>    
+            </div>
+            <div>
+                <template is="dom-repeat" items="[[ dispositions ]]">
+                    <paper-card class="disposition-item">
+                        <div class="card-content">
+                            <div class="tool">
+                                <paper-button>Cetak</paper-button>
+                                <paper-button on-tap="__onEditDispositionTap">Edit</paper-button>
+                                <paper-button on-tap="__onRemoveDispositionTap">Hapus</paper-button>
+                            </div>
+                            <div class="form-display">
+                                <div class="label">Tanggal</div>
+                                <div class="value">[[ item.tsmf_date_formatted ]]</div>
+                            </div>
+                            <div class="form-display">
+                                <div class="label">Petunjuk</div>
+                                <div class="value">[[ item.tsmf_content ]]</div>
+                            </div>
+                            <div class="form-display">
+                                <div class="label">Diteruskan Kepada</div>
+                                <div class="value">[[ item.tsmf_users ]]</div>
+                            </div>   
+                        </div>
+                    </paper-card>
+                </template>
+            </div>
+        </div>
+
+        <kct-dialog id="disposition-editor" title="Disposisi Surat" width="460" height="100%" scrollable>
+            <template preserve-content>
+                <style include="form-style">
+                    paper-item {
+                        cursor: pointer;
+                        padding-left: 0;
+                        padding-right: 0;
+                        --paper-item-min-height: 36px;
+                        @apply --layout-horizontal;
+                    }
+                    paper-item > .flex {
+                        @apply --layout-flex;
+                    }
+                    paper-item iron-icon {
+                        margin-right: 10px;
+                        --iron-icon-width: 20px;
+                        --iron-icon-height: 20px;
+                    }
+                    paper-icon-button {
+                        width: 36px;
+                        height: 36px;
+                    }
+                </style>
+
+                <div slot="dialog-body">
+                    <div class="section">
+                        <vaadin-date-picker value="{{ dispositionRecord.tsmf_date }}" label="Tanggal Disposisi"></vaadin-date-picker>
+                        <paper-input value="{{ dispositionRecord.tsmf_content }}" label="Petunjuk Disposisi"></paper-input>    
+                    </div>
+
+                    <div class="section">
+                        <h3 class="section-title">Diteruskan Kepada</h3>
+                        <template is="dom-repeat" items="[[ dispositionRecord.users ]]">
+                            <paper-item>
+                                <div>
+                                    <iron-icon icon="done"></iron-icon>
+                                </div>
+                                <div class="flex">
+                                    [[ item.tsmfu_su_fullname ]]
+                                </div>
+                                <div>
+                                    <paper-icon-button on-tap="__onRemoveDispositionUserTap" icon="close"></paper-icon-button>
+                                </div>
+                            </paper-item>
+                        </template>
+                        <kct-combobox 
+                            id="combo-user"  
+                            url="/users" 
+                            page-size="10" 
+                            item-label-path="su_fullname" 
+                            item-value-path="su_id" 
+                            no-label-float 
+                            on-change="__onComboUserChange" 
+                            hide-clear  
+                            autoload></kct-combobox>
+                    </div>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onDispositionEditorSaveTap">Simpan</paper-button>
+                    <paper-button on-tap="__onDispositionEditorCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class FormSuratMasukRead extends Mixins(FormBase).use(Mixins.FormSuratMasukBehavior) {
+
+            static get is() {
+                return 'form-surat-masuk-read';
+            }
+
+            static get properties() {
+                return {
+                    dispositions: { type: Array, value: () => ([]) },
+                    dispositionRecord: { type: Object }
+                    // buttons: { type: String, value: 'send,remove', notify: true }
+                };
+            }
+
+            initialize() {
+                return this.$.ajax.GET('/surat-masuk/' + this.record.status.tts_data_id).then(res => {
+                    let data = res.data || {};
+                    data.documents = data.documents || [];
+                    this.set('record.data', data);
+
+                    // load dispositions
+                    this.__loadDispositions();
+                });
+            }
+
+            save(options) {
+                let payload = this.record.data;
+
+                if (options.send) {
+                    if (this.dispositions.length) {
+                        payload.tsm_flag = 'DISPOSITION';    
+                    } else {
+                        payload.tsm_flag = 'ARCHIVED';
+                    }
+                }
+
+                if (payload.tsm_id) {
+                    return this.$.ajax.PUT('/surat-masuk/' + payload.tsm_id, payload).then(done.bind(this));
+                } else {
+                    return this.$.ajax.POST('/surat-masuk', payload).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        
+                        this.saveResult({
+                            date: res.data.tsm_date,
+                            sender: res.data.tsm_from,
+                            receiver: res.data.tsm_to,
+                            result: res.data
+                        });
+
+                        this.set('record.status.tts_data_id', res.data.tsm_id);
+                    }
+                    return res;
+                }
+            }
+
+            __loadDispositions() {
+                this.$.ajax.GET('/surat-masuk/dispositions', {
+                    params: {
+                        tsmf_tsm_id: this.record.data.tsm_id
+                    }
+                }).then(res => {
+                    this.set('dispositions', res.data);
+                });
+            }
+
+            __saveDisposition() {
+                let data = this.dispositionRecord;
+                data.tsmf_tsm_id = this.record.data.tsm_id;
+
+                if (data.tsmf_id) {
+                    this.$.ajax.PUT('/surat-masuk/dispositions/' + data.tsmf_id, data).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/surat-masuk/dispositions', data).then(done.bind(this));
+                }
+
+                function done() {
+                    this.__loadDispositions();
+                }
+            }
+
+            __onRemoveDocumentTap(e) {
+                e.stopPropagation();
+                this.confirm('Konfirmasi', 'Anda yakin akan menghapus dokumen ini?').then(y => {
+                    if (y) {
+                        this.splice('record.data.documents', e.model.index, 1);
+                    }
+                });
+            }
+
+            __onOpenDocumentTap(e) {
+                e.stopPropagation();
+
+                this.$.viewer.open(
+                    e.model.item.tsmd_file_url,
+                    e.model.item.tsmd_mime
+                );
+            }
+
+            __onAddDispositionTap() {
+                this.set('dispositionRecord', {
+                    tsmf_date: moment().format('YYYY-MM-DD'),
+                    tsmf_content: '',
+                    users: []
+                });
+
+                this.$['disposition-editor'].open();
+            }
+
+            __onEditDispositionTap(e) {
+                let disposition = JSON.parse(JSON.stringify(e.model.item));
+                this.set('dispositionRecord', disposition);
+                this.$['disposition-editor'].open();
+            }
+
+            __onRemoveDispositionTap(e) {
+                this.confirm('Konfirmasi', 'Anda yakin akan menghapus disposisi ini?').then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/surat-masuk/dispositions/' + e.model.item.tsmf_id).then(() => {
+                            this.__loadDispositions();
+                        });
+                    }
+                });
+            }
+
+            __onDispositionEditorSaveTap() {
+                this.__saveDisposition();
+                this.$['disposition-editor'].close();
+            }
+
+            __onDispositionEditorCloseTap() {
+                this.$['disposition-editor'].close();
+            }
+
+            __onComboUserChange(e) {
+                let value = e.target.value,
+                    data = e.target.getModelForValue(value);
+
+                if (data) {
+                    this.push('dispositionRecord.users', {
+                        tsmfu_su_id: data.su_id,
+                        tsmfu_su_fullname: data.su_fullname
+                    });
+                }
+
+                e.target.value = '';
+            }
+
+            __onRemoveDispositionUserTap(e) {
+                this.splice('dispositionRecord.users', e.model.index, 1);
+            }
+
+
+        }
+
+        customElements.define(FormSuratMasukRead.is, FormSuratMasukRead);
+    </script>
+</dom-module>

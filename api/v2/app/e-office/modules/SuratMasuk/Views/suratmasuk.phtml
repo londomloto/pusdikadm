@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lembar Surat Masuk</title>
+    <style>
+        *, * > * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            padding: 5px 0;
+        }
+        h2, h3 {
+            font-weight: 500;
+        }
+        h3, p {
+            margin: 0;
+        }
+        ol {
+            padding-left: 18px;
+        }
+        ol li {
+            margin-bottom: 8px;
+        }
+        .text-center { text-align: center; }
+        .text-right { text-align: right;  }
+
+        .p-a { padding: 15px;  }
+        .p-r-0 { padding-right: 0;  }
+        .p-l-0 { padding-left: 0;  }
+
+        .b-a { border: 1px solid #000000;  }
+        .b-t { border-top: 1px solid #000000;  }
+        .b-b { border-bottom: 1px solid #000000;  }
+        .b-r { border-right: 1px solid #000000;  }
+        .b-l { border-left: 1px solid #000000;  }
+        
+        .m-t { margin-top: 15px; }
+        .m-b { margin-bottom: 15px; }
+
+        .fw-400 { font-weight: 400 }
+        .fw-500 { font-weight: 500; }
+        .fw-600 { font-weight: 600; }
+        
+        .block { display: block; }
+        
+        .header {
+            border-bottom: 2px solid #000000;
+        }
+
+        .section td {
+            padding: 8px 12px;
+            vertical-align: top;
+        }
+
+        .section-title {
+            margin: 15px 0;
+        }
+
+        .form-group .label {
+            font-size: 11px;
+            margin-bottom: 5px;
+        }
+        .form-group .value {
+            font-size: 14px;   
+        }
+
+        .page-break {
+            page-break-before: always;
+        }
+    </style>
+</head>
+<body>
+    <table class="header">
+        <thead>
+            <tr>
+                <th></th>
+                <th>
+                    <h3 class="fw-600"><?php echo $company['scp_name']; ?></h3> 
+                    <p class="fw-400"><?php echo $company['scp_address']; ?></p>
+                    <p class="fw-400">Telp. <?php echo $company['scp_phone']; ?> Fax. <?php echo $company['scp_fax']; ?></p>
+                </th>
+            </tr>
+        </thead>
+    </table>
+
+    <h3 class="section-title">LEMBAR SURAT MASUK</h3>
+
+    <div class="b-a">
+        <table class="section">
+            <tbody>
+                <tr>
+                    <td class="b-t b-r b-b">
+                        <div class="form-group">
+                            <div class="label">No. Agenda:</div>
+                            <div class="value fw-600"><?php echo $data['tsm_seq'] ?></div>
+                        </div>
+                    </td>
+                    <td class="b-t b-b">
+                        <div class="form-group">
+                            <div class="label">Tanggal Masuk:</div>
+                            <div class="value fw-600"><?php echo $data['tsm_reg_date_formatted'] ?></div>
+                        </div>
+                    </td>
+                    <td class="b-t b-b b-l">
+                        <div class="form-group">
+                            <div class="label">No. Arsip:</div>
+                            <div class="value fw-600"><?php echo $data['tsm_reg_no'] ?></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="3">
+                        <div class="form-group">
+                            <div class="label">Perihal / Ringkasan:</div>
+                            <div class="value"><?php echo $data['tsm_subject']; ?></div>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <table class="section">
+            <tbody>
+                <tr>
+                    <td class="b-t">
+                        <div class="form-group">
+                            <div class="label">Pengirim:</div>
+                            <div class="value"><?php echo $data['tsm_from'] ?></div>
+                        </div>
+                    </td>
+                    <td class="b-t">
+                        <div class="form-group">
+                            <div class="label">Kepada:</div>
+                            <div class="value"><?php echo $data['tsm_to'] ?></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="b-t">
+                        <div class="form-group">
+                            <div class="label">Tanggal:</div>
+                            <div class="value"><?php echo $data['tsm_date_formatted'] ?></div>
+                        </div>
+                    </td>
+                    <td class="b-t">
+                        <div class="form-group">
+                            <div class="label">No. Surat:</div>
+                            <div class="value"><?php echo $data['tsm_no'] ?></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="b-t b-b" colspan="2">
+                        <div class="form-group">
+                            <div class="label">Pengolah:</div>
+                            <div class="value"><?php echo $data['tsm_admin']; ?></div>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+
+    <?php foreach($dispositions as $disp): ?>
+    
+    <div class="page-break"></div>
+    
+    <table class="header">
+        <thead>
+            <tr>
+                <th></th>
+                <th>
+                    <h3 class="fw-600"><?php echo $company['scp_name']; ?></h3> 
+                    <p class="fw-400"><?php echo $company['scp_address']; ?></p>
+                    <p class="fw-400">Telp. <?php echo $company['scp_phone']; ?> Fax. <?php echo $company['scp_fax']; ?></p>
+                </th>
+            </tr>
+        </thead>
+    </table>
+
+    <h3 class="section-title">LEMBAR DISPOSISI SURAT</h3>
+
+    <div class="b-a">
+        <table class="section">
+            <tbody>
+                <tr>
+                    <td class="b-b b-r">
+                        <div class="form-group">
+                            <div class="label">No. Agenda:</div>
+                            <div class="value fw-600"><?php echo $data['tsm_seq'] ?></div>
+                        </div>
+                    </td>
+                    <td class="b-b b-r">
+                        <div class="form-group">
+                            <div class="label">Tanggal Masuk:</div>
+                            <div class="value fw-600"><?php echo $data['tsm_reg_date_formatted'] ?></div>
+                        </div>
+                    </td>
+                    <td class="b-b">
+                        <div class="form-group">
+                            <div class="label">No. Arsip:</div>
+                            <div class="value fw-600"><?php echo $data['tsm_reg_no'] ?></div>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <table class="section">
+            <tbody>
+                <tr>
+                    <td>Asal / Pengirim:</td>
+                    <td><?php echo $data['tsm_from'] ?></td>
+                </tr>
+                <tr>
+                    <td>Ringkasan:</td>
+                    <td><?php echo $data['tsm_subject'] ?></td>
+                </tr>
+                <tr>
+                    <td>Tanggal:</td>
+                    <td><?php echo $data['tsm_date_formatted'] ?></td>
+                </tr>
+                <tr>
+                    <td>Nomor:</td>
+                    <td><?php echo $data['tsm_no']; ?></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <table class="section">
+            <tbody>
+                <tr>
+                    <td class="b-t">
+                        <div class="form-group">
+                            <div class="label">Petunjuk Disposisi:</div>
+                            <div class="value"><?php echo $disp['tsmf_content']; ?></div>
+                        </div>
+                    </td>
+                    <td class="b-t" style="width: 200px;">
+                        <div class="form-group">
+                            <div class="label">Diteruskan Kepada:</div>
+                            <div class="value">
+                                <ol>
+                                <?php foreach($disp['users'] as $user): ?>
+
+                                <li><?php echo $user['tsmfu_su_fullname']; ?></li>
+
+                                <?php endforeach; ?>
+                                </ol>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <table class="section">
+            <tbody>
+                <tr>
+                    <td class="b-t">
+                        <p>Sesudah digunakan harap dikembalikan kembali ke <?php echo $data['tsm_admin']; ?></p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+
+    <?php endforeach; ?>
+
+</body>
+</html>

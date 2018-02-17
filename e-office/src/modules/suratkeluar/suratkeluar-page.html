@@ -1,0 +1,103 @@
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../../../cores/elements/kct-pages/kct-pages.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../settings/blocks/setting-header-block.html">
+
+
+<dom-module id="suratkeluar-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--page-background-color);
+            }
+            #switcher {
+                display: block;
+                height: 100%;
+            }
+            #grid {
+                height: 100%;
+            }
+        </style>
+
+        <kct-pages id="switcher" selected="[[ page ]]" attr-for-selected="name">
+            <kct-grid 
+                id="grid" 
+                name="grid" 
+                url="/surat-keluar" 
+                selection-model="row" 
+                header-text="Monitoring" 
+                header-desc="Data Surat Keluar" 
+                hide-nav 
+                columns="[[ columns ]]" 
+                pagination></kct-grid>
+
+            <kct-vbox name="view">
+                <setting-header-block 
+                    text="Detail Surat" 
+                    desc="[[ record.tsk_no ]]" 
+                    on-back-tap="__onBackTap"></setting-header-block>
+                <div class="flex scroll-y padding">
+                    
+                </div>
+            </kct-vbox>
+        </kct-pages>
+
+    </template>
+    <script>
+        class SuratKeluarPage extends KctView {
+            static get is() {
+                return 'suratkeluar-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Surat Keluar', notify: true },
+                    page: { type: String, value: 'grid' },
+                    record: { type: Object, value: () => ({}) },
+                    columns: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'rownumber' }, 
+                            {
+                                type: 'action',
+                                width: 40,
+                                renderer: () => {
+                                    return '<kct-grid-action on-tap="__onViewTap" icon="search" rounded icon-only accent="blue"></kct-grid-action>';
+                                }
+                            },
+                            { text: 'No. Surat', dataIndex: 'tsk_no', width: 250 },
+                            { text: 'Tujuan', dataIndex: 'tsk_to', width: 300 },
+                            {
+                                text: 'Tanggal Keluar',
+                                dataIndex: 'tsk_send_date',
+                                renderer: (e) => {
+                                    return e.data.tsk_send_date_formatted;
+                                }
+                            }
+                        ])
+                    }
+                };
+            }
+
+            handleRouteParams() {
+                this.$.grid.deferAutoload();
+            }
+
+            handleResizing() {
+                this.$.grid && this.$.grid.resize();
+            }
+
+            __onViewTap(e) {
+                this.set('record', e.data);
+                this.set('page', 'view');
+            }
+
+            __onBackTap() {
+                this.set('page', 'grid');
+            }
+        }
+        customElements.define(SuratKeluarPage.is, SuratKeluarPage);
+    </script>
+</dom-module>

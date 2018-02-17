@@ -14,28 +14,25 @@
                     <vaadin-date-picker value="{{ record.data.tsm_reg_date }}" label="Tanggal Registrasi"></vaadin-date-picker>
                 </div>
                 <div>
-                    <kct-combobox 
-                        id="combo-user" 
-                        url="/projects/projects-users" 
-                        label="Petugas Registrasi" 
-                        value="{{ record.data.tsm_reg_user }}" 
-                        item-value-path="su_id" 
-                        item-label-path="su_fullname" 
-                        on-beforeload="__onComboUserBeforeLoad" 
-                        page-size="10"></kct-combobox>
+                    <paper-input value="{{ record.data.tsm_seq }}" label="Nomor Agenda (Urut)"></paper-input>  
                 </div>
             </kct-column>
             
+            <kct-combobox 
+                id="combo-user" 
+                url="/projects/projects-users" 
+                label="Petugas Registrasi" 
+                value="{{ record.data.tsm_reg_user }}" 
+                item-value-path="su_id" 
+                item-label-path="su_fullname" 
+                on-beforeload="__onComboUserBeforeLoad" 
+                page-size="10"></kct-combobox>
             <paper-input value="{{ record.data.tsm_admin }}" label="Pengolah"></paper-input>  
 
         </div>
 
         <div class="section section-primary">
             <h3 class="section-title">Kodefikasi</h3>
-            <div class="section-tools">
-                <paper-button on-tap="__onReloadSequenceTap"><iron-icon icon="refresh"></iron-icon>&nbsp;Nomor Urut</paper-button>
-            </div>
-            <paper-input label="Nomor Urut" value="{{ record.data.tsm_seq }}"></paper-input>
             <form-combo-class value="{{ record.data.tsm_tcs_id }}"></form-combo-class>
             <paper-input label="Nomor Arsip" value="{{ record.data.tsm_reg_no }}"></paper-input>
         </div>
@@ -53,24 +50,14 @@
             <paper-input value="{{ record.data.tsm_subject }}" label="Perihal"></paper-input>
 
             <form-combo-receiver value="{{ record.data.tsm_to }}" group="surat-masuk"></form-combo-receiver>
-
-              
-            
             
         </div>
         
     </template>
     <script>
-        class FormSuratMasukCode extends FormBase {
+        class FormSuratMasukCode extends Mixins(FormBase).use(Mixins.FormSuratMasukBehavior) {
             static get is() {
                 return 'form-surat-masuk-code';
-            }
-
-            static get observers() {
-                return [
-                    '__computeTask(record.data.*)',
-                    '__computeValidation(record.data.tsm_no)'
-                ];
             }
 
             initialize() {
@@ -129,40 +116,6 @@
 
             remove() {
                 return this.$.ajax.DELETE('/surat-masuk/' + this.record.status.tts_data_id);
-            }
-
-            __computeValidation(tsm_no) {
-                let valid = true;
-                valid = valid && tsm_no;
-                this.set('invalid', !valid);
-            }
-
-            __computeTask(changed) {
-                let data;
-
-                if ((data = this.record.data)) {
-                    let title = data.tsm_no || '';
-                    let content = '';
-
-                    this.set('record.task.tt_title', title);
-
-                    if (data.tsm_from) {
-                        content += `
-                            <div class="item-content-group">
-                                <div class="item-content-label">Pengirim</div>
-                                <div class="item-content-value">${data.tsm_from}</div>
-                            </div> 
-                        `;
-                    }
-
-                    this.set('record.task.tt_content', content);
-                }
-            }
-
-            __onReloadSequenceTap(e) {
-                this.$.ajax.GET('/surat-masuk/sequence').then(res => {
-                    this.set('record.data.tsm_seq', res.data);
-                });
             }
 
             __onComboUserBeforeLoad(e) {

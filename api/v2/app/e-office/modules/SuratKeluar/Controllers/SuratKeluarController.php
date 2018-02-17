@@ -2,7 +2,8 @@
 namespace App\SuratKeluar\Controllers;
 
 use App\SuratKeluar\Models\SuratKeluar,
-    App\SuratKeluar\Models\Document;
+    App\SuratKeluar\Models\Document,
+    App\Company\Models\Company;
 
 class SuratKeluarController extends \Micro\Controller {
 
@@ -102,6 +103,59 @@ class SuratKeluarController extends \Micro\Controller {
                 'success' => FALSE,
                 'message' => $this->uploader->getMessage()
             );
+        }
+
+    }
+
+    public function downloadAction($id) {
+        $data = SuratKeluar::get($id)->data;
+        
+        if ( ! $data) {
+            throw new \Phalcon\Exception("Not Found", 404);
+        }
+
+        $format = $this->request->getQuery('format');
+
+        switch($format) {
+            case 'pdf':
+
+                $html = $this->view->render('suratkeluar', array(
+                    'company' => Company::getDefault()->toArray(),
+                    'data' => $data->toArray()
+                ));
+
+                $pdf = new \Micro\Reports\Pdf();
+                $pdf->loadHtml($html);
+                $pdf->setPaper('A4');
+
+                $pdf->render();
+                $pdf->stream('suratkeluar_'.$data->tsk_id.'.pdf');
+
+                exit();
+
+            case 'xls':
+
+                $company = Company::getDefault()->toArray();
+                $data = $data->toArray();
+
+                $xls = \Micro\Reports\Xls::load(dirname(__DIR__).'/Templates/suratkeluar.xlsx');
+
+                $xls->getActiveSheet()
+                    ->setCellValue('A1', $company['scp_name'])
+                    ->setCellValue('A2', $company['scp_address'])
+                    ->setCellValue('A3', 'Telp. '.$company['scp_phone'].' Fax. '.$company['scp_fax'])
+                    ->setCellValue('A8', $data['tsk_seq'])
+                    ->setCellValue('B8', $data['tsk_send_date_formatted'])
+                    ->setCellValue('A10', $data['tsk_subject'])
+                    ->setCellValue('A12', $data['tsk_from'])
+                    ->setCellValue('B12', $data['tsk_to'])
+                    ->setCellValue('A14', $data['tsk_date_formatted'])
+                    ->setCellValue('B14', $data['tsk_no'])
+                    ->setCellValue('A16', $data['tsk_admin']);
+
+                $xls->stream('suratkeluar_'.$data['tsk_id'].'.xlsx');
+
+                exit();
         }
 
     }

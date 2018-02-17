@@ -1,0 +1,57 @@
+<link rel="import" href="../../../../../../cores/mixins/mixins.html">
+<script>
+    
+    Mixins.FormSuratMasukBehavior = Polymer.dedupingMixin(superclass => {
+
+        return class extends superclass {
+
+            static get observers() {
+                return [
+                    '_computeValidation(record.data.tsm_no)',
+                    '_computeTask(record.*)'
+                ];
+            }
+
+            _computeValidation(tsm_no) {
+                let valid = true;
+                valid = valid && tsm_no;
+                this.set('invalid', !valid);
+            }
+
+            _computeTask() {
+                let data;
+
+                if ((data = this.record.data)) {
+                    let title = data.tsm_no || '';
+                    let content = '';
+
+                    this.set('record.task.tt_title', title);
+
+                    if (data.tsm_from) {
+                        content += `
+                            <div class="item-content-group">
+                                <div class="item-content-value">${data.tsm_from}</div>
+                            </div> 
+                        `;
+
+                        // content += `
+                        //     <div class="item-content-group">
+                        //         <div class="item-content-label">Pengirim</div>
+                        //         <div class="item-content-value">${data.tsm_from}</div>
+                        //     </div> 
+                        // `;
+                    }
+
+                    this.set('record.task.tt_content', content);
+                }
+            }
+
+            __onPrintDocumentTap(e) {
+                let format = e.target.dataset.format;
+                this.$.ajax.DOWNLOAD('/surat-masuk/' + this.record.data.tsm_id + '/download?format=' + format);
+            }
+
+        }
+
+    });
+</script>

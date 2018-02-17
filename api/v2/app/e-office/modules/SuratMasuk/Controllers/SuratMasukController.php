@@ -2,7 +2,8 @@
 namespace App\SuratMasuk\Controllers;
 
 use App\SuratMasuk\Models\SuratMasuk,
-    App\SuratMasuk\Models\Document;
+    App\SuratMasuk\Models\Document,
+    App\Company\Models\Company;
 
 class SuratMasukController extends \Micro\Controller {
 
@@ -11,6 +12,10 @@ class SuratMasukController extends \Micro\Controller {
             'success' => TRUE,
             'data' => \App\System\Models\Autonumber::generate('SM_SEQUENCE')
         );
+    }
+
+    public function findAction() {
+        return SuratMasuk::get()->filterable()->sortable()->paginate();
     }
 
     public function findByIdAction($id) {
@@ -45,6 +50,10 @@ class SuratMasukController extends \Micro\Controller {
             if ($query->data->save($post)) {
                 if (isset($post['documents'])) {
                     $query->data->saveDocuments($post['documents']);
+                }
+
+                if (isset($post['dispositions'])) {
+                    $query->data->saveDispositions($post['dispositions']);
                 }
             }
         }
@@ -89,6 +98,42 @@ class SuratMasukController extends \Micro\Controller {
                 'success' => FALSE,
                 'message' => $this->uploader->getMessage()
             );
+        }
+
+    }
+
+    public function downloadAction($id) {
+        $data = SuratMasuk::get($id)->data;
+        
+        if ( ! $data) {
+            throw new \Phalcon\Exception("Not Found", 404);
+        }
+
+        $format = $this->request->getQuery('format');
+
+        switch($format) {
+            case 'pdf':
+
+                $html = $this->view->render('suratmasuk', array(
+                    'company' => Company::getDefault()->toArray(),
+                    'data' => $data->toArray(),
+                    'dispositions' => $data->dispositions->filter(function($d){
+                        return $d->toArray();
+                    })
+                ));
+
+                $pdf = new \Dompdf\Dompdf();
+                $pdf->loadHtml($html);
+                $pdf->setPaper('A4');
+
+                $pdf->render();
+                $pdf->stream('suratmasuk_'.$data->tsm_id.'.pdf');
+
+                exit();
+
+            case 'xls':
+
+                break;
         }
 
     }

@@ -17,17 +17,18 @@
         <div class="section">
             <h3 class="section-title">Pembuatan Surat</h3>
             <div class="section-tools">
-                <paper-button on-tap="__onReloadSequenceTap"><iron-icon icon="refresh"></iron-icon>&nbsp;Nomor Urut</paper-button>
+                <paper-button on-tap="__onReloadSequenceTap"><iron-icon icon="autorenew"></iron-icon>&nbsp;Nomor Urut</paper-button>
             </div>
             <kct-column columns="2">
                 <div>
                     <vaadin-date-picker value="{{ record.data.tsk_create_date }}" label="Tanggal Pembuatan"></vaadin-date-picker>
                 </div>
                 <div>
-                    <paper-input label="Nomor Urut" value="{{ record.data.tsk_seq }}"></paper-input>
+                    <paper-input label="Nomor Agenda (Urut)" value="{{ record.data.tsk_seq }}"></paper-input>
                 </div>
             </kct-column>
             <form-combo-class value="{{ record.data.tsk_tcs_id }}"></form-combo-class>
+            <paper-input label="Pengolah" value="{{ record.data.tsk_admin }}"></paper-input>
         </div>
 
         <div class="section">
@@ -53,7 +54,7 @@
             <h3 class="section-title">Dokumen Surat</h3>
             <p>Unggah dokumen-dokumen yang berkaitan dengan surat yang dibuat seperti dokumen word, pdf maupun gambar.</p>
             <div class="m-t m-b">
-                <paper-button on-tap="__onAttachmentTap" class="btn-cyan btn-sm"><iron-icon icon="file-upload"></iron-icon>&nbsp;Upload Dokumen</paper-button>    
+                <paper-button on-tap="__onAttachmentTap" class="btn-cyan"><iron-icon icon="file-upload"></iron-icon>&nbsp;Upload Dokumen</paper-button>    
             </div>
             <div>
                 <template is="dom-repeat" items="[[ record.data.documents ]]">
@@ -106,16 +107,9 @@
 
     </template>
     <script>
-        class FormSuratKeluar extends FormBase {
+        class FormSuratKeluar extends Mixins(FormBase).use(Mixins.FormSuratKeluarBehavior) {
             static get is() {
                 return 'form-surat-keluar';
-            }
-
-            static get observers() {
-                return [
-                    '__computeTask(record.data.*)',
-                    '__computeValidation(record.data.tsk_no)'
-                ];
             }
 
             initialize() {
@@ -176,34 +170,6 @@
                 data = data || {};
                 let val = data[key];
                 return val ? false : true;
-            }
-
-            __computeValidation(tsk_no) {
-                let valid = true;
-                valid = valid && tsk_no;
-                this.set('invalid', !valid);
-            }
-
-            __computeTask() {
-                let data = this.record.data;
-
-                if (data) {
-                    let title = data.tsk_no || 'Surat Keluar';
-                    let content = '';
-
-                    this.set('record.task.tt_title', title);
-
-                    if (data.tsk_to) {
-                        content += `
-                            <div class="item-content-group">
-                                <div class="item-content-label">Tujuan</div>
-                                <div class="item-content-value">${data.tsk_to}</div>
-                            </div>
-                        `;
-                    }
-
-                    this.set('record.task.tt_content', content);
-                }
             }
 
             __onReloadSequenceTap() {

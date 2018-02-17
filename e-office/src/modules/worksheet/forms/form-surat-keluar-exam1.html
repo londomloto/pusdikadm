@@ -26,7 +26,7 @@
                     <paper-input label="Tanggal Pembuatan" value="[[ record.data.tsk_create_date_formatted ]]" readonly></paper-input>
                 </div>
                 <div>
-                    <paper-input label="Nomor Urut" value="[[ record.data.tsk_seq ]]" readonly></paper-input>
+                    <paper-input label="Nomor Agenda (Urut)" value="[[ record.data.tsk_seq ]]" readonly></paper-input>
                 </div>
             </kct-column>
             <paper-input label="Klasifikasi Surat" value="[[ record.data.tsk_tcs_label ]]" readonly></paper-input>
@@ -101,15 +101,9 @@
 
     </template>
     <script>
-        class FormSuratKeluarExam1 extends FormBase {
+        class FormSuratKeluarExam1 extends Mixins(FormBase).use(Mixins.FormSuratKeluarBehavior) {
             static get is() {
                 return 'form-surat-keluar-exam1';
-            }
-
-            static get observers() {
-                return [
-                    '__computeTask(record.data.*)'
-                ];
             }
 
             initialize() {
@@ -153,28 +147,6 @@
                     }
                     return res;
                 });
-            }
-
-            __computeTask() {
-                let data = this.record.data;
-                
-                if (data) {
-                    let title = data.tsk_no || 'Surat Keluar';
-                    let content = '';
-
-                    this.set('record.task.tt_title', title);
-
-                    if (data.tsk_to) {
-                        content += `
-                            <div class="item-content-group">
-                                <div class="item-content-label">Tujuan</div>
-                                <div class="item-content-value">${data.tsk_to}</div>
-                            </div>
-                        `;
-                    }
-
-                    this.set('record.task.tt_content', content);
-                }
             }
 
             __onComboUserBeforeLoad(e) {

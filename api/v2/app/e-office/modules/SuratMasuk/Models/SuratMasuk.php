@@ -18,6 +18,18 @@ class SuratMasuk extends \Micro\Model {
             )
         );
 
+        $this->hasMany(
+            'tsm_id',
+            'App\SuratMasuk\Models\Disposition',
+            'tsmf_tsm_id',
+            array(
+                'alias' => 'Dispositions',
+                'foreignKey' => array(
+                    'action' => Relation::ACTION_CASCADE
+                )
+            )
+        );
+
         $this->hasOne(
             'tsm_tcs_id',
             'App\Classifications\Models\Classification',
@@ -35,6 +47,7 @@ class SuratMasuk extends \Micro\Model {
                 'alias' => 'Registrar'
             )
         );
+
     }
 
     public function getSource() {
@@ -90,6 +103,40 @@ class SuratMasuk extends \Micro\Model {
             $doc = new Document();
             $e['tsmd_tsm_id'] = $this->tsm_id;
             $doc->save($e);
+        }
+    }
+
+    public function saveDispositions($items) {
+        $create = array();
+        $remove = array();
+
+        $exists = array();
+
+        foreach($this->dispositions as $e) {
+            $exists[$e->tsmf_id] = TRUE;
+        }
+
+        foreach($items as $e) {
+            if ( ! isset($e['tsmf_id'])) {
+                $create[] = $e;
+            } else {
+                unset($exists[$e['tsmf_id']]);
+            }
+        }
+
+        $exists = array_values(array_keys($exists));
+
+        if (count($exists) > 0) {
+            Disposition::get()
+                ->inWhere('tsmf_id', $exists)
+                ->execute()
+                ->delete();
+        }
+
+        foreach($create as $e) {
+            $disp = new Disposition();
+            $e['tsmf_tsm_id'] = $this->tsm_id;
+            $disp->save($e);
         }
     }
 

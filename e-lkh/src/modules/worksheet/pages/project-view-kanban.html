@@ -70,7 +70,7 @@
                     worksheetRecord: { type: Object },
                     workspaces: { type: Array },
                     workspaceRecord: { type: Object },
-                    params: { type: Object, value: () => ({}) },
+                    params: { type: Object },
                     busy: { type: Boolean, value: false, notify: true },
                     pageSize: { type: Number, value: 5 },
                     maxPageSize: { type: Number, value: 100 }
@@ -79,7 +79,8 @@
 
             static get observers() {
                 return [
-                    '__projectChanged(project)'
+                    '__projectChanged(project)',
+                    '__paramsChanged(params.*)'
                 ];
             }
 
@@ -109,6 +110,12 @@
             __projectChanged(project) {
                 if (project) {
                     this.__loadProject();
+                }
+            }
+
+            __paramsChanged(changed) {
+                if (changed.path == 'params') {
+                    this.reload();
                 }
             }
 

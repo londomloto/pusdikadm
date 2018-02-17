@@ -3,7 +3,10 @@
 <link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
 <link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../cores/elements/kct-media/kct-media.html">
 <link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../cores/elements/kct-input/kct-input-file.html">
 <link rel="import" href="../settings/blocks/setting-header-block.html">
 
 <dom-module id="company-page">
@@ -17,18 +20,31 @@
                 font-size: 15px;
                 font-weight: 500;
             }
+            .logo {
+                width: 150px;
+                height: 150px;
+                background-color: var(--paper-grey-300);
+                text-align: center;
+            }
+            .sm .hidden-sm {
+                display: none;
+            }
         </style>        
 
         <kct-ajax id="ajax"></kct-ajax>
+        <kct-media screen="{{ screen }}"></kct-media>
 
-        <kct-vbox>
+        <kct-vbox class$="[[ screen ]]">
             <setting-header-block icon="home" text="Konfigurasi" desc="Organisasi" on-back-tap="__onBackTap">
                 <div class="separator"></div>
                 <paper-button on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Simpan</paper-button>
             </setting-header-block>
             <div class="flex padding">
-                <kct-column columns="2">
-                    <div>
+                <kct-hbox>
+                    <div class="logo hidden-sm m-r">
+                        <img alt="." src$="[[ company.scp_logo_thumb ]]&w=150&h=150">
+                    </div>
+                    <div class="flex">
                         <h3 class="title">Data Organisasi</h3>
                         <paper-input label="Nama Organisasi" value="{{ company.scp_name }}"></paper-input>
                         <paper-input label="Alamat" value="{{ company.scp_address }}"></paper-input>
@@ -36,9 +52,10 @@
                         <paper-input label="No. Fax" value="{{ company.scp_fax }}"></paper-input>
                         <paper-input label="Alamat Email" value="{{ company.scp_email }}"></paper-input>
                         <paper-input label="Homepage" value="{{ company.scp_homepage }}"></paper-input>
-                    </div>    
-                    <div></div>
-                </kct-column>
+
+                        <kct-input-file file="{{ logo }}" label="Logo Organisasi" value="{{ company.scp_logo }}"></kct-input-file>
+                    </div>
+                </kct-hbox>
                 
             </div>
         </kct-vbox>
@@ -56,16 +73,9 @@
             }
 
             __loadCompany() {
-                let payload = {
-                    params: {
-                        scp_default: 1
-                    }
-                };
-
-                this.$.ajax.GET('/company', payload).then(res => {
-                    if (res.success) {
-                        this.set('company', res.data[0]);
-                    }
+                this.$.ajax.GET('/company/load').then(res => {
+                    let data = res.data || {};
+                    this.set('company', data);
                 });
             }
 
@@ -74,7 +84,23 @@
 
                 this.$.ajax.PUT('/company/' + this.company.scp_id, payload).then(res => {
                     if (res.success) {
-                        this.toast('Sukses', 'Data instansi berhasil disimpan');
+                        if (this.logo) {
+                            this.$.ajax.UPLOAD('/company/upload', {
+                                files: [
+                                    { name: 'userfile', file: this.logo }
+                                ]
+                            }).then(r => {
+                                this.toast('Sukses', 'Data instansi berhasil disimpan');
+                                if (r.success) {
+                                    this.set('company.scp_logo', r.data.scp_logo);
+                                    this.set('company.scp_logo_thumb', r.data.scp_logo_thumb);
+                                }
+                            });
+                        } else {
+                            this.set('company.scp_logo', res.data.scp_logo);
+                            this.set('company.scp_logo_thumb', res.data.scp_logo_thumb);
+                            this.toast('Sukses', 'Data instansi berhasil disimpan');
+                        }
                     }
                 });
             }

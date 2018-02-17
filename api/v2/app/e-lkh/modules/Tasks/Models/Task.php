@@ -10,6 +10,7 @@ use App\Tasks\Models\TaskLabel,
 class Task extends \Micro\Model {
 
     private $__snapshot = NULL;
+    private $__loggable = TRUE;
 
     public function initialize() {
         
@@ -108,47 +109,62 @@ class Task extends \Micro\Model {
         return 'trx_tasks';
     }
 
+    public function suspendLog() {
+        $this->__loggable = FALSE;
+    }
+
+    public function resumeLog() {
+        $this->__loggable = TRUE;
+    }
+
     public function afterFetch() {
         
         if (isset(
             $this->tt_id, 
-            $this->tt_title,
-            $this->tt_due_date,
-            $this->tt_flag
+            $this->tt_due_date
         )) {
             $this->__snapshot = array(
                 'tt_id' => $this->tt_id,
-                'tt_title' => $this->tt_title,
-                'tt_due_date' => $this->tt_due_date,
-                'tt_flag' => $this->tt_flag
-            );    
+                'tt_due_date' => $this->tt_due_date
+            );
         }
     }
 
-    public function afterSave() {
-        $snapshot = $this->__snapshot;
-        if ( ! is_null($snapshot) && ! empty($snapshot['tt_id'])) {
-            if ($snapshot['tt_due_date'] != $this->tt_due_date) {
-                TaskActivity::log('update_due', array(
-                    'tta_tt_id' => $this->tt_id,
-                    'tta_data' => $this->tt_due_date
-                ));
-            }
+    public function afterCreate() {
+        if ($this->__loggable) {
+            TaskActivity::log('create', array(
+                'tta_tt_id' => $this->tt_id,
+                'tta_data' => $this->tt_title
+            ));    
+        }
+    }
 
-            if ($snapshot['tt_flag'] != $this->tt_flag) {
-                TaskActivity::log('update_flag', array(
-                    'tta_tt_id' => $this->tt_id,
-                    'tta_data' => $this->tt_flag
-                ));
-            }
+    public function afterUpdate() {
+        if ($this->__loggable) {
+            $snapshot = $this->__snapshot;
 
-            if ($snapshot['tt_title'] != $this->tt_title) {
-                TaskActivity::log('update', array(
-                    'tta_tt_id' => $this->tt_id,
-                    'tta_data' => $this->tt_title
-                ));
-            }
+            if ( ! is_null($snapshot) && ! empty($snapshot['tt_id'])) {
 
+                $detail = TRUE;
+
+                if ($snapshot['tt_due_date'] != $this->tt_due_date) {
+                    
+                    $detail = FALSE;
+
+                    TaskActivity::log('update_due', array(
+                        'tta_tt_id' => $this->tt_id,
+                        'tta_data' => $this->tt_due_date
+                    ));
+                }
+
+                if ($detail) {
+
+                    TaskActivity::log('update', array(
+                        'tta_tt_id' => $this->tt_id,
+                        'tta_data' => $this->tt_title
+                    ));
+                }
+            }
         }
     }
 
@@ -371,32 +387,16 @@ class Task extends \Micro\Model {
         }
     }
 
-    private static function __timezone() {
-        static $zone;
-
-        if (is_null($zone)) {
-            $conf = \Micro\App::getDefault()->config->app;
-            $zone = 'Asia/Jakarta';
-            if ($conf->offsetExists('timezone')) {
-                $zone = $conf->timezone;
-            }
-        }
-        return $zone;
-    }
-
     private static function __formatDate($date, $format = "d M Y H:i") {
         if (empty($date)) {
             return '';
         }
-        
-        $zone = self::__timezone();
-        $date = new \Moment\Moment(strtotime($date), $zone);
+        $date = new \Moment\Moment(strtotime($date));
         return $date->format($format);
     }
 
     private static function __relativeTime($date, $format = "d M Y H:i") {
-        $zone = self::__timezone();
-        $date = new \Moment\Moment(strtotime($date), $zone);
+        $date = new \Moment\Moment(strtotime($date));
         $diff = $date->fromNow();
 
         if ($diff->getDirection() == 'past') {

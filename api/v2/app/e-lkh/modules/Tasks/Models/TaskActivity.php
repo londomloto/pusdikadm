@@ -213,7 +213,7 @@ class TaskActivity extends \Micro\Model {
                         ->execute();
 
                     foreach($data as $e) {
-                        $labels[] = '<span style="padding: 3px 10px; color: #fff; border-radius: 12px; background-color:'.$e->sl_color.'">'.$e->sl_label.'</span>';
+                        $labels[] = '<span style="padding: 2px 8px; color: #fff; border-radius: 2px; background-color:'.$e->sl_color.'">'.$e->sl_label.'</span>';
                     }
 
                     $plural = count($labels) > 1 ? 'label' : 'label';

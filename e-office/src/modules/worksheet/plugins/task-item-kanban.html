@@ -55,7 +55,7 @@
             }
             .item-content {
                 color: var(--paper-blue-grey-500);
-                margin-top: 10px;
+                margin-top: 5px;
                 padding-right: 36px;
                 font-size: 12px;
             }
@@ -104,9 +104,9 @@
         <div class="box box-shadow-z2 item" style$="border-left: 2px solid [[ accent ]]">
             <div class="box-body" on-tap="__onItemTap">
                 <h3 class="item-title">[[ record.task.tt_title ]]</h3>
-                <p class="item-meta">
+                <!-- <p class="item-meta">
                     Dibuat oleh <b>[[ record.task.creator_su_fullname ]]</b> [[ record.task.tt_created_dt_relative ]]
-                </p>
+                </p> -->
                 <div class="box-label">
                     <template is="dom-repeat" items="[[ record.labels ]]">
                         <span class="item-label" style$="background-color: [[ item.sl_color ]]">[[ item.sl_label ]]</span>

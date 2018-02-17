@@ -1,0 +1,221 @@
+<dom-module id="form-surat-masuk-disp">
+    <template>
+        <style include="form-style">
+            kct-checkbox {
+                --paper-checkbox-margin: 10px 0;
+                color: #000;
+                font-weight: 500;
+            }
+            paper-radio-group {
+                --paper-radio-group-item-padding: 8px 0;
+            }
+            paper-radio-button {
+                display: block;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <file-viewer id="viewer"></file-viewer>
+
+        <div class="section">
+            <h3 class="section-title">Registrasi Surat</h3>
+
+            <kct-column columns="2">
+                <div><paper-input value="[[ record.data.tsm_reg_date_formatted ]]" label="Tanggal Registrasi" readonly></paper-input></div>
+                <div><paper-input value="[[ record.data.tsm_seq ]]" label="Nomor Agenda (Urut)" readonly></paper-input></div>
+            </kct-column>
+            <paper-input value="[[ record.data.tsm_reg_user_name ]]" label="Petugas Registrasi" readonly></paper-input>
+            <paper-input value="[[ record.data.tsm_admin ]]" label="Pengolah Surat" readonly></paper-input>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Kodefikasi</h3>
+            <paper-input value="[[ record.data.tsm_tcs_label ]]" label="Klasifikasi" readonly></paper-input>
+            <paper-input value="[[ record.data.tsm_reg_no ]]" label="Nomor Arsip" readonly></paper-input>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Identitas Surat</h3>
+
+            <kct-column columns="2">
+                <div><paper-input value="[[ record.data.tsm_no ]]" label="Nomor Surat" readonly></paper-input></div>
+                <div><paper-input value="[[ record.data.tsm_date_formatted ]]" label="Tanggal Surat" readonly></paper-input></div>
+            </kct-column>
+
+            <paper-input value="[[ record.data.tsm_from ]]" label="Pengirim" readonly></paper-input>
+            <paper-input value="[[ record.data.tsm_subject ]]" label="Perihal" readonly></paper-input>
+            <paper-input value="[[ record.data.tsm_to ]]" label="Tujuan" readonly></paper-input>
+            
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Dokumen Surat</h3>
+            <p>Daftar dokumen-dokumen yang berkaitan dengan surat yang dibuat seperti dokumen word, pdf maupun gambar.</p>
+            <div class="m-t">
+                <template is="dom-repeat" items="[[ record.data.documents ]]">
+                    <paper-card class="document-item">
+                        <div class="card-content">
+                            <div class="name">
+                                <a on-tap="__onOpenDocumentTap" href="javascript:;">[[ item.tsmd_orig ]]</a>
+                            </div>
+                            <div class="meta">
+                                <span>[[ item.tsmd_size_formatted ]] - [[ item.tsmd_mime ]]</span>
+                            </div>
+                        </div>
+                    </paper-card>
+                </template>
+            </div>
+        </div>
+
+        <div class="section section-primary">
+            <h3 class="section-title">Konfirmasi Disposisi</h3>
+            <p>Jika Anda sudah mendapatkan lembar disposisi, silahkan lakukan konfirmasi</p>
+            <div class="m-t">
+                <template is="dom-repeat" items="[[ dispositions ]]" as="disp">
+                    <paper-card class="disposition-item">
+                        <div class="card-content">
+                            <div class="tool">
+                                <paper-button>Cetak</paper-button>
+                            </div>
+                            <div class="form-display">
+                                <div class="label">Tanggal</div>
+                                <div class="value">[[ disp.tsmf_date_formatted ]]</div>
+                            </div>
+                            <div class="form-display">
+                                <div class="label">Petunjuk</div>
+                                <div class="value">[[ disp.tsmf_content ]]</div>
+                            </div>
+                            <div class="form-display">
+                                <div class="label">Konfirmasi</div>
+                                <div>
+                                    <template is="dom-repeat" items="[[ disp.users ]]">
+                                        <div class="inline-block m-r">
+                                            <kct-checkbox value="{{ item.tsmfu_confirm }}">[[ item.tsmfu_su_fullname ]]</kct-checkbox>    
+                                        </div>
+                                    </template>    
+                                </div>
+                                
+                            </div>
+                            
+                        </div>
+                    </paper-card>
+                </template>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Tindakan Selanjutnya</h3>
+            <paper-radio-group selected="{{ record.data.tsm_flag }}" attr-for-selected="name">
+                <paper-radio-button name="ARCHIVED">Arsipkan Surat Masuk</paper-radio-button>
+                <paper-radio-button name="REPLY">Buat Surat Balasan</paper-radio-button>
+            </paper-radio-group>
+        </div>
+
+    </template>
+    <script>
+        class FormSuratMasukDisp extends Mixins(FormBase).use(Mixins.FormSuratMasukBehavior) {
+
+            static get is() {
+                return 'form-surat-masuk-disp';
+            }
+
+            static get properties() {
+                return {
+                    dispositions: { type: Array, value: () => ([]) }
+                };
+            }
+
+            initialize() {
+                return this.$.ajax.GET('/surat-masuk/' + this.record.status.tts_data_id).then(res => {
+                    let data = res.data || {};
+                    data.documents = data.documents || [];
+                    this.set('record.data', data);
+
+                    // load dispositions
+                    this.__loadDispositions();
+                });
+            }
+
+            save(options) {
+                let payload = this.record.data;
+
+                if (options.send) {
+
+                    if (' ARCHIVED REPLY '.indexOf(payload.tsm_flag) === -1) {
+                        this.toast('Peringatan', 'Tindakan selanjutnya belum dipilih', 'warn');
+                        return this.resolve({ success: false });
+                    }
+
+                    // validate confirmations
+                    let confirmed = true;
+
+                    (this.dispositions || []).forEach(d => {
+                        (d.users || []).forEach(u => {
+                            confirmed = confirmed && (u.tsmfu_confirm == 1);
+                        });
+                    });
+
+                    if ( ! confirmed) {
+                        return this.confirm('Konfirmasi', 'Ada beberapa pengguna belum melakukan konfirmasi. Tetap lanjutkan proses ?').then(y => {
+                            if (y) {
+                                return save.bind(this)();
+                            } else {
+                                return this.resolve({ success: false });
+                            }
+                        });
+                    } else {
+                        return save.bind(this)();
+                    }
+                } else {
+                    return save.bind(this)();
+                }
+
+                function save() {
+                    if (payload.tsm_id) {
+                        return this.$.ajax.PUT('/surat-masuk/' + payload.tsm_id, payload).then(done.bind(this));
+                    } else {
+                        return this.$.ajax.POST('/surat-masuk', payload).then(done.bind(this));
+                    }
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        
+                        this.saveResult({
+                            date: res.data.tsm_date,
+                            sender: res.data.tsm_from,
+                            receiver: res.data.tsm_to,
+                            result: res.data
+                        });
+
+                        this.set('record.status.tts_data_id', res.data.tsm_id);
+                    }
+                    return res;
+                }
+            }
+
+            __loadDispositions() {
+                this.$.ajax.GET('/surat-masuk/dispositions', {
+                    params: {
+                        tsmf_tsm_id: this.record.data.tsm_id
+                    }
+                }).then(res => {
+                    this.set('dispositions', res.data);
+                });
+            }
+
+            __onOpenDocumentTap(e) {
+                e.stopPropagation();
+
+                this.$.viewer.open(
+                    e.model.item.tsmd_file_url,
+                    e.model.item.tsmd_mime
+                );
+            }
+
+
+        }
+
+        customElements.define(FormSuratMasukDisp.is, FormSuratMasukDisp);
+    </script>
+</dom-module>

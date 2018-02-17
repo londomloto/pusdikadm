@@ -11,14 +11,14 @@
 
             <kct-column columns="2">
                 <div><paper-input value="[[ record.data.tsm_reg_date_formatted ]]" label="Tanggal Registrasi" readonly></paper-input></div>
-                <div><paper-input value="[[ record.data.tsm_reg_user_name ]]" label="Petugas Registrasi" readonly></paper-input></div>
+                <div><paper-input value="[[ record.data.tsm_seq ]]" label="Nomor Agenda (Urut)" readonly></paper-input></div>
             </kct-column>
+            <paper-input value="[[ record.data.tsm_reg_user_name ]]" label="Petugas Registrasi" readonly></paper-input>
             <paper-input value="[[ record.data.tsm_admin ]]" label="Pengolah Surat" readonly></paper-input>
         </div>
 
         <div class="section">
             <h3 class="section-title">Kodefikasi</h3>
-            <paper-input value="[[ record.data.tsm_seq ]]" label="Nomor Urut" readonly></paper-input>
             <paper-input value="[[ record.data.tsm_tcs_label ]]" label="Klasifikasi" readonly></paper-input>
             <paper-input value="[[ record.data.tsm_reg_no ]]" label="Nomor Arsip" readonly></paper-input>
         </div>
@@ -27,13 +27,13 @@
             <h3 class="section-title">Identitas Surat</h3>
 
             <kct-column columns="2">
-                <div><paper-input value="[[ record.data.tsm_no ]]" label="Nomor Surat" readonly></paper-input></div>
-                <div><paper-input value="[[ record.data.tsm_date_formatted ]]" label="Tanggal Surat" readonly></paper-input></div>
+                <div><paper-input value="{{ record.data.tsm_no }}" label="Nomor Surat"></paper-input></div>
+                <div><paper-input value="{{ record.data.tsm_date_formatted }}" label="Tanggal Surat"></paper-input></div>
             </kct-column>
 
-            <paper-input value="[[ record.data.tsm_from ]]" label="Pengirim" readonly></paper-input>
-            <paper-input value="[[ record.data.tsm_subject ]]" label="Perihal" readonly></paper-input>
-            <paper-input value="[[ record.data.tsm_to ]]" label="Tujuan" readonly></paper-input>
+            <paper-input value="{{ record.data.tsm_from }}" label="Pengirim"></paper-input>
+            <paper-input value="{{ record.data.tsm_subject }}" label="Perihal"></paper-input>
+            <paper-input value="{{ record.data.tsm_to }}" label="Tujuan"></paper-input>
             
         </div>
 
@@ -42,7 +42,7 @@
             <h3 class="section-title">Dokumen Surat</h3>
             <p>Unggah dokumen-dokumen yang berkaitan dengan surat yang sudah dipindai (scan) dalam bentuk pdf maupun gambar.</p>
             <div class="m-t m-b">
-                <paper-button on-tap="__onAttachmentTap" class="btn-cyan btn-sm"><iron-icon icon="file-upload"></iron-icon>&nbsp;Upload Dokumen</paper-button>    
+                <paper-button on-tap="__onAttachmentTap" class="btn-cyan"><iron-icon icon="file-upload"></iron-icon>&nbsp;Upload Dokumen</paper-button>    
             </div>
             <div>
                 <template is="dom-repeat" items="[[ record.data.documents ]]">
@@ -65,7 +65,7 @@
 
     </template>
     <script>
-        class FormSuratMasukScan extends FormBase {
+        class FormSuratMasukScan extends Mixins(FormBase).use(Mixins.FormSuratMasukBehavior) {
 
             static get is() {
                 return 'form-surat-masuk-scan';
@@ -125,6 +125,8 @@
                                 tsmd_size_formatted: res.data.size_formatted,
                                 tsmd_file_url: res.data.file_url
                             });
+                            
+                            this.set('record.status.tts_data_id', res.data.tsm_id);
                         }
                     });
                 }

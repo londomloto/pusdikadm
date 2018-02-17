@@ -88,31 +88,37 @@
                 pointer-events: none;
             }
             :host([dirty]) .badge {
-                animation-name: bouncing;
+                animation-name: nb-bouncing;
                 animation-duration: 450ms;
                 animation-timing-function: linear;
                 animation-fill-mode: forwards;
             }
-            @keyframes bouncing {
+            @keyframes nb-bouncing {
                 0%{ opacity: 0; transform: scale(0.3) translate3d(0,0,0); }
                 50%{ opacity: 0.9; transform: scale(1.1); }
                 80%{ opacity: 1; transform: scale(0.89); }
                 100%{ opacity: 1; transform: scale(1) translate3d(0,0,0); }
             }
+            .container.sm .hidden-sm { display: none;  }
+            .container.md .hidden-md { display: none;  }
+            .container.lg .hidden-lg { display: none;  }
+            .container.xl .hidden-xl { display: none;  }
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
 
-        <div class="container">
+        <div class$="container [[ screen ]]">
+            <paper-icon-button class="hidden-lg hidden-xl  hidden-md" on-tap="__onResponsiveTap" icon="social:notifications"></paper-icon-button>
             <paper-menu-button 
                 id="menu" 
+                class="hidden-sm" 
                 horizontal-align="right" 
                 horizontal-offset="[[ offsetX ]]" 
                 vertical-offset="[[ offsetY ]]" 
                 on-paper-dropdown-open="__onPopupOpen" 
                 no-animations 
                 no-overlap>
-                <paper-icon-button slot="dropdown-trigger" class="nav-notif" icon="social:notifications"></paper-icon-button>    
+                <paper-icon-button slot="dropdown-trigger" icon="social:notifications"></paper-icon-button>    
                 <div class="popup" slot="dropdown-content">
                     <div class="header">
                         Anda memiliki notifikasi baru
@@ -157,7 +163,6 @@
 
             static get observers() {
                 return [
-                    '__screenChanged(screen)',
                     '__userChanged(user.*)'
                 ];
             }
@@ -224,34 +229,12 @@
                 this.$.ajax.PUT('/users/' + this.user.su_id, { su_feed: feed });
             }
 
-            __screenChanged(screen) {
-                switch(screen) {
-                    case 'xl':
-                    case 'lg':
-                    case 'md':
-                        this.updateStyles({ '--popup-width': '300px' });
-                        this.updateStyles({ '--popup-height': 'auto' });
-                        this.set('offsetX', 0);
-                        this.set('offsetY', 0);
-                        break;
-                    case 'sm':
-
-                        // get viewport width
-                        let width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-                        let height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
-
-                        this.updateStyles({ '--popup-width': width + 'px' });
-                        this.updateStyles({ '--popup-height': (height - 60) + 'px' });
-
-                        this.set('offsetX', -130);
-                        this.set('offsetY', 40);
-
-                        break;
-                }
-            }
-
             __onReadAllTap() {
                 this.$.menu.close();
+                this.set('route.path', '/notifications');
+            }
+
+            __onResponsiveTap() {
                 this.set('route.path', '/notifications');
             }
 

@@ -12,6 +12,7 @@
                 constructor() {
                     super();
                     this.__guid = 'subscriber-' + (++guid);
+                    this.__context = null;
                     this.__handleGlobalEvent = this.__onGlobalEvent.bind(this);
                 }
 
@@ -22,6 +23,7 @@
 
                 connectedCallback() {
                     super.connectedCallback();
+                    this.__resolveContext();
                     document.addEventListener('global-event', this.__handleGlobalEvent);
                 }
 
@@ -30,15 +32,38 @@
                     super.disconnectedCallback();
                 }
 
-                __onGlobalEvent(e) {
-                    let info = e.detail;
-                    
-                    let localEvent = new CustomEvent(info.name, {
-                        composed: true,
-                        detail: info.data
-                    });
+                __resolveContext() {
+                    let parent = this.parentNode,
+                        context = null;
 
-                    this.dispatchEvent(localEvent);
+                    while(parent) {
+                        if (parent.host) {
+                            context = parent.host;
+                            break;
+                        }
+
+                        if (parent === document.body) {
+                            break;
+                        }
+
+                        parent = parent.parentNode;
+                    }
+
+                    this.set('__context', context);
+                }
+
+                __onGlobalEvent(e) {
+                    let info = (e.detail || {});
+
+                    if (info.publisher !== this.__context) {
+                        let localEvent = new CustomEvent(info.name, {
+                            composed: true,
+                            detail: info.data
+                        });
+
+                        this.dispatchEvent(localEvent);
+                    }
+                    
                 }
             }
 

@@ -178,6 +178,7 @@ class KanbanController extends \Micro\Controller {
     public function updateAction($id) {
         $post = $this->request->getJson();
         $send = isset($post['send']) ? $post['send'] : FALSE;
+        $logs = isset($post['logs']) ? $post['logs'] : TRUE;
 
         if (self::validRequest($post)) {
 
@@ -195,6 +196,10 @@ class KanbanController extends \Micro\Controller {
 
             $affected = array();
 
+            if (FALSE === $logs || $send) {
+                $task->suspendLog();
+            }
+
             if ($task->save($form['task'])) {
 
                 if (isset($form['labels'])) {
@@ -204,6 +209,8 @@ class KanbanController extends \Micro\Controller {
                 if (isset($form['users'])) {
                     $task->saveUsers($form['users']);
                 }
+
+                $task->resumeLog();
 
                 if ($send) {
                     $move = array();

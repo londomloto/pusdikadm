@@ -8,23 +8,27 @@
 
         <div class="section">
             <h3 class="section-title">Registrasi Surat</h3>
+            <div class="section-tools">
+                <paper-button on-tap="__onGenerateSequenceTap"><iron-icon icon="autorenew"></iron-icon>&nbsp;Nomor Agenda</paper-button>
+            </div>
             <kct-column columns="2">
                 <div>
                     <vaadin-date-picker value="{{ record.data.tsm_reg_date }}" label="Tanggal Registrasi"></vaadin-date-picker>
                 </div>
                 <div>
-                    <kct-combobox 
-                        id="combo-user" 
-                        url="/projects/projects-users" 
-                        label="Petugas Registrasi" 
-                        value="{{ record.data.tsm_reg_user }}" 
-                        item-value-path="su_id" 
-                        item-label-path="su_fullname" 
-                        on-beforeload="__onComboUserBeforeLoad" 
-                        page-size="10"></kct-combobox>
+                    <paper-input value="{{ record.data.tsm_seq }}" label="Nomor Agenda (Urut)"></paper-input>  
                 </div>
             </kct-column>
             
+            <kct-combobox 
+                id="combo-user" 
+                url="/projects/projects-users" 
+                label="Petugas Registrasi" 
+                value="{{ record.data.tsm_reg_user }}" 
+                item-value-path="su_id" 
+                item-label-path="su_fullname" 
+                on-beforeload="__onComboUserBeforeLoad" 
+                page-size="10"></kct-combobox>
             <paper-input value="{{ record.data.tsm_admin }}" label="Pengolah"></paper-input>  
 
         </div>
@@ -41,24 +45,14 @@
             <paper-input value="{{ record.data.tsm_subject }}" label="Perihal"></paper-input>
 
             <form-combo-receiver value="{{ record.data.tsm_to }}" group="surat-masuk"></form-combo-receiver>
-
-              
-            
             
         </div>
         
     </template>
     <script>
-        class FormSuratMasuk extends FormBase {
+        class FormSuratMasuk extends Mixins(FormBase).use(Mixins.FormSuratMasukBehavior) {
             static get is() {
                 return 'form-surat-masuk';
-            }
-
-            static get observers() {
-                return [
-                    '__computeTask(record.data.*)',
-                    '__computeValidation(record.data.tsm_no)'
-                ];
             }
 
             initialize() {
@@ -112,38 +106,16 @@
                 return this.$.ajax.DELETE('/surat-masuk/' + this.record.status.tts_data_id);
             }
 
-            __computeValidation(tsm_no) {
-                let valid = true;
-                valid = valid && tsm_no;
-                this.set('invalid', !valid);
-            }
-
-            __computeTask(changed) {
-                let data;
-
-                if ((data = this.record.data)) {
-                    let title = data.tsm_no || '';
-                    let content = '';
-
-                    this.set('record.task.tt_title', title);
-
-                    if (data.tsm_from) {
-                        content += `
-                            <div class="item-content-group">
-                                <div class="item-content-label">Pengirim</div>
-                                <div class="item-content-value">${data.tsm_from}</div>
-                            </div> 
-                        `;
-                    }
-
-                    this.set('record.task.tt_content', content);
-                }
-            }
-
             __onComboUserBeforeLoad(e) {
                 if (this.project && this.project.sp_id) {
                     e.detail.options.project = this.project.sp_id;
                 }
+            }
+
+            __onGenerateSequenceTap() {
+                this.$.ajax.GET('/surat-masuk/sequence').then(res => {
+                    this.set('record.data.tsm_seq', res.data);
+                });
             }
         }
         customElements.define(FormSuratMasuk.is, FormSuratMasuk);

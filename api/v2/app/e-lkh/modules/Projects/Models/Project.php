@@ -68,6 +68,7 @@ class Project extends \Micro\Model {
 
     public function toArray($columns = NULL) {
         $data = parent::toArray($columns);
+        $data['sp_desc'] = empty($data['sp_desc']) ? 'Tidak ada keterangan' : $data['sp_desc'];
         $data['sp_logo'] = strtoupper(substr($this->sp_name, 0, 1));
         $data['sp_accent'] = self::__computeAccent();
         $data['sp_created_date_formatted'] = date('d M Y', strtotime($this->sp_created_date));

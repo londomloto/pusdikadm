@@ -4,16 +4,20 @@
             kct-column kct-combobox {
                 padding: 3px 0;
             }
+            .dropdown-menu paper-item {
+                cursor: pointer;
+                font-weight: normal;
+            }
             .section {
                 padding: 20px;
-                border: 1px solid var(--paper-grey-300);
+                border: 1px solid var(--paper-grey-200);
                 border-radius: 0;
                 position: relative;
-                /*background-color: var(--paper-grey-100);*/
-                /*@apply --shadow-elevation-2dp;*/
+                
+
             }
             .section + .section {
-                margin-top: 30px;
+                margin-top: 20px;
             }
             .section[hidden] {
                 display: none;
@@ -34,6 +38,8 @@
                 font-size: 12px;
                 background: var(--paper-cyan-400);
                 color: #fff;
+                margin-right: 0;
+                margin-left: 3px;
             }
             .section-tools paper-button iron-icon {
                 --iron-icon-width: 16px;
@@ -48,7 +54,9 @@
                 border-color: var(--paper-yellow-300);
             }
             paper-button {
+                font-size: 13px;
                 font-weight: 500;
+                margin-right: 0;
                 /*font-size: 13px;
                 padding: 5px 8px;*/
             }
@@ -56,12 +64,16 @@
                 --iron-icon-width: 18px;
                 --iron-icon-height: 18px;
             }
+            paper-button.btn-outline {
+                border: 1px solid #dfdfdf;
+            }
             .form-group {
                 margin-top: 8px;
                 margin-bottom: 8px;
                 position: relative;
             }
-            .form-group > label {
+            .form-group > label,
+            .form-group > .label {
                 display: block;
                 margin-bottom: 8px;
                 font-size: 12px;
@@ -75,6 +87,16 @@
                 right: 0;
                 bottom: 14px;
                 color: #999;
+            }
+            .form-display .label {
+                font-size: 12px;
+                color: #555;
+            }
+            .form-display .value {
+                font-weight: 500;
+            }
+            .form-display + .form-display {
+                margin-top: 8px;
             }
             paper-radio-group.hbox {
                 @apply --layout-horizontal;
@@ -92,38 +114,48 @@
                 padding-top: 8px;
             }
 
-            .document-item {
+            .document-item,
+            .disposition-item {
                 display: block;
                 background-color: var(--paper-grey-100);
                 box-shadow: none;
                 position: relative;
             }
+            .document-item .name {
+                margin-bottom: 5px;
+            }
             .document-item .meta {
                 font-size: 12px;
             }
-            .document-item .tool {
+            .document-item .tool,
+            .disposition-item .tool {
                 position: absolute;
                 right: 8px;
                 top: 8px;
             }
-            .document-item .tool paper-button {
+            .document-item .tool paper-button,
+            .disposition-item .tool paper-button {
                 border: 1px solid #dfdfdf;
                 font-size: 11px;
                 padding: 3px 5px;
                 font-weight: normal;
                 text-transform: none;
             }
-            .document-item .tool paper-button iron-icon {
+            .document-item .tool paper-button iron-icon,
+            .disposition-item .tool paper-button iron-icon {
                 --iron-icon-width: 16px;
                 --iron-icon-height: 16px;
 
             }
-            .document-item .card-content {
-                padding: 10px;
+            .document-item .card-content,
+            .disposition-item .card-content {
+                padding: 20px;
             }
-            .document-item + .document-item {
-                margin-top: 8px;
+            .document-item + .document-item,
+            .disposition-item + .disposition-item {
+                margin-top: 20px;
             }
+
         </style>
     </template>
 </dom-module>

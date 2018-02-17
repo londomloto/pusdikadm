@@ -5,7 +5,7 @@
 <dom-module id="kct-router">
     <template>
         <app-location id="app-location" route="{{ address }}"></app-location>
-        <kct-auth id="auth" config="[[ config ]]" name="[[ auth ]]"></kct-auth>
+        <kct-auth id="auth" config="[[ config ]]" user="[[ user ]]" name="[[ auth ]]"></kct-auth>
     </template>
     <script>
         class KctRouter extends Mixins(Polymer.Element).use(Mixins.Resolver) {
@@ -184,7 +184,7 @@
                                     errors: {
                                         code: 404,
                                         name: 'NOT FOUND',
-                                        message: 'It\'s look like that page no longer exists.'
+                                        message: 'Sepertinya halaman yang Anda cari tidak ditemukan.'
                                     }
                                 }
                             };
@@ -198,7 +198,7 @@
                                     errors: {
                                         code: 310,
                                         name: 'NET ERROR',
-                                        message: 'It\'s look like too many redirects.'
+                                        message: 'Sistem tidak dapat melakukan routing ke halaman yang Anda cari'
                                     }
                                 }
                             };

@@ -1,5 +1,6 @@
 <link rel="import" href="../../mixins/storage.html">
 <link rel="import" href="../../mixins/resolver.html">
+<link rel="import" href="../../mixins/location.html">
 <link rel="import" href="../kct-ajax/kct-ajax.html">
 
 <dom-module id="kct-auth">
@@ -9,7 +10,8 @@
     <script>
         class KctAuth extends Mixins(Polymer.Element).use(
             Mixins.Resolver, 
-            Mixins.Storage
+            Mixins.Storage,
+            Mixins.Location
         ) {
             static get is() {
                 return 'kct-auth';
@@ -59,24 +61,48 @@
                 this._ensureAttribute('hidden', true);
             }
 
+            
+
             validate() {
-                let token = this.user && this.user.su_access_token,
-                    defer = this._defer();
+                let defer = this._defer();
+                let token;
 
-                if ( ! token) {
-                    this.__fireEvent('validate', { success: false });
-                    defer.resolve({ success: false });
-                } else {
-                    this.$.ajax.GET(this.validationUrl).then(res => {
+                // check from params
+                if ((token = this._param('access_token'))) {
+                    let payload = {
+                        token: token,
+                        client: 'browser'
+                    };
+
+                    this.$.ajax.POST(this.accessUrl, payload).then(res => {
                         let success = res.success;
-
-                        if ( ! success) {
-                            this.__invalidate();
+                        
+                        if (success) {
+                            this.set('user', res.data);
                         }
 
-                        this.__fireEvent('validate', { success: success });
-                        defer.resolve({ success: success });
+                        this.__fireEvent('validate', { success: success, user: this.user });
+                        defer.resolve({ success: success, user: this.user });
                     });
+                } else {
+                    token = this.user && this.user.su_access_token;
+
+                    if (token) {
+                        this.$.ajax.GET(this.validationUrl).then(res => {
+                            let success = res.success;
+
+                            if ( ! success) {
+                                this.__invalidate();
+                            }
+
+                            this.__fireEvent('validate', { success: success, user: this.user});
+                            defer.resolve({ success: success, user: this.user });
+                        });
+
+                    } else {
+                        this.__fireEvent('validate', { success: false, user: this.user });
+                        defer.resolve({ success: false, user: this.user });
+                    }
                 }
 
                 return defer.promise;

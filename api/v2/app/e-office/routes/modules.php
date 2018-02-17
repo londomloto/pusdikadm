@@ -1,6 +1,14 @@
 <?php
 
 Router::group(array(
+    'prefix' => '/company',
+    'handler' => 'App\Company\Controllers\CompanyController',
+    'middleware' => 'auth'
+))
+->get('/load', 'load')
+->post('/upload', 'upload');
+
+Router::group(array(
     'prefix' => '/projects',
     'handler' => 'App\Projects\Controllers\ProjectsController',
     'middleware' => 'auth'
@@ -28,7 +36,8 @@ Router::group(array(
     'middleware' => 'auth'
 ))
 ->get('/sequence', 'sequence')
-->post('/upload', 'upload');
+->post('/upload', 'upload')
+->post('/{id}/download', 'download');
 
 Router::group(array(
     'prefix' => '/surat-keluar',
@@ -36,4 +45,5 @@ Router::group(array(
     'middleware' => 'auth'
 ))
 ->get('/sequence', 'sequence')
-->post('/upload', 'upload');
+->post('/upload', 'upload')
+->post('/{id}/download', 'download');

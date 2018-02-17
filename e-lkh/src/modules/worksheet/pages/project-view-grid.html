@@ -57,7 +57,7 @@
                     busy: { type: Boolean, value: false, notify: true },
                     project: { type: String },
                     projectRecord: { type: Object },
-                    params: { type: Object, value: () => ({}) },
+                    params: { type: Object },
                     columns: {
                         type: Array,
                         value: () => ([
@@ -124,7 +124,8 @@
 
             static get observers() {
                 return [
-                    '__projectChanged(project)'
+                    '__projectChanged(project)',
+                    '__paramsChanged(params.*)'
                 ];
             }
 
@@ -157,6 +158,12 @@
                 if (project) {
                     this.__loadProject();
                     this.__loadGrid();
+                }
+            }
+
+            __paramsChanged(changed) {
+                if (changed.path == 'params') {
+                    this.reload();
                 }
             }
 

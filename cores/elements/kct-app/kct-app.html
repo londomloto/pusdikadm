@@ -5,6 +5,7 @@
 <link rel="import" href="../kct-pages/kct-pages.html">
 <link rel="import" href="../kct-ajax/kct-ajax.html">
 <link rel="import" href="../kct-message/kct-alert.html">
+<link rel="import" href="plugins/screen-locker.html">
 
 <dom-module id="kct-app">
     
@@ -97,6 +98,40 @@
             ready() {
                 super.ready();
                 this.__loadConfig();
+
+                // intercept 401
+                KctAjax.interceptor({
+                    response: (res) => {
+                        if ( ! res.success && res.status !== undefined && res.status == 401) {
+                            this.__lock();
+                        }
+                    }
+                });
+            }
+
+            // lock screen
+            __lock() {
+                let locker = this.shadowRoot.querySelector('screen-locker');
+                
+                if ( ! locker) {
+                    locker = document.createElement('screen-locker');
+                    locker.route = this.route;
+                    locker.config = this.config;
+
+                    locker.addEventListener('authenticate', (e) => {
+                        if (e.detail.success) {
+                            this.$.router.user = e.detail.user;
+                        }
+                    });
+
+                    locker.addEventListener('close', () => {
+                        this.set('route.path', '/login');
+                    });
+
+                    this.shadowRoot.appendChild(locker);
+                }
+
+                locker.open();
             }
 
             /**
@@ -112,7 +147,8 @@
                     if (data) {
                         
                         if (version != data.app_version) {
-                            this.$['update-alert'].open();
+                            // this.$['update-alert'].open();
+                            console.info && console.info('INFO => There are updates available for your application. Clear your browser cache to apply new updates.');
                         }
 
                         Object.keys(data).forEach(k => {
@@ -137,7 +173,12 @@
 
             __onAuthenticate(e) {
                 if ( ! e.detail.success) {
-                    this.set('route.path', '/login');
+                    if ( ! this.state.layout) {
+                        this.set('route.path', '/login');    
+                    } else {
+                        this.__lock();
+                    }
+                    
                 }
             }
 

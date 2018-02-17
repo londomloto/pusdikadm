@@ -9,6 +9,7 @@
 <link rel="import" href="../../../../../cores/elements/kct-layouts/kct-hbox.html">
 <link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../../../../cores/elements/kct-file/kct-file.html">
+<link rel="import" href="../../../../../cores/elements/kct-checkbox/kct-checkbox.html">
 <link rel="import" href="../../../../../cores/elements/kct-message/kct-confirm.html">
 <link rel="import" href="../../../../../cores/mixins/resolver.html">
 <link rel="import" href="../../../../../cores/mixins/types.html">
@@ -25,16 +26,12 @@
                     record: { type: Object, notify: true },
                     action: { type: String, value: 'create'},
                     invalid: { type: Boolean, notify: true },
-                    readonly: { type: Boolean, notify: true },
-                    removable: { type: Boolean, notify: true }
+                    buttons: { type: String, value: 'save,send,remove', notify: true }
                 };
             }
 
             ready() {
                 super.ready();
-                
-                this.set('readonly', false);
-                this.set('removable', true);
             }
 
             save(options) {

@@ -1,0 +1,102 @@
+<link rel="import" href="../../../../cores/bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../settings/blocks/setting-header-block.html">
+
+<dom-module id="stat-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--page-background-color);
+            }
+            setting-header-block {
+                border-bottom: none;
+            }
+            .menu {
+                cursor: pointer;
+            }
+            .menu:hover .icon > div {
+                text-decoration: underline;
+            }
+            .menu:active {
+                background-color: var(--paper-blue-200);
+                color: #fff;
+            }
+            .menu .card-content {
+                position: relative;
+                height: 150px;
+            }
+            .menu .icon {
+                position: absolute;
+                top: 50%;
+                margin-top: -35px;
+                left: 0;
+                right: 0;
+                text-align: center;
+            }
+            .menu .icon iron-icon {
+                --iron-icon-width: 40px;
+                --iron-icon-height: 40px;
+                margin-bottom: 10px;
+            }
+        </style>
+
+        <kct-vbox>
+            <setting-header-block text="Module" desc="Menu Data Statistik" hide-nav></setting-header-block>
+            <div class="flex padding scroll-y">
+                
+                <kct-column columns="5" spacer="20px">
+                    <paper-card data-menu="dashboard" on-tap="__onMenuTap" class="menu box-shadow-z2">
+                        <div class="card-content">
+                            <div class="icon">
+                                <iron-icon icon="dashboard"></iron-icon>
+                                <div>Info Grafik</div> 
+                            </div>
+                        </div>
+                    </paper-card>
+
+                    <paper-card data-menu="surat-masuk" on-tap="__onMenuTap" class="menu box-shadow-z2">
+                        <div class="card-content">
+                            <div class="icon">
+                                <iron-icon icon="drafts"></iron-icon>
+                                <div>Surat Masuk</div> 
+                            </div>
+                        </div>
+                    </paper-card>
+
+                    <paper-card data-menu="surat-keluar" on-tap="__onMenuTap" class="menu box-shadow-z2">
+                        <div class="card-content">
+                            <div class="icon">
+                                <iron-icon icon="mail"></iron-icon>
+                                <div>Surat Keluar</div> 
+                            </div>
+                        </div>
+                    </paper-card>
+                </kct-column>
+
+            </div>
+        </kct-vbox>
+
+    </template>
+    <script>
+        class StatisticsPage extends KctView {
+            static get is() {
+                return 'stat-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Statistik', notify: true }
+                };
+            }
+
+            __onMenuTap(e) {
+                let menu = e.target.dataset.menu;
+                this.set('route.path', '/statistics/' + menu);
+            }
+        }
+        customElements.define(StatisticsPage.is, StatisticsPage);    
+    </script>
+</dom-module>

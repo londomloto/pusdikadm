@@ -1,6 +1,14 @@
 <?php
 
 Router::group(array(
+    'prefix' => '/company',
+    'handler' => 'App\Company\Controllers\CompanyController',
+    'middleware' => 'auth'
+))
+->get('/load', 'load')
+->post('/upload', 'upload');
+
+Router::group(array(
     'prefix' => '/projects',
     'handler' => 'App\Projects\Controllers\ProjectsController',
     'middleware' => 'auth'

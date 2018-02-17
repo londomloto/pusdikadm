@@ -1,0 +1,34 @@
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../settings/blocks/setting-header-block.html">
+
+<dom-module id="reports-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                background-color: var(--page-background-color);
+                height: 100%;
+            }
+            setting-header-block {
+                border-bottom: none;
+            }
+        </style>
+        <kct-vbox>
+            <setting-header-block text="module" desc="Laporan Kegiatan" hide-nav></setting-header-block>
+            <div class="flex scroll-y"></div>
+        </kct-vbox>
+    </template>
+    <script>
+        class ReportsPage extends KctView {
+            static get is() {
+                return 'reports-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Laporan', notify: true }
+                };
+            }
+        }
+        customElements.define(ReportsPage.is, ReportsPage);
+    </script>
+</dom-module>

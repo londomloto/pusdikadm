@@ -1,19 +1,36 @@
 <?php
 
 Router::get('/', function(){
-    $app = \Micro\App::getDefault();
     return array(
-        'success' => TRUE,
-        'message' => 'Welcome to demo application'
+        'success' => TRUE
     );
 });
 
-Router::get('/test/phpinfo', function(){
-    phpinfo();
+
+Router::get('/test/info', function(){
+    return array(
+        'success' => TRUE
+    );
+});
+
+Router::get('/test/pdf', function(){
+    $pdf = new \Dompdf\Dompdf();
+    $pdf->loadHtml('Hello World');
+    $pdf->setPaper('A4');
+
+    
+
+    $pdf->render();
+    $pdf->stream('pdf.pdf', array('Attachment' => FALSE));
+});
+
+Router::get('/test/word', function(){
+
 });
 
 Router::get('/test/excel', function(){
-    
+    phpinfo();
+    exit();
     $xbook = new \ExcelBook('Said M Fahmi', 'linux-edd01c7891abac1006082d3240p0d7u5', TRUE);
     $xbook->setLocale('UTF-8');
 

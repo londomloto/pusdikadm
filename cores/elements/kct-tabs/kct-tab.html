@@ -41,7 +41,7 @@
                 @apply --layout-flex-auto;
                 @apply --paper-tab-content;
             }
-            :host(:not(.iron-selected))>.tab-content {
+            :host(:not(.iron-selected)) > .tab-content {
                 opacity:0.8;
                 @apply --paper-tab-content-unselected;
             }
@@ -52,7 +52,7 @@
             paper-ripple {
                 color:var(--paper-tab-ink,var(--paper-yellow-a100));
             }
-            .tab-content>::slotted(a) {
+            .tab-content > ::slotted(a) {
                 @apply --layout-flex-auto;
                 height: 100%;
             }

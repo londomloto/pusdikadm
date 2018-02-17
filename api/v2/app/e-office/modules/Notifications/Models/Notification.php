@@ -63,7 +63,7 @@ class Notification extends \App\Tasks\Models\TaskActivity {
                     $task->tt_title
                 );
                 break;
-            case 'send':
+            case 'update_status':
                 $flags = json_decode($this->tta_data);
                 $flags = implode(', ', $flags);
 
@@ -125,7 +125,7 @@ class Notification extends \App\Tasks\Models\TaskActivity {
                     $assignee = implode(', ', $assignee);
                 }
 
-                $action = $type == 'add_user' ? 'assigned' : 'removed';
+                $action = $type == 'add_user' ? 'menugaskan' : 'menghapus';
 
                 $verb = sprintf(
                     '**%s** %s %s on task: "%s"',
@@ -151,18 +151,18 @@ class Notification extends \App\Tasks\Models\TaskActivity {
                         $labels[] = '<span style="font-weight: 500; color: '.$e->sl_color.'">'.$e->sl_label.'</span>';
                     }
 
-                    $plural = count($labels) > 1 ? 'labels' : 'label';
+                    $plural = count($labels) > 1 ? 'label' : 'label';
                     $labels = implode('&nbsp;', $labels);
                 }
 
-                $action = $type == 'add_label' ? 'add' : 'remove';
+                $action = $type == 'add_label' ? 'menambah' : 'menghapus';
 
                 $verb = sprintf(
                     '**%s** %s %s %s untuk dokumen: "%s"',
                     $sender_name,
                     $action,
-                    $labels,
                     $plural,
+                    $labels,
                     $task->tt_title
                 );
 

@@ -1,0 +1,155 @@
+<dom-module id="form-surat-masuk-reply">
+    <template>
+        <style include="form-style"></style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <file-viewer id="viewer"></file-viewer>
+
+        <div class="m-b">
+            <div class="text-right">
+                <paper-button on-tap="__onPrintDocumentTap" class="btn-outline"><iron-icon icon="print"></iron-icon>&nbsp;Print Dokumen</paper-button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Registrasi Surat</h3>
+
+            <kct-column columns="2">
+                <div><paper-input value="[[ record.data.tsm_reg_date_formatted ]]" label="Tanggal Registrasi" readonly></paper-input></div>
+                <div><paper-input value="[[ record.data.tsm_seq ]]" label="Nomor Agenda (Urut)" readonly></paper-input></div>
+            </kct-column>
+            <paper-input value="[[ record.data.tsm_reg_user_name ]]" label="Petugas Registrasi" readonly></paper-input>
+            <paper-input value="[[ record.data.tsm_admin ]]" label="Pengolah Surat" readonly></paper-input>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Kodefikasi</h3>
+            <paper-input value="[[ record.data.tsm_tcs_label ]]" label="Klasifikasi" readonly></paper-input>
+            <paper-input value="[[ record.data.tsm_reg_no ]]" label="Nomor Arsip" readonly></paper-input>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Identitas Surat</h3>
+
+            <kct-column columns="2">
+                <div><paper-input value="[[ record.data.tsm_no ]]" label="Nomor Surat" readonly></paper-input></div>
+                <div><paper-input value="[[ record.data.tsm_date_formatted ]]" label="Tanggal Surat" readonly></paper-input></div>
+            </kct-column>
+
+            <paper-input value="[[ record.data.tsm_from ]]" label="Pengirim" readonly></paper-input>
+            <paper-input value="[[ record.data.tsm_subject ]]" label="Perihal" readonly></paper-input>
+            <paper-input value="[[ record.data.tsm_to ]]" label="Tujuan" readonly></paper-input>
+            
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Dokumen Surat</h3>
+            <p>Daftar dokumen-dokumen yang berkaitan dengan surat yang dibuat seperti dokumen word, pdf maupun gambar.</p>
+            <div class="m-t">
+                <template is="dom-repeat" items="[[ record.data.documents ]]">
+                    <paper-card class="document-item">
+                        <div class="card-content">
+                            <div class="name">
+                                <a on-tap="__onOpenDocumentTap" href="javascript:;">[[ item.tsmd_orig ]]</a>
+                            </div>
+                            <div class="meta">
+                                <span>[[ item.tsmd_size_formatted ]] - [[ item.tsmd_mime ]]</span>
+                            </div>
+                        </div>
+                    </paper-card>
+                </template>
+            </div>
+        </div>
+
+        <div class="section section-primary">
+            <h3 class="section-title">Surat Balasan</h3>
+            <kct-combobox 
+                label="Referensi Surat Balasan" 
+                url="/surat-keluar" 
+                page-size="10" 
+                value="{{ record.data.tsm_tsk_id }}" 
+                item-label-path="tsk_id" 
+                item-value-path="tsk_id" 
+                autoload></kct-combobox>
+        </div>
+
+    </template>
+    <script>
+        class FormSuratMasukReply extends Mixins(FormBase).use(Mixins.FormSuratMasukBehavior) {
+
+            static get is() {
+                return 'form-surat-masuk-reply';
+            }
+
+            static get properties() {
+                return {
+                    
+                };
+            }
+
+            initialize() {
+                return this.$.ajax.GET('/surat-masuk/' + this.record.status.tts_data_id).then(res => {
+                    let data = res.data || {};
+                    data.documents = data.documents || [];
+                    this.set('record.data', data);
+                });
+            }
+
+            save(options) {
+                let payload = this.record.data;
+
+                if (options.send) {
+                    if ( ! payload.tsm_tsk_no) {
+                        return this.confirm('Konfirmasi', 'Referensi surat balasan (surat keluar) belum diisi. Lanjutkan?').then(y => {
+                            if (y) {
+                                return save.bind(this)();
+                            } else {
+                                return this.resolve({ success: false })
+                            }
+                        });
+                    } else {
+                        return save.bind(this)();
+                    }
+                } else {
+                    return save.bind(this)();
+                }
+
+                function save() {
+                    if (payload.tsm_id) {
+                        return this.$.ajax.PUT('/surat-masuk/' + payload.tsm_id, payload).then(done.bind(this));
+                    } else {
+                        return this.$.ajax.POST('/surat-masuk', payload).then(done.bind(this));
+                    }    
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        
+                        this.saveResult({
+                            date: res.data.tsm_date,
+                            sender: res.data.tsm_from,
+                            receiver: res.data.tsm_to,
+                            result: res.data
+                        });
+
+                        this.set('record.status.tts_data_id', res.data.tsm_id);
+                    }
+                    return res;
+                }
+            }
+
+            __onOpenDocumentTap(e) {
+                e.stopPropagation();
+
+                this.$.viewer.open(
+                    e.model.item.tsmd_file_url,
+                    e.model.item.tsmd_mime
+                );
+            }
+
+
+        }
+
+        customElements.define(FormSuratMasukReply.is, FormSuratMasukReply);
+    </script>
+</dom-module>

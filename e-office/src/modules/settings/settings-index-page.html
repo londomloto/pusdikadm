@@ -16,14 +16,15 @@
             .item {
                 float: left;
                 margin-right: 15px;
-                width: 80px;
+                margin-bottom: 15px;
+                min-width: 100px;
             }
             .item > .item-icon > paper-fab {
                 box-shadow: none;
                 position: absolute;
                 left: 50%;
                 margin-left: -28px;
-                background-color: var(--paper-blue-grey-400);
+                background-color: var(--paper-cyan-600);
             }
             .item > .item-icon {
                 text-align: center;
@@ -36,8 +37,43 @@
                 font-size: 13px;
             }
             h3 {
+                display: block;
                 font-size: 15px;
                 font-weight: 500;
+                margin-bottom: 20px;
+                
+            }
+            h3 span {
+                padding: 0 5px 0 0;
+                position: relative;
+                z-index: 2;
+                background-color: var(--page-background-color);
+            }
+            h3::before {
+                content: '';
+                display: block;
+                position: absolute;
+                z-index: 1;
+                top: 11px;
+                left: 0;
+                right: 0;
+                height: 1px;
+                background-color: #dfdfdf;
+                border-bottom: 1px solid #fafafa;
+            }
+            paper-card {
+                display: block;
+                box-shadow: none;
+                background: var(--page-background-color);
+            }
+            paper-card + paper-card {
+                margin-top: 20px;
+            }
+            paper-card .card-content {
+                padding: 0;
+            }
+            setting-header-block {
+                border-bottom: none;
             }
         </style>
         
@@ -50,11 +86,9 @@
             <div class="flex scroll-y">
                 <div class="padding">
                     <template is="dom-repeat" items="[[ links ]]" as="group">
-                        <div class="m-b">
-                            <h3>[[ group.text ]]</h3>
-                        </div>
-                        <paper-card class="block">
+                        <paper-card>
                             <div class="card-content">
+                                <h3><span>[[ group.text ]]</span></h3>
                                 <template is="dom-repeat" items="[[ group.children ]]" as="menu">
                                     <div class="item" >
                                         <div class="item-icon">

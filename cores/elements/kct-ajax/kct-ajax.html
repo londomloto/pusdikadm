@@ -583,7 +583,7 @@
                         }
 
                         d.resolve(response);
-                        KctAjax.executeInterceptor('response');
+                        KctAjax.executeInterceptor('response', response);
 
                         req = null;
                         xhr = null;
@@ -603,26 +603,26 @@
                         "Yes, I'm understand!"
                     );
                 } else {
-                    if ( ! res.success && res.status !== undefined) {
-                        let message = res.message || "It's look like your access token has been expired";
-                        switch(res.status) {
-                            case 401:
-                                this.__showError(
-                                    "User doesn't authenticated",
-                                    message,
-                                    "Yes, I want to re-login!"
-                                ).then(() => {
-                                    location.href = this.loginUrl;
-                                });
-                                break;
-                            case 404:
-                                this.__showError(
-                                    "Not Found",
-                                    message
-                                );
-                                break;
-                        }
-                    }
+                    // if ( ! res.success && res.status !== undefined) {
+                    //     let message = res.message || "It's look like your access token has been expired";
+                    //     switch(res.status) {
+                    //         case 401:
+                    //             this.__showError(
+                    //                 "User doesn't authenticated",
+                    //                 message,
+                    //                 "Yes, I want to re-login!"
+                    //             ).then(() => {
+                    //                 location.href = this.loginUrl;
+                    //             });
+                    //             break;
+                    //         case 404:
+                    //             this.__showError(
+                    //                 "Not Found",
+                    //                 message
+                    //             );
+                    //             break;
+                    //     }
+                    // }
                 }
                 
             }
@@ -652,8 +652,8 @@
             response: () => {}
         };
 
-        KctAjax.executeInterceptor = function(phase) {
-            KctAjax.__interceptor[phase]();
+        KctAjax.executeInterceptor = function(phase, data = {}) {
+            KctAjax.__interceptor[phase](data);
         };
 
         KctAjax.interceptor = function(interceptor) {

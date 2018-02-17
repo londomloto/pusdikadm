@@ -102,17 +102,17 @@ class AuthProvider extends \Micro\Component {
         $user = $this->_findUserByEmail($email);
 
         if ( ! $user) {
-            $this->_error = 'User not found!';
+            $this->_error = 'Pengguna tidak terdaftar';
             return FALSE;
         }
 
         if ( ! $user->su_active) {
-            $this->_error = 'User currently blocked';
+            $this->_error = 'Akun Anda dalam pemblokiran';
             return FALSE;
         }
 
         if ( ! $this->security->verifyHash($password, $user->su_passwd)) {
-            $this->_error = 'Invalid email or password!';
+            $this->_error = 'Sepertinya username dan password salah';
             return FALSE;
         }
 

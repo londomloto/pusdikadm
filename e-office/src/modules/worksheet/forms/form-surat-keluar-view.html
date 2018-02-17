@@ -7,6 +7,19 @@
         <kct-ajax id="ajax"></kct-ajax>
         <file-viewer id="viewer"></file-viewer>
         
+        <div class="m-b">
+            <div class="text-right">
+                <paper-menu-button class="dropdown-menu" horizontal-align="right" no-animations no-overlap>
+                    <paper-button slot="dropdown-trigger" class="btn-outline"><iron-icon icon="print"></iron-icon>&nbsp;Download&nbsp;<iron-icon icon="arrow-drop-down"></iron-icon></paper-button>
+                    <paper-listbox slot="dropdown-content">
+                        <paper-item data-format="pdf" on-tap="__onPrintDocumentTap">Download Format PDF</paper-item>
+                        <paper-item data-format="xls" on-tap="__onPrintDocumentTap">Download Format Excel</paper-item>
+                    </paper-listbox>
+                </paper-menu-button>
+                
+            </div>
+        </div>
+
         <div class="section">
             <h3 class="section-title">Pembuatan Surat</h3>
             <kct-column columns="2">
@@ -102,15 +115,18 @@
 
     </template>
     <script>
-        class FormSuratKeluarView extends FormBase {
+        class FormSuratKeluarView extends Mixins(FormBase).use(Mixins.FormSuratKeluarBehavior) {
             static get is() {
                 return 'form-surat-keluar-view';
             }
 
+            static get properties() {
+                return {
+                    buttons: { type: String, value: '', notify: true }
+                }
+            }
+
             initialize() {
-                this.set('invalid', false);
-                this.set('readonly', true);
-                this.set('removable', false);
 
                 return this.$.ajax.GET('/surat-keluar/' + this.record.status.tts_data_id).then(res => {
                     let data = res.data || {};
