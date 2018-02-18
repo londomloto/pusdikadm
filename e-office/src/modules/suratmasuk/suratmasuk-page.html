@@ -129,6 +129,7 @@
                 <setting-header-block 
                     text="Detail Surat" 
                     desc="[[ record.tsm_no ]]" 
+                    hide-header$="[[ __hideHeader(screen) ]]"
                     on-back-tap="__onBackTap">
                     
                     <print-menu on-print="__onPrintDocumentTap" slot="right-toolbar"></print-menu>
@@ -295,6 +296,10 @@
 
             handleResizing() {
                 this.$.grid && this.$.grid.resize();
+            }
+
+            __hideHeader(screen) {
+                return screen == 'sm';
             }
 
             __loadRecord(id) {
