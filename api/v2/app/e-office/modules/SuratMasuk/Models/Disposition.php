@@ -33,7 +33,7 @@ class Disposition extends \Micro\Model {
 
         foreach($this->dispositionUsers as $item) {
             $count++;
-            $label[] = '('. $count .') '. ($item->user ? $item->user->getName() : '');
+            $label[] = $count .') '. ($item->user ? $item->user->getName() : '')."<br>";
             $users[] = $item->toArray();
         }
 

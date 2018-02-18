@@ -46,8 +46,8 @@
             }
 
             __onPrintDocumentTap(e) {
-                let format = e.target.dataset.format;
-                this.$.ajax.DOWNLOAD('/surat-keluar/' + this.record.data.tsk_id + '/download?format=' + format);
+                let format = e.detail.format;
+                this.$.ajax.DOWNLOAD('/surat-keluar/print/document/' + format + '/' + this.record.data.tsk_id);
             }
 
         }

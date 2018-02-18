@@ -1,4 +1,5 @@
 <link rel="import" href="../plugins/file-viewer.html">
+<link rel="import" href="../plugins/print-menu.html">
 
 <dom-module id="form-surat-keluar-print">
     <template>
@@ -6,6 +7,10 @@
 
         <kct-ajax id="ajax"></kct-ajax>
         <file-viewer id="viewer"></file-viewer>
+
+        <div class="m-b text-right">
+            <print-menu on-print="__onPrintDocumentTap"></print-menu>
+        </div>
 
         <div class="section">
             <h3 class="section-title">Pembuatan Surat</h3>
@@ -102,6 +107,8 @@
             }
 
             initialize() {
+
+                this.set('buttons', 'save,send,remove');
 
                 return this.$.ajax.GET('/surat-keluar/' + this.record.status.tts_data_id).then(res => {
                     let data = res.data || {};

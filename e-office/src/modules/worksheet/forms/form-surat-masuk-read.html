@@ -1,5 +1,6 @@
 <link rel="import" href="../../../../../cores/vendors/moment/moment.html">
 <link rel="import" href="../../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../plugins/print-menu.html">
 
 <dom-module id="form-surat-masuk-read">
     <template>
@@ -7,6 +8,10 @@
 
         <kct-ajax id="ajax"></kct-ajax>
         <file-viewer id="viewer"></file-viewer>
+
+        <div class="m-b text-right">
+            <print-menu on-print="__onPrintDocumentTap"></print-menu>
+        </div>
 
         <div class="section">
             <h3 class="section-title">Registrasi Surat</h3>
@@ -35,6 +40,7 @@
 
             <paper-input value="[[ record.data.tsm_from ]]" label="Pengirim" readonly></paper-input>
             <paper-input value="[[ record.data.tsm_subject ]]" label="Perihal" readonly></paper-input>
+            <paper-input value="[[ record.data.tsm_summary ]]" label="Ringkasan" readonly></paper-input>
             <paper-input value="[[ record.data.tsm_to ]]" label="Tujuan" readonly></paper-input>
             
         </div>
@@ -69,7 +75,6 @@
                     <paper-card class="disposition-item">
                         <div class="card-content">
                             <div class="tool">
-                                <paper-button>Cetak</paper-button>
                                 <paper-button on-tap="__onEditDispositionTap">Edit</paper-button>
                                 <paper-button on-tap="__onRemoveDispositionTap">Hapus</paper-button>
                             </div>
@@ -167,11 +172,12 @@
                 return {
                     dispositions: { type: Array, value: () => ([]) },
                     dispositionRecord: { type: Object }
-                    // buttons: { type: String, value: 'send,remove', notify: true }
                 };
             }
 
             initialize() {
+                this.set('buttons', 'save,send,remove');
+
                 return this.$.ajax.GET('/surat-masuk/' + this.record.status.tts_data_id).then(res => {
                     let data = res.data || {};
                     data.documents = data.documents || [];

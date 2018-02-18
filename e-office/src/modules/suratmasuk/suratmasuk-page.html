@@ -1,8 +1,17 @@
+<link rel="import" href="../../../../cores/bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
 <link rel="import" href="../../../../cores/elements/kct-grid/kct-grid.html">
 <link rel="import" href="../../../../cores/elements/kct-pages/kct-pages.html">
 <link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-media/kct-media.html">
 <link rel="import" href="../settings/blocks/setting-header-block.html">
+<link rel="import" href="../worksheet/plugins/print-menu.html">
+<link rel="import" href="../worksheet/plugins/file-viewer.html">
 
 <dom-module id="suratmasuk-page">
     <template>
@@ -18,7 +27,91 @@
             #grid {
                 height: 100%;
             }
+            print-menu {
+                position: relative;
+                top: 10px;
+                --button-trigger: {
+                    padding: 3px 3px 3px 8px;
+                };
+            }
+            .layout {
+                
+            }
+            .main {
+                box-sizing: border-box;
+                background-color: #fff;
+                padding: 20px 30px 100px 30px;
+                @apply --shadow-elevation-2dp;
+                
+            }
+            .side {
+                width: 280px;
+            }
+
+            .section {
+                display: block;
+                box-shadow: none;
+            }
+            .section + .section {
+                margin-top: 20px;
+            }
+            .section .card-content {
+                padding: 0;
+            }
+            .section-title {
+                font-weight: 500;
+                font-size: 14px;
+                position: relative;
+                margin-bottom: 10px;
+                color: var(--paper-cyan-500);
+            }
+            .section-title span {
+                background-color: #fff;
+                padding: 0 5px 0 0;
+                position: relative;
+                z-index: 2;
+            }
+            .section-title::before {
+                content: ' ';
+                display: block;
+                position: absolute;
+                left: 0;
+                right: 0;
+                top: 12px;
+                border-top: 1px solid #dfdfdf;
+            }
+            .form-group {
+                margin: 8px 0;
+            }
+            .form-group .label {
+                font-size: 12px;
+                color: #666;
+                margin-bottom: 8px;
+            }
+            .form-group .value {
+                font-weight: 500;
+            }
+
+            .layout.sm .hidden-sm { display: none; }
+            .layout.md .hidden-md { display: none; }
+            .layout.lg .hidden-lg { display: none; }
+
+            .list-item iron-icon {
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
+                margin-right: 8px;
+            }
+            .list-item + .list-item {
+                margin-top: 10px;
+            }
+            .list-item .meta {
+                font-size: 12px;
+            }
         </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-media screen="{{ screen }}"></kct-media>
+        <file-viewer id="viewer"></file-viewer>
 
         <kct-pages id="switcher" selected="[[ page ]]" attr-for-selected="name">
             <kct-grid 
@@ -36,9 +129,117 @@
                 <setting-header-block 
                     text="Detail Surat" 
                     desc="[[ record.tsm_no ]]" 
-                    on-back-tap="__onBackTap"></setting-header-block>
-                <div class="flex scroll-y padding">
+                    on-back-tap="__onBackTap">
                     
+                    <print-menu on-print="__onPrintDocumentTap" slot="right-toolbar"></print-menu>
+
+                </setting-header-block>
+                <div class="flex scroll-y">
+                    
+                    <kct-hbox class$="layout [[ screen ]]">
+                        <div class="main flex">
+                            
+                            <paper-card class="section">
+                                <div class="card-content">
+                                    <h3 class="section-title"><span>Registrasi</span></h3>
+                                    <div>
+                                        <kct-column columns="2">
+                                            <div><paper-input value="[[ record.tsm_seq ]]" label="No. Agenda (Urut)" readonly always-float-label></paper-input></div>    
+                                            <div><paper-input value="[[ record.tsm_reg_date_formatted ]]" label="Tanggal Masuk" readonly always-float-label></paper-input></div>    
+                                        </kct-column>
+                                        <kct-column columns="2">
+                                            <div><paper-input value="[[ record.tsm_reg_user_name ]]" label="Operator" readonly always-float-label></paper-input></div>    
+                                            <div><paper-input value="[[ record.tsm_admin ]]" label="Pengolah" readonly always-float-label></paper-input></div>    
+                                        </kct-column>    
+                                    </div>
+                                </div>
+                            </paper-card>
+
+                            <paper-card class="section">
+                                <div class="card-content">
+                                    <h3 class="section-title"><span>Kodefikasi</span></h3>
+                                    <div>
+                                        <paper-input value="[[ record.tsm_tcs_label ]]" label="Klasifikasi" readonly always-float-label></paper-input>
+                                        <paper-input value="[[ record.tsm_reg_no ]]" label="No. Arsip" readonly always-float-label></paper-input>
+                                    </div>
+                                    
+                                </div>
+                            </paper-card>
+
+                            <paper-card class="section">
+                                <div class="card-content">
+                                    <h3 class="section-title"><span>Surat Masuk</span></h3>
+                                    <div>
+                                        <kct-column columns="2">
+                                            <div><paper-input value="[[ record.tsm_date_formatted ]]" label="Tanggal" readonly always-float-label></paper-input></div>
+                                            <div><paper-input value="[[ record.tsm_no ]]" label="No. Surat" readonly always-float-label></paper-input></div>
+                                        </kct-column>
+                                        <paper-input value="[[ record.tsm_subject ]]" label="Perihal" readonly always-float-label></paper-input>
+                                        <div class="form-group">
+                                            <div class="label">Ringkasan</div>
+                                            <div class="value">[[ record.tsm_summary ]]</div>
+                                        </div>
+                                        <paper-input value="[[ record.tsm_from ]]" label="Asal / Pengirim" readonly always-float-label></paper-input>
+                                        <paper-input value="[[ record.tsm_to ]]" label="Tujuan" readonly always-float-label></paper-input>
+                                    </div>
+                                </div>
+                            </paper-card>
+
+                            <paper-card class="section">
+                                <div class="card-content">
+                                    <h3 class="section-title"><span>Dokumen</span></h3>
+                                    <div>
+                                        <template is="dom-repeat" items="[[ record.documents ]]">
+                                            <kct-hbox class="list-item">
+                                                <div class="flex">
+                                                    <div><a on-tap="__onOpenDocumentTap" href="javascript:void(0);">[[ item.tsmd_orig ]]</a></div>
+                                                    <div class="meta">[[ item.tsmd_size_formatted ]] - [[ item.tsmd_mime ]]</div>
+                                                </div>
+                                            </kct-hbox>
+                                        </template>
+                                    </div>
+                                </div>
+                            </paper-card>
+
+                            <paper-card class="section">
+                                <div class="card-content">
+                                    <h3 class="section-title"><span>Disposisi</span></h3>
+                                    <div>
+                                        <template is="dom-repeat" items="[[ dispositions ]]">
+                                            <kct-hbox class="list-item">
+                                                <div class="flex">
+                                                    <div class="form-group">
+                                                        <div class="label">Tanggal</div>
+                                                        <div class="value">[[ item.tsmf_date_formatted ]]</div>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <div class="label">Isi Disposisi</div>
+                                                        <div class="value">[[ item.tsmf_content ]]</div>
+                                                    </div>
+                                                </div>
+                                                <div class="flex p-l">
+                                                    <div class="form-group">
+                                                        <div class="label">Diteruskan Kepada</div>
+                                                        <div class="value" inner-h-t-m-l="[[ item.tsmf_users ]]"></div>
+                                                    </div>
+                                                </div>
+                                            </kct-hbox>
+                                        </template>
+                                    </div>
+                                </div>
+                            </paper-card>
+
+                            <paper-card class="section">
+                                <div class="card-content">
+                                    <h3 class="section-title"><span>Referensi Surat Keluar</span></h3>
+                                    <a on-tap="__onOpenSuratKeluarTap" href="javascript:void(0)">[[ record.tsm_tsk_no ]]</a>
+                                </div>
+                            </paper-card>
+
+                        </div>
+                        <div class="side hidden-sm hidden-md hidden-lg"></div>
+                    </kct-hbox>
+
                 </div>
             </kct-vbox>
         </kct-pages>
@@ -54,8 +255,9 @@
             static get properties() {
                 return {
                     title: { type: String, value: 'Surat Masuk', notify: true },
-                    page: { type: String, value: 'grid' },
+                    page: { type: String },
                     record: { type: Object, value: () => ({}) },
+                    dispositions: { type: Array, value: () => ([]) },
                     columns: {
                         type: Array,
                         value: () => ([
@@ -81,21 +283,62 @@
                 };
             }
 
-            handleRouteParams() {
-                this.$.grid.deferAutoload();
+            handleRouteParams(id) {
+                if (id) {
+                    this.__loadRecord(id);
+                } else {
+                    this.set('page', 'grid');
+                    this.$.grid.deferAutoresize();
+                    this.$.grid.deferAutoload();
+                }
             }
 
             handleResizing() {
                 this.$.grid && this.$.grid.resize();
             }
 
-            __onViewTap(e) {
-                this.set('record', e.data);
+            __loadRecord(id) {
                 this.set('page', 'view');
+
+                return this.$.ajax.GET('/surat-masuk/' + id).then(res => {
+                    this.set('record', res.data);
+                    this.__loadDispositions();
+                });
+            }
+
+            __loadDispositions() {
+                this.$.ajax.GET('/surat-masuk/dispositions', {
+                    params: {
+                        tsmf_tsm_id: this.record.tsm_id
+                    }
+                }).then(res => {
+                    this.set('dispositions', res.data);
+                });
+            }
+
+            __onViewTap(e) {
+                this.set('route.path', '/suratmasuk/' + e.data.tsm_id);
+            }
+
+            __onPrintDocumentTap(e) {
+                let format = e.detail.format;
+                this.$.ajax.DOWNLOAD('/surat-masuk/print/document/' + format + '/' + this.record.tsm_id);
+            }
+
+            __onOpenSuratKeluarTap() {
+                this.set('route.path', '/suratkeluar/' + this.record.tsm_tsk_id);
+            }
+
+            __onOpenDocumentTap(e) {
+                let doc = e.model.item;
+                this.$.viewer.open(
+                    doc.tsmd_file_url,
+                    doc.tsmd_mime
+                );
             }
 
             __onBackTap() {
-                this.set('page', 'grid');
+                this.set('route.path', '/suratmasuk');
             }
         }
         customElements.define(SuratMasukPage.is, SuratMasukPage);

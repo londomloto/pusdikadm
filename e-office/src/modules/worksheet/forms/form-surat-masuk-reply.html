@@ -38,6 +38,7 @@
 
             <paper-input value="[[ record.data.tsm_from ]]" label="Pengirim" readonly></paper-input>
             <paper-input value="[[ record.data.tsm_subject ]]" label="Perihal" readonly></paper-input>
+            <paper-input value="[[ record.data.tsm_summary ]]" label="Ringkasan" readonly></paper-input>
             <paper-input value="[[ record.data.tsm_to ]]" label="Tujuan" readonly></paper-input>
             
         </div>
@@ -88,6 +89,8 @@
             }
 
             initialize() {
+                this.set('buttons', 'save,send,remove');
+                
                 return this.$.ajax.GET('/surat-masuk/' + this.record.status.tts_data_id).then(res => {
                     let data = res.data || {};
                     data.documents = data.documents || [];

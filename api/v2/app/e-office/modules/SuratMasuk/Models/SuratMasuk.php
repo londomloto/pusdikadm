@@ -48,6 +48,15 @@ class SuratMasuk extends \Micro\Model {
             )
         );
 
+        $this->hasOne(
+            'tsm_tsk_id',
+            'App\SuratKeluar\Models\SuratKeluar',
+            'tsk_id',
+            array(
+                'alias' => 'SuratKeluar'
+            )
+        );
+
     }
 
     public function getSource() {
@@ -67,6 +76,10 @@ class SuratMasuk extends \Micro\Model {
         if ($this->classification) {
             $data['tsm_tcs_name'] = $this->classification->tcs_name;
             $data['tsm_tcs_label'] = $this->classification->tcs_code.' - '.$this->classification->tcs_name;
+        }
+
+        if ($this->suratKeluar) {
+            $data['tsm_tsk_no'] = $this->suratKeluar->tsk_no;
         }
 
         return $data;

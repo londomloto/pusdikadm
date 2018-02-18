@@ -43,6 +43,7 @@
             </kct-column>
 
             <paper-input value="{{ record.data.tsk_subject }}" label="Perihal"></paper-input>
+            <paper-input value="{{ record.data.tsk_summary }}" label="Ringkasan"></paper-input>
             
             <form-combo-sender value="{{ record.data.tsk_from }}" group="surat-keluar"></form-combo-sender>
             <form-combo-receiver value="{{ record.data.tsk_to }}" group="surat-keluar"></form-combo-receiver>
@@ -114,6 +115,9 @@
 
             initialize() {
                 if (this.action == 'create') {
+
+                    this.set('buttons', 'save');
+
                     let today = moment();
                     this.set('record.data', {
                         tsk_create_date: today.format('YYYY-MM-DD'),
@@ -123,6 +127,9 @@
 
                     return this.resolve({ success: true });
                 } else {
+
+                    this.set('buttons', 'save,send,remove');
+
                     return this.$.ajax.GET('/surat-keluar/' + this.record.status.tts_data_id).then(res => {
                         this.set('record.data', res.data || {});
                     });

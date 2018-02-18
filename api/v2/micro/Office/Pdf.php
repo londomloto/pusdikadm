@@ -1,5 +1,5 @@
 <?php
-namespace Micro\Reports;
+namespace Micro\Office;
 
 class Pdf {
 
@@ -13,4 +13,8 @@ class Pdf {
         return call_user_func_array(array($this->__engine, $method), $args);
     }
 
+    public function stream($filename = NULL) {
+        $this->__engine->stream($filename);
+        exit();
+    }
 }

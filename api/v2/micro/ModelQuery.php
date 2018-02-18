@@ -163,13 +163,14 @@ class ModelQuery {
 
         if ( ! empty($params)) {
             $params = is_string($params) ? json_decode($params) : $params;
+            
             foreach($params as $key => $val) {
                 $attr = isset($this->__fields->{$key}) ? $this->__fields->{$key} : FALSE;
                 if ($attr) {
                     $bind = array();
                     $oper = '=';
                     $pkey = 'param_'.$key;
-                    
+
                     if (is_array($val)) {
                         $oper = $val[0]; 
 
@@ -228,7 +229,7 @@ class ModelQuery {
             }
         }
 
-        //print_r($this->__builder->getQuery()->getSql());
+        // print_r($this->__builder->getQuery()->getSql());
 
         $columns = $this->__builder->getColumns();
         $pageset = new ModelPageset($this);

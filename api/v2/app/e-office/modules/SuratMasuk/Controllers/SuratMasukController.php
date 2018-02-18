@@ -101,40 +101,4 @@ class SuratMasukController extends \Micro\Controller {
         }
 
     }
-
-    public function downloadAction($id) {
-        $data = SuratMasuk::get($id)->data;
-        
-        if ( ! $data) {
-            throw new \Phalcon\Exception("Not Found", 404);
-        }
-
-        $format = $this->request->getQuery('format');
-
-        switch($format) {
-            case 'pdf':
-
-                $html = $this->view->render('suratmasuk', array(
-                    'company' => Company::getDefault()->toArray(),
-                    'data' => $data->toArray(),
-                    'dispositions' => $data->dispositions->filter(function($d){
-                        return $d->toArray();
-                    })
-                ));
-
-                $pdf = new \Dompdf\Dompdf();
-                $pdf->loadHtml($html);
-                $pdf->setPaper('A4');
-
-                $pdf->render();
-                $pdf->stream('suratmasuk_'.$data->tsm_id.'.pdf');
-
-                exit();
-
-            case 'xls':
-
-                break;
-        }
-
-    }
 }

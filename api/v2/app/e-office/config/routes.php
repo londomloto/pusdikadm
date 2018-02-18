@@ -54,9 +54,13 @@ return array(
             'module' =>  'worksheet',
             'page' =>  'worksheet-page'
         ),
-        '/stat/:stat' => array(
-            'module' => 'stat',
-            'page' => 'stat-index-page'
+        '/suratmasuk/:id' => array(
+            'module' => 'suratmasuk',
+            'page' => 'suratmasuk-page'
+        ),
+        '/suratkeluar/:id' => array(
+            'module' => 'suratkeluar',
+            'page' => 'suratkeluar-page'
         )
     )
 );

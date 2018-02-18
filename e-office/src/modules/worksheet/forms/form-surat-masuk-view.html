@@ -1,3 +1,5 @@
+<link rel="import" href="../plugins/print-menu.html">
+
 <dom-module id="form-surat-masuk-view">
     <template>
         <style include="form-style"></style>
@@ -5,17 +7,8 @@
         <kct-ajax id="ajax"></kct-ajax>
         <file-viewer id="viewer"></file-viewer>
 
-        <div class="m-b">
-            <div class="text-right">
-                <paper-menu-button class="dropdown-menu" horizontal-align="right" no-animations no-overlap>
-                    <paper-button slot="dropdown-trigger" class="btn-outline"><iron-icon icon="print"></iron-icon>&nbsp;Download&nbsp;<iron-icon icon="arrow-drop-down"></iron-icon></paper-button>
-                    <paper-listbox slot="dropdown-content">
-                        <paper-item data-format="pdf" on-tap="__onPrintDocumentTap">Download Format PDF</paper-item>
-                        <paper-item data-format="xls" on-tap="__onPrintDocumentTap">Download Format Excel</paper-item>
-                    </paper-listbox>
-                </paper-menu-button>
-                
-            </div>
+        <div class="m-b text-right">
+            <print-menu on-print="__onPrintDocumentTap"></print-menu>
         </div>
 
         <div class="section">
@@ -45,6 +38,7 @@
 
             <paper-input value="[[ record.data.tsm_from ]]" label="Pengirim" readonly></paper-input>
             <paper-input value="[[ record.data.tsm_subject ]]" label="Perihal" readonly></paper-input>
+            <paper-input value="[[ record.data.tsm_summary ]]" label="Ringkasan" readonly></paper-input>
             <paper-input value="[[ record.data.tsm_to ]]" label="Tujuan" readonly></paper-input>
             
         </div>
@@ -75,9 +69,6 @@
                 <template is="dom-repeat" items="[[ dispositions ]]">
                     <paper-card class="disposition-item">
                         <div class="card-content">
-                            <div class="tool">
-                                <paper-button>Cetak</paper-button>
-                            </div>
                             <div class="form-display">
                                 <div class="label">Tanggal</div>
                                 <div class="value">[[ item.tsmf_date_formatted ]]</div>
@@ -106,12 +97,13 @@
 
             static get properties() {
                 return {
-                    dispositions: { type: Array, value: () => ([]) },
-                    buttons: { type: String, value: '', notify: true }
+                    dispositions: { type: Array, value: () => ([]) }
                 };
             }
 
             initialize() {
+                this.set('buttons', '');
+
                 return this.$.ajax.GET('/surat-masuk/' + this.record.status.tts_data_id).then(res => {
                     let data = res.data || {};
                     data.documents = data.documents || [];

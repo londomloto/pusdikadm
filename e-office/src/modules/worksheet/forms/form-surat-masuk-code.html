@@ -27,6 +27,7 @@
                 item-label-path="su_fullname" 
                 on-beforeload="__onComboUserBeforeLoad" 
                 page-size="10"></kct-combobox>
+
             <paper-input value="{{ record.data.tsm_admin }}" label="Pengolah"></paper-input>  
 
         </div>
@@ -48,6 +49,7 @@
             <form-combo-sender value="{{ record.data.tsm_from }}" group="surat-masuk"></form-combo-sender>
 
             <paper-input value="{{ record.data.tsm_subject }}" label="Perihal"></paper-input>
+            <paper-input value="{{ record.data.tsm_summary }}" label="Ringkasan"></paper-input>
 
             <form-combo-receiver value="{{ record.data.tsm_to }}" group="surat-masuk"></form-combo-receiver>
             
@@ -61,36 +63,18 @@
             }
 
             initialize() {
-                if (this.action == 'create') {
+                this.set('buttons', 'save,send,remove');
+
+                return this.$.ajax.GET('/surat-masuk/' + this.record.status.tts_data_id).then(res => {
                     return this.$['combo-user'].load().then(() => {
-                        let today = moment();
-
-                        this.set('record.data', {
-                            tsm_reg_date: today.format('YYYY-MM-DD'),
-                            tsm_reg_user: this.user.su_id
-                        });
-
-                        return this.resolve({ success: true });
+                        this.set('record.data', res.data || {});
+                        return res;
                     });
-                } else {
-                    return this.$.ajax.GET('/surat-masuk/' + this.record.status.tts_data_id).then(res => {
-                        return this.$['combo-user'].load().then(() => {
-                            this.set('record.data', res.data || {});
-                            return res;
-                        });
-                    });
-                }
+                });
             }
 
             save(options) {
                 let payload = this.record.data;
-
-                if (options.send) {
-                    if ( ! payload.tsm_seq) {
-                        this.toast('Warning', 'Nomor urut belum diisi', 'warn');
-                        return this.resolve({ success: false });
-                    }
-                }
 
                 if (payload.tsm_id) {
                     return this.$.ajax.PUT('/surat-masuk/' + payload.tsm_id, payload).then(done.bind(this));

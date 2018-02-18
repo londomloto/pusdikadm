@@ -4,16 +4,25 @@
             kct-column kct-combobox {
                 padding: 3px 0;
             }
-            .dropdown-menu paper-item {
-                cursor: pointer;
-                font-weight: normal;
+            paper-button {
+                font-size: 13px;
+                font-weight: 500;
+                margin-right: 0;
+                /*font-size: 13px;
+                padding: 5px 8px;*/
+            }
+            paper-button iron-icon {
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
+            }
+            paper-button.btn-outline {
+                border: 1px solid #dfdfdf;
             }
             .section {
                 padding: 20px;
                 border: 1px solid var(--paper-grey-200);
                 border-radius: 0;
                 position: relative;
-                
 
             }
             .section + .section {
@@ -53,20 +62,7 @@
                 background-color: var(--paper-yellow-100);
                 border-color: var(--paper-yellow-300);
             }
-            paper-button {
-                font-size: 13px;
-                font-weight: 500;
-                margin-right: 0;
-                /*font-size: 13px;
-                padding: 5px 8px;*/
-            }
-            paper-button iron-icon {
-                --iron-icon-width: 18px;
-                --iron-icon-height: 18px;
-            }
-            paper-button.btn-outline {
-                border: 1px solid #dfdfdf;
-            }
+            
             .form-group {
                 margin-top: 8px;
                 margin-bottom: 8px;
@@ -117,9 +113,10 @@
             .document-item,
             .disposition-item {
                 display: block;
-                background-color: var(--paper-grey-100);
+                background-color: #fafafa;
                 box-shadow: none;
                 position: relative;
+                border-radius: 0;
             }
             .document-item .name {
                 margin-bottom: 5px;

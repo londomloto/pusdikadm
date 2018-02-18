@@ -1,4 +1,5 @@
 <link rel="import" href="../plugins/file-viewer.html">
+<link rel="import" href="../plugins/print-menu.html">
 
 <dom-module id="form-surat-keluar-send">
     <template>
@@ -7,6 +8,10 @@
         <kct-ajax id="ajax"></kct-ajax>
         <file-viewer id="viewer"></file-viewer>
         
+        <div class="m-b text-right">
+            <print-menu on-print="__onPrintDocumentTap"></print-menu>
+        </div>
+
         <div class="section section-primary">
             <h3 class="section-title">Pengiriman Surat</h3>
             <vaadin-date-picker value="{{ record.data.tsk_send_date }}" label="Tanggal Pengiriman"></vaadin-date-picker>
@@ -40,6 +45,7 @@
             <paper-input label="Tujuan" value="[[ record.data.tsk_to ]]" readonly></paper-input>
             <paper-input label="Pengirim" value="[[ record.data.tsk_from ]]" readonly></paper-input>
             <paper-input label="Perihal" value="[[ record.data.tsk_subject ]]" readonly></paper-input>
+            <paper-input label="Ringkasan" value="[[ record.data.tsk_summary ]]" readonly></paper-input>
         </div>
 
         <div class="section">
@@ -110,6 +116,7 @@
             }
 
             initialize() {
+                this.set('buttons', 'save,send,remove');
                 return this.$.ajax.GET('/surat-keluar/' + this.record.status.tts_data_id).then(res => {
                     let data = res.data || {};
                     this.set('record.data', res.data || {});

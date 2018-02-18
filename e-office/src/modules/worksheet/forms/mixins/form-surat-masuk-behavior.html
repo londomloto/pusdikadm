@@ -47,8 +47,8 @@
             }
 
             __onPrintDocumentTap(e) {
-                let format = e.target.dataset.format;
-                this.$.ajax.DOWNLOAD('/surat-masuk/' + this.record.data.tsm_id + '/download?format=' + format);
+                let format = e.detail.format;
+                this.$.ajax.DOWNLOAD('/surat-masuk/print/document/' + format + '/' + this.record.data.tsm_id);
             }
 
         }

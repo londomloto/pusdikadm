@@ -85,26 +85,30 @@
 
             .workspace.sm .hidden-sm { display: none;  }
             .workspace.md .hidden-md { display: none;  }
+
+            .layout.loading #header paper-button {
+                display: none;
+            }
+
         </style>
         
         <kct-ajax id="ajax"></kct-ajax>
         <kct-event-publisher id="publisher"></kct-event-publisher>
         <kct-media screen="{{ screen }}"></kct-media>
         
-        <kct-vbox>
+        <kct-vbox class$="layout [[ __computeClass(loading) ]]">
             <header-block id="header" on-back-tap="__onBackTap" text="Module Kegiatan" hide-header$="[[ __hideHeader(screen) ]]">
                 <h3 slot="header-value">[[ __projectTitle ]]</h3>
 
-                <paper-button hidden$="[[ __hideButton('save', actionRecord, formButtons) ]]" disabled$="[[ formInvalid ]]" on-tap="__onSaveTap" class="btn-action primary" slot="right-toolbar" style="margin-left: 8px;">
+                <paper-button hidden$="[[ __hideButton('save', formButtons) ]]" disabled$="[[ formInvalid ]]" on-tap="__onSaveTap" class="btn-action primary" slot="right-toolbar" style="margin-left: 8px;">
                     <iron-icon icon="done"></iron-icon>&nbsp;[[ __computeSaveLabel(actionRecord) ]]
                 </paper-button>
-
                 
-                <paper-button hidden$="[[ __hideButton('send', actionRecord, formButtons) ]]" disabled$="[[ formInvalid ]]"  on-tap="__onSendTap" class="btn-action info" slot="right-toolbar">
+                <paper-button hidden$="[[ __hideButton('send', formButtons) ]]" disabled$="[[ formInvalid ]]"  on-tap="__onSendTap" class="btn-action info" slot="right-toolbar">
                     <iron-icon icon="arrow-forward"></iron-icon>&nbsp;Proses
                 </paper-button>
 
-                <paper-button hidden$="[[ __hideButton('remove', actionRecord, formButtons) ]]" on-tap="__onRemoveTap" class="btn-action danger" slot="right-toolbar">
+                <paper-button hidden$="[[ __hideButton('remove', formButtons) ]]" on-tap="__onRemoveTap" class="btn-action danger" slot="right-toolbar">
                     <iron-icon icon="close"></iron-icon>&nbsp;Hapus
                 </paper-button>
 
@@ -188,12 +192,18 @@
                 this.__projectTitle = 'Loading...';
             }
 
+            ready() {
+                super.ready();
+                this.set('loading', true);
+            }
+
             handleRouteParams(project, action, type, id) {
                 if (project === undefined  || project == 'tour' || project == 'create') return;
                 if (action != 'task') return;
 
                 let actionBack = '/worksheet/' + project + '/view/kanban';
 
+                this.set('formButtons', '');
                 this.set('taskRecord', {});
 
                 if (this.route.data) {
@@ -230,6 +240,10 @@
                 });
             }
 
+            __computeClass(loading) {
+                return loading ? 'loading' : '';
+            }
+
             __hideHeader(size) {
                 return size != 'xl' ? true : false;
             }
@@ -246,16 +260,8 @@
                 return this.actionRecord == 'create' ? true : false;
             }
 
-            __hideButton(type, action, buttons) {
-                if ( ! buttons) {
-                    return true;
-                }
-
-                if (action == 'create' && ' send remove '.indexOf(type) !== -1) {
-                    return true;
-                }
-
-                return buttons.indexOf(type) === -1;
+            __hideButton(type, buttons) {
+                return (buttons || '').indexOf(type) === -1;
             }
 
             __projectRecordChanged(changed) {

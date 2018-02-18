@@ -50,6 +50,7 @@
             <paper-input label="Tujuan" value="[[ record.data.tsk_to ]]" readonly></paper-input>
             <paper-input label="Pengirim" value="[[ record.data.tsk_from ]]" readonly></paper-input>
             <paper-input label="Perihal" value="[[ record.data.tsk_subject ]]" readonly></paper-input>
+            <paper-input label="Ringkasan" value="[[ record.data.tsk_summary ]]" readonly></paper-input>
         </div>
 
         <div class="section">
@@ -133,7 +134,7 @@
             }
 
             initialize() {
-
+                this.set('buttons', 'save,send,remove');
                 return this.$.ajax.GET('/surat-keluar/' + this.record.status.tts_data_id).then(res => {
                     let data = res.data || {};
                     this.set('record.data', res.data || {});

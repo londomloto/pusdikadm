@@ -1,5 +1,6 @@
 <link rel="import" href="../../../../../cores/bower_components/paper-spinner/paper-spinner-lite.html">
 <link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+
 <link rel="import" href="../forms/form-style.html">
 <link rel="import" href="../forms/form-base.html">
 <link rel="import" href="../forms/mixins/form-surat-masuk-behavior.html">
@@ -172,8 +173,9 @@
                 }
 
                 __createTemplate(name) {
-                    let template = cachedTemplates[name];
-                    
+                    let token = name;
+                    let template = cachedTemplates[token];
+
                     if ( ! template) {
                         template = document.createElement('template');
 
@@ -190,7 +192,7 @@
                                 buttons="{{ buttons }}"></${name}>
                         `; 
 
-                        cachedTemplates[name] = template;
+                        cachedTemplates[token] = template;
                     }
                     
                     return template;

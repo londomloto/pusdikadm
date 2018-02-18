@@ -28,6 +28,15 @@ class SuratKeluar extends \Micro\Model {
         );
 
         $this->hasOne(
+            'tsk_create_user',
+            'App\Users\Models\User',
+            'su_id',
+            array(
+                'alias' => 'Creator'
+            )
+        );
+
+        $this->hasOne(
             'tsk_exam1_user',
             'App\Users\Models\User',
             'su_id',
@@ -112,6 +121,10 @@ class SuratKeluar extends \Micro\Model {
         $data['tsk_exam3_date_formatted'] = date('d M Y', strtotime($this->tsk_exam3_date));
         $data['tsk_sign_date_formatted'] = date('d M Y', strtotime($this->tsk_sign_date));
         $data['tsk_send_date_formatted'] = date('d M Y', strtotime($this->tsk_send_date));
+
+        if ($this->creator) {
+            $data['tsk_create_user_name'] = $this->creator->getName();
+        }
 
         if ($this->exam1User) {
             $data['tsk_exam1_user_name'] = $this->exam1User->getName();

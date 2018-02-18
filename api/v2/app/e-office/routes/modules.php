@@ -36,8 +36,15 @@ Router::group(array(
     'middleware' => 'auth'
 ))
 ->get('/sequence', 'sequence')
-->post('/upload', 'upload')
-->post('/{id}/download', 'download');
+->post('/upload', 'upload');
+
+Router::group(array(
+    'prefix' => '/surat-masuk/print',
+    'handler' => 'App\SuratMasuk\Controllers\PrintController',
+    'middleware' => 'auth'
+))
+->post('/document/{format}/{id}', 'document')
+->post('/report/{format}', 'report');
 
 Router::group(array(
     'prefix' => '/surat-keluar',
@@ -45,5 +52,12 @@ Router::group(array(
     'middleware' => 'auth'
 ))
 ->get('/sequence', 'sequence')
-->post('/upload', 'upload')
-->post('/{id}/download', 'download');
+->post('/upload', 'upload');
+
+Router::group(array(
+    'prefix' => '/surat-keluar/print',
+    'handler' => 'App\SuratKeluar\Controllers\PrintController',
+    'middleware' => 'auth'
+))
+->post('/document/{format}/{id}', 'document')
+->post('/report/{format}', 'report');

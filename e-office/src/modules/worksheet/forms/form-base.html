@@ -26,12 +26,8 @@
                     record: { type: Object, notify: true },
                     action: { type: String, value: 'create'},
                     invalid: { type: Boolean, notify: true },
-                    buttons: { type: String, value: 'save,send,remove', notify: true }
+                    buttons: { type: String, notify: true }
                 };
-            }
-
-            ready() {
-                super.ready();
             }
 
             save(options) {

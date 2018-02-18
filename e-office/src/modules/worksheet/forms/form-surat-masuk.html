@@ -29,6 +29,7 @@
                 item-label-path="su_fullname" 
                 on-beforeload="__onComboUserBeforeLoad" 
                 page-size="10"></kct-combobox>
+                
             <paper-input value="{{ record.data.tsm_admin }}" label="Pengolah"></paper-input>  
 
         </div>
@@ -41,9 +42,8 @@
             </kct-column>
 
             <form-combo-sender value="{{ record.data.tsm_from }}" group="surat-masuk"></form-combo-sender>
-
             <paper-input value="{{ record.data.tsm_subject }}" label="Perihal"></paper-input>
-
+            <paper-input value="{{ record.data.tsm_summary }}" label="Ringkasan"></paper-input>
             <form-combo-receiver value="{{ record.data.tsm_to }}" group="surat-masuk"></form-combo-receiver>
             
         </div>
@@ -57,6 +57,9 @@
 
             initialize() {
                 if (this.action == 'create') {
+
+                    this.set('buttons', 'save');
+
                     return this.$['combo-user'].load().then(() => {
                         let today = moment();
 
@@ -68,6 +71,9 @@
                         return this.resolve({ success: true });
                     });
                 } else {
+
+                    this.set('buttons', 'save,send,remove');
+
                     return this.$.ajax.GET('/surat-masuk/' + this.record.status.tts_data_id).then(res => {
                         return this.$['combo-user'].load().then(() => {
                             this.set('record.data', res.data || {});
@@ -79,6 +85,11 @@
 
             save(options) {
                 let payload = this.record.data;
+
+                if (options.send && !payload.tsm_seq) {
+                    this.toast('Peringatan', 'Nomor urut belum diisi', 'warn');
+                    return this.resolve({ success: false });
+                }
 
                 if (payload.tsm_id) {
                     return this.$.ajax.PUT('/surat-masuk/' + payload.tsm_id, payload).then(done.bind(this));
