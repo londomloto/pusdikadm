@@ -1,14 +1,32 @@
 <dom-module id="form-style">
     <template>
         <style include="theme-helper">
+            kct-column kct-combobox {
+                padding: 3px 0;
+            }
+            paper-button {
+                font-size: 13px;
+                font-weight: 500;
+                margin-right: 0;
+                /*font-size: 13px;
+                padding: 5px 8px;*/
+            }
+            paper-button iron-icon {
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
+            }
+            paper-button.btn-outline {
+                border: 1px solid #dfdfdf;
+            }
             .section {
                 padding: 20px;
-                border: 1px solid var(--paper-grey-300);
+                border: 1px solid var(--paper-grey-200);
                 border-radius: 0;
-                
+                position: relative;
+
             }
             .section + .section {
-                margin-top: 15px;
+                margin-top: 20px;
             }
             .section[hidden] {
                 display: none;
@@ -18,31 +36,63 @@
                 font-size: 15px;
                 font-weight: 500;
                 margin: 0 0 8px 0;
+                color: var(--paper-cyan-500);
+            }
+            .section-tools {
+                position: absolute;
+                top: 16px;
+                right: 16px;
+            }
+            .section-tools paper-button {
+                font-size: 12px;
+                background: var(--paper-cyan-400);
+                color: #fff;
+                margin-right: 0;
+                margin-left: 3px;
+            }
+            .section-tools paper-button iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
             }
             .section.section-primary {
-                background-color: var(--paper-green-100);
+                border-width: 2px;
+                border-color: var(--paper-cyan-300);
             }
             .section.section-warning {
                 background-color: var(--paper-yellow-100);
                 border-color: var(--paper-yellow-300);
             }
-            paper-button {
-                /*font-size: 13px;
-                padding: 5px 8px;*/
-            }
-            paper-button iron-icon {
-                --iron-icon-width: 18px;
-                --iron-icon-height: 18px;
-            }
+            
             .form-group {
                 margin-top: 8px;
                 margin-bottom: 8px;
+                position: relative;
             }
-            .form-group > label {
+            .form-group > label,
+            .form-group > .label {
                 display: block;
                 margin-bottom: 8px;
                 font-size: 12px;
                 color: #666;
+            }
+            .form-group .add-on {
+                width: 24px;
+                height: 24px;
+                padding: 4px;
+                position: absolute;
+                right: 0;
+                bottom: 14px;
+                color: #999;
+            }
+            .form-display .label {
+                font-size: 12px;
+                color: #555;
+            }
+            .form-display .value {
+                font-weight: 500;
+            }
+            .form-display + .form-display {
+                margin-top: 8px;
             }
             paper-radio-group.hbox {
                 @apply --layout-horizontal;
@@ -59,6 +109,50 @@
             paper-radio-group.hbox.md paper-radio-button + paper-radio-button {
                 padding-top: 8px;
             }
+
+            .document-item,
+            .disposition-item {
+                display: block;
+                background-color: #fafafa;
+                box-shadow: none;
+                position: relative;
+                border-radius: 0;
+            }
+            .document-item .name {
+                margin-bottom: 5px;
+            }
+            .document-item .meta {
+                font-size: 12px;
+            }
+            .document-item .tool,
+            .disposition-item .tool {
+                position: absolute;
+                right: 8px;
+                top: 8px;
+            }
+            .document-item .tool paper-button,
+            .disposition-item .tool paper-button {
+                border: 1px solid #dfdfdf;
+                font-size: 11px;
+                padding: 3px 5px;
+                font-weight: normal;
+                text-transform: none;
+            }
+            .document-item .tool paper-button iron-icon,
+            .disposition-item .tool paper-button iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
+
+            }
+            .document-item .card-content,
+            .disposition-item .card-content {
+                padding: 20px;
+            }
+            .document-item + .document-item,
+            .disposition-item + .disposition-item {
+                margin-top: 20px;
+            }
+
         </style>
     </template>
 </dom-module>

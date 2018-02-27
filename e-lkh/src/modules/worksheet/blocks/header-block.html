@@ -57,25 +57,6 @@
                 position: relative;
                 top: 4px;
             }
-            .header-value ::slotted(kct-combobox),
-            .header-value kct-combobox {
-                padding: 0;
-                /*min-width: 300px;*/
-                --paper-input-container-input: {
-                    font-size: 17px;
-                    font-weight: 400;
-                };
-                --paper-input-container-label: {
-                    font-size: 17px;
-                    font-weight: 400;
-                };
-                --paper-input-container-underline: {
-                    display: none;
-                };
-                --paper-input-container-underline-focus: {
-                    display: none;
-                };
-            }
             .header-value ::slotted(h3),
             .header-value h3 {
                 font-size: 17px;
@@ -95,49 +76,45 @@
                 float: left;
             }
 
-            .col-toolbar paper-icon-button,
-            .col-toolbar ::slotted(paper-icon-button) {
+            .toolbar paper-icon-button,
+            .toolbar ::slotted(paper-icon-button) {
                 margin-top: 10px;
                 width: 32px;
                 height: 32px;
                 padding: 6px;
             }
-            .col-toolbar ::slotted(kct-icon-button) {
+            .toolbar ::slotted(kct-icon-button) {
                 margin-top: 10px;
                 width: 32px;
                 height: 32px;
                 --button-padding: 6px;
             }
-            .col-toolbar paper-button,
-            .col-toolbar ::slotted(paper-button) {
+            .toolbar paper-button,
+            .toolbar ::slotted(paper-button) {
                 margin-top: 12px;
-                margin-right: 8px;
+                margin-right: 2px;
                 font-size: 12px !important;
                 font-weight: 600 !important;
                 --iron-icon-width: 18px;
                 --iron-icon-height: 18px;
             }
-            .col-toolbar .separator,
-            .col-toolbar ::slotted(.separator) {
+            .toolbar .separator,
+            .toolbar ::slotted(.separator) {
                 height: 100%;
                 border-right: 1px solid #dfdfdf;
                 margin: 0 3px;
             }
-            .col-toolbar ::slotted(paper-spinner),
-            .col-toolbar ::slotted(paper-spinner-lite) {
+            .toolbar ::slotted(paper-spinner),
+            .toolbar ::slotted(paper-spinner-lite) {
                 width: 24px;
                 height: 24px;
                 margin: 14px 6px 0 7px;
                 cursor: pointer;
                 --paper-spinner-stroke-width: 2px;
             }
-            .col-toolbar ::slotted(paper-spinner[hidden]),
-            .col-toolbar ::slotted(paper-spinner-lite[hidden]) {
+            .toolbar ::slotted(paper-spinner[hidden]),
+            .toolbar ::slotted(paper-spinner-lite[hidden]) {
                 display: none;
-            }
-            .col-toolbar task-search,
-            .col-toolbar ::slotted(task-search) {
-                margin-top: 10px;
             }
         </style>
 
@@ -166,17 +143,17 @@
                     </kct-vbox>
                 </div>
                 <div class="col-toolbar">
-                    <div class="left-toolbar">
+                    <div class="left-toolbar toolbar">
                         <slot name="left-toolbar"></slot>
                     </div>
                 </div>
                 <div class="col-toolbar flex">
-                    <div class="center-toolbar">
+                    <div class="center-toolbar toolbar">
                         <slot name="center-toolbar"></slot>
                     </div>
                 </div>
                 <div class="col-toolbar">
-                    <div class="right-toolbar">
+                    <div class="right-toolbar toolbar">
                         <slot name="right-toolbar"></slot>
                     </div>
                 </div>
@@ -199,7 +176,6 @@
             }
 
             __onBackTap(e) {
-                
                 if (e.target != this.$['button-back']) {
                     this.$['button-back'].getRipple().simulatedRipple();
                 }

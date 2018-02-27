@@ -39,7 +39,7 @@
                             <paper-input label="Versi" value="{{ config.app_version }}"></paper-input>
                             <paper-input label="Keterangan" value="{{ config.app_description }}"></paper-input>
                             <paper-input label="Kata kunci" value="{{ config.app_keywords }}"></paper-input>
-                            <paper-input label="Pemilik Aplikasi" value="{{ config.app_author }}" readonly></paper-input>
+                            <paper-input label="Pemilik Aplikasi" value="{{ config.app_author }}"></paper-input>
                             <kct-checkbox value="{{ tour }}">Aktifkan pemandu aplikasi</kct-checkbox>
                         </div>
                         <div></div>
@@ -90,24 +90,24 @@
             }
 
             __onSaveTap() {
-                let data = {};
+                let data = {},
+                    save = [
+                        'app_title',
+                        'app_version',
+                        'app_description',
+                        'app_keywords',
+                        'app_author'
+                    ];
 
-                for (let k in this.config) {
-                    if ([
-                        'app_name', 
-                        'app_host', 
-                        'app_base', 
-                        'app_site', 
-                        'app_push_server',
-                        'app_package_info', 
-                        'app_tour_enabled'].indexOf(k) === -1) {
+                Object.keys(this.config).forEach(k => {
+                    if (save.indexOf(k) !== -1) {
                         data[k] = this.config[k];
                     }
-                }
+                });
 
                 this.$.ajax.POST('/config/save', data).then((res) => {
                     this.__reset = res.data;
-                    this.toast('Success', 'Configuration has been saved!');
+                    this.toast('Berhasil', 'Data konfigurasi berhasil disimpan');
                     this.set('config.app_tour_enabled', this.tour == '1' ? true : false);
                 });
             }

@@ -250,7 +250,7 @@
                                     <iron-icon icon="hardware:security"></iron-icon>
                                 </div>
                                 <div class="text">
-                                    <div class="name">Role [[ item.sr_name ]]</div>
+                                    <div class="name">[[ item.sr_name ]]</div>
                                     <div class="tool">
                                         <a on-tap="__onSetupRoleTap" href="javascript:;">Pengaturan</a>
                                     </div>
@@ -387,7 +387,7 @@
 
             handleRouteParams(project, action) {
                 if (project === undefined  || project == 'tour' || project == 'create') return;
-                if (action != 'setting') return;
+                if (action != 'info') return;
 
                 this.set('project', project);
                 this.__loadProject();

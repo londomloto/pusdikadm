@@ -53,6 +53,10 @@ return array(
         '/worksheet/:project' => array(
             'module' =>  'worksheet',
             'page' =>  'worksheet-page'
+        ),
+        '/registration/:id' => array(
+            'module' => 'registration',
+            'page' => 'registration-page'
         )
     )
 );

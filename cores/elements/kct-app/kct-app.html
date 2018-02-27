@@ -103,7 +103,9 @@
                 KctAjax.interceptor({
                     response: (res) => {
                         if ( ! res.success && res.status !== undefined && res.status == 401) {
-                            this.__lock();
+                            if (this.state.layout) {
+                                this.__lock();
+                            }
                         }
                     }
                 });
@@ -174,11 +176,8 @@
             __onAuthenticate(e) {
                 if ( ! e.detail.success) {
                     if ( ! this.state.layout) {
-                        this.set('route.path', '/login');    
-                    } else {
-                        this.__lock();
+                        this.set('route.path', '/login');
                     }
-                    
                 }
             }
 

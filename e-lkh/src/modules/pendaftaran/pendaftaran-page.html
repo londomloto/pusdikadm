@@ -1,0 +1,199 @@
+<link rel="import" href="../../../../cores/bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../../../../cores/bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../settings/blocks/setting-header-block.html">
+
+<dom-module id="pendaftaran-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--page-background-color);
+            }
+            #switcher {
+                display: block;
+                height: 100%;
+            }
+            .main {
+                box-sizing: border-box;
+                background-color: #fff;
+                padding: 20px 30px 100px 30px;
+                @apply --shadow-elevation-2dp;
+                
+            }
+            .side {
+                width: 280px;
+            }
+            .section {
+                display: block;
+                box-shadow: none;
+            }
+            .section + .section {
+                margin-top: 20px;
+            }
+            .section .card-content {
+                padding: 0;
+            }
+            .section-title {
+                font-weight: 500;
+                font-size: 14px;
+                position: relative;
+                margin-bottom: 10px;
+                color: var(--paper-cyan-500);
+            }
+            .section-title span {
+                background-color: #fff;
+                padding: 0 5px 0 0;
+                position: relative;
+                z-index: 2;
+            }
+            .section-title::before {
+                content: ' ';
+                display: block;
+                position: absolute;
+                left: 0;
+                right: 0;
+                top: 12px;
+                border-top: 1px solid #dfdfdf;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <iron-pages id="switcher" attr-for-selected="id" selected="[[ page ]]">
+            <kct-grid 
+                id="grid" 
+                url="/registration" 
+                header-text="Monitoring" 
+                header-desc="Pendaftaran Peserta" 
+                selection-model="row" 
+                columns="[[ columns ]]" 
+                hide-nav 
+                pagination>    
+
+            </kct-grid>
+
+            <kct-vbox id="view">
+                <setting-header-block text="Monitoring" desc$="[[ __caption ]]" on-back-tap="__onBackTap"></setting-header-block>
+                <div class="flex scroll-y">
+                    <kct-hbox>
+                        <div class="flex main">
+                            
+                            <paper-card class="section">
+                                <div class="card-content">
+                                    <h3 class="section-title"><span>Account</span></h3>
+                                    <div>
+                                        <paper-input label="Alamat Email" value="[[ record.su_email ]]" readonly always-float-label></paper-input>
+                                        <paper-input label="Group Akses (Role)" value="[[ record.sr_name ]]" readonly always-float-label></paper-input>
+                                    </div>
+                                </div>
+                            </paper-card>
+
+                            <paper-card class="section">
+                                <div class="card-content">
+                                    <h3 class="section-title"><span>Personal</span></h3>
+                                    <div>
+                                        <paper-input label="Nama Lengkap" value="[[ record.su_fullname ]]" readonly always-float-label></paper-input>
+                                        <paper-input label="Jenis Kelamin" value="[[ record.su_sex ]]" readonly always-float-label></paper-input>
+                                        <kct-column columns="2">
+                                            <div>
+                                                <paper-input label="Tempat Lahir" value="[[ record.su_pob ]]" readonly always-float-label></paper-input>
+                                            </div>
+                                            <div>
+                                                <paper-input label="Tanggal Lahir" value="[[ record.su_dob_formatted ]]" readonly always-float-label></paper-input>
+                                            </div>
+                                        </kct-column>
+                                        <paper-input label="No. Induk Pegawai" value="[[ record.su_no ]]" readonly always-float-label></paper-input>
+                                        <paper-input label="Pangkat / Gol. Ruang" value="[[ record.su_grade ]]" readonly always-float-label></paper-input>
+                                        <paper-input label="Jabatan (Pekerjaan)" value="[[ record.su_sj_name ]]" readonly always-float-label></paper-input>
+                                        <paper-input label="Unit Kerja" value="[[ record.su_sdp_name ]]" readonly always-float-label></paper-input>
+                                        <paper-input label="Organisasi" value="[[ record.su_scp_name ]]" readonly always-float-label></paper-input>
+                                    </div>
+                                </div>
+                            </paper-card>
+
+                        </div>
+                        <div class="side"></div>
+                    </kct-hbox>
+                </div>
+            </kct-vbox>
+        </iron-pages>
+
+        
+            
+        </kct-grid>
+    </template>
+    <script>
+        class PendaftaranPage extends KctView {
+
+            static get is() {
+                return 'pendaftaran-page';
+            }
+
+            static get properties() {
+                return {
+                    page: { type: String },
+                    title: { type: String, value: 'Pendaftaran', notify: true },
+                    record: { type: Object, value: () => ({}) },
+                    columns: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'rownumber' }, 
+                            {
+                                type: 'action',
+                                width: 50,
+                                align: 'center',
+                                renderer: e => {
+                                    return '<kct-grid-action on-tap="__onViewRecordTap" rounded icon-only accent="blue" icon="search"></kct-grid-action>';
+                                }
+                            },
+                            { text: 'Username (Email)', dataIndex: 'su_email' },
+                            { text: 'Nama Lengkap', dataIndex: 'su_fullname' }
+                        ])
+                    }
+                };
+            }
+
+            constructor() {
+                super();
+                this.__caption = 'Loading...';
+            }
+
+            handleRouteParams(id) {
+                if (id === undefined) {
+                    this.set('page', 'grid');
+                    this.$.grid.resize();
+                    this.$.grid.deferAutoload();    
+                } else {
+                    this.set('page', 'view');
+                    this.__loadRecord(id);
+                }
+                
+            }
+
+            __loadRecord(id) {
+                this.$.ajax.GET('/users/' + id).then(res => {
+                    let data = res.data || {};
+                    this.set('record', res.data);
+                    this.set('__caption', data.su_fullname || 'Detail Peserta');
+                });
+            }
+
+            __onViewRecordTap(e) {
+                this.set('route.path', '/registration/' + e.data.su_id);
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/registration');
+            }
+        }
+
+        customElements.define(PendaftaranPage.is, PendaftaranPage);
+    </script>
+</dom-module>

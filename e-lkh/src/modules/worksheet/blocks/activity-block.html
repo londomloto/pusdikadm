@@ -62,6 +62,7 @@
                 position: relative;
                 width: 100%;
                 height: 100%;
+                top: -2px;
             }
 
             .timeline-body {
@@ -280,7 +281,7 @@
                                 <div class="comment-footer" hidden$="[[ item.tta_editing ]]">
                                     <!-- <paper-button checked><iron-icon icon="thumb-up"></iron-icon>&nbsp;5 Likes</paper-button>  -->
                                     <paper-button on-tap="__onEditCommentTap" hidden$="[[ !item.tta_is_editable ]]"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button> 
-                                    <label hidden$="[[ !item.tta_is_editable ]]">&nbsp;&nbsp;or&nbsp;&nbsp;<a href="javascript:void(0);" on-tap="__onRemoveCommentTap">delete comment</a></label>
+                                    <label hidden$="[[ !item.tta_is_editable ]]">&nbsp;&nbsp;atau&nbsp;&nbsp;<a href="javascript:void(0);" on-tap="__onRemoveCommentTap">hapus komentar</a></label>
                                     <div class="clearfix"></div>
                                 </div>
                                 <div class="comment-footer" hidden$="[[ !item.tta_editing ]]">
@@ -297,7 +298,7 @@
         </div>
 
         <div class="paginator" hidden$="[[ __hidePaginator ]]">
-            <paper-button on-tap="__onPaginatorTap">Load more activities...</paper-button>
+            <paper-button on-tap="__onPaginatorTap">Lihat data sebelumnya...</paper-button>
         </div>
 
     </template>

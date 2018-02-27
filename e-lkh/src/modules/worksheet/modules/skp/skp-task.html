@@ -1,0 +1,15 @@
+<link rel="import" href="../../pages/project-task.html">
+
+<dom-module id="skp-task">
+    
+    <script>
+        
+        class SkpTask extends ProjectTask {
+            static get is() {
+                return 'skp-task';
+            }
+        }
+        
+        customElements.define(SkpTask.is, SkpTask);
+    </script>
+</dom-module>

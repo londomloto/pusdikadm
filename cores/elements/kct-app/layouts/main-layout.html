@@ -17,6 +17,7 @@
 <link rel="import" href="../../kct-auth/kct-auth.html">
 <link rel="import" href="../../kct-socket/kct-socket-manager.html">
 <link rel="import" href="../../kct-socket/kct-socket.html">
+<link rel="import" href="../../kct-feed/kct-feed.html">
 <link rel="import" href="../blocks/navigation-block.html">
 <link rel="import" href="../blocks/notification-block.html">
 
@@ -211,6 +212,7 @@
         <kct-media screen="{{ screen }}"></kct-media>
         <kct-socket-manager id="socket" name="global-socket"></kct-socket-manager>
         <kct-socket manager="global-socket" on-notify="__onSocketNotify"></kct-socket>
+        <!-- <kct-feed id="feed" config="{{ config }}"></kct-feed> -->
 
         <app-drawer-layout id="viewport" class="unresolved" fullbleed>
             

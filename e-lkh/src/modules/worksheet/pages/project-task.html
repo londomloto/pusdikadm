@@ -22,8 +22,29 @@
                 height: 100%;
             }
 
+            .btn-action {
+                color: #999;
+                border: 1px solid #999;
+            }
+
+            .btn-action.primary {
+                color: var(--app-primary);
+                border-color: var(--app-primary);
+            }
+
+            .btn-action.danger {
+                color: var(--app-danger);
+                border-color: var(--app-danger);
+            }
+
+            .btn-action.info {
+                color: var(--app-info);
+                border-color: var(--app-info);
+            }
+
             .btn-action[disabled] {
-                background-color: var(--paper-grey-500);
+                color: var(--paper-grey-500);
+                border-color: var(--paper-grey-500);
             }
             
             #workspace {
@@ -64,26 +85,30 @@
 
             .workspace.sm .hidden-sm { display: none;  }
             .workspace.md .hidden-md { display: none;  }
+
+            .layout.loading #header paper-button {
+                display: none;
+            }
+
         </style>
         
         <kct-ajax id="ajax"></kct-ajax>
         <kct-event-publisher id="publisher"></kct-event-publisher>
         <kct-media screen="{{ screen }}"></kct-media>
         
-        <kct-vbox>
+        <kct-vbox class$="layout [[ __computeClass(loading) ]]">
             <header-block id="header" on-back-tap="__onBackTap" text="Module Kegiatan" hide-header$="[[ __hideHeader(screen) ]]">
                 <h3 slot="header-value">[[ __projectTitle ]]</h3>
 
-                <paper-button hidden$="[[ formReadonly ]]" disabled$="[[ formInvalid ]]" on-tap="__onSaveTap" class="btn-action btn-primary" slot="right-toolbar" style="margin-left: 8px;">
+                <paper-button hidden$="[[ __hideButton('save', formButtons) ]]" disabled$="[[ formInvalid ]]" on-tap="__onSaveTap" class="btn-action primary" slot="right-toolbar" style="margin-left: 8px;">
                     <iron-icon icon="done"></iron-icon>&nbsp;[[ __computeSaveLabel(actionRecord) ]]
                 </paper-button>
-
                 
-                <paper-button hidden$="[[ __hideSend(actionRecord, formReadonly) ]]" disabled$="[[ formInvalid ]]"  on-tap="__onSendTap" class="btn-action btn-blue" slot="right-toolbar">
-                    <iron-icon icon="arrow-forward"></iron-icon>&nbsp;Lanjut
+                <paper-button hidden$="[[ __hideButton('send', formButtons) ]]" disabled$="[[ formInvalid ]]"  on-tap="__onSendTap" class="btn-action info" slot="right-toolbar">
+                    <iron-icon icon="arrow-forward"></iron-icon>&nbsp;Proses
                 </paper-button>
 
-                <paper-button hidden$="[[ __hideRemove(actionRecord, formRemovable) ]]" on-tap="__onRemoveTap" class="btn-action btn-danger" slot="right-toolbar">
+                <paper-button hidden$="[[ __hideButton('remove', formButtons) ]]" on-tap="__onRemoveTap" class="btn-action danger" slot="right-toolbar">
                     <iron-icon icon="close"></iron-icon>&nbsp;Hapus
                 </paper-button>
 
@@ -102,8 +127,7 @@
                             user="[[ user ]]" 
                             route="{{ route }}" 
                             invalid="{{ formInvalid }}" 
-                            readonly="{{ formReadonly }}" 
-                            removable="{{ formRemovable }}" 
+                            buttons="{{ formButtons }}"
                             loading="[[ loading ]]" 
                             on-before-update="__onFormBeforeUpdate" 
                             on-after-update="__onFormAfterUpdate" 
@@ -142,7 +166,7 @@
             static get properties() {
                 return {
                     recordId: { type: Number },
-                    actionRecord: { type: String },
+                    actionRecord: { type: String, value: 'create' },
                     actionBack: { type: String },
                     project: { type: String },
                     projectRecord: { type: Object },
@@ -168,12 +192,18 @@
                 this.__projectTitle = 'Loading...';
             }
 
+            ready() {
+                super.ready();
+                this.set('loading', true);
+            }
+
             handleRouteParams(project, action, type, id) {
                 if (project === undefined  || project == 'tour' || project == 'create') return;
                 if (action != 'task') return;
 
                 let actionBack = '/worksheet/' + project + '/view/kanban';
 
+                this.set('formButtons', '');
                 this.set('taskRecord', {});
 
                 if (this.route.data) {
@@ -210,6 +240,10 @@
                 });
             }
 
+            __computeClass(loading) {
+                return loading ? 'loading' : '';
+            }
+
             __hideHeader(size) {
                 return size != 'xl' ? true : false;
             }
@@ -218,37 +252,16 @@
                 return title || 'Loading...';
             }
 
-            __computeSaveLabel() {
-                return this.actionRecord == 'create' ? 'Simpan Data' : 'Update';
+            __computeSaveLabel(action) {
+                return action == 'create' ? 'Simpan Data' : 'Update';
             }
 
             __hideActivity() {
                 return this.actionRecord == 'create' ? true : false;
             }
 
-            __hideSave() {
-                let readonly = this.formReadonly === undefined ? false : this.formReadonly;
-                return readonly;
-            }
-
-            __hideSend(action, readonly) {
-                readonly = readonly === undefined ? false : readonly;
-
-                if (readonly) {
-                    return true;
-                }
-
-                return action == 'create' ? true : false;
-            }
-
-            __hideRemove(action, removable) {
-                removable = removable === undefined ? true : removable;
-
-                if ( ! removable) {
-                    return true;
-                }
-
-                return action == 'create' ? true : false;
+            __hideButton(type, buttons) {
+                return (buttons || '').indexOf(type) === -1;
             }
 
             __projectRecordChanged(changed) {

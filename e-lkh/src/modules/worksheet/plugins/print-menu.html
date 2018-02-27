@@ -1,0 +1,57 @@
+<dom-module id="print-menu">
+    <template>
+        
+        <style>
+            .menu {
+                padding: 0;
+            }
+            .menu paper-item {
+                cursor: pointer;
+                font-weight: normal;
+                --paper-item-min-height: 36px;
+            }
+
+            .btn-trigger {
+                border: 1px solid #dfdfdf;
+                font-size: 12px;
+                font-weight: 400;
+                margin: 0;
+                padding: 0.5em 0.57em;
+                @apply --button-trigger;
+            }
+            .btn-trigger .icon {
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
+            }
+        </style>
+
+        <paper-menu-button class="menu" horizontal-align="right" no-animations no-overlap>
+            <paper-button slot="dropdown-trigger" class="btn-trigger">
+                <iron-icon class="icon" icon="print"></iron-icon>&nbsp;&nbsp;Download&nbsp;<iron-icon class="caret" icon="arrow-drop-down"></iron-icon>
+            </paper-button>
+
+            <paper-listbox slot="dropdown-content">
+                <paper-item data-format="pdf" on-tap="__onMenuItemTap">Download Format PDF</paper-item>
+                <paper-item data-format="xls" on-tap="__onMenuItemTap">Download Format Excel</paper-item>
+            </paper-listbox>
+        </paper-menu-button>
+    </template>
+    <script>
+        class PrintMenu extends Polymer.Element {
+
+            static get is() {
+                return 'print-menu';
+            }
+
+            __onMenuItemTap(e) {
+                this.dispatchEvent(new CustomEvent('print', {
+                    detail: {
+                        format: e.target.dataset.format
+                    }
+                }));
+            }
+        }
+
+        customElements.define(PrintMenu.is, PrintMenu);
+    </script>
+</dom-module>

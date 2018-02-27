@@ -1,4 +1,5 @@
 <link rel="import" href="../../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../../../../cores/elements/kct-pages/kct-pages.html">
 
 <dom-module id="project-home">
@@ -7,61 +8,130 @@
             :host {
                 height: 100%;
             }
-            #layout-switcher {
+            #switcher {
                 display: block;
                 height: 100%;
             }
         </style>
         
-        <kct-pages id="layout-switcher" attr-for-selected="name" selected="[[ layout ]]" lazy-load>
-            <project-view import="project-view.html" name="view" route="{{ route }}" state="[[ state ]]" config="{{ config }}" opened="[[ opened ]]"></project-view>
-            <project-task import="project-task.html" name="task" route="{{ route }}" state="[[ state ]]" user="[[ user ]]"></project-task>
-            <project-info import="project-info.html" name="info" route="{{ route }}" state="[[ state ]]"></project-info>
-        </kct-pages>
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-pages id="switcher" attr-for-selected="name" selected="[[ page ]]"></kct-pages>
 
     </template>
     <script>
-        class ProjectHome extends KctView {
-            static get is() {
-                return 'project-home';
-            }
+        {
+            let cachedTemplates = {};
 
-            static get properties() {
-                return {
-                    layout: { type: String }
-                };
-            }
+            class ProjectHome extends KctView {
+                static get is() {
+                    return 'project-home';
+                }
 
-            handleRouteParams(project, action) {
-                if (project === undefined  || project == 'tour' || project == 'create') return;
+                static get properties() {
+                    return {
+                        page: { type: String },
+                        projectRecord: { type: Object }
+                    };
+                }
 
-                if (action == 'task') {
-                    this.set('layout', 'task');
-                } else if (action == 'setting') {
-                    this.set('layout', 'info');
-                } else {
-                    if (action === undefined) {
-                        
+                constructor() {
+                    super();
+                    this.__pages = {};
+                }
+
+                handleRouteParams(project, action) {
+                    if (project === undefined  || project == 'tour' || project == 'create') return;
+
+                    if (action == undefined) {
                         let redir = setTimeout(() => {
                             clearTimeout(redir);
                             redir = null;
                             this.set('route.path', '/worksheet/' + project + '/view/kanban');
                         }, 10);
-                        
                     } else {
-                        this.set('layout', 'view');
+                        
+                        this.set('page', '');
+                        this.mask('Loading..');
+
+                        this.__resolveProject(project).then(() => {
+                            let module = this.projectRecord && this.projectRecord.sp_worksheet_module;
+
+                            if (module) {
+
+                                let name = module + '-' + action;
+
+                                let path = this.resolveUrl('../modules/' + module + '/' + name + '.html');
+                                let page = this.__pages[name];
+
+                                if ( ! page) {
+                                    page = {
+                                        name: name,
+                                        path: path
+                                    };
+
+                                    this.__pages[name] = page;
+
+                                    Polymer.importHref(path, () => {
+                                        this.unmask();
+
+                                        let node = this.__createPage(page);
+                                        this.$.switcher.appendChild(node);
+
+                                        let timer = setTimeout(() => {
+                                            clearTimeout(timer);
+                                            timer = null;
+                                            this.set('page', page.name);
+                                        }, 10);
+                                        
+                                    });
+                                } else {
+                                    this.unmask();
+                                    this.set('page', page.name);
+                                }
+
+                            } else {
+                                this.unmask();
+                            }
+                        });
+                    }
+                    
+                }
+
+                handleResizing(width, height) {
+                    let layoutItem = this.$.switcher.selectedItem;
+                    
+                    if (layoutItem && layoutItem.handleResizing) {
+                        layoutItem.handleResizing(width, height);
                     }
                 }
-            }
 
-            handleResizing(width, height) {
-                let layoutItem = this.$['layout-switcher'].selectedItem;
-                if (layoutItem && layoutItem.handleResizing) {
-                    layoutItem.handleResizing(width, height);
+                __resolveProject(project) {
+                    let reload = (this.projectRecord && this.projectRecord.sp_name != project) || !this.projectRecord;
+                    
+                    if (reload) {
+                        return this.$.ajax.GET('/projects/' + project + '/load').then(res => {
+                            this.set('projectRecord', res.data);
+                        });
+                    } else {
+                        return Promise.resolve();
+                    }
+                }
+
+                __createPage(page) {
+                    let template = cachedTemplates[page.name];
+
+                    if ( ! template) {
+                        template = document.createElement('template');
+                        template.innerHTML = `<${page.name} name="${page.name}" config="{{ config }}" route="{{ route }}" state="[[ state ]]" user="[[ user ]]"></${page.name}>`;
+                        cachedTemplates[page.name] = template;
+                    }
+
+                    let node = this._stampTemplate(template);
+                    return node;
                 }
             }
-        }
 
-        customElements.define(ProjectHome.is, ProjectHome);
+            customElements.define(ProjectHome.is, ProjectHome);
+        }
     </script>
 </dom-module>

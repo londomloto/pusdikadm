@@ -1,0 +1,49 @@
+
+<link rel="import" href="../../mixins/project-view-grid.html">
+
+<dom-module id="pendaftaran-view-grid">
+    <template>
+        <style include="project-view-grid-style"></style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-event-subscriber on-notify="__onNotify"></kct-event-subscriber>
+
+        <kct-grid 
+            id="grid" 
+            url="/worksheet/grid" 
+            columns="[[ columns ]]" 
+            selection-model="row" 
+            row-height="50" 
+            hide-header>
+            <template preserve-content>
+                <style>
+                    .item-title { color: var(--paper-cyan-500);  }
+                    .item-meta { font-size: 11px; color: #999;   }
+                    .item-badge {
+                        padding: 3px 10px;
+                        color: #fff;
+                        font-size: 11px;
+                        border-radius: 3px;
+                        display: inline-block;
+                        text-align: center;
+                        text-decoration: none;
+                    }
+                    .item-badge iron-icon {
+                        --iron-icon-width: 12px !important;
+                        --iron-icon-height: 12px !important;
+                    }
+                </style>
+            </template>        
+        </kct-grid>
+        
+    </template>
+    <script>
+        class PendaftaranViewGrid extends Mixins(KctView).use(Mixins.ProjectViewGrid) {
+            static get is() {
+                return 'pendaftaran-view-grid';
+            }
+        }
+
+        customElements.define(PendaftaranViewGrid.is, PendaftaranViewGrid);
+    </script>
+</dom-module>

@@ -2,66 +2,13 @@
 <link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../../../../cores/elements/kct-worksheet/kct-worksheet.html">
 <link rel="import" href="../../../../../cores/elements/kct-event/kct-event-subscriber.html">
-<!-- <link rel="import" href="../../../../../cores/vendors/graph-interactjs/graph-interactjs.html"> -->
-<link rel="import" href="../plugins/task-item-kanban.html">
+<link rel="import" href="../../../../../cores/mixins/mixins.html">
+<link rel="import" href="../styles/project-view-kanban-style.html">
 
-<dom-module id="project-view-kanban">
-    <template>
-        <style include="theme-helper">
-            :host {
-                height: 100%;
-            }
-            .panel-content {
-                padding: 15px;
-            }
-            .panel-item + .panel-item {
-                margin-top: 8px;
-            }
-            .panel-paging {
-                margin-top: 15px;
-                text-align: center;
-            }
-            .panel-paging > paper-button {
-                display: block;
-                text-transform: none;
-                font-size: 12px;
-            }
-            .panel-paging > paper-button iron-icon {
-                --iron-icon-width: 16px;
-                --iron-icon-height: 16px;
-                position: relative;
-                top: -1px;
-            }
-        </style>
-        
-        <kct-ajax id="ajax"></kct-ajax>
-        <kct-event-subscriber on-notify="__onNotify"></kct-event-subscriber>
+<script>
+    Mixins.ProjectViewKanban = Polymer.dedupingMixin(superclass => {
 
-        <kct-worksheet id="worksheet" columns="3">
-            <template is="dom-repeat" items="[[ worksheetRecord.ks_panels ]]" as="panel">
-                <kct-worksheet-panel title="[[ panel.kp_title ]]" accent="[[ panel.kp_accent ]]" hide-condensed hide-secondary>
-                    <div class="panel-content">
-                        <template is="dom-repeat" items="[[ panel.kp_data ]]">
-                            <task-item-kanban 
-                                class="panel-item" 
-                                record="[[ item ]]" 
-                                accent="[[ panel.kp_accent ]]" 
-                                on-item-tap="__onTaskItemTap" draggable></task-item-kanban>
-                        </template>
-                        <div class="panel-paging" hidden$="[[ !panel.kp_more ]]">
-                            <paper-button on-tap="__onLoadMoreTap">Load more items&nbsp;<iron-icon icon="arrow-drop-down"></iron-icon></paper-button>
-                        </div>
-                    </div>
-                </kct-worksheet-panel>
-            </template>
-        </kct-worksheet>
-
-    </template>
-    <script>
-        class ProjectViewKanban extends KctView {
-            static get is() {
-                return 'project-view-kanban';
-            }
+        return class extends superclass {
 
             static get properties() {
                 return {
@@ -106,7 +53,7 @@
             reload() {
                 return this.__loadWorksheet();
             }
-            
+
             __projectChanged(project) {
                 if (project) {
                     this.__loadProject();
@@ -162,7 +109,7 @@
                                 cached[p.kp_id] = p.kp_data;
                             });
 
-                            data.ks_panels.forEach(p => {
+                            (data.ks_panels || []).forEach(p => {
                                 if (cached[p.kp_id] !== undefined) {
                                     p.kp_data = cached[p.kp_id];
                                 }
@@ -307,58 +254,7 @@
                 return this.__paging[token];
             }
 
-            __installDragDrop() {
-
-                /*if (this.__draggable) {
-                    this.__draggable.unset();
-                }
-
-                this.__draggable = interact('task-item-kanban[draggable]')
-                    .draggable({
-                        inertia: true,
-                        autoScroll: {
-                            container: this.$.worksheet.$['kanban-body'],
-                            margin: 50,
-                            distance: 20
-                        },
-                        manualStart: true,
-                        onstart: (e) => {
-                            let t = e.target;
-                            t.style.position = 'relative';
-                            t.style.zIndex = '99999';
-                            t.style.willChange = 'transform';
-                            t.dataset.dragX = t.dataset.dragX !== undefined ? t.dataset.dragX : 0;
-                            t.dataset.dragY = t.dataset.dragY !== undefined ? t.dataset.dragY : 0;
-                        },
-                        onend: (e) => {
-                            let t = e.target;
-                            t.style.zIndex = '0';
-                            t.style.willChange = 'none';
-                        },
-                        onmove: (e) => {
-                            let t = e.target;
-                            let x = (+t.dataset.dragX || 0) + e.dx;
-                            let y = (+t.dataset.dragY || 0) + e.dy;
-
-                            t.style.webkitTransform = t.style.transform = 'translate(' + x +'px, ' + y + 'px)';
-                            
-                            t.dataset.dragX = x;
-                            t.dataset.dragY = y;
-                        }
-                    })
-                    .on('move', (e) => {
-                        let i = e.interaction;
-
-                        if ( ! i.interacting()) {
-                            let a = { name: 'drag' };
-                            i.prepared.name = a.name;
-                            i.setEventXY(i.startCoords, i.pointers);
-                            i.start(a, e.interactable, e.currentTarget);
-                        }
-                    });*/
-            }
-
-            __onTaskItemTap(e) {
+            __onCardItemTap(e) {
                 let task = e.model.item;
                 
                 this.set('route.data.back', '/worksheet/' + this.project + '/view/kanban');
@@ -384,8 +280,8 @@
                     });
                 }
             }
+
         }
 
-        customElements.define(ProjectViewKanban.is, ProjectViewKanban);
-    </script>
-</dom-module>
+    });
+</script>

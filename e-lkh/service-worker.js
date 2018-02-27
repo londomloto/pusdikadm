@@ -10,6 +10,29 @@
 
 /* eslint no-console: ["error", { allow: ["info"] }] */
 
-console.info(
-  'Service worker disabled for development, will be generated at build time.'
-);
+// console.info(
+//   'Service worker disabled for development, will be generated at build time.'
+// );
+
+importScripts('https://www.gstatic.com/firebasejs/4.10.1/firebase-app.js');
+importScripts('https://www.gstatic.com/firebasejs/4.10.1/firebase-messaging.js');
+
+firebase.initializeApp({
+    apiKey: "AIzaSyDKeX0MeJWB0hRcWNLhULc5bkwxKmjgovs",
+    authDomain: "pusdikadm-196510.firebaseapp.com",
+    databaseURL: "https://pusdikadm-196510.firebaseio.com",
+    projectId: "pusdikadm-196510",
+    storageBucket: "pusdikadm-196510.appspot.com",
+    messagingSenderId: "240276356095"
+});
+
+const messanger = firebase.messaging();
+
+messanger.setBackgroundMessageHandler(function(payload) {
+  const notificationTitle = payload.data.title;
+  const notificationOptions = {
+        body: payload.data.body,
+        icon: 'images/logo/logo-48x48.png'
+  };
+  return self.registration.showNotification(notificationTitle, notificationOptions);
+});

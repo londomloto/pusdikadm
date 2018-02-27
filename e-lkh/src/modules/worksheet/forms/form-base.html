@@ -6,8 +6,10 @@
 <link rel="import" href="../../../../../cores/bower_components/vaadin-date-picker/vaadin-date-picker.html">
 <link rel="import" href="../../../../../cores/elements/kct-combobox/kct-combobox.html">
 <link rel="import" href="../../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-hbox.html">
 <link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
-<link rel="import" href="../../../../../cores/elements/kct-input/kct-input-file.html">
+<link rel="import" href="../../../../../cores/elements/kct-file/kct-file.html">
+<link rel="import" href="../../../../../cores/elements/kct-checkbox/kct-checkbox.html">
 <link rel="import" href="../../../../../cores/elements/kct-message/kct-confirm.html">
 <link rel="import" href="../../../../../cores/mixins/resolver.html">
 <link rel="import" href="../../../../../cores/mixins/types.html">
@@ -24,16 +26,8 @@
                     record: { type: Object, notify: true },
                     action: { type: String, value: 'create'},
                     invalid: { type: Boolean, notify: true },
-                    readonly: { type: Boolean, notify: true },
-                    removable: { type: Boolean, notify: true }
+                    buttons: { type: String, notify: true }
                 };
-            }
-
-            ready() {
-                super.ready();
-                
-                this.set('readonly', false);
-                this.set('removable', true);
             }
 
             save(options) {
@@ -44,16 +38,21 @@
                 let result = [];
 
                 Object.keys(options).forEach(k => {
-                    if (k == 'date' || k == 'author') {
-                        result.push(k + '=' + options[k]);
-                    } else if (k == 'result') {
-                        let data = options[k] || {};
-                        Object.keys(data).forEach(f => {
-                            let v = data[f];
-                            if ( ! this._isArray(v) && ! this._isObject(v)) {
-                                result.push(f + '=' + v);
+                    let v = options[k];
+                    if (v !== null && v != '') {
+                        if (typeof v === 'object') {
+                            let t = [];
+                            Object.keys(v).forEach(e => {
+                                if (v[e] !== null && v[e] != '') {
+                                    t.push(v[e]);
+                                }
+                            });
+                            if (t.length) {
+                                result.push(k + '=' + t.join(';'));
                             }
-                        });
+                        } else {
+                            result.push(k + '=' + v);
+                        }
                     }
                 });
 
@@ -61,7 +60,7 @@
 
                 if (result) {
                     result = '|' + result + '|';
-                    this.set('record.status.tts_result', result);
+                    this.set('record.status.tts_data_result', result);
                 }
             }
 

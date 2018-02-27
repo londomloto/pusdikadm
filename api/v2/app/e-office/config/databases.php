@@ -3,7 +3,7 @@ switch($_SERVER['SERVER_ADMIN']) {
     case 'roso@xampp.local':
         $databases = array(
             'db' => array(
-                'host' => 'localhost',
+                'host' => '192.168.56.5',
                 'user' => 'root',
                 'pass' => 'secret',
                 'name' => 'e_office'

@@ -215,14 +215,14 @@
 
             __onOpenProjectTap(e) {
                 let projectRecord = e.model.item;
-                this.set('route.path', '/worksheet/' + projectRecord.sp_name + '/view/kanban');
+                this.set('route.path', '/worksheet/' + projectRecord.sp_name + '/view/kanban');  
             }
 
             __onProjectSettingTap(e) {
                 e.stopPropagation();
                 
                 let projectItem = e.model.item;
-                this.set('route.path', '/worksheet/' + projectItem.sp_name + '/setting');
+                this.set('route.path', '/worksheet/' + projectItem.sp_name + '/info');
             }
 
             __onProjectSaved() {

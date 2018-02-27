@@ -1,6 +1,6 @@
 <!-- <link rel="import" href="user-dock.html"> -->
 
-<dom-module id="task-item-kanban">
+<dom-module id="skp-card">
     <template>
         <style include="theme-helper">
             .item {
@@ -53,16 +53,26 @@
                 color: var(--paper-blue-grey-500);
                 font-size: 15px;
             }
-            .item-desc {
+            .item-content {
                 color: var(--paper-blue-grey-500);
-                margin-top: 10px;
-                font-size: 13px;
+                margin-top: 5px;
+                padding-right: 36px;
+                font-size: 12px;
             }
-            .item-desc iron-icon {
+            .item-content iron-icon {
                 --iron-icon-width: 16px;
                 --iron-icon-height: 16px;
                 position: relative;
                 top: -1px;
+            }
+            .item-content-group + .item-content-group {
+                margin-top: 5px;
+            }
+            .item-content-label {
+                color: #999;   
+            }
+            .item-content-value {
+                font-weight: 500;
             }
             .item-meta {
                 font-size: 11px;
@@ -92,18 +102,18 @@
         </style>
         
         <div class="box box-shadow-z2 item" style$="border-left: 2px solid [[ accent ]]">
-            <div class="box-body" on-tap="__onItemTap">
+            <div class="box-body" on-tap="__onCardTap">
                 <h3 class="item-title">[[ record.task.tt_title ]]</h3>
-                <p class="item-meta">
+                <!-- <p class="item-meta">
                     Dibuat oleh <b>[[ record.task.creator_su_fullname ]]</b> [[ record.task.tt_created_dt_relative ]]
-                </p>
+                </p> -->
                 <div class="box-label">
                     <template is="dom-repeat" items="[[ record.labels ]]">
                         <span class="item-label" style$="background-color: [[ item.sl_color ]]">[[ item.sl_label ]]</span>
                     </template>
                     <span class="item-clear"></span>
                 </div>
-                <div class="item-desc" inner-h-t-m-l="[[ record.status.tts_content ]]" hidden$="[[ !record.status.tts_has_content ]]"></div>
+                <div class="item-content" inner-h-t-m-l="[[ record.task.tt_content ]]"></div>
             </div>
             <div class="box-user">
                 <div class="item-user" title$="Dibuat oleh [[ record.task.creator_su_fullname ]]">
@@ -121,25 +131,24 @@
 
     </template>
     <script>
-        class TaskItemKanban extends Polymer.Element {
+        class SkpCard extends Polymer.Element {
             static get is() {
-                return 'task-item-kanban';
+                return 'skp-card';
             }
 
             static get properties() {
                 return {
                     accent: { type: String },
-                    record: { type: Object },
-                    draggable: { type: Boolean, value: true, reflectToAttribute: true }
+                    record: { type: Object }
                 };
             }
 
-            __onItemTap() {
-                this.dispatchEvent(new CustomEvent('item-tap'));
+            __onCardTap() {
+                this.dispatchEvent(new CustomEvent('card-tap'));
             }
 
         }
 
-        customElements.define(TaskItemKanban.is, TaskItemKanban);
+        customElements.define(SkpCard.is, SkpCard);
     </script>
 </dom-module>

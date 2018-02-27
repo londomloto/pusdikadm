@@ -2,55 +2,13 @@
 <link rel="import" href="../../../../../cores/elements/kct-grid/kct-grid.html">
 <link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../../../../cores/elements/kct-event/kct-event-subscriber.html">
+<link rel="import" href="../../../../../cores/mixins/mixins.html">
+<link rel="import" href="../styles/project-view-grid-style.html">
 
-<dom-module id="project-view-grid">
-    <template>
-        <style include="theme-helper">
-            :host {
-                height: 100%;
-            }
-            #grid {
-                height: 100%;
-            }
-        </style>
+<script>
+    Mixins.ProjectViewGrid = Polymer.dedupingMixin(superclass => {
 
-        <kct-ajax id="ajax"></kct-ajax>
-        <kct-event-subscriber on-notify="__onNotify"></kct-event-subscriber>
-
-        <kct-grid 
-            id="grid" 
-            url="/worksheet/grid" 
-            columns="[[ columns ]]" 
-            selection-model="row" 
-            row-height="50" 
-            hide-header>
-            <template preserve-content>
-                <style>
-                    .item-title { color: var(--paper-cyan-500);  }
-                    .item-meta { font-size: 11px; color: #999;   }
-                    .item-badge {
-                        padding: 3px 10px;
-                        color: #fff;
-                        font-size: 11px;
-                        border-radius: 3px;
-                        display: inline-block;
-                        text-align: center;
-                        text-decoration: none;
-                    }
-                    .item-badge iron-icon {
-                        --iron-icon-width: 12px !important;
-                        --iron-icon-height: 12px !important;
-                    }
-                </style>
-            </template>        
-        </kct-grid>
-        
-    </template>
-    <script>
-        class ProjectViewGrid extends KctView {
-            static get is() {
-                return 'project-view-grid';
-            }
+        return class extends superclass {
 
             static get properties() {
                 return {
@@ -153,7 +111,7 @@
             reload() {
                 return this.__loadGrid();
             }
-
+            
             __projectChanged(project) {
                 if (project) {
                     this.__loadProject();
@@ -221,8 +179,8 @@
                     this.set('route.path', '/worksheet/' + this.project + '/task/update/' + status.tts_id);
                 }
             }
+
         }
 
-        customElements.define(ProjectViewGrid.is, ProjectViewGrid);
-    </script>
-</dom-module>
+    });
+</script>
