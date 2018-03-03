@@ -2,8 +2,8 @@
     Options +FollowSymLinks
     RewriteEngine on
 
-    #RewriteCond %{HTTPS} !=on
-    #RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+    RewriteCond %{HTTPS} !=on
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
     # ACCEPTABLE
     #RewriteCond %{REQUEST_URI} ^/(bower_components|elements|mixins|vendors|themes|helpers|fonts)/
