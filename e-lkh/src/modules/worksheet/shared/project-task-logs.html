@@ -1,0 +1,192 @@
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-editor/kct-html-editor.html">
+<link rel="import" href="../../../../../cores/elements/kct-html/kct-html.html">
+<link rel="import" href="../../../../../cores/elements/kct-file/kct-file.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../../cores/elements/kct-message/kct-confirm.html">
+<link rel="import" href="../../../../../cores/mixins/mixins.html">
+<link rel="import" href="../styles/project-task-logs-style.html">
+
+<script>
+    Mixins.ProjectTaskLogs = Polymer.dedupingMixin(superclass => {
+
+        return class extends superclass {
+
+            static get properties() {
+                return {
+                    record: { type: Object, notify: true },
+                    message: { type: String },
+                    activities: { 
+                        type: Array, 
+                        value: () => ([]), 
+                        notify: true 
+                    },
+                    paginator: {
+                        type: Object,
+                        value: () => ({
+                            start: 0,
+                            limit: 20
+                        })
+                    }, 
+                    metadata: { type: Object },
+                    loading: { type: Boolean, value: false, reflectToAttribute: true }
+                };
+            }
+
+            constructor() {
+                super();
+                this.__hidePaginator = true;
+            }
+
+            initialize() {
+                this.load({ start: 0 });
+            }
+            
+            load(options = {}) {
+
+                let start, limit;
+
+                if (options.start !== undefined) {
+                    start = options.start;
+                    this.set('paginator.start', start);
+                } else {
+                    start = this.paginator.start;
+                }
+
+                limit = this.paginator.limit;
+
+                let taskId = this.record && this.record.task && this.record.task.tt_id;
+
+                if ( ! taskId) {
+                    this.set('activities', []);
+                    return;
+                }
+
+                let payload = {
+                    params: {
+                        tta_tt_id: taskId
+                    },
+                    sort: [
+                        { property: 'tta_created', direction: 'desc' }
+                    ],
+                    start: start,
+                    limit: limit
+                };
+
+                this.$.ajax.GET('/tasks/tasks-activities', payload).then(res => {
+                    if (start == 0) {
+                        this.set('activities', []);
+                    }
+
+                    let activities = this.activities.slice();
+                    Array.prototype.push.apply(activities, res.data);
+                    this.set('activities', activities);
+
+                    start = this.paginator.start + this.paginator.limit;
+                    this.set('paginator.start', start);
+
+                    if (start >= res.total) {
+                        this.set('__hidePaginator', true);
+                    } else {
+                        this.set('__hidePaginator', false);
+                    }
+
+                });
+            }
+
+            __onSubmitTap() {
+                let message = this.$.msgbox.value;
+
+                if ( ! message) {
+                    if ( ! this.attachment) {
+                        return;
+                    }
+                }
+
+                let data = {
+                    tta_type: 'comment',
+                    tta_data: message,
+                    tta_tt_id: this.record.task.tt_id
+                };
+
+                this.$.ajax.POST('/tasks/tasks-activities', data).then(res => {
+                    if (res.success) {
+                        let activity = res.data;
+                        // this.unshift('activities', activity);
+                        this.load({start: 0});
+                        this.$.msgbox.value = '';
+                    }
+                });
+                
+            }
+
+            __onAttachTap() {
+                this.$.file.browse();
+            }
+
+            __onFileChange() {
+                let attachment = this.$.file.file().files[0];
+
+                if (attachment) {
+                    let payload = {
+                        files: [
+                            { name: 'userfile', file: attachment }
+                        ]
+                    };
+
+                    this.$.ajax.UPLOAD('/tasks/tasks-activities/upload', payload).then(res => {
+                        if (res.success) {
+                            let code = res.data.code;
+                            let html = this.$['msgbox'].value;
+                            
+                            html += code;
+                            html += '<p></p>';
+
+                            this.$['msgbox'].value = html;
+                        }
+                        this.$.file.reset();
+                    });
+                }
+            }
+
+            __onEditCommentTap(e) {
+                let index = e.model.index;
+                this.set('activities.' + index + '.tta_editing', true);
+            }
+
+            __onSaveCommentTap(e) {
+                let data = e.model.item;
+                this.$.ajax.PUT('/tasks/tasks-activities/' + data.tta_id, data).then(res => {
+                    if (res.success) {
+                        this.set('activities.' + e.model.index + '.tta_data', res.data.tta_data);    
+                        this.set('activities.' + e.model.index + '.tta_text', res.data.tta_text);
+                    }
+                    this.set('activities.' + e.model.index + '.tta_editing', false);
+                });
+            }
+
+            __onCancelEditCommentTap(e) {
+                let index = e.model.index;
+                this.set('activities.' + index + '.tta_editing', false);
+            }
+
+            __onRemoveCommentTap(e) {
+                this.$.confirm.title = 'Konfirmasi';
+                this.$.confirm.message = 'Anda yakin akan menghapus komentar ini?';
+                this.$.confirm.open().then(y => {
+                    if (y == 'yes') {
+                        this.$.ajax.DELETE('/tasks/tasks-activities/' + e.model.item.tta_id).then(res => {
+                            this.load({start: 0});
+                        });
+                    }
+                }); 
+            }
+
+            __onPaginatorTap() {
+                this.load();
+            }
+
+        };
+
+    });
+</script>

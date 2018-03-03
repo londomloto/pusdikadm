@@ -1,394 +1,510 @@
+<link rel="import" href="../../mixins/resolver.html">
+<link rel="import" href="../../mixins/storage.html">
+<link rel="import" href="../../mixins/browser.html">
+<link rel="import" href="../kct-config/kct-config.html">
 <link rel="import" href="../kct-ajax/kct-ajax.html">
 
 <dom-module id="kct-feed">
     <template>
         <style>
-            
+            :host {
+                display: none;
+            }
+            :host([opened]) {
+                display: block;
+            }
             .hbox {
                 @apply --layout-horizontal;
             }
             .flex {
                 @apply --layout-flex;
             }
+
+            .dialog {
+                position: fixed;
+                box-sizing: border-box;
+                bottom: 0;
+                right: 0;
+                left: 0;
+                padding: 15px;
+                background-color: var(--paper-blue-grey-500);
+                color: #fff;
+            }
+            
+            .dialog.opened {
+                -webkit-animation: feed-slide-in-bottom 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
+                        animation: feed-slide-in-bottom 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
+            }
+
             paper-button {
                 color: #fff;
-                background-color: var(--paper-blue-500);
-                font-size: 14px;
+                background-color: var(--app-danger);
+                font-size: 13px;
                 font-weight: normal;
+                padding: 0.5em 0.7em;
+                margin: 0;
             }
-            :host {
-                position: fixed;
-                bottom: 0;
-                width: 100%;
-                box-sizing: border-box;
-                padding: 10px;
-                display: none;
-                background-color: var(--paper-grey-200);
-                font-family: 'Segoe UI', Roboto, Arial, sans-serif;
-                z-index: 2;
+
+            @-webkit-keyframes feed-slide-in-bottom {
+                0% {
+                    opacity: 0;
+                    -webkit-transform: translateY(1000px);
+                            transform: translateY(1000px);
+                }
+                100% {
+                    opacity: 1;
+                    -webkit-transform: translateY(0);
+                            transform: translateY(0);
+                }
             }
-            :host([opened]) {
-                display: block;
+
+            @keyframes feed-slide-in-bottom {
+                0% {
+                    opacity: 0;
+                    -webkit-transform: translateY(1000px);
+                            transform: translateY(1000px);
+                }
+                100% {
+                    opacity: 1;
+                    -webkit-transform: translateY(0);
+                            transform: translateY(0);
+                }
             }
         </style>
 
         <kct-ajax id="ajax" config="[[ config ]]"></kct-ajax>
 
-        <div class="hbox">
-            <div class="flex" style="text-align: left;">
-                Aplikasi ini memerlukan otorisasi Anda.
-            </div>
-            <div class="flex" style="text-align: right;">
-                <paper-button hidden$="[[ authenticated ]]" on-tap="__onAuthenticateTap" id="button-authenticate">Otentifikasi</paper-button>
-                <paper-button hidden$="[[ authorized ]]" on-tap="__onAuthorizeTap" id="button-authorize">Otorisasi</paper-button>
-            </div>
+        <div class="container">
+            <div id="authenticator" class="dialog">
+                <div class="hbox">
+                    <div class="flex">
+                        Aplikasi memerlukan otentifikasi Anda agar dapat mengirimkan pesan notifikasi.
+                    </div>
+                    <div>
+                        <paper-button on-tap="__onAuthenticateTap" raised class="button-authenticate">Otentifikasi</paper-button>    
+                    </div>
+                </div>
+            </div>    
         </div>
+        
 
     </template>
     <script>
-        class KctFeed extends Polymer.Element {
-            static get is() {
-                return 'kct-feed';
-            }
+        {
+            let messanger = null;
 
-            static get properties() {
-                return {
-                    config: { type: Object, notify: true },
-                    opened: { type: Boolean, value: false, reflectToAttribute: true },
-                    authorized: { type: Boolean, value: true, reflectToAttribute: true },
-                    authenticated: { type: Boolean, value: true, reflectToAttribute: true }
+            class KctFeed extends Mixins(Polymer.Element).use(Mixins.Resolver, Mixins.Storage, Mixins.Browser) {
+                static get is() {
+                    return 'kct-feed';
                 }
-            }
 
-            static get observers() {
-                return [
-                    '__configChanged(config.*)',
-                    '__authChanged(authorized, authenticated)'
-                ]
-            }
-
-            __authChanged(authorized, authenticated) {
-                if ( ! authorized || ! authenticated) {
-                    this.set('opened', true);
+                static get properties() {
+                    return {
+                        config: { type: Object },
+                        opened: { type: Boolean, value: false, reflectToAttribute: true }, 
+                        subscribed: { type: Boolean, value: false, notify: true },
+                        storageKey: { type: String },
+                        messageToken: { type: String }
+                    }
                 }
-            }
 
-            constructor() {
-                super();
+                static get observers() {
+                    return [
+                        '__messageTokenChanged(messageToken)'
+                    ]
+                }
 
-                let scopes = [
-                    'https://www.googleapis.com/auth/firebase',
-                    'https://www.googleapis.com/auth/firebase.database',
-                    'https://www.googleapis.com/auth/firebase.messaging',
-                    'https://www.googleapis.com/auth/identitytoolkit',
-                    'https://www.googleapis.com/auth/userinfo.email'
-                ];
+                constructor() {
+                    super();
 
-                this.__scopes = scopes.join(' ');
-            }
+                    let scopes = [
+                        'https://www.googleapis.com/auth/firebase',
+                        'https://www.googleapis.com/auth/firebase.database',
+                        'https://www.googleapis.com/auth/firebase.messaging',
+                        'https://www.googleapis.com/auth/identitytoolkit',
+                        'https://www.googleapis.com/auth/userinfo.email'
+                    ];
 
-            ready() {
-                super.ready();
+                    this.__scopes = scopes.join(' ');
+                    this.__context = null;
+                }
 
-                // if (window.firebase === undefined) {
-                //     let fb = document.createElement('script');
-                //     fb.src = 'https://www.gstatic.com/firebasejs/4.10.1/firebase.js';
-                //     fb.onload = this.__onFirebaseLoad.bind(this);
-                //     document.body.appendChild(fb);
-                // }
-            }
+                ready() {
+                    super.ready();
+                    this.__loadStorage().then(() => {
+                        this.set('messageToken', this._getStorageItem(this.storageKey, 'message_token'));
+                    });
+                    
+                }
 
-            notify(payload = {}) {
-
-                if (window.GoogleAuth === undefined) {
-                    let ga = document.createElement('script');
-
-                    ga.src = 'https://apis.google.com/js/api.js';
-                    ga.defer = true;
-                    ga.async = true;
-                    ga.onload = _ => {
-                        gapi.load('client:auth2', _ => {
-
-                            gapi.client.init({
-                                apiKey: 'AIzaSyDCHEBx3OGgnHna2iLC4qtIl5IwL9T50LE',
-                                clientId: '291581890497-98g8ulajoequ35hdtvj0lgc2hr664mi3.apps.googleusercontent.com',
-                                scope: this.__scopes
-                            }).then( _ => {
-
-                                window.GoogleAuth = gapi.auth2.getAuthInstance();
-                                
-                                GoogleAuth.isSignedIn.listen(() => {
-                                    this.__authenticate();
-                                });
-
-                                this.__authenticate().then(send.bind(this));
+                subscribe() {
+                    return this.__loadMessanger().then(support => {
+                        if (support) {
+                            return this.__requestToken().then(token => {
+                                if (token) {
+                                    return this.__registerToken(token).then(success => {
+                                        if (success) {
+                                            return {
+                                                success: true
+                                            };
+                                        } else {
+                                            return {
+                                                success: false,
+                                                message: 'Gagal mengaktifkan notifikasi, silahkan ulangi kembali'
+                                            };
+                                        }
+                                    });
+                                } else {
+                                    return {
+                                        success: false,
+                                        message: 'Gagal mengaktifkan notifikasi, silahkan ulangi kembali'
+                                    };
+                                }
                             });
-                        });
-                    };
-                    document.body.appendChild(ga);
-                } else {
-                    this.__authenticate().then(send.bind(this));
-                }
-
-                function send() {
-                    this.$.ajax.post('https://www.pusdikadm.xyz/qtool/api/feed/notify/qtool', {
-                        title: 'Hei Baby',
-                        body: 'I want to make love',
-                        authorization: this.session.gapi_access_token
+                        } else {
+                            return {
+                                success: false,
+                                message: 'Perangkat Anda tidak mendukung notifikasi'
+                            };
+                        }
                     });
                 }
-            }
 
-            __loadMessanger() {
-                if (this.__messangerLoaded) {
-                    return;
+                unsubscribe() {
+                    return this.__loadMessanger().then(support => {
+                        if (support) {
+                            return this.__requestToken().then(token => {
+                                if (token) {
+                                    return this.__unregisterToken(token).then(success => {
+                                        if (success) {
+                                            return {
+                                                success: success
+                                            };
+                                        } else {
+                                            return {
+                                                success: false,
+                                                message: 'Gagal menonaktifkan notifikasi, silahkan ulangi kembali'
+                                            };
+                                        }
+                                    });
+                                } else {
+                                    return {
+                                        success: false,
+                                        message: 'Gagal mengaktifkan notifikasi, silahkan ulangi kembali'
+                                    };
+                                }
+                            });
+                        } else {
+                            return {
+                                success: false,
+                                message: 'Perangkat Anda tidak mendukung notifikasi'
+                            };
+                        }
+                    });
                 }
 
-                this.__messangerLoaded = true;
-
-                if (window.firebase === undefined) {
-                    let fb = document.createElement('script');
-                    fb.src = 'https://www.gstatic.com/firebasejs/4.10.1/firebase.js';
-                    fb.onload = () => {
-                        this.__initMessanger();
-                    };
-
-                    document.body.appendChild(fb);
+                notify(payload = {}) {
+                    this.__loadAuthenticator().then(authenticated => {
+                        if (authenticated) {
+                            payload.token = this._getStorageItem(this.storageKey, 'access_token');
+                            this.$.ajax.POST('/notifications/notify', payload);
+                        }
+                    });
                 }
-            }
 
-            __initMessanger() {
-                firebase.initializeApp({
-                    apiKey: "AIzaSyDKeX0MeJWB0hRcWNLhULc5bkwxKmjgovs",
-                    authDomain: "pusdikadm-196510.firebaseapp.com",
-                    databaseURL: "https://pusdikadm-196510.firebaseio.com",
-                    projectId: "pusdikadm-196510",
-                    storageBucket: "pusdikadm-196510.appspot.com",
-                    messagingSenderId: "240276356095"
-                });
+                __loadStorage() {
+                    return this._resolve('config').then(() => {
+                        if (this.config === undefined) {
+                            this.set('config', KctConfig.instance().config);
+                        }
+                        
+                        let storageKey = this._getStorageKey(this.config.app_name, this.constructor.is);
 
-                let messanger = this.__messanger = firebase.messaging();
+                        this._initStorage(storageKey, {
+                            message_token: null,
+                            access_token: null
+                        });
 
-                messanger.usePublicVapidKey('BNw20yrPzz1t3g1Fi1uTIsNoOD7gjYYPTrWhYLbdKgrVEsyWnj34puOFYkpH4lC_THsc5fROd5TTBeb-0oCJsLo');
-                
-                messanger.onMessage(payload => {
-                    console.log(payload);
-                });
+                        this.set('storageKey', storageKey);
+                    });
+                }
 
-                messanger.onTokenRefresh(() => {
-                    messanger.getToken()
-                        .then(refreshedToken => {
-                            console.log(refreshedToken);
+                __loadMessanger() {
+                    if (messanger != null) {
+                        return Promise.resolve(true);
+                    }
+
+                    let def = this._defer();
+
+                    this.__loadStorage().then(() => {
+                        if (window.firebase === undefined) {
+                            let fb = document.createElement('script');
+                            fb.src = 'https://www.gstatic.com/firebasejs/4.10.1/firebase.js';
+                            fb.onload = () => {
+                                this.__initMessanger().then(support => {
+                                    def.resolve(support);
+                                });
+                            };
+                            document.body.appendChild(fb);
+                        }
+                    });
+
+                    return def.promise;
+                }
+
+                __initMessanger() {
+                    firebase.initializeApp({
+                        apiKey: "AIzaSyDKeX0MeJWB0hRcWNLhULc5bkwxKmjgovs",
+                        authDomain: "pusdikadm-196510.firebaseapp.com",
+                        databaseURL: "https://pusdikadm-196510.firebaseio.com",
+                        projectId: "pusdikadm-196510",
+                        storageBucket: "pusdikadm-196510.appspot.com",
+                        messagingSenderId: "240276356095"
+                    });
+
+                    messanger = firebase.messaging();
+                    messanger.usePublicVapidKey('BNw20yrPzz1t3g1Fi1uTIsNoOD7gjYYPTrWhYLbdKgrVEsyWnj34puOFYkpH4lC_THsc5fROd5TTBeb-0oCJsLo');
+                    
+                    messanger.onMessage(payload => {
+                        console.log(payload);
+                    });
+
+                    messanger.onTokenRefresh(() => {
+                        messanger.getToken()
+                            .then(refreshedToken => {
+                                this.set('messageToken', null);
+                                this.__registerToken(refreshedToken);
+                            })
+                            .catch(err => {});
+                    });
+
+                    let local = false,
+                        https = location.protocol == 'https:';
+
+                    if (/(\.?local|127\.|)/.test(this.config.app_host)) {
+                        local = true;
+                    }
+
+                    let support = !local && https && navigator.serviceWorker;
+                    
+                    support = true;
+
+                    if (support) {
+                        let worker = this.config.app_base + 'service-worker.js';
+
+                        return navigator.serviceWorker.register(worker).then(reg => {
+                            messanger.useServiceWorker(reg);
+
+                            return messanger.requestPermission()
+                                .then(() => {
+                                    return true;
+                                })
+                                .catch(err => {
+                                    return false;
+                                });
+                        });
+                    } else {
+                        messanger = false;
+                        return Promise.resolve(false);
+                    }
+                }
+
+                __requestToken() {
+                    return messanger.getToken()
+                        .then(currentToken => {
+                            return currentToken;
                         })
                         .catch(err => {
-
+                            return null;
                         });
-                });
-
-                let local = false,
-                    https = location.protocol == 'https:';
-
-                if (/(\.?local|127\.|)/.test(this.config.app_host)) {
-                    local = true;
                 }
 
-                if ( ! local && https) {
-                    let worker = this.config.app_base + 'service-worker.js';
+                __registerToken(token) {
 
-                    navigator.serviceWorker.register(worker).then(reg => {
-                        messanger.useServiceWorker(reg);
-                        this.__requestMessangerToken();
-                    });
-                }
-            }
+                    if ( ! this.subscribed) {
+                        return this.$.ajax.POST('/notifications/subscribe', {
+                            token: token,
+                            device: this._browser()
+                        }).then(res => {
+                            let status = res.data.http_code;
 
-            __requestMessangerToken() {
-                let messanger = this.__messanger;
-
-                messanger.getToken()
-                    .then(currentToken => {
-                        if (currentToken) {
-                            this.__sendMessangerToken(currentToken);
-                        } else {
-                            this.set('authorized', false);
-                            this.__saveMessangerToken(false);
-                        }
-                    })
-                    .catch(err => {
-                        console.log('request token error: ' + err);
-                    });
-            }
-
-            __sendMessangerToken(token) {
-                if ( ! this.config.app_feed_saved) {
-                    this.$.ajax.POST('/feed/register', {
-                        token: token
-                    }).then(res => {
-                        let status = res.data.http_code;
-                        if (status == 200) {
-                            this.__saveMessangerToken(true);
-                        } else {
-                            this.__messanger.deleteToken(token);
-                            this.__requestMessangerToken();
-                        }
-                    });
-                }
-            }
-
-            __saveMessangerToken(save) {
-                this.set('config.app_feed_saved', save ? 1 : 0);
-            }
-
-            __loadAuthenticator() {
-
-            }
-
-            __authenticate() {
-
-                this.__authenticating = {};
-
-                this.__authenticating.promise = new Promise(res => {
-                    this.__authenticating.resolve = res;
-                });
-
-                let user = GoogleAuth.currentUser.get();
-
-                if ( ! user.hasGrantedScopes(this.__scopes)) {
-                    this.set('authenticated', false);
-                } else {
-                    this.set('authenticated', true);
-
-                    let accessToken = user.getAuthResponse().access_token;
-                    this.set('session.gapi_access_token', accessToken);
-
-                    this.__authenticating.resolve();
-                }
-
-                return this.__authenticating.promise;
-            }
-
-            __configChanged(changed) {
-                this.__loadMessanger();
-            }
-
-            __onFirebaseLoad() {
-                firebase.initializeApp({
-                    apiKey: "AIzaSyDKeX0MeJWB0hRcWNLhULc5bkwxKmjgovs",
-                    authDomain: "pusdikadm-196510.firebaseapp.com",
-                    databaseURL: "https://pusdikadm-196510.firebaseio.com",
-                    projectId: "pusdikadm-196510",
-                    storageBucket: "pusdikadm-196510.appspot.com",
-                    messagingSenderId: "240276356095"
-                });
-
-                /*if (/^https/.test(location.protocol)) {
-                    this.__setup();
-                }*/
-
-            }
-
-            __setup() {
-
-                let messaging = this.__messaging =  firebase.messaging();
-                // this.__auth = firebase.auth();
-                // this.__authProvider = new firebase.auth.GoogleAuthProvider();
-
-                messaging.usePublicVapidKey('BKvx8BwtL-Y8T0SuMLszQUu6m5hj3rhf4y2A3yqB1SJxYlOdh0j__FFkHN3jtdwOobiiC2-SifcdKvYKMF1f1UA');
-
-                messaging.onMessage(payload => {
-                    console.log(payload);
-                });
-
-                messaging.onTokenRefresh(() => {
-                    messaging.getToken()
-                        .then(refreshedToken => {
-                            console.log(refreshedToken);
-                            this.__setTokenSentToServer(false);
-                            this.__sendTokenToServer(refreshedToken);
-                        })
-                        .catch(err => {
-                            console.log(err);
-                            this.__setTokenSentToServer(false);
+                            if (status == 200) {
+                                this.set('messageToken', token);
+                                return true;
+                            } else {
+                                return false;
+                            }
                         });
-                });
+                    } else {
+                        return Promise.resolve(true);
+                    }
+                }
 
-                navigator.serviceWorker.register('/qtool/worker.js').then(reg => {
-                    messaging.useServiceWorker(reg);
-                    this.__requestToken();
-                });
-            }
-
-            __requestToken() {
-                let messaging = this.__messaging;
-
-                messaging.getToken()
-                    .then(currentToken => {
-                        if (currentToken) {
-                            this.__sendTokenToServer(currentToken);
-                            // updateUIForPushEnabled(currentToken);
-                        } else {
-                            this.set('granted', false);
-                            // permission request.
-                            // updateUIForPushPermissionRequired();
-                            this.__setTokenSentToServer(false);
-                        }
-                    })
-                    .catch(err => {
-                        console.log(err);
-                    });
-            }
-
-            __isTokenSentToServer() {
-                return this.session.feed_token_sent == 1;
-            }
-
-            __setTokenSentToServer(sent) {
-                this.set('session.feed_token_sent', sent ? 1 : 0);
-            }
-
-            __sendTokenToServer(token) {
-                if ( ! this.__isTokenSentToServer()) {
-                    this.$.ajax.post('/api/feed/register', {
+                __unregisterToken(token) {
+                    return this.$.ajax.POST('/notifications/unsubscribe', {
                         token: token,
-                        authorization: this.session.gapi_access_token
+                        device: this._browser()
                     }).then(res => {
-                        let status = res.data.http_code;
-                        if (status == 200) {
-                            this.__setTokenSentToServer(true);
-                        } else  {
-                            this.__messaging.deleteToken(token);
-                            this.__requestToken();
+                        if (res.success) {
+                            return messanger.deleteToken(token)
+                                .then(() => {
+                                    this.set('messageToken', null);
+                                    return true; 
+                                })
+                                .catch(err => {
+                                    return false;
+                                });
+                        } else {
+                            return false;
+                        }
+                    });
+                    
+                }
+
+                __authenticate() {
+                    this.__authenticating = this._defer();
+
+                    this.__loadStorage().then(() => {
+                        this.__loadAuthenticator();
+                    });
+
+                    return this.__authenticating.promise;
+                }
+
+                __loadAuthenticator() {
+                    this.__authenticating = this._defer();
+
+                    if (window.GoogleAuth === undefined) {
+                        let ga = document.createElement('script');
+
+                        ga.src = 'https://apis.google.com/js/api.js';
+                        ga.defer = true;
+                        ga.async = true;
+                        ga.onload = _ => {
+                            gapi.load('client:auth2', _ => {
+
+                                gapi.client.init({
+                                    apiKey: 'AIzaSyB8HreVpMd2SRwRdW8bSdgw8uyMK4ClSHw',
+                                    clientId: '240276356095-ktmik9r38jmietfkfmn1s3ctc7tpcsbj.apps.googleusercontent.com',
+                                    scope: this.__scopes
+                                }).then(() => {
+                                    window.GoogleAuth = gapi.auth2.getAuthInstance();
+                                    
+                                    GoogleAuth.isSignedIn.listen(status => {
+                                        validate.bind(this)();
+                                    });
+
+                                    validate.bind(this)();
+                                });
+                            });
+                        };
+
+                        document.body.appendChild(ga);
+                    } else {
+                        validate.bind(this)();
+                    }
+
+                    return this.__authenticating.promise;
+
+                    function validate() {
+                        let user = GoogleAuth.currentUser.get();
+
+                        if ( ! user.hasGrantedScopes(this.__scopes)) {
+                            this.__showAuthenticator();
+                        } else {
+                            this.__hideAuthenticator();
+                            this._setStorageItem(this.storageKey, 'access_token', user.getAuthResponse().access_token);
+
+                            if (this.__authenticating) {
+                                this.__authenticating.resolve(true);
+                            }
+                        }
+                    }
+                }
+
+                __authenticationChanged(auth) {
+                    if ( ! auth) {
+                        this.__showAuthenticator();
+                    } else {
+                        this.__hideAuthenticator();
+                    }
+                }
+
+                __showAuthenticator() {
+                    this.__resolveContext();
+
+                    if ( ! this.opened) {
+                        document.body.appendChild(this);
+                    }
+
+                    let timer = setTimeout(() => {
+                        clearTimeout(timer);
+                        timer = null;
+                        this.set('opened', true);
+                        this.$.authenticator.classList.add('opened');
+                    }, 10);
+                }
+
+                __hideAuthenticator() {
+                    this.__resolveContext();
+
+                    if (this.opened) {
+                        this.__context.appendChild(this);
+                    }
+
+                    let timer = setTimeout(() => {
+                        clearTimeout(timer);
+                        timer = null;
+                        this.set('opened', false);
+                        this.$.authenticator.classList.remove('opened');
+                    }, 10);
+                    
+                }
+
+                __resolveContext() {
+                    if ( ! this.__context) {
+                        let parent = this.parentNode;
+                        let context = null;
+
+                        while(parent) {
+                            if (parent.nodeType === Node.ELEMENT_NODE ) {
+                                context = parent;
+                                break;
+                            }
+
+                            if (parent.host) {
+                                context = parent.host;
+                                break;
+                            }
+
+                            parent = parent.parentNode;
+                        }
+
+                        this.__context = context;
+                    }
+                    
+                }
+
+                __messageTokenChanged(token) {
+                    if (this.storageKey) {
+                        this.set('subscribed', !!token);
+                        this._setStorageItem(this.storageKey, 'message_token', token);
+                    }
+                }
+
+                __onAuthenticateTap() {
+                    GoogleAuth.signIn().catch(err => {
+                        this.__hideAuthenticator();
+                        if (this.__authenticating) {
+                            this.__authenticating.resolve(false);
                         }
                     });
                 }
+
+
             }
-
-            __notify() {
-                // notify all
-                if (this.session.feed_authorization) {
-                    this.$.ajax.post('https://www.pusdikadm.xyz/qtool/api/feed/notify/qtool', {
-                        title: 'Hei Baby',
-                        body: 'I want to make love',
-                        authorization: this.session.feed_authorization
-                    });
-                }
-            }
-
-            __onAuthorizeTap() {
-                let messaging = this.__messaging;
-
-                messaging.requestPermission()
-                    .then(() => {
-                        this.set('granted', true);
-                    });
-            }
-
-            __onAuthenticateTap() {
-                GoogleAuth.signIn();
-            }
-
-
+            customElements.define(KctFeed.is, KctFeed);
         }
-        customElements.define(KctFeed.is, KctFeed);
+        
     </script>
 </dom-module>

@@ -103,20 +103,19 @@
         
         <div class="box box-shadow-z2 item" style$="border-left: 2px solid [[ accent ]]">
             <div class="box-body" on-tap="__onCardTap">
-                <h3 class="item-title">[[ record.task.tt_title ]]</h3>
-                <!-- <p class="item-meta">
-                    Dibuat oleh <b>[[ record.task.creator_su_fullname ]]</b> [[ record.task.tt_created_dt_relative ]]
-                </p> -->
+                <h3 class="item-title">[[ record.task.su_fullname ]]</h3>
+                <p class="item-meta">
+                    Didaftarkan oleh <b>[[ record.task.creator_su_fullname ]]</b> [[ record.task.tt_created_dt_relative ]]
+                </p>
                 <div class="box-label">
                     <template is="dom-repeat" items="[[ record.labels ]]">
                         <span class="item-label" style$="background-color: [[ item.sl_color ]]">[[ item.sl_label ]]</span>
                     </template>
                     <span class="item-clear"></span>
                 </div>
-                <div class="item-content" inner-h-t-m-l="[[ record.task.tt_content ]]"></div>
             </div>
             <div class="box-user">
-                <div class="item-user" title$="Dibuat oleh [[ record.task.creator_su_fullname ]]">
+                <div class="item-user" title$="Didaftarkan oleh [[ record.task.creator_su_fullname ]]">
                     <img src$="[[ record.task.creator_su_avatar_thumb ]]&w=30&h=30" alt=".">
                 </div>
                 <!-- <user-dock items="[[ record.users ]]"></user-dock> -->

@@ -7,57 +7,7 @@ use App\Users\Models\User,
 class UsersController extends \Micro\Controller {
 
     public function testAction() {
-        $data = \App\Lkh\Models\Lkh::get(1)->data;
-        $post = $data->toArray();
-
-        $flag = array();
-        $date = $post['lkh_date'];
-        $user = $post['lkh_su_id'];
-        $time = strtotime($date);
-
-        $m = date('m', $time);
-        $y = date('Y', $time);
-
-        $exam = \App\Lkh\Models\Exam::findFirst(array(
-            'lke_su_id = :user: AND YEAR(lke_date) = :y:',
-            'bind' => array(
-                'user' => $user,
-                'y' => $y
-            )
-        ));
-
-        if ( ! $exam) {
-            $flag[] = 'Y';
-        }
-
-        $exam = \App\Lkh\Models\Exam::findFirst(array(
-            'lke_su_id = :user: AND MONTH(lke_date) = :m: AND YEAR(lke_date) = :y:',
-            'bind' => array(
-                'user' => $user,
-                'y' => $y,
-                'm' => $m
-            )
-        ));
-
-        if ( ! $exam) {
-            $flag[] = 'M';
-        }
-
-        $exam = \App\Lkh\Models\Exam::findFirst(array(
-            'lke_su_id = :user: AND lke_date = :d:',
-            'bind' => array(
-                'user' => $user,
-                'd' => $date
-            )
-        ));
-
-        if ( ! $exam) {
-            $flag[] = 'D';
-        }
-
-        $flag = implode('', $flag);
-
-        print_r($flag);
+        
     }
 
     public function findAction() {
@@ -184,34 +134,30 @@ class UsersController extends \Micro\Controller {
 
         $user = User::findFirst(array(
             'su_email = :email:', 
-            'bind' => array(
-                'email' => $post['email']
-            )
+            'bind' => array('email' => $post['email'])
         ));
 
+        $result = array(
+            'success' => FALSE,
+            'message' => NULL
+        );
+
         if ($user && $user->su_active == 0) {
-            $token = $user->su_invite_token;
-            $need = FALSE;
-
-            if ( ! empty($token)) {
-                $verify = $this->security->verifyToken($token);
-                if ( ! $verify['success']) {
-                    $need = TRUE;
-                }
-            } else {
-                $need = TRUE;
-            }
-
-            if ($need) {
+            if (empty($user->su_invite_token)) {
                 $user->su_invite_token = User::createInvitationToken(array('su_email' => $post['email']));
                 $user->save();
-                $user->sendInvitation();
+            }
+            
+            $sent = $user->sendInvitation();
+
+            if (is_bool($sent)) {
+                $result['success'] = $sent;
+            } else {
+                $result['message'] = $sent;
             }
         }
 
-        return array(
-            'success' => TRUE
-        );
+        return $result;
     }
 
     public function validateActivationAction() {
@@ -220,35 +166,37 @@ class UsersController extends \Micro\Controller {
         );
 
         $post = $this->request->getJson();
-        $code = $post['token'];
+        $code = $this->url->decode($post['token']);
 
-        $verify = $this->security->verifyToken($code);
+        if ( ! empty($code)) {
+            $data = $this->security->decrypt($code, TRUE);
 
-        if ($verify['success']) {
-            $email = $verify['payload']->su_email;
-            
-            $user = User::findFirst(array(
-                'su_email = :email: AND su_invite_token = :code:',
-                'bind' => array(
-                    'email' => $email,
-                    'code' => $code
-                )
-            ));
+            if (isset($data->su_email)) {
+                $user = User::findFirst(array(
+                    'su_email = :email: AND su_invite_token = :code:',
+                    'bind' => array(
+                        'email' => $data->su_email,
+                        'code' => $code
+                    )
+                ));
 
-            if ($user) {
-                if ($user->su_active == 0) {
-                    $result['success'] = TRUE;
-                    $result['data'] = $user->toArray();
+                if ($user) {
+                    if ($user->su_active == 0) {
+                        $result['success'] = TRUE;
+                        $result['data'] = $user->toArray();
+                    } else {
+                        $result['message'] = 'Pengguna sudah aktif';
+                    }
                 } else {
-                    $result['message'] = 'Akun sudah aktif';
+                    $result['message'] = 'Kode aktivasi tidak valid';
                 }
             } else {
-                $result['message'] = 'Kode aktivasi tidak valid';
+                $result['message'] = 'Kode aktivasi tidak valid';    
             }
         } else {
-            $result['message'] = $verify['message'];
+            $result['message'] = 'Kode aktivasi tidak valid';
         }
-        
+
         return $result;
     }
 

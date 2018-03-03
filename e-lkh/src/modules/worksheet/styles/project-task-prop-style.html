@@ -1,0 +1,128 @@
+<dom-module id="project-task-prop-style">
+    <template>
+        <style include="theme-helper">
+            
+            :host {
+                height: 100%;
+                overflow: hidden;
+            }
+
+            :host([loading]) {
+                display: none;
+            }
+
+            .scroller {
+                height: 100%;
+                margin-right: -20px;
+                overflow-x: hidden;
+                overflow-y: scroll;
+                padding: 15px;
+            }
+            .form-group {
+                padding: 15px 0;
+                font-size: 13px;
+            }
+
+            .form-group .tools {
+                position: relative;
+                float: right;
+                top: -7px;
+            }
+
+            .form-group .tools paper-button {
+                font-size: 11px;
+                text-transform: none;
+                border: 1px solid #dfdfdf;
+                padding: 0.3em 0.57em;
+            }
+
+            .form-group .tools paper-button iron-icon {
+                --iron-icon-width: 14px;
+                --iron-icon-height: 14px;
+            }
+
+            .form-group .field {
+                margin-top: 10px;
+            }
+
+            .form-group .field .empty {
+                color: var(--paper-grey-500);
+            }
+
+            .form-group + .form-group {
+                border-top: 1px solid #dfdfdf;
+            }
+
+            .editor[hidden] {
+                display: none;
+            }
+
+            .user-item {
+                margin-bottom: 10px;
+                position: relative;
+            }
+
+            .user-item .icon {
+                width: 40px;
+                height: 40px;
+                overflow: hidden;
+                border-radius: 50%;
+                float: left;
+            }
+            .user-item .text {
+                margin-left: 50px;
+                font-size: 13px;
+                font-weight: 500;
+            }
+            .user-item .text a {
+                font-weight: 400;
+                font-size: 12px;
+            }
+            .user-item .meta {
+                font-size: 12px;
+                font-weight: 400;
+                color: #999;
+            }
+            .user-item .tool {
+                position: absolute;
+                right: 10px;
+                top: 0;
+            }
+            .user-item .tool paper-icon-button {
+                padding: 0;
+                width: 16px;
+                height: 16px;
+                color: #999;
+            }
+            .label-item {
+                float: left;
+                padding: 3px 3px 3px 6px;
+                border-radius: 2px;
+                margin: 0 3px 3px 0;
+                color: #fff;
+                cursor: default;
+                font-size: 12px;
+            }
+            .label-item paper-icon-button {
+                padding: 0;
+                width: 16px;
+                height: 16px;
+                position: relative;
+                top: -1px;
+            }
+            .value-text {
+                font-weight: 500;
+            }
+            .value-icon {
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
+                position: relative;
+                top: -1px;
+            }
+            save-indicator {
+                position: relative;
+                top: 2px;
+            }
+        </style>
+    </template>
+</dom-module>

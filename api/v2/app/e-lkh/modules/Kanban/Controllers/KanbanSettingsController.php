@@ -35,7 +35,7 @@ class KanbanSettingsController extends \Micro\Controller {
                 });
 
                 if ($request == 'granted') {
-                    $setup = \App\Roles\Models\RoleStatus::find(array(
+                    $setup = \App\Roles\Models\RolePanel::find(array(
                         'srs_sp_id = :project: AND srs_sr_id = :role: AND srs_kp_id = :panel:',
                         'bind' => array(
                             'project' => $project,

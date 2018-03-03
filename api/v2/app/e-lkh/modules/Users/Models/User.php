@@ -58,17 +58,17 @@ class User extends \Micro\Model {
             )
         );
 
-        $this->hasManyToMany(
-            'su_id',
-            'App\Users\Models\UserPermission',
-            'sup_su_id',
-            'sup_smc_id',
-            'App\Modules\Models\ModuleCapability',
-            'smc_id',
-            array(
-                'alias' => 'Permissions'
-            )
-        );
+        // $this->hasManyToMany(
+        //     'su_id',
+        //     'App\Users\Models\UserPermission',
+        //     'sup_su_id',
+        //     'sup_smc_id',
+        //     'App\Modules\Models\ModuleCapability',
+        //     'smc_id',
+        //     array(
+        //         'alias' => 'Permissions'
+        //     )
+        // );
 
         $this->hasMany(
             'su_id',
@@ -91,6 +91,18 @@ class User extends \Micro\Model {
             )
         );
 
+        $this->hasManyToMany(
+            'su_id',
+            'App\Projects\Models\ProjectUser',
+            'spu_su_id',
+            'spu_sp_id',
+            'App\Projects\Models\Project',
+            'sp_id',
+            array(
+                'alias' => 'Projects'
+            )
+        );
+
         $this->hasMany(
             'su_id',
             'App\Tasks\Models\TaskUser',
@@ -103,30 +115,15 @@ class User extends \Micro\Model {
             )
         );
 
-        $this->hasOne(
-            'su_sj_id',
-            'App\Jobs\Models\Job',
-            'sj_id',
+        $this->hasMany(
+            'su_id',
+            'App\Users\Models\UserToken',
+            'sut_su_id',
             array(
-                'alias' => 'Job'
-            )
-        );
-
-        $this->hasOne(
-            'su_scp_id',
-            'App\Company\Models\Company',
-            'scp_id',
-            array(
-                'alias' => 'Company'
-            )
-        );
-
-        $this->hasOne(
-            'su_sdp_id',
-            'App\Departments\Models\Department',
-            'sdp_id',
-            array(
-                'alias' => 'Department'
+                'alias' => 'Tokens',
+                'foreignKey' => array(
+                    'action' => Relation::ACTION_CASCADE
+                )
             )
         );
 
@@ -134,24 +131,6 @@ class User extends \Micro\Model {
 
     public function getSource() {
         return 'sys_users';
-    }
-
-    public function beforeSave() {
-        if (isset($this->su_scp_id) && $this->su_scp_id== '') {
-            $this->su_scp_id = NULL;
-        }
-
-        if (isset($this->su_sdp_id) && $this->su_sdp_id == '') {
-            $this->su_sdp_id = NULL;
-        }
-
-        if (isset($this->su_sj_id) && $this->su_sj_id == '') {
-            $this->su_sj_id = NULL;
-        }
-
-        if (isset($this->su_dob) && $this->su_dob == '') {
-            $this->su_dob = NULL;
-        }
     }
 
     public function validation()
@@ -173,42 +152,16 @@ class User extends \Micro\Model {
     // @Override
     public function toArray($columns =  NULL) {
         $array = parent::toArray($columns);
-        $array['su_dob_formatted'] = date('d M Y', strtotime($this->su_dob));
-
-        if (empty($array['su_fullname'])) {
-            $array['su_fullname'] = $array['su_email'];
-        }
-
-        // handle avatar
-        $avatar = PUBPATH.'resources/avatars/'.$array['su_avatar'];
-        $exists = file_exists($avatar) && ! is_dir($avatar);
-
-        if ( ! $exists) {
-            $array['su_avatar'] = self::AVATAR_DEFAULT;
-        }
-
-        $URL = $this->getDI()->get('url');
-
-        $array['su_avatar_url'] = $URL->getBaseUrl().'public/resources/avatars/'.$array['su_avatar'];
-        $array['su_avatar_thumb'] = $URL->getSiteUrl('assets/thumb?s=public/resources/avatars/'.$array['su_avatar']);
+        $array['su_fullname'] = $this->getName();
+        $array['su_avatar'] = $this->getAvatar();
+        $array['su_avatar_url'] = $this->getAvatarUrl();
+        $array['su_avatar_thumb'] = $this->getAvatarThumb();
 
         // handle password
         unset($array['su_passwd']);    
 
         if ($this->role) {
             $array = array_merge($array, $this->role->toArray());
-        }
-
-        if ($this->job) {
-            $array['su_sj_name'] = $this->job->sj_name;
-        }
-
-        if ($this->company) {
-            $array['su_scp_name'] = $this->company->scp_name;
-        }
-
-        if ($this->department) {
-            $array['su_sdp_name'] = $this->department->sdp_name;
         }
 
         // need to reinvite
@@ -223,6 +176,40 @@ class User extends \Micro\Model {
 
     public function getName() {
         return empty($this->su_fullname) ? $this->su_email : $this->su_fullname;
+    }
+
+    public function getAvatar() {
+        // cache for multiple call in same time
+        static $avatar = array();
+        
+        $key = $this->su_id;
+
+        if ( ! isset($avatar[$key])) {
+            $avatar[$key] = isset($this->su_avatar) ? $this->su_avatar : self::AVATAR_DEFAULT;
+            $exists = FALSE;
+
+            if ( ! empty($avatar[$key])) {
+                $exists = file_exists(PUBPATH.'resources/avatars/'.$avatar[$key]);
+            }
+
+            if ( ! $exists) {
+                $avatar[$key] = self::AVATAR_DEFAULT;
+            }
+        }
+
+        return $avatar[$key];
+    }
+
+    public function getAvatarUrl() {
+        $app = \Micro\App::getDefault();
+        $avatar = $this->getAvatar();
+        return $app->url->getBaseUrl().'public/resources/avatars/'.$avatar;
+    }
+
+    public function getAvatarThumb() {
+        $app = \Micro\App::getDefault();
+        $avatar = $this->getAvatar();
+        return $app->url->getSiteUrl('assets/thumb?s=public/resources/avatars/'.$avatar);
     }
 
     public function getMenus($options = array()) {
@@ -259,28 +246,32 @@ class User extends \Micro\Model {
             if ($this->role) {
                 return $this->role->getPermissions();
             } else {
-                return \App\Modules\Models\ModuleCapability::find('smc_id = -1');
+                return array();
             }
-        } else {
-            $conditions = '';
+        } 
 
-            if (isset($options[0]) && is_string($options[0])) {
-                $conditions .= ' AND ' . $options[0];
-                unset($options[0]);
-            } else if (isset($options['conditions'])) {
-                $conditions = ' AND ' . $options['conditions'];
-                unset($options['conditions']);
+        $perms = array();
+
+        foreach($this->getUserPermissions($options) as $prof) {
+            if (($cap = $prof->capability) && ($mod = $cap->module)) {
+                $perms[] = array(
+                    'authorized' => $prof->sup_selected ? TRUE : FALSE,
+                    'permission' => strtolower($cap->smc_name).'@'.$mod->sm_name,
+                    'capability' => $cap->smc_name,
+                    'module_name' => $mod->sm_name,
+                    'module_path' => $mod->sm_api
+                );
             }
-
-            if ( ! empty($conditions)) {
-                $conditions .= ' AND ';
-            }
-
-            $conditions .= 'App\Users\Models\UserPermission.sup_selected = 1';
-            $options['conditions'] = $conditions;
         }
 
-        return parent::getPermissions($options);
+        return $perms;
+    }
+
+    public function getAccesses() {
+        if ($this->role) {
+            return $this->role->getAccesses();
+        }
+        return array();
     }
 
     // @Override
@@ -560,7 +551,7 @@ class User extends \Micro\Model {
     }
 
     public static function createInvitationToken($data = array()) {
-        return \Micro\App::getDefault()->security->createToken($data, 2678400);
+        return \Micro\App::getDefault()->security->encrypt($data, TRUE);
     }
 
     public function sendInvitation() {
@@ -573,8 +564,9 @@ class User extends \Micro\Model {
         }
 
         $app = \Micro\App::getDefault();
+        $code = $app->url->encode($this->su_invite_token);
 
-        $href = sprintf('%sinvitation?code=%s', $app->url->getClientUrl(), $this->su_invite_token);
+        $href = sprintf('%sinvitation?code=%s', $app->url->getClientUrl(), $code);
         $body = $app->di->get('\App\Users\Controllers\UsersController', TRUE)
             ->view
             ->render('invitation', array(
@@ -592,4 +584,5 @@ class User extends \Micro\Model {
 
         return $app->mailer->send($options);
     }
+
 }

@@ -2,6 +2,7 @@
 <link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
 <link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/mixins/location.html">
 
 <dom-module id="invitation-page">
     <template>
@@ -141,7 +142,9 @@
             }
 
             handleRouteParams() {
-                let token = this.route.query.code;
+                let token = this._param('code');
+                console.log(token);
+                //let token = this.route.query.code;
                 this.set('token', token);
                 this.__validate();
             }

@@ -4,6 +4,7 @@ namespace App\Roles\Models;
 use Micro\Helpers\Text,
     App\Roles\Models\RoleKanban,
     App\Roles\Models\RolePermission,
+    App\Roles\Models\RoleAccess,
     Phalcon\Mvc\Model\Relation;
 
 class Role extends \Micro\Model {
@@ -105,24 +106,39 @@ class Role extends \Micro\Model {
     }
 
     public function getPermissions($options = array()) {
-        $conditions = '';
+        $perms = array();
 
-        if (isset($options[0]) && is_string($options[0])) {
-            $conditions = $options[0];
-            unset($options[0]);
-        } else if (isset($options['conditions'])) {
-            $conditions = $options['conditions'];
-            unset($options['conditions']);
+        foreach($this->getRolePermissions($options) as $prof) {
+            if (($cap = $prof->capability) && ($mod = $cap->module)) {
+                $perms[] = array(
+                    'authorized' => $prof->srp_selected ? TRUE : FALSE,
+                    'permission' => strtolower($cap->smc_name).'@'.$mod->sm_name,
+                    'capability' => $cap->smc_name,
+                    'module_name' => $mod->sm_name,
+                    'module_path' => $mod->sm_api
+                );
+            }
         }
 
-        if ( ! empty($conditions)) {
-            $conditions .= ' AND ';
+        return $perms;
+    }
+
+    public function getAccesses() { 
+        $acceses = array();
+
+        foreach($this->getRoleMenus() as $prof) {
+            if (($mod = $prof->module)) {
+                $acceses[] = array(
+                    'authorized' => $prof->srm_selected == 1 ? TRUE : FALSE,
+                    'permission' => 'access@'.$mod->sm_name,
+                    'capability' => 'access',
+                    'module_name' => $mod->sm_name,
+                    'module_path' => $mod->sm_api
+                );
+            }
         }
 
-        $conditions .= 'App\Roles\Models\RolePermission.srp_selected = 1';
-        $options['conditions'] = $conditions;
-
-        return parent::getPermissions($options);
+        return $acceses;
     }
 
     public function beforeSave() {
@@ -195,45 +211,61 @@ class Role extends \Micro\Model {
         $exists = array();
 
         foreach($this->roleMenus as $rm) {
-            $exists[$rm->srm_smn_id] = $rm;
+            $token = $rm->getToken();
+            $exists[$token] = $rm->srm_id;
         }
 
-        foreach($items as $id) {
-            if ( ! isset($exists[$id])) {
-                $create[] = $id;
+        foreach($items as $item) {
+            list($menu, $module, $selected) = explode(':', $item);
+
+            $menu = empty($menu) ? NULL : $menu;
+            $token = sprintf('%d:%d', $menu, $module);
+
+            if ( ! isset($exists[$token])) {
+                $create[] = array(
+                    'menu' => $menu,
+                    'module' => $module,
+                    'selected' => $selected
+                );
             } else {
-                $update[] = $id;
-                unset($exists[$id]);
+                $update[] = array(
+                    'id' => $exists[$token],
+                    'menu' => $menu,
+                    'module' => $module,
+                    'selected' => $selected
+                );
+
+                unset($exists[$token]);
+            }
+        
+        }
+
+        foreach($exists as $token => $id) {
+            $rm = RoleMenu::findFirst($id);
+            if ($rm) {
+                $rm->delete();
             }
         }
 
-        foreach($exists as $menu => $rm) {
-            $rm->srm_selected = 0;
-            $rm->save();
-        }
-
-        foreach($update as $id) {
-            $rm = RoleMenu::findFirst(array(
-                'srm_sr_id = :role: AND srm_smn_id = :menu:',
-                'bind' => array(
-                    'role' => $this->sr_id,
-                    'menu' => $id
-                )
-            ));
+        foreach($update as $elem) {
+            $rm = RoleMenu::findFirst($elem['id']);
 
             if ($rm) {
-                $rm->srm_selected = 1;
+                $rm->srm_smn_id = $elem['menu'];
+                $rm->srm_sm_id = $elem['module'];
+                $rm->srm_selected = $elem['selected'];
                 $rm->save();
             }
         }
 
-        foreach($create as $id) {
+        foreach($create as $elem) {
             $rm = new RoleMenu();
-
-            $rm->srm_sr_id = $this->sr_id;
-            $rm->srm_smn_id = $id;
-            $rm->srm_selected = 1;
             
+            $rm->srm_sr_id = $this->sr_id;
+            $rm->srm_sm_id = $elem['module'];
+            $rm->srm_smn_id = $elem['menu'];
+            $rm->srm_selected = $elem['selected'];
+
             $rm->save();
         }
     }
@@ -247,12 +279,12 @@ class Role extends \Micro\Model {
             $exists[$rp->srp_smc_id] = $rp;
         }
 
-        foreach($items as $id) {
-            if ( ! isset($exists[$id])) {
-                $create[] = $id;
+        foreach($items as $cap) {
+            if ( ! isset($exists[$cap])) {
+                $create[] = $cap;
             } else {
-                $update[] = $id;
-                unset($exists[$id]);
+                $update[] = $cap;
+                unset($exists[$cap]);
             }
         }
 
@@ -261,12 +293,12 @@ class Role extends \Micro\Model {
             $rp->save();
         }
 
-        foreach($update as $id) {
+        foreach($update as $cap) {
             $rp = RolePermission::findFirst(array(
                 'srp_sr_id = :role: AND srp_smc_id = :capability:',
                 'bind' => array(
                     'role' => $this->sr_id,
-                    'capability' => $id
+                    'capability' => $cap
                 )
             ));
 
@@ -276,10 +308,10 @@ class Role extends \Micro\Model {
             }
         }
 
-        foreach($create as $id) {
+        foreach($create as $cap) {
             $rp = new RolePermission();
             $rp->srp_sr_id = $this->sr_id;
-            $rp->srp_smc_id = $id;
+            $rp->srp_smc_id = $cap;
             $rp->srp_selected = 1;
             $rp->save();
         }

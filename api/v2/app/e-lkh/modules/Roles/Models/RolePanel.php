@@ -1,17 +1,17 @@
 <?php
-namespace App\Users\Models;
+namespace App\Roles\Models;
 
-class UserStatus extends \Micro\Model {
+class RolePanel extends \Micro\Model {
 
     public function getSource() {
-        return 'sys_users_statuses';
+        return 'sys_roles_panels';
     }
 
-    public static function queryGranted($project, $user) {
+    public static function queryGranted($project, $role) {
         $data = self::get()
-            ->where('sus_sp_id = :project: AND sus_su_id = :user:', array(
+            ->where('srs_sp_id = :project: AND srs_sr_id = :role:', array(
                 'project' => $project->sp_id,
-                'user' => $user->su_id
+                'role' => $role->sr_id
             ))
             ->execute();
 
@@ -21,7 +21,7 @@ class UserStatus extends \Micro\Model {
         );
     }
 
-    public static function querySetup($project, $user) {
+    public static function querySetup($project, $role) {
 
         $result = array(
             'success' => TRUE,
@@ -36,11 +36,11 @@ class UserStatus extends \Micro\Model {
                 $statuses = array();
                 $maps = array();
 
-                $query = UserStatus::find(array(
-                    'sus_sp_id = :project: AND sus_su_id = :user: AND sus_kp_id = :panel:',
+                $query = RolePanel::find(array(
+                    'srs_sp_id = :project: AND srs_sr_id = :role: AND srs_kp_id = :panel:',
                     'bind' => array(
                         'project' => $project->sp_id,
-                        'user' => $user->su_id,
+                        'role' => $role->sr_id,
                         'panel' => $panel->kp_id
                     )
                 ));
@@ -51,13 +51,13 @@ class UserStatus extends \Micro\Model {
                     $display = 'hide';
 
                     foreach($query as $item) {
-                        $maps[$item->sus_kst_id] = array(
-                            'id' => $item->sus_id,
-                            'checked' => $item->sus_checked
+                        $maps[$item->srs_kst_id] = array(
+                            'id' => $item->srs_id,
+                            'checked' => $item->srs_checked
                         );
 
-                        if ($item->sus_checked == 1) {
-                            $display = 'user';
+                        if ($item->srs_checked == 1) {
+                            $display = 'custom';
                         }
                     }
                 }
@@ -74,15 +74,15 @@ class UserStatus extends \Micro\Model {
                     }
 
                     $statuses[] = array(
-                        'sus_id' => $id,
-                        'sus_su_id' => $user->su_id,
-                        'sus_sp_id' => $project->sp_id,
-                        'sus_kp_id' => $panel->kp_id,
-                        'sus_kst_id' => $ps['kst_id'],
-                        'sus_label' => $ps['kst_label'],
-                        'sus_source_label' => $ps['kst_source_label'],
-                        'sus_target_label' => $ps['kst_target_label'],
-                        'sus_checked' => $checked
+                        'srs_id' => $id,
+                        'srs_sr_id' => $role->sr_id,
+                        'srs_sp_id' => $project->sp_id,
+                        'srs_kp_id' => $panel->kp_id,
+                        'srs_kst_id' => $ps['kst_id'],
+                        'srs_label' => $ps['kst_label'],
+                        'srs_source_label' => $ps['kst_source_label'],
+                        'srs_target_label' => $ps['kst_target_label'],
+                        'srs_checked' => $checked
                     );
                 }
 
@@ -91,7 +91,7 @@ class UserStatus extends \Micro\Model {
                     'panel_title' => $panel->kp_title,
                     'panel_statuses' => $statuses,
                     'panel_display' => $display,
-                    'panel_custom' => $display == 'user' ? TRUE : FALSE
+                    'panel_custom' => $display == 'custom' ? TRUE : FALSE
                 );
 
             }

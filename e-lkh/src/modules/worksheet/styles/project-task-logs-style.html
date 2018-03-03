@@ -1,0 +1,211 @@
+<dom-module id="project-task-logs-style">
+    <template>
+        <style include="theme-helper">
+            :host([loading]) {
+                display: none;
+            }
+            .timeline {
+                padding: 0;
+                border-left: 4px solid #dfdfdf;
+                margin-left: 30px;
+            }
+
+            .timeline-title {
+                font-weight: 500;
+                font-size: 13px;
+                text-transform: uppercase;
+                margin-bottom: 15px;
+            }
+
+            .timeline-item {
+                position: relative;
+            }
+
+            .timeline-item ~ .timeline-item {
+                margin-top: 15px;
+            }
+
+            .timeline-item::before {
+                content: '';
+                position: absolute;
+                height: 0;
+                border-top: 2px dotted #dfdfdf;
+                margin-top: -2px;
+                left: 0;
+                right: 0;
+                top: 50%;
+            }
+
+            .timeline-icon {
+                position: absolute;
+                left: -18px;
+                top: 50%;
+                margin-top: -16px;
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                border: 1px solid var(--paper-cyan-300);
+                color: var(--paper-cyan-300);
+                box-sizing: border-box;
+                padding: 6px;
+                background-color: #fff;
+            }
+
+            .timeline-icon iron-icon {
+                position: relative;
+                width: 100%;
+                height: 100%;
+                top: -2px;
+            }
+
+            .timeline-body {
+                margin-left: 30px;
+                background-color: #fff;
+                height: 100%;
+                position: relative;
+                z-index: 2;
+            }
+
+            .msgbox-wrapper {
+                border: 1px solid #dfdfdf;
+                border-radius: 4px;
+            }
+            .msgbox-body {
+                padding: 10px;
+            }
+            .msgbox-footer {
+                padding: 0 10px 10px 10px;
+            }
+            .msgbox-footer iron-icon {
+                --iron-icon-width: 20px;
+                --iron-icon-height: 20px;
+            }
+            .msgbox-footer paper-button {
+                margin: 0;
+                text-transform: none;
+            }
+
+            #msgbox {
+                border: 1px solid #2A9AF2;
+                height: 150px;
+            }
+
+            .history-wrapper,
+            .comment-wrapper {
+                border: 1px solid #dfdfdf;
+                background-color: var(--paper-grey-100);
+                border-radius: 4px;
+            }
+
+            .history-body {
+                font-size: 12px;
+                padding: 10px;
+            }
+
+            .comment-header {
+                font-size: 12px;
+                padding: 10px;
+                border-bottom: 1px solid #dfdfdf;
+            }
+
+            .comment-body {
+                font-size: 15px;
+                padding: 15px 10px;
+            }
+
+            kct-html {
+                --strong: { font-weight: 500; };
+                --image: { cursor: pointer;  }
+            }
+
+            .comment-body kct-html {
+                --paragraph: { margin: 0; };
+                --space: 15px;
+            }
+
+            .comment-body kct-html[hidden] {
+                display: none;
+            }
+
+            .comment-footer {
+                padding: 10px;
+                font-size: 12px;
+            }
+
+            .comment-footer > paper-button,
+            .comment-footer > label {
+                float: left;
+            }
+
+            .comment-footer paper-button {
+                margin: 0 5px 0 0;
+                text-transform: none;
+                font-size: 12px;
+                border: 1px solid #dfdfdf;
+
+            }
+
+            .comment-footer paper-button[checked] {
+                border-color: var(--paper-red-200);
+                color: var(--paper-red-500);
+            }
+
+            .comment-footer paper-button.btn-icon {
+                min-width: auto;
+            }
+
+            .comment-footer paper-button iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
+                position: relative;
+                top: -1px;
+            }
+
+            .comment-footer > label {
+                margin-top: 8px;
+            }
+
+            .comment-edit {
+                border-radius: 2px;
+                background-color: #fff;
+                border: 1px solid #dfdfdf;
+            }
+
+            .comment-edit paper-textarea {
+                padding: 0;
+                --paper-input-container: { padding: 0; };
+                --paper-input-container-underline: { display: none; };
+                --paper-input-container-underline-focus: { display: none; };
+            }
+
+            .comment-edit kct-html-editor {
+                height: 150px;
+                --wysiwyg-toolbar-background: #fff;
+                --wysiwyg-toolbar-color: var(--paper-blue-grey-500);
+                --wysiwyg-tool-icon-disabled-color: var(--paper-grey-500);
+                --wysiwyg-toolbar: {
+                    border-bottom: 1px solid #dfdfdf;
+                };
+            }
+
+            .paginator {
+                display: block;
+                margin: 20px 0;
+                text-align: center;
+            }
+
+            .paginator[hidden] {
+                display: none;
+            }
+
+            .paginator paper-button {
+                font-size: 13px;
+                padding: 8px 16px;
+                text-transform: none;
+                color: var(--paper-cyan-500);
+                border: 1px solid var(--paper-cyan-300);
+            }
+
+        </style>
+    </template>
+</dom-module>

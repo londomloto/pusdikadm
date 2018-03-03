@@ -2,10 +2,10 @@
 namespace App\Roles\Controllers;
 
 use App\Roles\Models\Role,
-    App\Roles\Models\RoleStatus,
+    App\Roles\Models\RolePanel,
     App\Projects\Models\Project;
 
-class RolesStatusesController extends \Micro\Controller {
+class RolesPanelsController extends \Micro\Controller {
 
     public function findAction() {
         $params = $this->request->getParams();
@@ -17,15 +17,15 @@ class RolesStatusesController extends \Micro\Controller {
         switch($display) {
             case 'setup':
 
-                return RoleStatus::querySetup($project, $role);
+                return RolePanel::querySetup($project, $role);
                 
             case 'granted':
                 
-                return RoleStatus::queryGranted($project, $role);
+                return RolePanel::queryGranted($project, $role);
 
             default:
                 
-                return RoleStatus::get()->paginate();
+                return RolePanel::get()->paginate();
         }
     }
 
@@ -36,7 +36,7 @@ class RolesStatusesController extends \Micro\Controller {
 
         foreach($post['panels'] as $panel) {
             if ($panel['panel_display'] == 'show') {
-                RoleStatus::find(array(
+                RolePanel::find(array(
                     'srs_sp_id = :project: AND srs_sr_id = :role: AND srs_kp_id = :panel:',
                     'bind' => array(
                         'project' => $project->sp_id,
@@ -49,7 +49,7 @@ class RolesStatusesController extends \Micro\Controller {
                 $updated = array();
                 $deleted = array();
 
-                $found = RoleStatus::find(array(
+                $found = RolePanel::find(array(
                     'srs_sp_id = :project: AND srs_sr_id = :role: AND srs_kp_id = :panel:',
                     'bind' => array(
                         'project' => $project->sp_id,
@@ -85,12 +85,12 @@ class RolesStatusesController extends \Micro\Controller {
                 }
 
                 foreach($created as $data) {
-                    $item = new RoleStatus();
+                    $item = new RolePanel();
                     $item->save($data);
                 }
 
                 foreach($updated as $data) {
-                    $item = RoleStatus::findFirst($data['srs_id']);
+                    $item = RolePanel::findFirst($data['srs_id']);
                     if ($item) {
                         $item->save($data);
                     }

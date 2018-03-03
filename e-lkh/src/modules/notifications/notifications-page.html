@@ -1,8 +1,12 @@
 <link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
 <link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
 <link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../../../cores/elements/kct-html/kct-html.html">
+<link rel="import" href="../../../../cores/elements/kct-feed/kct-feed.html">
+<link rel="import" href="../../../../cores/elements/kct-checkbox/kct-checkbox.html">
 <link rel="import" href="../../../../cores/elements/kct-socket/kct-socket.html">
+<link rel="import" href="../../../../cores/elements/kct-media/kct-media.html">
 <link rel="import" href="../settings/blocks/setting-header-block.html">
 
 <dom-module id="notifications-page">
@@ -29,13 +33,14 @@
                 padding: 5px 15px 5px 5px;
             }
             .item + .item {
-                border-top: 1px solid #dfdfdf;
+                /*border-top: 1px solid #dfdfdf;*/
             }
             .time {
                 font-size: 12px;
             }
             kct-html {
-                --strong: { font-weight: 500; color: var(--paper-purple-500);  };
+                --strong: { font-weight: 500; color: var(--paper-purple-500);  }; 
+                --paragraph: { font-size: 13px;  }
             }
             .paginator {
                 text-align: center;
@@ -47,35 +52,67 @@
                 padding-left: 30px;
                 padding-right: 30px;
             }
+            .main {
+                background-color: #fff;
+                min-height: calc(100vh - 72px - 55px);
+                @apply --shadow-elevation-2dp;
+            }
+            .side {
+                width: 300px;
+
+            }
+            #layout.sm,
+            #layout.md {
+                @apply --layout-vertical;
+            }
+
+            #layout.sm .main,
+            #layout.md .main {
+                min-height: auto;
+            }
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
+        <kct-feed subscribed="{{ subscribed }}" id="feed"></kct-feed>
+
+        <kct-media screen="{{ screen }}"></kct-media>
         <kct-socket manager="global-socket" on-notify="__onSocketNotify"></kct-socket>
 
         <kct-vbox>
             <setting-header-block icon="social:notifications" text="Module" desc="Notifications" hide-nav></setting-header-block>
             <div class="flex scroll-y">
-                <template is="dom-repeat" items="[[ items ]]">
-                    <div class="item" on-tap="__onItemTap">
-                        <div class="icon">
-                            <iron-icon icon="[[ item.tta_icon ]]"></iron-icon>
-                        </div>
-                        <div class="text">
-                            <div class="time">[[ item.tta_time ]]</div>
-                            <kct-html html="[[ item.tta_verb ]]"></kct-html>    
+                <kct-hbox id="layout" class$="[[ screen ]]">
+                    <div class="main flex">
+                        <template is="dom-repeat" items="[[ items ]]">
+                            <div class="item" on-tap="__onItemTap">
+                                <div class="icon">
+                                    <iron-icon icon="[[ item.ta_icon ]]"></iron-icon>
+                                </div>
+                                <div class="text">
+                                    <div class="time">[[ item.ta_time ]]</div>
+                                    <kct-html html="[[ item.ta_verb ]]"></kct-html>    
+                                </div>
+                            </div>
+                        </template>
+                        <div class="paginator">
+                            <paper-button hidden$="[[ !__more ]]" on-tap="__onLoadMoreTap" class="btn-more">Load more items&nbsp;<iron-icon icon="arrow-drop-down"></iron-icon></paper-button>    
                         </div>
                     </div>
-                </template>
-                <div class="paginator">
-                    <paper-button hidden$="[[ !__more ]]" on-tap="__onLoadMoreTap" class="btn-more">Load more items&nbsp;<iron-icon icon="arrow-drop-down"></iron-icon></paper-button>    
-                </div>
+                    <div class="side padding">
+                        <p>Anda dapat menerima pesan notifikasi dari perangkat yang Anda gunakan pada saat aplikasi tidak aktif.</p>
+                        <div class="m-t">
+                            <paper-button on-tap="__onSubscribeTap" class$="[[ __computeButtonClass(subscribed) ]]" raised>[[ __computeButtonLabel(subscribed) ]]</paper-button>
+                        </div>
+                    </div>
+                </kct-hbox>
+                                
             </div>
         </kct-vbox>
 
     </template>
     <script>
         class NotificationsPage extends KctView {
-
+            
             static get is() {
                 return 'notifications-page';
             }
@@ -83,7 +120,8 @@
             static get properties() {
                 return {
                     title: { type: String, value: 'Notifications', notify: true },
-                    items: { type: Array, value: () => ([]) }
+                    items: { type: Array, value: () => ([]) },
+                    setup: { type: Object, value: () => ({}) }
                 };
             }
 
@@ -101,6 +139,19 @@
             ready() {
                 super.ready();
                 this.__load();
+
+                this.$.feed.notify({
+                    body: 'I Love You Bebeh...',
+                    title: 'QTool Yuk'
+                });
+            }
+
+            __computeButtonClass(subscribed) {
+                return subscribed ? 'btn-danger' : 'btn-blue';
+            }
+
+            __computeButtonLabel(subscribed) {
+                return subscribed ? 'Non-aktifkan Notifikasi' : 'Aktifkan Notifikasi';
             }
 
             __load(options = {}) {
@@ -144,10 +195,40 @@
                 });
             }
 
+            __onSubscribeTap() {
+                let action = this.subscribed ? 'unsubscribe' : 'subscribe';
+                let caption = this.subscribed ? 'menonaktifkan' : 'mengaktifkan';
+                
+                this.confirm(
+                    'Konfirmasi',
+                    'Apakah Anda akan ' + caption + ' pesan notifikasi pada perangkat ini?'
+                ).then(y => {
+                    if (y) {
+                        this.mask('Sedang ' + caption + '...');
+
+                        if (action == 'subscribe') {
+                            this.$.feed.subscribe().then(res => {
+                                this.unmask();
+                                if ( ! res.success) {
+                                    this.toast('Peringatan', res.message, 'danger');
+                                }
+                            });
+                        } else {
+                            this.$.feed.unsubscribe().then(res => {
+                                this.unmask();
+                                if ( ! res.success) {
+                                    this.toast('Peringatan', res.message, 'danger');
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+
             __onItemTap(e) {
                 let item = e.model.item;
-                if (item.tta_link) {
-                    this.set('route.path', item.tta_link);
+                if (item.ta_link) {
+                    this.set('route.path', item.ta_link);
                 }
             }
 

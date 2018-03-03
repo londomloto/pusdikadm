@@ -37,6 +37,7 @@
                     storageKey: { type: String },
                     autoValidate: { type: Boolean, value: false },
                     validationUrl: { type: String, value: '/auth/validate' },
+                    accessUrl: { type: String, value: '/auth/access' },
                     loginUrl: { type: String, value: '/auth/login' },
                     errors: { type: String }
                 };
@@ -61,7 +62,11 @@
                 this._ensureAttribute('hidden', true);
             }
 
-            
+            authenticate() {
+                return this.validate().then(auth => {
+                    return auth.success;
+                });
+            }
 
             validate() {
                 let defer = this._defer();
@@ -130,17 +135,23 @@
             }
 
             logout() {
-                this.__invalidate();
+                this.__invalidate(true);
                 return Promise.resolve();
             }
 
-            __invalidate() {
+            __invalidate(purge = false) {
                 // clear user data
-                let user = {};
+                let user;
 
-                Object.keys(this.user).forEach(k => {
-                    user[k] = null;
-                });
+                if (purge) {
+                    user = {};
+                    Object.keys(this.user).forEach(k => {
+                        user[k] = null;
+                    });
+                } else {
+                    user = Object.assign({}, this.user);
+                    user.su_access_token = null;
+                }
 
                 this.set('user', user);
             }
@@ -183,6 +194,7 @@
             }
 
             __fireEvent(type, data = {}) {
+
                 let evt = new CustomEvent(type, {
                     detail: data
                 });

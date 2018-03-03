@@ -4,17 +4,16 @@ namespace App\Notifications\Models;
 use App\Users\Models\User,
     App\Labels\Models\Label;
 
-class Notification extends \App\Tasks\Models\TaskActivity {
+class Notification extends \App\Activities\Models\Activity {
 
     public static function items($start = NULL, $limit = NULL) {
         $auth = \Micro\App::getDefault()->auth->user();
         $query = self::get()
             ->alias('a')
-            ->join('App\Tasks\Models\Task', 'b.tt_id = a.tta_tt_id', 'b', 'left') 
-            ->join('App\Projects\Models\Project', 'c.sp_id = b.tt_sp_id', 'c', 'left')
-            ->join('App\Projects\Models\ProjectUser', 'd.spu_sp_id = c.sp_id', 'd', 'left')
-            ->where('d.spu_su_id = :user:', array('user' => $auth['su_id']))
-            ->orderBy('a.tta_created DESC');
+            ->join('App\Projects\Models\Project', 'b.sp_id = a.ta_sp_id', 'b', 'left')
+            ->join('App\Projects\Models\ProjectUser', 'c.spu_sp_id = b.sp_id', 'c', 'left')
+            ->where('c.spu_su_id = :user:', array('user' => $auth['su_id']))
+            ->orderBy('a.ta_created DESC');
 
         if ( ! is_null($start) && ! is_null($limit)) {
             $query->limit($limit, $start);
@@ -30,60 +29,98 @@ class Notification extends \App\Tasks\Models\TaskActivity {
         $time = str_replace(array('about ', 'at '), '', $time);
         $icon = $this->getIcon();
 
-        $data['tta_verb'] = $this->getVerb();
-        $data['tta_time'] = ucfirst($time);
-        $data['tta_icon'] = $icon;
-        $data['tta_tt_id'] = $this->tta_tt_id;
-        $data['tta_link'] = $this->getLink();
+        $data['ta_id'] = $this->ta_id;
+        $data['ta_verb'] = $this->getVerb();
+        $data['ta_time'] = ucfirst($time);
+        $data['ta_icon'] = $icon;
+        $data['ta_task_id'] = $this->ta_task_id;
+        $data['ta_link'] = $this->getLink();
+        $data['ta_sender'] = $this->ta_sender;
 
         return $data;
     }
 
     // @Override
     public function getVerb() {
-        $verb = '';
-        $type = $this->tta_type;
-        $time = $this->getRelativeTime();
-        $task = $this->task;
+        $task = $this->getTask();
 
-        $sender = $this->tta_sender;
-        $sender_name = '';
+        if ( ! $task) {
+            return '';
+        }
+
+        $verb = '';
+        $type = $this->ta_type;
+        $time = $this->getRelativeTime();
+
+        $sender = $this->ta_sender;
+        $senderName = '';
+        $taskTitle = $task->getTitle();
 
         if ($this->sender) {
-            $sender_name = $this->sender->getName();
+            $senderName = $this->sender->getName();
+        }
+
+        $projectTitle = '';
+
+        if ($this->project) {
+            $projectTitle = strtolower($this->project->sp_title);
         }
 
         switch($type) {
+            case 'create':
+                $verb = sprintf(
+                    '**%s** membuat dokumen %s: "%s"',
+                    $senderName,
+                    $projectTitle,
+                    $taskTitle
+                );
+                break;
+            case 'update_status':
+                $flags = json_decode($this->ta_data);
+                $flags = implode(', ', $flags);
+
+                $verb = sprintf(
+                    '**%s** merubah status dokumen %s: %s" ke **%s**',
+                    $senderName,
+                    $projectTitle,
+                    $taskTitle,
+                    $flags
+                );
+                break;
             case 'comment':
                 $verb = sprintf(
-                    '**%s** mengomentari kegiatan: "%s"',
-                    $sender_name,
-                    $task->tt_title
+                    '**%s** mengomentari dokumen %s: "%s"',
+                    $senderName, 
+                    $projectTitle,
+                    $taskTitle
                 );
                 break;
             case 'update':
             case 'update_title':
             case 'update_description':
                 $verb = sprintf(
-                    '**%s** merubah detail kegiatan: "%s"',
-                    $sender_name,
-                    $task->tt_title
+                    '**%s** menyunting dokumen %: "%s"',
+                    $senderName,
+                    $projectTitle,
+                    $taskTitle
                 );
                 break;
             case 'update_flag':
                 $verb = sprintf(
-                    '**%s** merubah tahapan menjadi **%s** untuk kegiatan: "%s"',
-                    $sender_name,
-                    $this->tta_data,
-                    $task->tt_title
+                    '**%s** merubah status menjadi **%s** untuk dokumen %s: "%s"',
+                    $senderName,
+                    $this->ta_data,
+                    $projectTitle,
+                    $taskTitle
                 );
                 break;
             case 'update_due':
                 $verb = sprintf(
-                    '**%s** merubah tanggal deadline menjadi **%s** untuk kegiatan: "%s"',
-                    $sender_name,
-                    self::_formatDate($this->tta_data, 'M d, Y'),
-                    $task->tt_title
+                    '**%s** merubah tanggal deadline menjadi **%s** untuk dokumen %s: "%s"',
+                    $senderName,
+                    self::_formatDate($this->ta_data, 'M d, Y'),
+                    $projectTitle,
+                    $taskTitle
                 );
                 break;
             case 'add_user':
@@ -91,10 +128,10 @@ class Notification extends \App\Tasks\Models\TaskActivity {
 
                 $assignee = array();
 
-                if ( ! empty($this->tta_data)) {
+                if ( ! empty($this->ta_data)) {
                     $data = User::get()
                         ->columns('su_id, su_fullname, su_email')
-                        ->inWhere('su_id', json_decode($this->tta_data))
+                        ->inWhere('su_id', json_decode($this->ta_data))
                         ->execute();
 
                     foreach($data as $e) {
@@ -105,14 +142,14 @@ class Notification extends \App\Tasks\Models\TaskActivity {
                     $assignee = implode(', ', $assignee);
                 }
 
-                $action = $type == 'add_user' ? 'assigned' : 'removed';
+                $action = $type == 'add_user' ? 'menugaskan' : 'menghapus';
 
                 $verb = sprintf(
                     '**%s** %s %s on task: "%s"',
-                    $sender_name,
+                    $senderName,
                     $action,
                     $assignee,
-                    $task->tt_title
+                    $taskTitle
                 );
                 break;
             case 'add_label':
@@ -121,31 +158,32 @@ class Notification extends \App\Tasks\Models\TaskActivity {
                 $labels = array();
                 $plural = 'label';
 
-                if ( ! empty($this->tta_data)) {
+                if ( ! empty($this->ta_data)) {
                     $data = Label::get()
                         ->columns('sl_id, sl_label, sl_color')
-                        ->inWhere('sl_id', json_decode($this->tta_data))
+                        ->inWhere('sl_id', json_decode($this->ta_data))
                         ->execute();
 
                     foreach($data as $e) {
                         $labels[] = '<span style="font-weight: 500; color: '.$e->sl_color.'">'.$e->sl_label.'</span>';
                     }
 
-                    $plural = count($labels) > 1 ? 'labels' : 'label';
+                    $plural = count($labels) > 1 ? 'label' : 'label';
                     $labels = implode('&nbsp;', $labels);
                 }
 
-                $action = $type == 'add_label' ? 'add' : 'remove';
+                $action = $type == 'add_label' ? 'menambah' : 'menghapus';
 
                 $verb = sprintf(
-                    '**%s** %s %s %s on task: "%s"',
-                    $sender_name,
+                    '**%s** %s %s %s untuk dokumen %s: "%s"',
+                    $senderName,
                     $action,
-                    $labels,
                     $plural,
-                    $task->tt_title
+                    $labels,
+                    $projectTitle,
+                    $taskTitle
                 );
-
+                
                 break;
         }
 

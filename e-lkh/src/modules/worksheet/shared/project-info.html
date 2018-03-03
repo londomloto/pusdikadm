@@ -15,105 +15,11 @@
 <link rel="import" href="../../../../../cores/elements/kct-event/kct-event-publisher.html">
 <link rel="import" href="../blocks/header-block.html">
 <link rel="import" href="../plugins/user-invitation.html">
+<link rel="import" href="../styles/project-info-style.html">
 
 <dom-module id="project-info">
     <template>
-        <style include="theme-helper">
-            :host {
-                height: 100%;
-            }
-            h3 { min-width: 300px; }
-            .main {
-                /*background-color: #fff;*/
-            }
-            .setting-block {
-                background-color: #fff;
-                padding: 20px;
-                border-radius: 3px;
-                margin-bottom: 15px;
-                @apply --shadow-elevation-2dp;
-            }
-
-            .setting-block h3 {
-                font-size: 15px;
-                font-weight: 500;
-                margin-bottom: 8px;
-            }
-            .setting-block[hidden] {
-                display: none;
-            }
-            .member-item,
-            .role-item {
-                float: left;
-                margin: 0 15px 15px 0;
-                min-width: 200px;
-            }
-            .member-item > .icon,
-            .role-item > .icon {
-                float: left;
-                width: 50px;
-                height: 50px;
-                line-height: 48px;
-                text-align: center;
-                background-color: var(--paper-grey-200);
-                color: var(--paper-cyan-500);
-            }
-            .role-item > .icon iron-icon {
-                --iron-icon-width: 28px;
-                --iron-icon-height: 28px;
-            }
-            .member-item > .text,
-            .member-item > .form {
-                margin-left: 60px;
-                font-weight: 500;
-            }
-            .role-item > .text {
-                margin-left: 60px;
-                font-weight: 500;
-                position: relative;
-                top: 5px;
-            }
-            .member-item .meta,
-            .role-item .meta {
-                font-weight: 400;
-                font-size: 12px;
-                color: #999;
-            }
-            .member-item .tool,
-            .role-item .tool {
-                font-weight: 400;
-                font-size: 13px;
-            }
-
-            .member-item .tool a {
-                margin-right: 10px;
-            }
-            
-            .member-item-add > .icon {
-                cursor: pointer;
-            }
-            .member-item-add:hover > .icon {
-                background-color: var(--paper-cyan-500);
-                color: #fff;
-            }
-            .member-item-add > .icon iron-icon {
-                pointer-events: none;
-            }
-            #combo-user {
-                width: 300px;
-            }
-            .form-control label {
-                font-size: 12px;
-                color: #777;
-            }
-            paper-radio-group.hbox { 
-                @apply --layout-horizontal;  
-            }
-            paper-radio-button.flex { 
-                padding: 8px 0 0 0;
-                @apply --layout-flex;  
-            }
-        </style>
+        <style include="project-info-style"></style>
 
         <kct-ajax id="ajax"></kct-ajax>
         <kct-event-publisher id="event-publisher"></kct-event-publisher>
@@ -596,7 +502,7 @@
 
                 this.set('__selectedRole', role);
 
-                this.$.ajax.GET('/roles/roles-statuses', {
+                this.$.ajax.GET('/roles/roles-panels', {
                     display: 'setup',
                     project: this.projectRecord.sp_id,
                     role: role.sr_id
@@ -614,7 +520,7 @@
                     panels: this.panels
                 };
 
-                this.$.ajax.POST('/roles/roles-statuses/save', payload);
+                this.$.ajax.POST('/roles/roles-panels/save', payload);
             }
 
             __onSetupCloseTap() {

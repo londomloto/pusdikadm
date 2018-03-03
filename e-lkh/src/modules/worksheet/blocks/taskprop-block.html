@@ -157,8 +157,8 @@
                             on-change="__onComboStatusChange"></task-combo-status>
                     </div> -->
                     <div class="display">
-                        <div class="empty" hidden$="[[ __hideEmptyStatus(record.status.tts_status) ]]">Belum ada</div>
-                        <div class="value" hidden$="[[ !__hideEmptyStatus(record.status.tts_status) ]]">
+                        <div class="empty" hidden$="[[ __hideEmptyStatus(record.status.*) ]]">Belum ada</div>
+                        <div class="value" hidden$="[[ !__hideEmptyStatus(record.status.*) ]]">
                             <iron-icon icon="bookmark-border" class="value-icon"></iron-icon>    
                             <span class="value-text">[[ record.status.status_text ]]</span>
                         </div>
@@ -223,7 +223,7 @@
                     <save-indicator id="due-indicator"></save-indicator>
                     <paper-button on-tap="__onDueEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
                 </div>
-                <div class="label">Deadline</div>
+                <div class="label">Target Penyelesaian</div>
                 <div class="field">
                     <div class="editor" hidden$="[[ !__states.editing.due ]]">
                         <task-date-picker
@@ -231,8 +231,8 @@
                             on-value-changed="__onDuePickerChange"></task-date-picker>
                     </div>
                     <div class="display">
-                        <div class="empty" hidden$="[[ __hideEmptyDue(record.task.tt_due_date) ]]">Belum ada</div>
-                        <div class="value" hidden$="[[ !__hideEmptyDue(record.task.tt_due_date) ]]">
+                        <div class="empty" hidden$="[[ __hideEmptyDue(record.task.*) ]]">Belum ada</div>
+                        <div class="value" hidden$="[[ !__hideEmptyDue(record.task.*) ]]">
                             <iron-icon icon="today" class="value-icon"></iron-icon>    
                             <span class="value-text">[[ record.task.tt_due_date_formatted ]]</span> - <a on-tap="__onDueRemoveTap" href="javascript:;">Hapus</a>
                         </div>
@@ -280,7 +280,8 @@
             static get properties() {
                 return {
                     project: { type: Object },
-                    workspace: { type: Object },
+                    workspace: { type: Object }, 
+                    metadata: { type: Object },
                     record: { type: Object, notify: true },
                     loading: { type: Boolean, value: false, reflectToAttribute: true } 
                 };

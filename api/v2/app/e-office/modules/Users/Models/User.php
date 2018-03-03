@@ -130,6 +130,18 @@ class User extends \Micro\Model {
             )
         );
 
+        $this->hasMany(
+            'su_id',
+            'App\Users\Models\UserToken',
+            'sut_su_id',
+            array(
+                'alias' => 'Tokens',
+                'foreignKey' => array(
+                    'action' => Relation::ACTION_CASCADE
+                )
+            )
+        );
+
     }
 
     public function getSource() {

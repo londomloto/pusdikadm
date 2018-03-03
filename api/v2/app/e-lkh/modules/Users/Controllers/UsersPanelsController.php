@@ -2,10 +2,10 @@
 namespace App\Users\Controllers;
 
 use App\Users\Models\User,
-    App\Users\Models\UserStatus,
+    App\Users\Models\UserPanel,
     App\Projects\Models\Project;
 
-class UsersStatusesController extends \Micro\Controller {
+class UsersPanelsController extends \Micro\Controller {
 
     public function findAction() {
         $params = $this->request->getParams();
@@ -17,15 +17,15 @@ class UsersStatusesController extends \Micro\Controller {
         switch($display) {
             case 'setup':
 
-                return UserStatus::querySetup($project, $user);
+                return UserPanel::querySetup($project, $user);
                 
             case 'granted':
                 
-                return UserStatus::queryGranted($project, $user);
+                return UserPanel::queryGranted($project, $user);
 
             default:
                 
-                return UserStatus::get()->paginate();
+                return UserPanel::get()->paginate();
         }
     }
 
@@ -36,7 +36,7 @@ class UsersStatusesController extends \Micro\Controller {
 
         foreach($post['panels'] as $panel) {
             if ($panel['panel_display'] == 'show') {
-                UserStatus::find(array(
+                UserPanel::find(array(
                     'sus_sp_id = :project: AND sus_su_id = :user: AND sus_kp_id = :panel:',
                     'bind' => array(
                         'project' => $project->sp_id,
@@ -49,7 +49,7 @@ class UsersStatusesController extends \Micro\Controller {
                 $updated = array();
                 $deleted = array();
 
-                $found = UserStatus::find(array(
+                $found = UserPanel::find(array(
                     'sus_sp_id = :project: AND sus_su_id = :user: AND sus_kp_id = :panel:',
                     'bind' => array(
                         'project' => $project->sp_id,
@@ -85,12 +85,12 @@ class UsersStatusesController extends \Micro\Controller {
                 }
 
                 foreach($created as $data) {
-                    $item = new UserStatus();
+                    $item = new UserPanel();
                     $item->save($data);
                 }
 
                 foreach($updated as $data) {
-                    $item = UserStatus::findFirst($data['sus_id']);
+                    $item = UserPanel::findFirst($data['sus_id']);
                     if ($item) {
                         $item->save($data);
                     }

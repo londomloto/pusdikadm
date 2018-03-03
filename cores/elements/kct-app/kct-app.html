@@ -4,7 +4,9 @@
 <link rel="import" href="../kct-router/kct-router.html">
 <link rel="import" href="../kct-pages/kct-pages.html">
 <link rel="import" href="../kct-ajax/kct-ajax.html">
-<link rel="import" href="../kct-message/kct-alert.html">
+<link rel="import" href="../kct-auth/kct-auth.html">
+<link rel="import" href="../kct-role/kct-role.html">
+<link rel="import" href="../kct-toast/kct-toast.html">
 <link rel="import" href="plugins/screen-locker.html">
 
 <dom-module id="kct-app">
@@ -12,7 +14,10 @@
     <template>
 
         <style>
-            :host { display: block; height: 100%; }
+            :host { 
+                display: block; 
+                height: 100%; 
+            }
             #pages {
                 display: block;
                 height: 100%;
@@ -21,7 +26,17 @@
         
         <kct-config id="config" name="[[ name ]]" config="{{ config }}"></kct-config>
         <kct-ajax id="ajax" config="[[ config ]]"></kct-ajax>
-        <kct-router id="router" config="[[ config ]]" routes="[[ routes ]]" route="{{ route }}" state="{{ state }}" fallback="[[ fallback ]]" on-authenticate="__onAuthenticate"></kct-router>
+        <kct-router 
+            id="router" 
+            config="[[ config ]]" 
+            routes="[[ routes ]]" 
+            route="{{ route }}" 
+            state="{{ state }}" 
+            fallback="[[ fallback ]]" 
+            on-before-route="__onBeforeRoute"></kct-router>
+
+        <kct-auth id="auth" config="[[ config ]]"></kct-auth>
+        <kct-role id="role" config="[[ config ]]"></kct-role>
 
         <template is="dom-if" if="[[ state.layout ]]">
             <kct-pages id="pages" selected="{{ state.layout }}" attr-for-selected="name" fallback-selection="error" lazy-load>
@@ -31,13 +46,6 @@
                 <error-layout name="error" config="{{ config }}" route="{{ route }}" state="[[ state ]]" import="layouts/error-layout.html"></error-layout>
             </kct-pages>
         </template>
-
-        <kct-alert id="update-alert" icon="social:notifications-active" title="Updates">
-            <p>
-                There are updates available for your application. <br>
-                Clear your browser cache to apply new updates.
-            </p>
-        </kct-alert>
 
     </template>
 
@@ -52,40 +60,7 @@
                 return {
                     name: { type: String, reflectToAttribute: true },
                     fallback: { type: String },
-                    routes: {
-                        type: Object,
-                        notify: true,
-                        value: {
-                            '/login': {
-                                layout: 'auth',
-                                module: 'auth',
-                                page: 'login-page',
-                                authentication: false
-                            },
-                            '/invitation/:token': {
-                                layout: 'auth',
-                                module: 'auth',
-                                page: 'invitation-page',
-                                authentication: false
-                            },
-                            '/projects/:project': {
-                                module: 'projects',
-                                page: 'project-page'
-                            },
-                            '/settings/:setting/:params': {
-                                module: 'settings',
-                                page: 'settings-page'
-                            },
-                            '/settings/:setting': {
-                                module: 'settings',
-                                page: 'settings-page'
-                            },
-                            '/worksheet/:params': {
-                                module: 'worksheet',
-                                page: 'worksheet-page'
-                            }
-                        }
-                    }
+                    routes: { type: Object, notify: true }
                 };
             }
 
@@ -95,20 +70,47 @@
                 ];
             }
 
+            constructor() {
+                super();
+                this.__maxRedir = 1;
+                this.__numRedir = 0;
+            }
+
             ready() {
                 super.ready();
                 this.__loadConfig();
 
-                // intercept 401
+                // intercept 401, 403
                 KctAjax.interceptor({
                     response: (res) => {
-                        if ( ! res.success && res.status !== undefined && res.status == 401) {
+                        if ( ! res.success && res.status !== undefined) {
                             if (this.state.layout) {
-                                this.__lock();
+                                switch(true) {
+                                    case (res.status == 401):
+                                        this.__lock();
+                                        break;
+                                    case (res.status == 403):
+                                        this.__toast('Forbidden', res.message, 'danger');
+                                        break;
+                                }
                             }
                         }
                     }
                 });
+            }
+
+            __toast(title, message, type = 'warn') {
+                let toast = document.createElement('kct-toast');
+
+                toast.title = title;
+                toast.message = message;
+                toast.type = type;
+                toast.icon = 'close';
+                toast.duration = 2000;
+                
+                document.body.appendChild(toast);
+                
+                toast.open();
             }
 
             // lock screen
@@ -122,7 +124,7 @@
 
                     locker.addEventListener('authenticate', (e) => {
                         if (e.detail.success) {
-                            this.$.router.user = e.detail.user;
+                            this.$.auth.user = e.detail.user;
                         }
                     });
 
@@ -145,14 +147,13 @@
 
                 this.$.ajax.GET('/config/load').then(res => {
                     let data = res.data;
-
+                    
                     if (data) {
-                        
                         if (version != data.app_version) {
-                            // this.$['update-alert'].open();
                             console.info && console.info('INFO => There are updates available for your application. Clear your browser cache to apply new updates.');
+                            // this.$['update-alert'].open();
                         }
-
+                        
                         Object.keys(data).forEach(k => {
                             config[k] = data[k];
                         });
@@ -173,12 +174,49 @@
                 );
             }
 
-            __onAuthenticate(e) {
-                if ( ! e.detail.success) {
-                    if ( ! this.state.layout) {
-                        this.set('route.path', '/login');
-                    }
+            __onBeforeRoute(e) {
+                let state = e.detail.state;
+
+                if (state.authentication) {
+                    e.preventDefault();
+
+                    this.$.auth.authenticate().then(authenticated => {
+                        if ( ! authenticated) { // 401
+                            if (this.__numRedir <= this.__maxRedir) {
+                                this.__numRedir++;
+                                if ( ! this.state.layout) {
+                                    this.set('route.path', '/login');
+                                }
+                            } else {
+                                this.__numRedir = 0;
+                                this.set('route.path', '/net-error');
+                            }
+                        } else {
+                            if (state.authorization) {
+                                this.$.role.access(state).then(authorized => {
+                                    if ( ! authorized) { // 403
+                                        if (this.__numRedir <= this.__maxRedir) {
+                                            this.__numRedir++;
+                                            this.set('route.path', '/forbidden');
+                                        } else {
+                                            this.__numRedir = 0;
+                                            this.set('route.path', '/net-error');
+                                        }   
+                                    } else {
+                                        this.__numRedir = 0;
+                                        this.set('state', state);
+                                        this.set('route.event', 'finish');    
+                                    }
+                                });
+                            } else {
+                                this.__numRedir = 0;
+                                this.set('state', state);
+                                this.set('route.event', 'finish');   
+                            }
+                        }
+                    });
                 }
+                
             }
 
         }

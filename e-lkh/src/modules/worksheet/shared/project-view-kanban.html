@@ -194,8 +194,8 @@
                 }
 
                 this.set('worksheetRecord.ks_panels.' + index + '.kp_busy', true);
-
-                this.$.ajax.GET('/worksheet/kanban', payload).then((res) => {
+                
+                this.$.ajax.GET(this.metadata.service_url, payload).then((res) => {
                     let items;
 
                     if (payload.start == 0) {
@@ -255,10 +255,10 @@
             }
 
             __onCardItemTap(e) {
-                let task = e.model.item;
+                let record = e.model.item;
                 
                 this.set('route.data.back', '/worksheet/' + this.project + '/view/kanban');
-                this.set('route.path', '/worksheet/' + this.project + '/task/update/' + task.status.tts_id);
+                this.set('route.path', '/worksheet/' + this.project + '/task/update/' + record.status[this.metadata.status_primary_key]);
             }
 
             __onNotify() {

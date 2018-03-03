@@ -126,11 +126,11 @@
                     <template is="dom-repeat" items="[[ items ]]">
                         <paper-item on-tap="__onItemTap">
                             <div class="icon">
-                                <iron-icon icon="[[ item.tta_icon ]]"></iron-icon>
+                                <iron-icon icon="[[ item.ta_icon ]]"></iron-icon>
                             </div>
                             <paper-item-body>
-                                <div class="time">[[ item.tta_time ]]</div>
-                                <kct-html class="text" html="[[ item.tta_verb ]]"></kct-html>
+                                <div class="time">[[ item.ta_time ]]</div>
+                                <kct-html class="text" html="[[ item.ta_verb ]]"></kct-html>
                             </paper-item-body>
                         </paper-item>    
                     </template>
@@ -181,9 +181,9 @@
             verify() {
                 
                 this.$.ajax.GET('/notifications?display=top').then(res => {
-                    let keys = (res.data || []).map(e => e.tta_id + ':' + e.tta_sender);
+                    let keys = (res.data || []).map(e => e.ta_id + ':' + e.ta_sender);
                     if (keys.length) {
-                        let feed = this.user.su_feed ? JSON.parse(this.user.su_feed) : false;
+                        let feed = this.user.su_feed_read ? JSON.parse(this.user.su_feed_read) : false;
                         
                         if ( ! feed) {
                             this.set('dirty', true);
@@ -217,7 +217,7 @@
                     this.set('items', res.data);
                     this.$.menu.$.dropdown.notifyResize();
 
-                    let keys = (res.data || []).map(e => e.tta_id + ':' + e.tta_sender);
+                    let keys = (res.data || []).map(e => e.ta_id + ':' + e.ta_sender);
                     this.__save(keys);
                 });
             }
@@ -225,8 +225,8 @@
             __save(feed) {
                 feed = JSON.stringify(feed);
 
-                this.set('user.su_feed', feed);
-                this.$.ajax.PUT('/users/' + this.user.su_id, { su_feed: feed });
+                this.set('user.su_feed_read', feed);
+                this.$.ajax.PUT('/users/' + this.user.su_id, { su_feed_read: feed });
             }
 
             __onReadAllTap() {
@@ -243,9 +243,9 @@
 
                 let item = e.model.item;
 
-                if (item.tta_link) {
+                if (item.ta_link) {
                     this.set('route.data.task', null);
-                    this.set('route.path', item.tta_link);
+                    this.set('route.path', item.ta_link);
                 }
             }
 

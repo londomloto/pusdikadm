@@ -1,8 +1,9 @@
 <?php
 namespace App\Modules\Models;
 
-use Micro\Helpers\Text,
-    App\Modules\Models\ModuleCapability;
+use App\Modules\Models\ModuleCapability;
+use Micro\Helpers\Text;
+use Phalcon\Mvc\Model\Relation;
 
 class Module extends \Micro\Model {
 
@@ -15,7 +16,19 @@ class Module extends \Micro\Model {
             array(
                 'alias' => 'Capabilities',
                 'foreignKey' => array(
-                    'action' => \Phalcon\Mvc\Model\Relation::ACTION_CASCADE
+                    'action' => Relation::ACTION_CASCADE
+                )
+            )
+        );
+
+        $this->hasMany(
+            'sm_id',
+            'App\Roles\Models\RoleMenu',
+            'srm_sm_id',
+            array(
+                'alias' => 'RoleAccesses',
+                'foreignKey' => array(
+                    'action' => Relation::ACTION_CASCADE
                 )
             )
         );

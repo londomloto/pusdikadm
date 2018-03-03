@@ -132,16 +132,25 @@ class Security extends \Phalcon\Security {
         return $this->getRandom()->base58($length);
     }
 
-    public function encrypt($data) {
+    public function encrypt($data, $base64 = FALSE) {
         $key = $this->getApp()->config->app->secret;
         $val = json_encode(array('data' => $data));
-
-        return self::$__encrypt->encrypt($val, $key);
+        
+        if ($base64) {
+            return self::$__encrypt->encryptBase64($val, $key);
+        } else {
+            return self::$__encrypt->encrypt($val, $key);
+        }
     }
 
-    public function decrypt($data) {
+    public function decrypt($data, $base64 = FALSE) {
         $key = $this->getApp()->config->app->secret;
-        $val = self::$__encrypt->decrypt($data, $key);
+        
+        if ($base64) {
+            $val = self::$__encrypt->decryptBase64($data, $key);
+        } else {
+            $val = self::$__encrypt->decrypt($data, $key);
+        }
 
         if ( ! empty($val)) {
             $val = json_decode($val);

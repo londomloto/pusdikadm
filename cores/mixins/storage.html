@@ -85,6 +85,8 @@
                     switch(namespace) {
                         case 'kct-auth':
                             return key + ':user';
+                        case 'kct-feed':
+                            return key + ':feed';
                         default:
                             return key + ':data';
                     }    

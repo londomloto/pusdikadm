@@ -34,36 +34,6 @@
                 return this.resolve({ success: true });
             }
 
-            saveResult(options = {}) {
-                let result = [];
-
-                Object.keys(options).forEach(k => {
-                    let v = options[k];
-                    if (v !== null && v != '') {
-                        if (typeof v === 'object') {
-                            let t = [];
-                            Object.keys(v).forEach(e => {
-                                if (v[e] !== null && v[e] != '') {
-                                    t.push(v[e]);
-                                }
-                            });
-                            if (t.length) {
-                                result.push(k + '=' + t.join(';'));
-                            }
-                        } else {
-                            result.push(k + '=' + v);
-                        }
-                    }
-                });
-
-                result = result.join('|');
-
-                if (result) {
-                    result = '|' + result + '|';
-                    this.set('record.status.tts_data_result', result);
-                }
-            }
-
             remove() {
                 return this.resolve({success: true});
             }

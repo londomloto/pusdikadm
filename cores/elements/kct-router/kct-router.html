@@ -1,11 +1,9 @@
 <link rel="import" href="../../bower_components/app-route/app-location.html">
 <link rel="import" href="../../mixins/resolver.html">
-<link rel="import" href="../kct-auth/kct-auth.html">
 
 <dom-module id="kct-router">
     <template>
         <app-location id="app-location" route="{{ address }}"></app-location>
-        <kct-auth id="auth" config="[[ config ]]" user="[[ user ]]" name="[[ auth ]]"></kct-auth>
     </template>
     <script>
         class KctRouter extends Mixins(Polymer.Element).use(Mixins.Resolver) {
@@ -88,10 +86,6 @@
                 this.__maxRedirect = 1;
                 this.__numRedirect = 0;
 
-                // start resolver
-                this.__startResolver = this._defer();
-                this.__startResolver.done = false;
-
                 // dependencies resolver
                 this.__configResolver = this._defer();
                 this.__configResolver.done = false;
@@ -108,7 +102,11 @@
             }
 
             start() {
-                this.__startResolver.resolve();
+                this.set('route.event', 'start');
+            }
+
+            finish() {
+                this.set('route.event', 'finish');
             }
 
             go(path) {
@@ -180,11 +178,12 @@
                             routes['/not-found'] = {
                                 layout: defaults.layoutError,
                                 authentication: false,
+                                authorization: false,
                                 data: {
                                     errors: {
                                         code: 404,
                                         name: 'NOT FOUND',
-                                        message: 'Sepertinya halaman yang Anda cari tidak ditemukan.'
+                                        message: 'It\'s look like that page no longer exists.'
                                     }
                                 }
                             };
@@ -194,11 +193,27 @@
                             routes['/net-error'] = {
                                 layout: defaults.layoutError,
                                 authentication: false,
+                                authorization: false,
                                 data: {
                                     errors: {
                                         code: 310,
                                         name: 'NET ERROR',
-                                        message: 'Sistem tidak dapat melakukan routing ke halaman yang Anda cari'
+                                        message: 'It\'s look like too many redirects.'
+                                    }
+                                }
+                            };
+                        }
+
+                        if (routes['/forbidden'] === undefined) {
+                            routes['/forbidden'] = {
+                                layout: defaults.layoutError,
+                                authentication: false,
+                                authorization: false,
+                                data: {
+                                    errors: {
+                                        code: 403,
+                                        name: 'FORBIDDEN',
+                                        message: 'It\'s look like you don\'t have permission to access this page'
                                     }
                                 }
                             };
@@ -271,8 +286,15 @@
                                 route.authentication = defaults.authentication;
                             }
 
+                            if (route.authentication) {
+                                if (route.authorization === undefined) {
+                                    route.authorization = defaults.authentication;
+                                }    
+                            } else {
+                                route.authorization = false;
+                            }
+
                             route.data = route.data || {};
-                            route.active = false;
                         }
 
                         d.resolve();
@@ -306,7 +328,7 @@
                             let state;
 
                             path = base + path.replace(base, '');
-                            
+
                             if (this.address.path != path) {
                                 this.set('route.addr', path);    
                             }
@@ -317,14 +339,14 @@
                                 let route = Object.assign(Object.create(null), this.routes[key]),
                                     matches = path.match(route.compiled);
 
-                                route.active = false;
-
                                 if (matches) {
                                     let params = [];
                                     
                                     route.active = true;
                                     route.params = [];
                                     route.path = path.replace(/\/$/, '');
+                                    route.module_path = route.path.replace(base, '');
+
 
                                     for (let index in route.placeholder) {
                                         if (matches[index] !== undefined) {
@@ -363,38 +385,21 @@
                             }
 
                             if (state) {
-                                if (state.authentication) {
-                                    this.$.auth.validate().then((auth) => {
-                                        if ( ! auth.success) {
-                                            if (this.__numRedirect <= this.__maxRedirect) {
-                                                this.__numRedirect++;
-                                                let e = { detail: auth };
-                                                this.dispatchEvent(new CustomEvent('authenticate', e));
-                                            } else {
-                                                this.__numRedirect = 0;
-                                                this.go('/net-error');
-                                            }
-                                        } else {
-                                            let e = { 
-                                                cancelable: true,
-                                                detail: { success: true }
-                                            };
 
-                                            let canceled = ! this.dispatchEvent(new CustomEvent('authenticate', e));
+                                let before = this.dispatchEvent(new CustomEvent('before-route', {
+                                    cancelable: true,
+                                    detail: {
+                                        state: state
+                                    }
+                                }));
 
-                                            if ( ! canceled) {
-                                                this.__numRedirect = 0;
-                                                this.set('state', state);
-                                                this.set('route.event', 'done');
-                                            }
-                                        }
-                                    });
-                                } else {
-                                    this.__numRedirect = 0;
+                                this.__numRedirect = 0;
+
+                                if (before) {
                                     this.set('state', state);
-                                    this.set('route.event', 'done');
+                                    this.finish();
                                 }
-                                
+
                             } else {
                                 if (this.fallback) {
                                     if (this.__numRedirect <= this.__maxRedirect) {
@@ -483,7 +488,7 @@
 
             __routePathChanged(path) {
                 if (path && ! this.__silent) {
-                    this.set('route.event', 'start');
+                    this.start();
 
                     let i = path.indexOf('?');
 

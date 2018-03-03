@@ -27,12 +27,24 @@ firebase.initializeApp({
 });
 
 const messanger = firebase.messaging();
+var data = {};
+
+self.addEventListener('notificationclick', function(event) {
+  event.notification.close();
+  if (data.link) {
+    event.waitUntil(self.clients.openWindow(data.link));
+  }
+});
 
 messanger.setBackgroundMessageHandler(function(payload) {
-  const notificationTitle = payload.data.title;
-  const notificationOptions = {
-        body: payload.data.body,
-        icon: 'images/logo/logo-48x48.png'
+  data = payload.data;
+
+  const title = data.title;
+
+  const options = {
+    body: data.body,
+    icon: 'images/logo/logo-96x96.png'
   };
-  return self.registration.showNotification(notificationTitle, notificationOptions);
+
+  return self.registration.showNotification(title, options);
 });

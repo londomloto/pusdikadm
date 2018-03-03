@@ -1,0 +1,163 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-spinner/paper-spinner-lite.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../../cores/mixins/mixins.html">
+<link rel="import" href="../styles/project-task-form-style.html">
+
+<script>
+    Mixins.ProjectTaskForm = Polymer.dedupingMixin(superclass => {
+
+        let cachedTemplates = {};
+
+        return class extends superclass {
+
+            static get properties() {
+                return {
+                    form: { type: Object },
+                    user: { type: Object },
+                    project: { type: Object }, 
+                    record: { type: Object, notify: true }, 
+                    workspace: { type: Object },
+                    action: { type: String }, 
+                    busy: { type: Boolean, value: false },
+                    invalid: { type: Boolean, notify: true },
+                    buttons: { type: String, notify: true },
+                    loading: { type: Boolean, value: false, reflectToAttribute: true }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__loadingChanged(loading)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__node = null;
+            }
+
+            mask() {
+                this.set('busy', true);
+            }
+
+            unmask() {
+                this.set('busy', false);
+            }
+
+            cleanup() {
+                if (this.__node) {
+                    this._removeBoundDom(this.__node);
+                    this.__node = undefined;
+                    this.$.form = undefined;
+                }
+            }
+
+            render() {
+                let form = this.form;
+                let promise, resolve, reject;
+
+                promise = new Promise((a, b) => {
+                    resolve = a;
+                    reject = b;
+                });
+
+                this.cleanup();
+
+                if ( ! form.bf_html) {
+                    return;
+                }
+
+                let name = form.bf_tpl_orig.replace(/\.html/, ''),
+                    elem = customElements.get(name);
+
+                let temp, node;
+
+                if (elem) {
+                    temp = this.__createTemplate(name);
+                    node = this._stampTemplate(temp);
+
+                    this.$['form-container'].appendChild(node);
+                    this.$.form = this.$['form-container'].querySelector('#form');
+                    
+                    this.__node = node;
+
+                    resolve();
+                    
+                } else {
+                    return this.$.ajax.__resolveUrl('/bpmn/forms/view/' + form.bf_tpl_file).then(url => {
+                        let token = this.user && this.user.su_access_token;
+                        url += token ? '?access_token=' + token : '';
+                        
+                        Polymer.Base.importHref(url, () => {
+                            let temp, node;
+                            
+                            temp = this.__createTemplate(name);
+                            node = this._stampTemplate(temp);
+
+                            this.$['form-container'].appendChild(node);
+                            this.$.form = this.$['form-container'].querySelector('#form');
+                            
+                            this.__node = node;
+
+                            resolve();
+                        });
+                    });
+                }
+
+                return promise;
+            }
+
+            resolve(data = {}) {
+                return Promise.resolve(data);
+            }
+
+            initialize() {
+                return this.$.form ? this.$.form.initialize() : this.resolve({ success: true });
+            }
+
+            save(options) {
+                return this.$.form ? this.$.form.save(options) : this.resolve({ success: true });
+            }
+
+            remove() {
+                return this.$.form ? this.$.form.remove() : this.resolve({ success: true });
+            }
+
+            __createTemplate(name) {
+                let token = name;
+                let template = cachedTemplates[token];
+
+                if ( ! template) {
+                    template = document.createElement('template');
+
+                    template.innerHTML = `
+                        <${name} 
+                            id="form" 
+                            project="[[ project ]]" 
+                            record="{{ record }}" 
+                            workspace="[[ workspace ]]" 
+                            action="[[ action ]]" 
+                            user="[[ user ]]" 
+                            route="{{ route }}" 
+                            invalid="{{ invalid }}" 
+                            buttons="{{ buttons }}"></${name}>
+                    `; 
+
+                    cachedTemplates[token] = template;
+                }
+                
+                return template;
+            }
+
+            __loadingChanged(loading) {
+                if (loading) {
+                    this.mask();
+                } else {
+                    this.unmask();
+                }
+            }
+
+        };
+
+    });
+</script>

@@ -116,7 +116,7 @@ class Task extends \Micro\Model {
     public function resumeLog() {
         $this->__loggable = TRUE;
     }
-
+    
     public function afterFetch() {
         
         if (isset(

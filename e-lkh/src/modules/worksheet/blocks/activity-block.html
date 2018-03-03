@@ -323,7 +323,8 @@
                             start: 0,
                             limit: 20
                         })
-                    },
+                    }, 
+                    metadata: { type: Object },
                     loading: { type: Boolean, value: false, reflectToAttribute: true }
                 };
             }
@@ -466,12 +467,11 @@
             }
 
             __onRemoveCommentTap(e) {
-                this.$.confirm.title = 'Confirm';
-                this.$.confirm.message = 'Are you sure want to remove this comment?';
+                this.$.confirm.title = 'Konfirmasi';
+                this.$.confirm.message = 'Anda yakin akan menghapus komentar ini?';
                 this.$.confirm.open().then(y => {
                     if (y == 'yes') {
                         this.$.ajax.DELETE('/tasks/tasks-activities/' + e.model.item.tta_id).then(res => {
-                            // this.splice('activities', e.model.index, 1);
                             this.load({start: 0});
                         });
                     }

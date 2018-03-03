@@ -353,7 +353,7 @@
             }
 
             __routeEventChanged(event) {
-                if (event != 'done') return;
+                if (event != 'finish') return;
 
                 if (this.state.layout == this.name) {
                     this._resolvePageFromState(this.state).then((spec) => {

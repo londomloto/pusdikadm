@@ -222,10 +222,12 @@ class App extends \Phalcon\Mvc\Micro {
             if ($name[0] == '.' || $name[0] == '..') continue;
 
             if ($item->isDir()) {
-                $controllers = 'App\\' . $name . '\Controllers';
-                $models = 'App\\' . $name . '\Models';
+                $controllers = 'App\\' . $name . '\\Controllers';
+                $interfaces = 'App\\' . $name . '\\Interfaces';
+                $models = 'App\\' . $name . '\\Models';
 
                 $namespaces[$controllers] = array($path . '/' . $name . '/Controllers/');
+                $namespaces[$interfaces] = array($path . '/' . $name . '/Interfaces/');
                 $namespaces[$models] = array($path . '/' . $name . '/Models/');
 
                 $prefix = '/' . \Phalcon\Text::uncamelize($name, '-');

@@ -121,7 +121,6 @@ class AuthProvider extends \Micro\Component {
             'su_sr_id'  => $user->su_sr_id
         ));
 
-        $user->su_refresh_token = $this->security->createToken(NULL, 108000);
         $user->save();
 
         $data = $user->toArray();
@@ -157,7 +156,6 @@ class AuthProvider extends \Micro\Component {
 
     public function secure(&$user) {
         unset($user['su_passwd']);
-        unset($user['su_refresh_token']);
         unset($user['su_invite_token']);
         unset($user['su_recover_token']);
 

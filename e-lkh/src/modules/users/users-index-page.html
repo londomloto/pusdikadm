@@ -324,7 +324,12 @@
                 };
 
                 this.$.ajax.POST('/users/reinvite', payload).then(res => {
-                    this.toast('Success', 'User has been re-invited', 'info');
+                    if (res.success) {
+                        this.toast('Berhasil', 'Pengguna sudah diundang kembali', 'info');    
+                    } else {
+                        console.log(res.message);
+                        this.toast('Gagal', 'Gagal mengirimkan undangan', 'warn');    
+                    }
                 });
             }
 

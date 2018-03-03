@@ -1,0 +1,53 @@
+<link rel="import" href="mixins.html">
+
+<script>
+    Mixins.Browser = Polymer.dedupingMixin(superclass => {
+
+        return class extends superclass {
+
+            _browser() {
+                return this._isChrome()
+                    ? 'chrome'
+                    : this._isFirefox()
+                        ? 'firefox' 
+                        : this._isOpera() 
+                            ? 'opera'
+                            : this._isSafari() 
+                                ? 'safari'
+                                : this._isEdge()
+                                    ? 'edge'
+                                    : null;
+            }
+
+            _isChrome() {
+                return !!window.chrome && !!window.chrome.webstore;
+            }
+
+            _isFirefox() {
+                return typeof InstallTrigger !== 'undefined';
+            }
+
+            _isOpera() {
+                return (!!window.opr && !!opr.addons) || !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
+            }
+
+            _isSafari() {
+                return /constructor/i.test(window.HTMLElement) || (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || (typeof safari !== 'undefined' && safari.pushNotification));
+            }
+
+            _isIE() {
+                return /*@cc_on!@*/false || !!document.documentMode;
+            }
+
+            _isEdge() {
+                return ! this._isIE() && !!window.StyleMedia;
+            }
+
+            _isBlink() {
+                return (this._isChrome() || this._isOpera()) && !!window.CSS;
+            }
+
+        };
+
+    });
+</script>

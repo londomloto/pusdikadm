@@ -52,4 +52,13 @@ class URL extends \Phalcon\Mvc\Url {
         return $part[0].'/'.$part[1];
     }
 
+    public function encode($str) {
+        $revert = array('%21'=>'!', '%2A'=>'*', '%27'=>"'", '%28'=>'(', '%29'=>')');
+        return strtr(rawurlencode($str), $revert);
+    }
+
+    public function decode($str) {
+        return rawurldecode($str);
+    }
+
 }

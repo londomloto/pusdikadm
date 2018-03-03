@@ -1,6 +1,16 @@
 <?php
 
 Router::group(array(
+    'prefix' => '/notifications',
+    'handler' => 'App\Notifications\Controllers\NotificationsController',
+    'middleware' => 'auth'
+))
+->get('/status', 'status')
+->post('/subscribe', 'subscribe')
+->post('/unsubscribe', 'unsubscribe')
+->post('/notify', 'notify');
+
+Router::group(array(
     'prefix' => '/company',
     'handler' => 'App\Company\Controllers\CompanyController',
     'middleware' => 'auth'
@@ -17,15 +27,15 @@ Router::group(array(
 ->get('/{name}/days', 'days');
 
 Router::group(array(
-    'prefix' => '/users/users-statuses',
-    'handler' => 'App\Users\Controllers\UsersStatusesController',
+    'prefix' => '/users/users-panels',
+    'handler' => 'App\Users\Controllers\UsersPanelsController',
     'middleware' => 'auth'
 ))
 ->post('/save', 'save');
 
 Router::group(array(
-    'prefix' => '/roles/roles-statuses',
-    'handler' => 'App\Roles\Controllers\RolesStatusesController',
+    'prefix' => '/roles/roles-panels',
+    'handler' => 'App\Roles\Controllers\RolesPanelsController',
     'middleware' => 'auth'
 ))
 ->post('/save', 'save');
