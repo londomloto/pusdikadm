@@ -55,7 +55,7 @@
 
                 limit = this.paginator.limit;
 
-                let taskId = this.record && this.record.task && this.record.task.tt_id;
+                let taskId = this.record && this.record.task && this.record.task[this.metadata.primary_key];
 
                 if ( ! taskId) {
                     this.set('activities', []);
@@ -64,16 +64,17 @@
 
                 let payload = {
                     params: {
-                        tta_tt_id: taskId
+                        ta_task_ns: this.metadata.namespace,
+                        ta_task_id: taskId
                     },
                     sort: [
-                        { property: 'tta_created', direction: 'desc' }
+                        { property: 'ta_created', direction: 'desc' }
                     ],
                     start: start,
                     limit: limit
                 };
-
-                this.$.ajax.GET('/tasks/tasks-activities', payload).then(res => {
+                
+                this.$.ajax.GET('/activities', payload).then(res => {
                     if (start == 0) {
                         this.set('activities', []);
                     }

@@ -31,7 +31,8 @@ class RolesPermissionsController extends \Micro\Controller {
                     if ($role) {
                         foreach($role->roleMenus as $rm) {
                             if ($rm->srm_selected) {
-                                $menuSelection[$rm->srm_smn_id] = TRUE;    
+                                $token = $rm->getToken();
+                                $menuSelection[$token] = TRUE;
                             }
                         }
 
@@ -43,11 +44,10 @@ class RolesPermissionsController extends \Micro\Controller {
                     }
                 }
 
-                foreach(Module::find() as $module) {
-                    if ($module->menus->count() == 0 && $module->capabilities->count() == 0) {
-                        continue;
-                    }
+                $modules = Module::find(array('order' => 'sm_title ASC'));
 
+                foreach($modules as $module) {
+                    
                     $item = array(
                         'module' => $module->toArray()
                     );
@@ -56,18 +56,18 @@ class RolesPermissionsController extends \Micro\Controller {
                         $array = $menu->toArray();
                         $array['smn_title_path'] = $menu->getTitlePath();
 
-                        $array['smn_selected_1'] = '0';
-                        $array['smn_selected_2'] = '0';
-
-                        if (isset($menuSelection[$menu->smn_id])) {
-                            $array['smn_selected_'.$combo] = '1';
-                        }
-
                         return $array;
                     });
 
-                    $item['menu'] = isset($menus[0]) ? $menus[0] : NULL;
-                    // $item['menus'] = $menus;
+                    $item['menu'] = isset($menus[0]) ? $menus[0] : FALSE;
+                    $item['menu_token'] = sprintf('%d:%d', $item['menu'] ? $item['menu']['smn_id'] : 0, $module->sm_id);
+
+                    $item['menu_selected_1'] = '0';
+                    $item['menu_selected_2'] = '0';
+
+                    if (isset($menuSelection[$item['menu_token']])) {
+                        $item['menu_selected_'.$combo] = '1';
+                    }
 
                     $item['capabilities'] = $module->capabilities->filter(function($cap) use ($permSelection, $combo) {
                         $array = $cap->toArray();

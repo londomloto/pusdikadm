@@ -6,8 +6,8 @@ use Phalcon\Mvc\Model\Relation;
 
 class Task extends \App\Users\Models\User implements \App\Tasks\Interfaces\TaskModel {
     
-    private $__loggable;
-    private $__snapshot;
+    private $__loggable = TRUE;
+    private $__snapshot = NULL;
 
     public function initialize() {
         parent::initialize();
@@ -67,12 +67,16 @@ class Task extends \App\Users\Models\User implements \App\Tasks\Interfaces\TaskM
         );
     }
 
+    public function getNamespace() {
+        return '/registration';
+    }
+
     public function afterCreate() {
         if ($this->__loggable) {
             Activity::log('create', array(
-                'ta_task_source' => $this->getSource(),
-                'ta_sp_id' => $this->su_task_project,
+                'ta_task_ns' => $this->getNamespace(),
                 'ta_task_id' => $this->su_id,
+                'ta_sp_id' => $this->su_task_project,
                 'ta_data' => $this->su_fullname
             ));    
         }
@@ -83,7 +87,6 @@ class Task extends \App\Users\Models\User implements \App\Tasks\Interfaces\TaskM
             $snapshot = $this->__snapshot;
 
             if ( ! is_null($snapshot) && ! empty($snapshot['su_id'])) {
-
                 $detail = TRUE;
 
                 if ($snapshot['su_task_due'] != $this->su_task_due) {
@@ -91,9 +94,9 @@ class Task extends \App\Users\Models\User implements \App\Tasks\Interfaces\TaskM
                     $detail = FALSE;
 
                     Activity::log('update_due', array(
-                        'ta_task_source' => $this->getSource(),
-                        'ta_sp_id' => $this->su_task_project,
+                        'ta_task_ns' => $this->getNamespace(),
                         'ta_task_id' => $this->su_id,
+                        'ta_sp_id' => $this->su_task_project,
                         'ta_data' => $this->su_task_due
                     ));
                 }
@@ -101,9 +104,9 @@ class Task extends \App\Users\Models\User implements \App\Tasks\Interfaces\TaskM
                 if ($detail) {
 
                     Activity::log('update', array(
-                        'ta_task_source' => $this->getSource(),
-                        'ta_sp_id' => $this->su_task_project,
+                        'ta_task_ns' => $this->getNamespace(),
                         'ta_task_id' => $this->su_id,
+                        'ta_sp_id' => $this->su_task_project,
                         'ta_data' => $this->su_fullname
                     ));
                 }
@@ -112,8 +115,9 @@ class Task extends \App\Users\Models\User implements \App\Tasks\Interfaces\TaskM
     }
 
     public function afterFetch() {
-        if (isset($this->su_task_due)) {
+        if (isset($this->su_id, $this->su_task_due)) {
             $this->__snapshot = array(
+                'su_id' => $this->su_id,
                 'su_task_due' => $this->su_task_due
             );
         }
@@ -189,7 +193,7 @@ class Task extends \App\Users\Models\User implements \App\Tasks\Interfaces\TaskM
                 ->delete();
 
             Activity::log('remove_label', array(
-                'ta_task_source' => $this->getSource(),
+                'ta_task_ns' => $this->getNamespace(),
                 'ta_sp_id' => $this->su_task_project,
                 'ta_task_id' => $this->su_id,
                 'ta_data' => json_encode($current)
@@ -209,7 +213,7 @@ class Task extends \App\Users\Models\User implements \App\Tasks\Interfaces\TaskM
             }
 
             Activity::log('add_label', array(
-                'ta_task_source' => $this->getSource(),
+                'ta_task_ns' => $this->getNamespace(),
                 'ta_sp_id' => $this->su_task_project,
                 'ta_task_id' => $this->su_id,
                 'ta_data' => json_encode($indexes)

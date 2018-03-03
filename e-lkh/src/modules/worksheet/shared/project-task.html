@@ -78,7 +78,7 @@
                 
                 this.set('actionBack', actionBack);
                 this.set('actionRecord', type);
-                this.set('metadata.primary_val', id);
+                this.set('metadata.status_primary_val', id);
 
                 this.set('project', project);
                 this.set('loading', true);
@@ -209,7 +209,7 @@
             }
 
             __initUpdate() {
-                if ( ! this.metadata.primary_val) {
+                if ( ! this.metadata.status_primary_val) {
                     return;
                 }
 
@@ -217,7 +217,7 @@
                     handle.bind(this)(this.taskRecord);
                 } else {
                     let params = {};
-                    params[this.metadata.primary_key] = this.metadata.primary_val;
+                    params[this.metadata.status_primary_key] = this.metadata.status_primary_val;
 
                     this.$.ajax.GET(this.metadata.service_url, { params: params }).then(res => {
                         let record = res.data.length ? res.data[0] : null;

@@ -148,7 +148,7 @@
                         worker: this.workspace.worker,
                         record: this.record,
                         send: send,
-                        logs: false
+                        logs: ['due'].indexOf(prop) !== -1 ? true :false
                     };
 
                     let options = {

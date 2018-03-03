@@ -87,12 +87,15 @@
                     metadata: { 
                         type: Object,
                         value: () => ({
+                            namespace: '/registration',
                             service_url: '/registration/kanban',
                             primary_val: null,
                             primary_key: 'su_id',
                             project_key: 'su_task_project',
                             due_key: 'su_task_due',
                             due_formatted_key: 'su_task_due_formatted',
+                            status_primary_key: 'tus_id',
+                            status_primary_val: null,
                             status_status_key: 'tus_status',
                             status_worker_key: 'tus_worker',
                             status_target_key: 'tus_target'

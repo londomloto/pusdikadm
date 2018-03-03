@@ -321,12 +321,12 @@ class KanbanController extends \Micro\Controller {
     public static function applyFilter($query, $params) {
         if (isset($params['params'])) {
             $json = json_decode($params['params']);
-
+            
             if (isset($json->tus_id)) {
                 $query->andWhere('(task_status.tus_id = :tus_id:)', array('tus_id' => $json->tus_id));
             } else {
-                if (isset($json->author) && count($json->author) > 0) {
-                    $query->inWhere('task.su_created_by', $json->author[1]);
+                if (isset($json->user) && count($json->user) > 0) {
+                    $query->inWhere('task.su_id', $json->user[1]);
                 }
                 
                 if (isset($json->label) && count($json->label) > 0) {

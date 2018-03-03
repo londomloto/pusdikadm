@@ -42,8 +42,8 @@ class Activity extends \Micro\Model {
     }
 
     public function getReference() {
-        switch($this->ta_task_source) {
-            case 'sys_users':
+        switch($this->ta_task_ns) {
+            case '/registration':
                 return array(
                     'model' => 'App\Registration\Models\Task',
                     'reference_key' => 'su_id',

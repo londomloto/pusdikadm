@@ -6,7 +6,7 @@
 <link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
 <link rel="import" href="../../../../cores/elements/kct-checkbox/kct-checkbox.html">
-<link rel="import" href="../../../../cores/elements/kct-app/blocks/page-header-block.html">
+<link rel="import" href="../../../../cores/mixins/dom.html">
 <link rel="import" href="../settings/blocks/setting-header-block.html">
 
 <dom-module id="roles-permissions-page">
@@ -16,10 +16,12 @@
                 display: block;
                 height: 100%;
             }
-            .header-container,
             .body-container {
                 overflow-y: scroll;
                 overflow-x: hidden;
+            }
+            .header-container {
+                overflow: hidden;
             }
             table {
                 border-collapse: collapse;
@@ -32,15 +34,20 @@
                 padding: 8px 16px;
             }
             th.column-input {
-                padding-left: 0;
-                padding-right: 0;
+                padding: 4px 0;
+                /*padding-left: 16px;*/
+                /*padding-right: 80px;*/
+                /*width: 256px;*/
                 width: 232px;
+                padding-right: var(--header-padding-right);
+
             }
+
             td {
                 padding: 4px 16px;
             }
             th {
-                border-bottom: 1px solid #ccc;
+                border-bottom: 1px solid #dfdfdf;
             }
             th > span {
                 display: block;
@@ -52,10 +59,11 @@
                 font-size: 14px;
             }
             tr {
-                border-bottom: 1px solid #f2f2f2;
+                border-bottom: 1px solid #f0f0f0;
             }
+
             tr.level-1 {
-                background-color: var(--paper-grey-100);
+                /*background-color: var(--paper-grey-100);*/
             }
 
             
@@ -64,7 +72,7 @@
             }
             th + th,
             td + td {
-                border-left: 1px solid #dfdfdf;
+                border-left: 1px solid #f0f0f0;
             }
             tr.level-1 td {
                 font-weight: 400;
@@ -73,8 +81,10 @@
                 padding-left: 44px;
                 font-weight: 400;
             }
-            .column-input {
-                width: 200px;
+
+            td.column-input {
+                padding: 4px 0;
+                width: 232px;
                 text-align: center;
             }
             .scroll-overlay {
@@ -90,8 +100,8 @@
                 position: relative;
             }
             kct-checkbox {
-                position: absolute;
-                top: -24px;
+                display: inline;
+                --paper-checkbox-margin: 0;
                 --paper-checkbox-label-spacing: 0;
             }
             vaadin-combo-box {
@@ -100,6 +110,12 @@
                 --paper-input-container-label: { font-size: 14px; font-weight: 400;  };
                 --paper-input-container-underline: { display: none; };
                 --paper-input-container-underline-focus: { display: none; };
+            }
+            .body-container tr {
+                cursor: pointer;
+            }
+            .body-container tr:hover {
+                background-color: #f0f0f0;
             }
         </style>
 
@@ -110,9 +126,10 @@
         </div> -->
 
         <kct-vbox>
-            <setting-header-block icon="lock-outline" text="Konfigurasi" desc="Hak Akses" on-back-tap="__onBackTap">
+            <setting-header-block icon="lock-outline" text="Settings" desc="Roles Permissions" on-back-tap="__onBackTap">
                 <div class="separator"></div>
-                <paper-button on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Simpan</paper-button>
+                <paper-icon-button on-tap="__onReloadTap" style="margin-right: 5px;" icon="refresh"></paper-icon-button>
+                <paper-button class="btn-blue" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
             </setting-header-block>
             <!-- <page-header-block icon="lock-outline" title="Settings - RBAC" description="Roles Permissions">
                 <paper-icon-button on-tap="__onReloadTap" icon="refresh"></paper-icon-button>
@@ -123,111 +140,87 @@
                 <kct-vbox class="table-wrapper">
                     <div class="header-container">
                         <table>
-                            <tr>
-                                <th class="column-label"><span>Keterangan</span></th>
-                                <th class="column-input">
-                                    <vaadin-combo-box
-                                        label="Pilih Role" 
-                                        items="[[ __roles1 ]]" 
-                                        value="{{ selectedRole1 }}"
-                                        item-value-path="sr_id" 
-                                        item-label-path="sr_name" 
-                                        no-label-float></vaadin-combo-box>
-                                </th>
-                                <th class="column-input">
-                                    <vaadin-combo-box
-                                        label="Pilih Role" 
-                                        items="[[ __roles2 ]]" 
-                                        value="{{ selectedRole2 }}"
-                                        item-value-path="sr_id" 
-                                        item-label-path="sr_name" 
-                                        no-label-float></vaadin-combo-box>
-                                </th>
-                            </tr>
+                            <thead>                                
+                                <tr>
+                                    <th class="column-label"><span>&nbsp;</span></th>
+                                    <th class="column-input">
+                                        <vaadin-combo-box
+                                            label="Select Role" 
+                                            items="[[ __roles1 ]]" 
+                                            value="{{ selectedRole1 }}"
+                                            item-value-path="sr_id" 
+                                            item-label-path="sr_name" 
+                                            no-label-float></vaadin-combo-box>
+                                    </th>
+                                    <!-- <th class="column-input">
+                                        <vaadin-combo-box
+                                            label="Select Role" 
+                                            items="[[ __roles2 ]]" 
+                                            value="{{ selectedRole2 }}"
+                                            item-value-path="sr_id" 
+                                            item-label-path="sr_name" 
+                                            no-label-float></vaadin-combo-box>
+                                    </th> -->
+                                </tr>
+                            </thead>
                         </table>
                     </div>    
                     <div class="body-container flex scroll-y">
                         <table>
                             <tbody>
                                 <template is="dom-repeat" items="[[ setup ]]">
-                                    <tr class="level-1">
+                                    <tr class="level-1"  on-tap="__onRowTap">
                                         <td class="column-label">
                                             <iron-icon icon="label-outline" style="position: relative; top: -2px;"></iron-icon> 
-                                            <span>Module [[ item.module.sm_title ]]</span>
+                                            <span><strong>[[ item.module.sm_title ]]</strong> module</span>
                                             <template is="dom-if" if="[[ item.menu ]]">
-                                                <span class="f-400">( Menu: <span class="text-danger">[[ item.menu.smn_title_path ]]</span> )</span>
+                                                <span class="f-400">( menu: <span class="text-danger"><strong>[[ item.menu.smn_title_path ]]</strong></span> )</span>
                                             </template>
                                         </td>
                                         <td class="column-input">
-                                            <template is="dom-if" if="[[ item.menu ]]">
-                                                <div class="checkbox-wrapper">
-                                                    <kct-checkbox value="{{ item.menu.smn_selected_1 }}"></kct-checkbox>
-                                                </div> 
-                                            </template>
+                                            <div class="checkbox-wrapper">
+                                                <kct-checkbox value="{{ item.menu_selected_1 }}"  disabled$="[[__disabledCheckbox]]"></kct-checkbox>
+                                            </div> 
                                         </td>
-                                        <td class="column-input">
-                                            <template is="dom-if" if="[[ item.menu ]]">
-                                                <div class="checkbox-wrapper">
-                                                    <kct-checkbox value="{{ item.menu.smn_selected_2 }}"></kct-checkbox>
-                                                </div>    
-                                            </template>
-                                        </td>
+                                        <!-- <td class="column-input">
+                                            <div class="checkbox-wrapper">
+                                                <kct-checkbox value="{{ item.menu_selected_2 }}"  disabled$="[[__disabledCheckbox]]"></kct-checkbox>
+                                            </div> 
+                                        </td> -->
                                     </tr>    
-                                    <!-- <template is="dom-if" if="[[ item.menus.length ]]">
-                                        <tr class="level-2">
-                                            <td>Menus </td>
-                                            <td></td>
-                                            <td></td>
-                                        </tr>
-                                        <template is="dom-repeat" items="[[ item.menus ]]" as="menu">
-                                            <tr class="level-3">
-                                                <td>&bull; [[ menu.smn_title ]]</td>
-                                                <td class="column-input">
-                                                    <div class="checkbox-wrapper">
-                                                        <kct-checkbox value="{{ menu.smn_selected_1 }}" true-value="1" false-value="0"></kct-checkbox>
-                                                    </div>
-                                                </td>
-                                                <td class="column-input">
-                                                    <div class="checkbox-wrapper">
-                                                        <kct-checkbox value="{{ menu.smn_selected_2 }}" true-value="1" false-value="0"></kct-checkbox>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        </template>    
-                                    </template> -->
                                     <template is="dom-if" if="[[ item.capabilities.length ]]">
                                         <tr class="level-2">
-                                            <td>Kapabilitas</td>
+                                            <td>Permissions:</td>
                                             <td></td>
-                                            <td></td>
+                                            <!-- <td></td> -->
                                         </tr>
-                                        <template is="dom-repeat" items="[[ item.capabilities ]]" as="cap">
-                                            <tr class="level-3">
-                                                <td>&bull; [[ cap.smc_description ]]</td>
-                                                <td class="column-input">
-                                                    <div class="checkbox-wrapper">
-                                                        <kct-checkbox value="{{ cap.smc_selected_1 }}" true-value="1" false-value="0"></kct-checkbox>
-                                                    </div>
-                                                </td>
-                                                <td class="column-input">
-                                                    <div class="checkbox-wrapper">
-                                                        <kct-checkbox value="{{ cap.smc_selected_2 }}" true-value="1" false-value="0"></kct-checkbox>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        </template>    
                                     </template>
+                                    <template is="dom-repeat" items="[[ item.capabilities ]]" as="cap">
+                                        <tr class="level-3"  on-tap="__onRowTap">
+                                            <td>&bull;&nbsp;&nbsp;[[ cap.smc_description ]]</td>
+                                            <td class="column-input">
+                                                <div class="checkbox-wrapper">
+                                                    <kct-checkbox value="{{ cap.smc_selected_1 }}" true-value="1" false-value="0" disabled$="[[__disabledCheckbox]]"></kct-checkbox>
+                                                </div>
+                                            </td>
+                                            <!-- <td class="column-input">
+                                                <div class="checkbox-wrapper">
+                                                    <kct-checkbox value="{{ cap.smc_selected_2 }}" true-value="1" false-value="0"></kct-checkbox>
+                                                </div>
+                                            </td> -->
+                                        </tr>
+                                    </template>    
                                 </template>
                             </tbody>
                         </table>
                     </div>
                 </kct-vbox>
-                <div class="scroll-overlay">&nbsp;</div>
+                <!-- <div class="scroll-overlay">&nbsp;</div> -->
             </div>
         </kct-vbox>
     </template>
     <script>
-        class RolesPermissionsPage extends KctView {
+        class RolesPermissionsPage extends Mixins(KctView).use(Mixins.DOM) {
             static get is() {
                 return 'roles-permissions-page';
             }
@@ -236,14 +229,14 @@
                     setup: { type: Array },
                     roles: { type: Array },
                     selectedRole1: { type: Object },
-                    selectedRole2: { type: Object }
+                    // selectedRole2: { type: Object }
                 };
             }
 
             static get observers() {
                 return [
                     '__selectedRole1Changed(selectedRole1)',
-                    '__selectedRole2Changed(selectedRole2)'
+                    // '__selectedRole2Changed(selectedRole2)'
                 ];
             }
 
@@ -252,12 +245,42 @@
 
                 this.__roles1 = [];
                 this.__roles2 = [];
+                this.__disabledCheckbox = true;
+
             }
 
             ready() {
                 super.ready();
+                this.updateStyles({
+                    '--header-padding-right': this._getScrollerSize() + 'px'
+                })
+            }
+
+            /*ready() {
+                super.ready();
                 this.__loadRoles();
                 this.__loadSetup();
+            }*/
+
+            handleRouteParams(setting) {
+                if (setting != 'roles-permissions') {
+                    return;
+                }
+
+                let __s1 = this.selectedRole1 || '';
+                // let __s2 = this.selectedRole2 || '';
+
+                this.set('selectedRole1', '');
+                // this.set('selectedRole2', '');
+
+                this.__loadRoles().then(() => {
+                    this.__loadSetup().then(() => {
+                        
+
+                        this.set('selectedRole1', __s1);
+                        // this.set('selectedRole2', __s2);
+                    });
+                });
             }
 
             __loadSetup() {
@@ -275,7 +298,7 @@
                     let roles = res.data;
 
                     this.set('__roles1', roles.slice());
-                    this.set('__roles2', roles.slice());
+                    // this.set('__roles2', roles.slice());
                     this.set('roles', roles);
                 });
             }
@@ -285,13 +308,7 @@
                 if ( ! this.setup) return;
 
                 this.setup.forEach((s, i) => {
-                    if (s.menu) {
-                        this.set('setup.' + i + '.menu.smn_selected_' + combo, '0');
-                    }
-
-                    // s.menus.forEach((m, j) => {
-                    //     this.set('setup.' + i + '.menus.' + j + '.smn_selected_' + combo, '0');
-                    // });
+                    this.set('setup.' + i + '.menu_selected_' + combo, '0');
 
                     s.capabilities.forEach((c, j) => {
                         this.set('setup.' + i + '.capabilities.' + j + '.smc_selected_' + combo, '0');
@@ -306,23 +323,17 @@
                     let data = res.data;
 
                     data.forEach((d, i) => {
+                        
                         let setupItem = this.setup.find(s => s.module.sm_id == d.module.sm_id),
                             setupIndex = setupItem ? this.setup.indexOf(setupItem) : -1,
-                            menuSelected = (d.menu && d.menu['smn_selected_' + combo] == '1') ? true : false,
-                            // menuSelection = d.menus.filter(m => m['smn_selected_' + combo] == '1').map(m => m.smn_id),
+                            menuSelected = d['menu_selected_' + combo] == '1' ? true : false,
                             permSelection = d.capabilities.filter(c => c['smc_selected_' + combo] == '1').map(c => c.smc_id);
 
                         if (setupItem) {
-                            if (setupItem.menu && menuSelected) {
-                                this.set('setup.' + setupIndex + '.menu.smn_selected_' + combo, '1');
-                            }
 
-                            // validate menus
-                            // setupItem.menus.forEach((m, j) => {
-                            //     if (menuSelection.indexOf(m.smn_id) !== -1) {
-                            //         this.set('setup.' + setupIndex + '.menus.' + j + '.smn_selected_' + combo, '1');
-                            //     }
-                            // });
+                            if (menuSelected) {
+                                this.set('setup.' + setupIndex + '.menu_selected_' + combo, '1');    
+                            }
 
                             // validate capabilities
                             setupItem.capabilities.forEach((c, j) => {
@@ -339,33 +350,58 @@
                 this.__loadPermissions(role, 1);
 
                 if (role) {
-                    let roles2 = this.roles.filter(r => r.sr_id != role);
-                    this.set('__roles2', roles2);
-                } else if (this.roles) {
-                    this.set('__roles2', this.roles.slice());
+                    this.set("__disabledCheckbox", false);
+                } else {
+                    this.set("__disabledCheckbox", true);
                 }
+
+                // if (role) {
+                //     let roles2 = this.roles.filter(r => r.sr_id != role);
+                //     this.set('__roles2', roles2);
+                // } else if (this.roles) {
+                //     this.set('__roles2', this.roles.slice());
+                // }
             }
 
-            __selectedRole2Changed(role) {
-                this.__loadPermissions(role, 2);
+            // __selectedRole2Changed(role) {
+            //     this.__loadPermissions(role, 2);
 
-                if (role) {
-                    let roles1 = this.roles.filter(r => r.sr_id != role);
-                    this.set('__roles1', roles1);
-                } else if (this.roles) {
-                    this.set('__roles1', this.roles.slice());
-                }
-            }
+            //     if (role) {
+            //         this.set("__disabledCheckbox", false);
+            //     } else {
+            //         this.set("__disabledCheckbox", true);
+            //     }
+
+            //     if (role) {
+            //         let roles1 = this.roles.filter(r => r.sr_id != role);
+            //         this.set('__roles1', roles1);
+            //     } else if (this.roles) {
+            //         this.set('__roles1', this.roles.slice());
+            //     }
+            // }
 
             __onReloadTap() {
                 this.set('__roles1', []);
-                this.set('__roles2', []);
+                // this.set('__roles2', []);
 
                 this.set('selectedRole1', '');
-                this.set('selectedRole2', '');
+                // this.set('selectedRole2', '');
 
                 this.__loadRoles();
                 this.__loadSetup();
+            }
+
+            __onRowTap(e) {
+                let row = e.currentTarget;
+                if (row) {
+                    let dom = e.target;
+                    if (dom.localName != 'kct-checkbox') {
+                        let checkbox = row.querySelector('kct-checkbox');
+                        if ( ! checkbox.disabled) {
+                            checkbox.checked = !checkbox.checked;  
+                        }
+                    }
+                }
             }
             
             __onSaveTap() {
@@ -379,25 +415,18 @@
                     };
                 }
 
-                if (this.selectedRole2) {
-                    data[this.selectedRole2] = {
-                        menus: [],
-                        permissions: []
-                    };
-                }
+                // if (this.selectedRole2) {
+                //     data[this.selectedRole2] = {
+                //         menus: [],
+                //         permissions: []
+                //     };
+                // }
 
                 this.setup.forEach(s => {
                     if (this.selectedRole1) {
 
-                        if (s.menu && (s.menu.smn_selected_1 == '1')) {
-                            data[this.selectedRole1].menus.push(s.menu.smn_id);
-                        }
-
-                        // s.menus.forEach(m => {
-                        //     if (m.smn_selected_1 == '1') {
-                        //         data[this.selectedRole1].menus.push(m.smn_id);
-                        //     }
-                        // });
+                        let token = s.menu_token + ':' + (s.menu_selected_1 == '1' ? '1' : '0');
+                        data[this.selectedRole1].menus.push(token);
 
                         s.capabilities.forEach(c => {
                             if (c.smc_selected_1 == '1') {
@@ -406,23 +435,16 @@
                         });
                     }
 
-                    if (this.selectedRole2) {
-                        if (s.menu && (s.menu.smn_selected_2 == '1')) {
-                            data[this.selectedRole2].menus.push(s.menu.smn_id);
-                        }
-
-                        // s.menus.forEach(m => {
-                        //     if (m.smn_selected_2 == '1') {
-                        //         data[this.selectedRole2].menus.push(m.smn_id);
-                        //     } 
-                        // });
-
+                    /*if (this.selectedRole2) {
+                        let token = s.menu_token + ':' + (s.menu_selected_1 == '1' ? '1' : '0');
+                        data[this.selectedRole1].menus.push(s.menu_token);
+                        
                         s.capabilities.forEach(c => {
                             if (c.smc_selected_2 == '1') {
                                 data[this.selectedRole2].permissions.push(c.smc_id);
                             } 
                         });
-                    }
+                    }*/
                 });
 
                 ajax.POST('/roles/roles-permissions', data).then(res => {
