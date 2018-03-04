@@ -212,7 +212,7 @@
         <kct-media screen="{{ screen }}"></kct-media>
         <kct-socket-manager id="socket" name="global-socket"></kct-socket-manager>
         <kct-socket manager="global-socket" on-notify="__onSocketNotify"></kct-socket>
-        <!-- <kct-feed id="feed" config="{{ config }}"></kct-feed> -->
+        <kct-feed id="feed" config="[[ config ]]"></kct-feed>
 
         <app-drawer-layout id="viewport" class="unresolved" fullbleed>
             
@@ -331,10 +331,12 @@
                 this._debounce(
                     'active',
                     () => {
+
                         this.$.viewport.classList.remove('unresolved');
                         this.__doLayout();
                         this.$.navigation.loadMenus();
                         this.$.socket.connect();
+                        this.$.feed.subscribe();
                     },
                     1000
                 );

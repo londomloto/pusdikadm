@@ -123,16 +123,35 @@
                     
                 }
 
+                support() {
+                    return !/\d\./.test(location.host) && location.protocol == 'https:';
+                }
+
                 subscribe() {
-                    return this.__loadMessanger().then(support => {
-                        if (support) {
-                            return this.__requestToken().then(token => {
-                                if (token) {
-                                    return this.__registerToken(token).then(success => {
-                                        if (success) {
-                                            return {
-                                                success: true
-                                            };
+                    if ( ! this.support()) {
+                        return Promise.resolve({
+                            success: false,
+                            message: 'Perangkat Anda tidak mendukung'
+                        });
+                    } else {
+                        return this.__loadStorage().then(() => {
+                            let subscribed = !!this._getStorageItem(this.storageKey, 'token');
+                            if ( ! subscribed) {
+                                return this.__loadMessanger().then(() => {
+                                    return this.__requestToken().then(token => {
+                                        if (token) {
+                                            return this.__registerToken(token).then(success => {
+                                                if (success) {
+                                                    return {
+                                                        success: true
+                                                    };
+                                                } else {
+                                                    return {
+                                                        success: false,
+                                                        message: 'Gagal mengaktifkan notifikasi, silahkan ulangi kembali'
+                                                    };
+                                                }
+                                            });
                                         } else {
                                             return {
                                                 success: false,
@@ -140,53 +159,58 @@
                                             };
                                         }
                                     });
-                                } else {
-                                    return {
-                                        success: false,
-                                        message: 'Gagal mengaktifkan notifikasi, silahkan ulangi kembali'
-                                    };
+                                });
+                            } else {
+                                return {
+                                    success: true
                                 }
-                            });
-                        } else {
-                            return {
-                                success: false,
-                                message: 'Perangkat Anda tidak mendukung notifikasi'
-                            };
-                        }
-                    });
+                            }
+                        });
+                    }
                 }
 
                 unsubscribe() {
-                    return this.__loadMessanger().then(support => {
-                        if (support) {
-                            return this.__requestToken().then(token => {
-                                if (token) {
-                                    return this.__unregisterToken(token).then(success => {
-                                        if (success) {
-                                            return {
-                                                success: success
-                                            };
+                    if ( ! this.support()) {
+                        return Promise.resolve({
+                            success: false,
+                            message: 'Perangkat Anda tidak mendukung'
+                        });
+                    } else {
+                        return this.__loadStorage().then(() => {
+                            let subscribed = !!this._getStorageItem(this.storageKey, 'token');
+                            if (subscribed) {
+                                return this.__loadMessanger().then(() => {
+                                    return this.__requestToken().then(token => {
+                                        if (token) {
+                                            return this.__unregisterToken(token).then(success => {
+                                                if (success) {
+                                                    return {
+                                                        success: success
+                                                    };
+                                                } else {
+                                                    return {
+                                                        success: false,
+                                                        message: 'Gagal menonaktifkan notifikasi, silahkan ulangi kembali'
+                                                    };
+                                                }
+                                            });
                                         } else {
                                             return {
                                                 success: false,
-                                                message: 'Gagal menonaktifkan notifikasi, silahkan ulangi kembali'
+                                                message: 'Gagal mengaktifkan notifikasi, silahkan ulangi kembali'
                                             };
                                         }
                                     });
-                                } else {
-                                    return {
-                                        success: false,
-                                        message: 'Gagal mengaktifkan notifikasi, silahkan ulangi kembali'
-                                    };
-                                }
-                            });
-                        } else {
-                            return {
-                                success: false,
-                                message: 'Perangkat Anda tidak mendukung notifikasi'
-                            };
-                        }
-                    });
+                                });
+                            } else {
+                                return {
+                                    success: true
+                                };
+                            }
+                        });
+                    }
+                    
+                    
                 }
 
                 notify(payload = {}) {
@@ -216,23 +240,21 @@
 
                 __loadMessanger() {
                     if (messanger != null) {
-                        return Promise.resolve(true);
+                        return Promise.resolve();
                     }
 
                     let def = this._defer();
 
-                    this.__loadStorage().then(() => {
-                        if (window.firebase === undefined) {
-                            let fb = document.createElement('script');
-                            fb.src = 'https://www.gstatic.com/firebasejs/4.10.1/firebase.js';
-                            fb.onload = () => {
-                                this.__initMessanger().then(support => {
-                                    def.resolve(support);
-                                });
-                            };
-                            document.body.appendChild(fb);
-                        }
-                    });
+                    if (window.firebase === undefined) {
+                        let fb = document.createElement('script');
+                        fb.src = 'https://www.gstatic.com/firebasejs/4.10.1/firebase.js';
+                        fb.onload = () => {
+                            this.__initMessanger().then(() => {
+                                def.resolve();
+                            });
+                        };
+                        document.body.appendChild(fb);
+                    }
 
                     return def.promise;
                 }
@@ -263,29 +285,19 @@
                             .catch(err => {});
                     });
 
-                    let https = location.protocol == 'https:';
-                    let numericAddress = /\d\./.test(this.config.app_host);
+                    let worker = this.config.app_base + 'service-worker.js';
 
-                    let support = !numericAddress && https && navigator.serviceWorker;
-                    
-                    if (support) {
-                        let worker = this.config.app_base + 'service-worker.js';
+                    return navigator.serviceWorker.register(worker).then(reg => {
+                        messanger.useServiceWorker(reg);
 
-                        return navigator.serviceWorker.register(worker).then(reg => {
-                            messanger.useServiceWorker(reg);
-
-                            return messanger.requestPermission()
-                                .then(() => {
-                                    return true;
-                                })
-                                .catch(err => {
-                                    return false;
-                                });
-                        });
-                    } else {
-                        messanger = false;
-                        return Promise.resolve(false);
-                    }
+                        return messanger.requestPermission()
+                            .then(() => {
+                                return true;
+                            })
+                            .catch(err => {
+                                return false;
+                            });
+                    });
                 }
 
                 __requestToken() {
