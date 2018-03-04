@@ -14,6 +14,7 @@
 <link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
 <link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
 <link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../cores/elements/kct-media/kct-media.html">
 <link rel="import" href="../settings/blocks/setting-header-block.html">
 
 <dom-module id="profile-page">
@@ -25,8 +26,9 @@
             }
             .sidebar {
                 width: 200px;
-                padding-right: 1rem;
+                padding-right: 1em;
                 position: relative;
+                margin-bottom: 1em;
             }
             .profile-avatar {
                 height: 200px;
@@ -47,14 +49,29 @@
                 left: 50%;
                 margin-left: -28px;
             }
+            .layout.small {
+                @apply --layout-vertical;
+            }
+            .layout.small .sidebar {
+                padding: 1em;
+                width: auto;
+                background-color: #fff;
+                @apply --shadow-elevation-2dp;
+                border-radius: 2px;
+                text-align: center;
+            }
+            .layout.small .sidebar .rel {
+                display: inline-block;
+            }
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
+        <kct-media screen="{{ screen }}"></kct-media>
 
         <kct-vbox>
             <setting-header-block icon="face" text="Profile" desc="[[ user.su_fullname ]]" hide-nav></setting-header-block>
             <div class="flex scroll-y padding">
-                <kct-hbox> 
+                <kct-hbox class$="layout [[ __computeClass(screen) ]]"> 
                     <div class="sidebar">
                         <div class="rel">
                             <div class="profile-avatar">
@@ -152,6 +169,10 @@
 
             handleResizing(width, height) {
                 this.updateStyles({ '--profile-page-height': height + 'px' });
+            }
+
+            __computeClass(screen) {
+                return ['sm', 'md'].indexOf(screen) !== -1 ? 'small' : '';
             }
 
             __onSaveBasicTap() {
