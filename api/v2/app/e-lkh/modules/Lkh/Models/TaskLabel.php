@@ -1,10 +1,10 @@
 <?php
 namespace App\Lkh\Models;
 
-class Exam extends \Micro\Model {
+class TaskLabel extends \Micro\Model {
 
     public function getSource() {
-        return 'trx_lkh_exam';
+        return 'trx_lkh_labels';
     }
 
 }

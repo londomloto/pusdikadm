@@ -2,6 +2,7 @@
 namespace App\Registration\Models;
 
 use App\Activities\Models\Activity;
+use Micro\Helpers\Date as DateHelper;
 use Phalcon\Mvc\Model\Relation;
 
 class Task extends \App\Users\Models\User implements \App\Tasks\Interfaces\TaskModel {
@@ -125,7 +126,9 @@ class Task extends \App\Users\Models\User implements \App\Tasks\Interfaces\TaskM
 
     public function toArray($columns = NULL) {
         $data = parent::toArray($columns);
-        $data['su_task_due_formatted'] = ! empty($this->su_task_due) ? date('d M Y', strtotime($this->su_task_due)) : '';
+        
+        $data['su_task_due_formatted'] = DateHelper::format($this->su_task_due);
+        $data['su_created_dt_relative'] = DateHelper::formatRelative($this->su_created_dt);
 
         if ($this->creator) {
             $data['creator_su_fullname'] = $this->creator->getName();

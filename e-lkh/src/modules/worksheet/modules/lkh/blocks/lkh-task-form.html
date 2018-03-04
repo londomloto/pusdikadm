@@ -3,12 +3,9 @@
 <link rel="import" href="../../../forms/form-style.html">
 <link rel="import" href="../../../forms/form-base.html">
 
-<link rel="import" href="../../../forms/form-pendaftaran.html">
-<link rel="import" href="../../../forms/form-pendaftaran-auth.html">
-<link rel="import" href="../../../forms/form-pendaftaran-conf.html">
-<link rel="import" href="../../../forms/form-pendaftaran-view.html">
+<link rel="import" href="../../../forms/form-lkh.html">
 
-<dom-module id="pendaftaran-task-form">
+<dom-module id="lkh-task-form">
     <template>
         <style include="project-task-form-style"></style>
         <div id="mask" hidden$="[[ !busy ]]">
@@ -20,12 +17,12 @@
         <div id="form-container" hidden$="[[ loading ]]"></div>
     </template>
     <script>
-        class PendaftaranTaskForm extends Mixins(Polymer.Element).use(Mixins.ProjectTaskForm) {
+        class LkhTaskForm extends Mixins(Polymer.Element).use(Mixins.ProjectTaskForm) {
             static get is() {
-                return 'pendaftaran-task-form';
+                return 'lkh-task-form';
             }
         }
 
-        customElements.define(PendaftaranTaskForm.is, PendaftaranTaskForm);
+        customElements.define(LkhTaskForm.is, LkhTaskForm);
     </script>
 </dom-module>

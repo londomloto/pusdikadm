@@ -1,7 +1,7 @@
 
 <link rel="import" href="../../shared/project-view-grid.html">
 
-<dom-module id="lkh-view-grid">
+<dom-module id="absensi-view-grid">
     <template>
         <style include="project-view-grid-style"></style>
 
@@ -10,7 +10,7 @@
 
         <kct-grid 
             id="grid" 
-            url="/lkh/grid" 
+            url="/registration/grid" 
             columns="[[ columns ]]" 
             selection-model="row" 
             row-height="50" 
@@ -38,9 +38,9 @@
         
     </template>
     <script>
-        class LkhViewGrid extends Mixins(KctView).use(Mixins.ProjectViewGrid) {
+        class AbsensiViewGrid extends Mixins(KctView).use(Mixins.ProjectViewGrid) {
             static get is() {
-                return 'lkh-view-grid';
+                return 'absensi-view-grid';
             }
 
             static get properties() {
@@ -52,10 +52,10 @@
                             { 
                                 text: 'Keterangan', 
                                 width: 367,
-                                dataIndex: 'lkh_title',
+                                dataIndex: 'su_fullname',
                                 renderer: (e) => {
                                     return `
-                                        <div class="item-title">${e.data.lkh_title}</div>
+                                        <div class="item-title">${e.data.su_fullname}</div>
                                         <div class="item-meta">Dibuat oleh <b>${e.data.creator_su_fullname}</b> ${e.data.su_created_dt_relative}</div>
                                     `;
                                 }
@@ -93,6 +93,6 @@
             }
         }
 
-        customElements.define(LkhViewGrid.is, LkhViewGrid);
+        customElements.define(AbsensiViewGrid.is, AbsensiViewGrid);
     </script>
 </dom-module>

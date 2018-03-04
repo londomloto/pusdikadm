@@ -15,68 +15,7 @@
                     busy: { type: Boolean, value: false, notify: true },
                     project: { type: String },
                     projectRecord: { type: Object },
-                    params: { type: Object },
-                    columns: {
-                        type: Array,
-                        value: () => ([
-                            { type: 'rownumber', width: 44 },
-                            /*{
-                                type: 'action',
-                                width: 50,
-                                align: 'center',
-                                renderer: (e) => {
-                                    if (e.data) {
-                                        return '<kct-grid-action accent="pink" icon="image:edit" on-tap="__onEditTap" icon-only rounded></kct-grid-action>';
-                                    }
-                                    return '';
-                                }
-                            },*/
-                            { 
-                                text: 'Keterangan', 
-                                width: 367,
-                                dataIndex: 'tt_title',
-                                renderer: (e) => {
-                                    if (e.data) {
-                                        return `
-                                            <div class="item-title">${e.data.tt_title}</div>
-                                            <div class="item-meta">Dibuat oleh <b>${e.data.creator_su_fullname}</b> ${e.data.tt_created_dt_formatted}</div>
-                                        `;
-                                    }
-                                    return '';
-                                }
-                            },
-                            { 
-                                text: 'Deadline',
-                                dataIndex: 'tt_due_date',
-                                renderer: (e) => {
-                                    if (e.data) {
-                                        return e.data.tt_due_date_formatted;
-                                    }
-                                    return '';
-                                }
-                            },
-                            { 
-                                text: 'Status',
-                                type: 'action',
-                                renderer: (e) => {
-                                    if (e.data) {
-                                        let div = '';
-                                        e.data.statuses.forEach(s => {
-                                            div += `<a 
-                                                on-tap="__onTaskStatusTap" 
-                                                title="Update task" 
-                                                data-status="${s.tts_id}" 
-                                                href="javascript:;" 
-                                                class="item-badge" 
-                                                style="background-color: ${s.status_color};">${s.status_text}</a>`;
-                                        });
-                                        return div;
-                                    }
-                                    return '';
-                                }
-                            }
-                        ])
-                    }
+                    params: { type: Object }
                 };
             }
 

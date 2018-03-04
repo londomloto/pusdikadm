@@ -42,6 +42,55 @@
             static get is() {
                 return 'pendaftaran-view-grid';
             }
+
+            static get properties() {
+                return {
+                    columns: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'rownumber', width: 44 },
+                            { 
+                                text: 'Keterangan', 
+                                width: 367,
+                                dataIndex: 'su_fullname',
+                                renderer: (e) => {
+                                    return `
+                                        <div class="item-title">${e.data.su_fullname}</div>
+                                        <div class="item-meta">Dibuat oleh <b>${e.data.creator_su_fullname}</b> ${e.data.su_created_dt_relative}</div>
+                                    `;
+                                }
+                            },
+                            { 
+                                text: 'Target Penyelesaian',
+                                dataIndex: 'su_task_due',
+                                renderer: (e) => {
+                                    return e.data.su_task_due_formatted;
+                                }
+                            },
+                            { 
+                                text: 'Status',
+                                type: 'action',
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        let div = '';
+                                        e.data.statuses.forEach(s => {
+                                            div += `<a 
+                                                on-tap="__onTaskStatusTap" 
+                                                title="Update task" 
+                                                data-status="${s.tus_id}" 
+                                                href="javascript:;" 
+                                                class="item-badge" 
+                                                style="background-color: ${s.status_color};">${s.status_text}</a>`;
+                                        });
+                                        return div;
+                                    }
+                                    return '';
+                                }
+                            }
+                        ])
+                    }
+                };
+            }
         }
 
         customElements.define(PendaftaranViewGrid.is, PendaftaranViewGrid);
