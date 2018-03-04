@@ -171,7 +171,7 @@
                 } else {
                     this.__paging.limit = payload.limit;
                 }
-                
+
                 this.$.ajax.GET('/notifications', payload).then(res => {
                     let data = res.data || [];
 

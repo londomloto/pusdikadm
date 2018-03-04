@@ -190,8 +190,12 @@
                 }
 
                 notify(payload = {}) {
-                    payload.topic = this._browser();
+                    payload.topic = this.__defineTopic();
                     return this.$.ajax.POST('/notifications/notify', payload);
+                }
+
+                __defineTopic() {
+                    return this._browser() || 'global';
                 }
 
                 __loadStorage() {
@@ -299,7 +303,7 @@
                     if ( ! this.subscribed) {
                         return this.$.ajax.POST('/notifications/subscribe', {
                             token: token,
-                            topic: this._browser()
+                            topic: this.__defineTopic()
                         }).then(res => {
                             if (res.success) {
                                 this.set('token', token);
@@ -316,7 +320,7 @@
                 __unregisterToken(token) {
                     return this.$.ajax.POST('/notifications/unsubscribe', {
                         token: token,
-                        topic: this._browser()
+                        topic: this.__defineTopic()
                     }).then(res => {
                         if (res.success) {
                             return messanger.deleteToken(token)

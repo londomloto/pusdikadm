@@ -6,45 +6,70 @@
         return class extends superclass {
 
             _browser() {
-                return this._isChrome()
-                    ? 'chrome'
-                    : this._isFirefox()
-                        ? 'firefox' 
-                        : this._isOpera() 
-                            ? 'opera'
+                return this._isIE()
+                    ? 'IE'
+                    : this._isChrome()
+                        ? 'chrome' 
+                        : this._isFirefox() 
+                            ? 'firefox'
                             : this._isSafari() 
                                 ? 'safari'
-                                : this._isEdge()
-                                    ? 'edge'
-                                    : null;
+                                : this._isOpera()
+                                    ? 'opera'
+                                    : this._isEdge()
+                                        ? 'edge'
+                                        : null;
             }
 
             _isChrome() {
-                return !!window.chrome && !!window.chrome.webstore;
+                return /chrome/i.test(navigator.userAgent);
             }
 
             _isFirefox() {
-                return typeof InstallTrigger !== 'undefined';
+                return /firefox/i.test(navigator.userAgent);
             }
 
             _isOpera() {
-                return (!!window.opr && !!opr.addons) || !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
+                return /opera/i.test(navigator.userAgent);
             }
 
             _isSafari() {
-                return /constructor/i.test(window.HTMLElement) || (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || (typeof safari !== 'undefined' && safari.pushNotification));
+                return /safari/i.test(navigator.userAgent) && !this._isChrome();
             }
 
             _isIE() {
-                return /*@cc_on!@*/false || !!document.documentMode;
+                let ver = this._detectIEVersion();
+                return ver && ver < 12;
             }
 
             _isEdge() {
-                return ! this._isIE() && !!window.StyleMedia;
+                let ver = this._detectIEVersion();
+                return ver && ver >= 12;
             }
 
-            _isBlink() {
-                return (this._isChrome() || this._isOpera()) && !!window.CSS;
+            _detectIEVersion() {
+                let ua = navigator.userAgent;
+                
+                let msie = ua.indexOf('MSIE ');
+                
+                if (msie > 0) {
+                    return parseInt(ua.substring(msie + 5, ua.indexOf('.', msie)), 10);
+                }
+
+                let trident = ua.indexOf('Trident/');
+
+                if (trident > 0) {
+                    let rv = ua.indexOf('rv:');
+                    return parseInt(ua.substring(rv + 3, ua.indexOf('.', rv)), 10);
+                }
+
+                let edge = ua.indexOf('Edge/');
+
+                if (edge > 0) {
+                    return parseInt(ua.substring(edge + 5, ua.indexOf('.', edge)), 10);
+                }
+
+                return false;
             }
 
         };
