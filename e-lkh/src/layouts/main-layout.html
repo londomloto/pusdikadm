@@ -291,7 +291,8 @@
                     name: { type: String, value: 'main' },
                     page: { type: String },
                     busy: { type: Boolean, value: false },
-                    pages: { type: Array, value: [] }
+                    pages: { type: Array, value: [] },
+                    narrow: { type: Boolean }
                 };
             }
 
@@ -517,7 +518,7 @@
             }
 
             __onNavigationTap() {
-                if (this.narrow) {
+                if (this.$.viewport.narrow) {
                     this.$.drawer1.toggle();    
                 }
             }
