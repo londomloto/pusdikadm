@@ -26,10 +26,10 @@
                 <paper-spinner-lite slot="left-toolbar" active$="[[ busy ]]" hidden$="[[ !busy ]]"></paper-spinner-lite>
 
                 <paper-button id="button-create-task" on-tap="__onCreateTaskTap" slot="left-toolbar">
-                    <iron-icon icon="add" style="position: relative; top: -1px;"></iron-icon><span class="hidden-sm hidden-md">&nbsp;Record</span>
+                    <iron-icon icon="add" style="position: relative; top: -1px;"></iron-icon><span>&nbsp;Record</span>
                 </paper-button>
                 
-                <pendaftaran-find project="[[ project ]]" search="{{ search }}" slot="center-toolbar"></pendaftaran-find>
+                <pendaftaran-find class="hidden-sm" project="[[ project ]]" search="{{ search }}" slot="center-toolbar"></pendaftaran-find>
                 
                 <paper-icon-button title="Kanban View" data-view="kanban" on-tap="__onDisplayTap" class$="display-button hidden-sm hidden-md [[ __computeSelectedDisplay('kanban', view) ]]" icon="view-column" slot="right-toolbar"></paper-icon-button>
                 <paper-icon-button title="List View" data-view="list" on-tap="__onDisplayTap" class$="display-button hidden-sm hidden-md [[ __computeSelectedDisplay('list', view) ]]" icon="view-list" slot="right-toolbar"></paper-icon-button>
