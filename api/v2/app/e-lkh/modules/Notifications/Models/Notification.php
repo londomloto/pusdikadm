@@ -45,7 +45,7 @@ class Notification extends \App\Activities\Models\Activity {
         $task = $this->getTask();
 
         if ( ! $task) {
-            return '';
+            return '(dokumen sudah dihapus)';
         }
 
         $verb = '';

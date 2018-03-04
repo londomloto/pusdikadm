@@ -35,7 +35,8 @@ class Activity extends \Micro\Model {
         $ref = $this->getReference();
 
         if ($ref) {
-            return call_user_func_array(array($ref['model'], 'findFirst'), array($this->ta_task_id));
+            $task = call_user_func_array(array($ref['model'], 'findFirst'), array($this->ta_task_id));
+            return $task;
         }
 
         return NULL;
