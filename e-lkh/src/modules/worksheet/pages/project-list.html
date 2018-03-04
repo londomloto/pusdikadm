@@ -1,14 +1,17 @@
+<link rel="import" href="../../../../../cores/bower_components/app-layout/app-grid/app-grid-style.html">
 <link rel="import" href="../../../../../cores/bower_components/paper-card/paper-card.html">
 <link rel="import" href="../../../../../cores/bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../../../../../cores/elements/kct-view/kct-view.html">
 <link rel="import" href="../../../../../cores/elements/kct-layouts/kct-vbox.html">
 <link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../../cores/elements/kct-media/kct-media.html">
 <link rel="import" href="../../../../../cores/elements/kct-search/kct-search-advance.html">
 <link rel="import" href="../../../../../cores/elements/kct-event/kct-event-subscriber.html">
 <link rel="import" href="../blocks/header-block.html">
 
 <dom-module id="project-list">
     <template>
+        <style include="app-grid-style"></style>
         <style include="theme-helper">
             :host {
                 height: 100%;
@@ -17,14 +20,31 @@
                 background-color: var(--page-background-color);
             }
             .container {
-                @apply --layout-horizontal;
-                @apply --layout-wrap;
+                padding: 1.5em;
+                --app-grid-columns: 5;
+                --app-grid-item-height: 50%;
+                --app-grid-expandible-item-columns: 0;
+            }
+            .container.sm {
+                --app-grid-columns: 1;
+            }
+            .container.md {
+                --app-grid-columns: 2;
+            }
+            .container.lg {
+                --app-grid-columns: 3;
+            }
+            .item-wrapper {
+                box-sizing: border-box;
+                padding: .5em;
             }
             .item {
+                display: block;
                 cursor: pointer;
-                width: 200px;
-                height: 200px;
-                margin: 8px;
+                height: 188px;
+                /*width: 200px;*/
+                /*height: 200px;*/
+                /*margin: 8px;*/
                 border-radius: 0;
                 box-shadow: none;
                 border: 1px solid #f0f0f0;
@@ -130,6 +150,7 @@
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
+        <kct-media screen="{{ screen }}"></kct-media>
 
         <kct-event-subscriber 
             on-project-saved="__onProjectSaved" 
@@ -138,37 +159,75 @@
         <kct-vbox>
             <header-block hide-nav hide-header hidden></header-block>
             <div class="flex main">
-                <div class="container padding">
+                <div class$="container [[ screen ]]">
 
-                    <paper-card id="button-create" on-tap="__onCreateProjectTap" class="item item-create animated">
-                        <div class="card-content">
-                            <div><paper-icon-button icon="add"></paper-icon-button></div>
-                            <div>MODULE BARU</div>
+                    <div class="app-grid">
+                        
+                        <div class="item-wrapper">
+                            <paper-card id="button-create" on-tap="__onCreateProjectTap" class="item item-create animated">
+                                <div class="card-content">
+                                    <div><paper-icon-button icon="add"></paper-icon-button></div>
+                                    <div>MODULE BARU</div>
+                                </div>
+                            </paper-card>
                         </div>
-                    </paper-card>
+                        
+                        <template is="dom-repeat" items="[[ projects ]]">
+                            <div class="item-wrapper">
+                                <paper-card class="item" on-tap="__onOpenProjectTap">
+                                    <div class="card-content">
+                                        <div class="tool">
+                                            <paper-icon-button on-tap="__onProjectSettingTap" icon="settings"></paper-icon-button>
+                                        </div>
 
-                    <template is="dom-repeat" items="[[ projects ]]">
-                        <paper-card class="item" on-tap="__onOpenProjectTap">
-                            <div class="card-content">
-                                <div class="tool">
-                                    <paper-icon-button on-tap="__onProjectSettingTap" icon="settings"></paper-icon-button>
-                                </div>
-
-                                <div class="logo" style$="background-color: [[ item.sp_accent ]]">
-                                    <span>[[ item.sp_logo ]]</span>
-                                </div>
-                                <div class="text">
-                                    <span>[[ item.sp_title ]]</span>
-                                </div>
-                                <div class="meta">
-                                    <span>Oleh <b>[[ item.sp_creator_fullname ]]</b> pada <br>[[item.sp_created_date_formatted]]</span>
-                                </div>
-                                <div class="open m-t">
-                                    <paper-button class="btn-sm btn-cyan">Buka Module</paper-button>
-                                </div>
+                                        <div class="logo" style$="background-color: [[ item.sp_accent ]]">
+                                            <span>[[ item.sp_logo ]]</span>
+                                        </div>
+                                        <div class="text">
+                                            <span>[[ item.sp_title ]]</span>
+                                        </div>
+                                        <div class="meta">
+                                            <span>Oleh <b>[[ item.sp_creator_fullname ]]</b> pada <br>[[item.sp_created_date_formatted]]</span>
+                                        </div>
+                                        <div class="open m-t">
+                                            <paper-button class="btn-sm btn-cyan">Buka Module</paper-button>
+                                        </div>
+                                    </div>
+                                </paper-card>    
                             </div>
-                        </paper-card>    
-                    </template>
+                        </template>
+
+                        <!-- <paper-card id="button-create" on-tap="__onCreateProjectTap" class="item item-create animated">
+                            <div class="card-content">
+                                <div><paper-icon-button icon="add"></paper-icon-button></div>
+                                <div>MODULE BARU</div>
+                            </div>
+                        </paper-card>
+
+                        <template is="dom-repeat" items="[[ projects ]]">
+                            <paper-card class="item" on-tap="__onOpenProjectTap">
+                                <div class="card-content">
+                                    <div class="tool">
+                                        <paper-icon-button on-tap="__onProjectSettingTap" icon="settings"></paper-icon-button>
+                                    </div>
+
+                                    <div class="logo" style$="background-color: [[ item.sp_accent ]]">
+                                        <span>[[ item.sp_logo ]]</span>
+                                    </div>
+                                    <div class="text">
+                                        <span>[[ item.sp_title ]]</span>
+                                    </div>
+                                    <div class="meta">
+                                        <span>Oleh <b>[[ item.sp_creator_fullname ]]</b> pada <br>[[item.sp_created_date_formatted]]</span>
+                                    </div>
+                                    <div class="open m-t">
+                                        <paper-button class="btn-sm btn-cyan">Buka Module</paper-button>
+                                    </div>
+                                </div>
+                            </paper-card>    
+                        </template> -->
+
+                    </div>
                     
                 </div>
             </div>
