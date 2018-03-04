@@ -86,6 +86,7 @@
                 this.__maxRedirect = 1;
                 this.__numRedirect = 0;
 
+                
                 // dependencies resolver
                 this.__configResolver = this._defer();
                 this.__configResolver.done = false;
@@ -97,6 +98,7 @@
 
             ready() {
                 super.ready();
+
                 this._ensureAttribute('hidden', true);
                 this.__appLocation = this.$['app-location'];
             }
@@ -330,7 +332,7 @@
                             path = base + path.replace(base, '');
 
                             if (this.address.path != path) {
-                                this.set('route.addr', path);    
+                                this.set('route.addr', path);
                             }
 
                             path = path.replace(/\/$/, '') + '/';
@@ -478,7 +480,7 @@
                         this.set('route.addr', null);
 
                         let timer = setTimeout(() => {
-                            this.__silent = false;    
+                            this.__silent = false;
                             clearTimeout(timer);
                             timer = null;
                         }, 0);
@@ -489,13 +491,6 @@
             __routePathChanged(path) {
                 if (path && ! this.__silent) {
                     this.start();
-
-                    let i = path.indexOf('?');
-
-                    if (i !== -1) {
-                        let q = path.substr(i);
-                    }
-
                     this.__handle(path);
                 }
             }
