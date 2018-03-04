@@ -185,7 +185,11 @@
                             if (this.__numRedir <= this.__maxRedir) {
                                 this.__numRedir++;
                                 if ( ! this.state.layout) {
-                                    this.set('route.path', '/login');
+                                    let delay = setTimeout(() => {
+                                        clearTimeout(delay);
+                                        delay = null;
+                                        this.set('route.path', '/login');
+                                    }, 1);
                                 }
                             } else {
                                 this.__numRedir = 0;
