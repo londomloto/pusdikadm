@@ -23,6 +23,7 @@ class App extends \Phalcon\Mvc\Micro {
             'databases' => array()
         ));
 
+        $di->set('app', $this, TRUE);
         $di->set('config', $config, TRUE);
 
         $registry = new \Phalcon\Registry();
@@ -137,7 +138,7 @@ class App extends \Phalcon\Mvc\Micro {
         $folder = $this->config->app->path . 'config/';
 
         foreach(scandir($folder) as $file) {
-            if ($file[0] == '.') continue;
+            if (strpos($file, '.php') === FALSE) continue;
 
             $data = include_once($folder . $file);
             $name = basename($file, '.php');
@@ -296,6 +297,7 @@ class App extends \Phalcon\Mvc\Micro {
 
     private function _initProviders() {
         $di = $this->getDI();
+        $app = $this;
 
         $providers = array();
         $middleware = array();
@@ -303,16 +305,30 @@ class App extends \Phalcon\Mvc\Micro {
         $providers = array_merge($providers, $this->config->app->providers->toArray());
 
         foreach($providers as $name => $class) {
-            $di->set($name, function() use ($class){
-                return new $class();
+            $di->set($name, function() use ($class, $di){
+                $instance = new $class();
+                
+                if ($instance instanceof \Micro\Component) {
+                    $instance->setDI($di);
+                    $instance->ready();
+                }
+
+                return $instance;
             }, TRUE);
         }
 
         $middleware = array_merge($middleware, $this->config->app->middleware->toArray());
 
         foreach($middleware as $name => $class) {
-            $di->set($name.'_middleware', function() use ($class){
-                return new $class();
+            $di->set($name.'_middleware', function() use ($class, $di){
+                $instance = new $class();
+                
+                if ($instance instanceof \Micro\Component) {
+                    $instance->setDI($di);
+                    $instance->ready();
+                }
+
+                return $instance;
             }, TRUE);
         }
 

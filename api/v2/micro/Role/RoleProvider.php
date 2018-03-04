@@ -6,7 +6,7 @@ class RoleProvider extends \Micro\Component {
     protected $_providers;
     protected $_auth;
 
-    public function __construct() {
+    public function ready() {
         $app = $this->getApp();
 
         $this->_providers = $app->config->role->providers;

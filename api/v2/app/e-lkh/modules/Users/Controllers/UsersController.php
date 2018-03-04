@@ -20,12 +20,88 @@ class UsersController extends \Micro\Controller {
     
     public function createAction() {
         $post = $this->request->getJson();
-        return User::dbcreate($post);
+        $auth = $app->auth->user();
+
+        $user = new User();
+
+        $post['su_created_date'] = date('Y-m-d H:i:s');
+        $post['su_created_by'] = $auth['su_fullname'];
+
+        if (isset($post['su_passwd']) && ! empty($post['su_passwd'])) {
+            $post['su_passwd'] = $app->security->createHash($post['su_passwd']);
+        }
+
+        if (isset($post['su_email'])) {
+            if ( ! isset($post['su_fullname']) || empty($post['su_fullname'])) {
+                $name = substr($post['su_email'], 0, strpos($post['su_email'], '@'));
+                $name = ucwords(str_replace('.', ' ', $name));    
+                $post['su_fullname'] = $name;
+            }
+        }
+
+        if ($user->save($post)) {
+
+            if (isset($post['su_kanban'])) {
+                $user->saveKanban($post['su_kanban']);
+            }
+
+            if (isset($post['su_invite'], $post['su_email'])) {
+                $user->su_invite_token = User::createInvitationToken(array('su_email' => $post['su_email']));
+                $user->save();
+                $user->sendInvitation();
+            }
+
+            return User::get($user->su_id);
+        } else {
+            $messages = [];
+
+            foreach($user->getMessages() as $item) {
+                $messages[] = $item->getMessage();
+            }
+
+            return (object) array(
+                'success' => FALSE,
+                'data' => NULL,
+                'message' => implode('<br>', $messages)
+            );
+        }
     }
 
     public function updateAction($id) {
         $post = $this->request->getJson();
-        return User::dbupdate($id, $post);
+        $query = User::get($id);
+
+        if ($query->data) {
+
+            if (isset($post['su_passwd']) && ! empty($post['su_passwd'])) {
+                $post['su_passwd'] = $app->security->createHash($post['su_passwd']);
+            }
+
+            if ($query->data->save($post)) {
+                if (isset($post['su_kanban'])) {
+                    $query->data->saveKanban($post['su_kanban']);
+                }
+
+                if (isset($post['su_invite'], $post['su_email'])) {
+                    $query->data->su_active = 0;
+                    $query->data->su_invite_token = User::createInvitationToken(array('su_email' => $post['su_email']));
+                    $query->data->save();
+                    $query->data->sendInvitation();
+                }
+            } else {
+                $query->success = FALSE;
+                $query->message = [];
+
+                foreach($query->data->getMessages() as $m) {
+                    $query->message[] = $m;
+                }
+
+                $query->message = implode('<br>', $query->message);
+            }
+
+        }
+
+        return $query;
     }
 
     public function deleteAction($id) {
@@ -76,12 +152,14 @@ class UsersController extends \Micro\Controller {
 
         if ( ! empty($email)) {
             if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $found = User::findFirst(array(
+                $user = User::findFirst(array(
                     'su_email = :email:',
-                    'bind' => array('email' => $email)
+                    'bind' => array(
+                        'email' => $email
+                    )
                 ));
 
-                if ( ! $found) {
+                if ( ! $user) {
                     $user = new User();
 
                     if (empty($role)) {
@@ -104,21 +182,31 @@ class UsersController extends \Micro\Controller {
 
                     $user->su_sr_id = $role;
 
-                    $user->save();
-                    $user->sendInvitation();
+                    if ($user->save()) {
+                        
+                        $user = $user->refresh();
 
-                    if (isset($post['project']) && ! empty($post['project'])) {
-                        $pu = new \App\Projects\Models\ProjectUser();
-                        $pu->spu_su_id = $user->su_id;
-                        $pu->spu_sp_id = $post['project'];
-                        $pu->save();
+                        if (isset($post['project']) && ! empty($post['project'])) {
+                            $pu = new \App\Projects\Models\ProjectUser();
+                            $pu->spu_su_id = $user->su_id;
+                            $pu->spu_sp_id = $post['project'];
+                            $pu->save();
+                        }
                     }
-
-                    $result['success'] = TRUE;
-                    $result['data'] = User::get($user->su_id)->data;
                 } else {
-                    $result['message'] = 'Alamat email sudah terdaftar';
+                    $user->su_active = 0;
+                    $user->su_invite_token = User::createInvitationToken(array('su_email' => $email));
+                    $user->save();
+
+                    $user = $user->refresh();
                 }
+
+                $user->sendInvitation();
+
+                return array(
+                    'success' => TRUE,
+                    'data' => $user->toArray()
+                );
             } else {
                 $result['message'] = 'Alamat email tidak valid';
             }
@@ -213,14 +301,12 @@ class UsersController extends \Micro\Controller {
 
         if ($user) {
             if ($user->save($post)) {
-                if ( ! empty($user->su_ticket)) {
-                    $task = \App\Tasks\Models\Task::get($user->su_ticket)->data;
-                    
-                    if ($task) {
-                        $task->next($user->toArray());
-                        $user->su_ticket = NULL;
-                        $user->save();
-                    }
+                if ($user->su_task_flag == 'CONFIRMATION') {
+                    $task = \App\Registration\Models\Task::findFirst($user->su_id);
+                    $task->forward();
+
+                    $task->su_task_flag = NULL;
+                    $task->save();
                 }
             }
         }

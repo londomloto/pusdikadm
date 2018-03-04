@@ -149,9 +149,22 @@ class User extends \Micro\Model {
         return $this->validate($validator);
     }
 
+    public function beforeCreate() {
+        if (isset($this->su_dob) && $this->su_dob == '') {
+            $this->su_dob = NULL;
+        }
+    }
+
+    public function beforeUpdate() {
+        if (isset($this->su_dob) && $this->su_dob == '') {
+            $this->su_dob = NULL;
+        }
+    }    
+
     // @Override
     public function toArray($columns =  NULL) {
         $array = parent::toArray($columns);
+
         $array['su_fullname'] = $this->getName();
         $array['su_avatar'] = $this->getAvatar();
         $array['su_avatar_url'] = $this->getAvatarUrl();
@@ -456,98 +469,6 @@ class User extends \Micro\Model {
             $up->sup_selected = 1;
             $up->save();
         }
-    }
-
-    public static function dbcreate($data) {
-        $app = \Micro\App::getDefault();
-
-        $user = new User();
-        $auth = $app->auth->user();
-
-        $data['su_created_date'] = date('Y-m-d H:i:s');
-        $data['su_created_by'] = $auth['su_fullname'];
-
-        if (isset($data['su_passwd']) && ! empty($data['su_passwd'])) {
-            $data['su_passwd'] = $app->security->createHash($data['su_passwd']);
-        }
-
-        if (isset($data['su_email'])) {
-            if ( ! isset($data['su_fullname']) || empty($data['su_fullname'])) {
-                $name = substr($data['su_email'], 0, strpos($data['su_email'], '@'));
-                $name = ucwords(str_replace('.', ' ', $name));    
-                $data['su_fullname'] = $name;
-            }
-        }
-
-        if ($user->save($data)) {
-
-            if (isset($data['su_kanban'])) {
-                $user->saveKanban($data['su_kanban']);
-            }
-
-            if (isset($data['su_invite'], $data['su_email'])) {
-                $user->su_invite_token = User::createInvitationToken(array('su_email' => $data['su_email']));
-                $user->save();
-                $user->sendInvitation();
-            }
-
-            return User::get($user->su_id);
-        } else {
-            $messages = [];
-
-            foreach($user->getMessages() as $item) {
-                $messages[] = $item->getMessage();
-            }
-
-            return (object) array(
-                'success' => FALSE,
-                'data' => NULL,
-                'message' => implode('<br>', $messages)
-            );
-        }
-
-        User::none();
-    }
-
-    public static function dbupdate($id, $data = array()) {
-        $app = \Micro\App::getDefault();
-        $query = User::get($id);
-
-        if ($query->data) {
-
-            if (isset($data['su_passwd']) && ! empty($data['su_passwd'])) {
-                $data['su_passwd'] = $app->security->createHash($data['su_passwd']);
-            }
-
-            if ($query->data->save($data)) {
-                if (isset($data['su_kanban'])) {
-                    $query->data->saveKanban($data['su_kanban']);
-                }
-
-                if (isset($data['su_invite'], $data['su_email'])) {
-                    $query->data->su_active = 0;
-                    $query->data->su_invite_token = User::createInvitationToken(array('su_email' => $data['su_email']));
-                    $query->data->save();
-                    $query->data->sendInvitation();
-                }
-            } else {
-                $query->success = FALSE;
-                $query->message = [];
-
-                foreach($query->data->getMessages() as $m) {
-                    $query->message[] = $m;
-                }
-
-                $query->message = implode('<br>', $query->message);
-            }
-
-        }
-
-        return $query;
-    }
-
-    public static function dbdelete() {
-
     }
 
     public static function createInvitationToken($data = array()) {

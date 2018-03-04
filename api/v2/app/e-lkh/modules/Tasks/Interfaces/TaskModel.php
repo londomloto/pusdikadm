@@ -12,5 +12,6 @@ interface TaskModel {
     public function getTitle();
     public function getLink();
     public function getCurrentStatuses();
+    public function forward();
 
 }

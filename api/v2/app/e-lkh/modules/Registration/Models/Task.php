@@ -85,7 +85,7 @@ class Task extends \App\Users\Models\User implements \App\Tasks\Interfaces\TaskM
     public function afterUpdate() {
         if ($this->__loggable) {
             $snapshot = $this->__snapshot;
-
+            
             if ( ! is_null($snapshot) && ! empty($snapshot['su_id'])) {
                 $detail = TRUE;
 
@@ -221,4 +221,75 @@ class Task extends \App\Users\Models\User implements \App\Tasks\Interfaces\TaskM
         }
     }
 
+    public function forward() {
+
+        $app = \Micro\App::getDefault();
+
+        $payload = $this->toArray();
+        $statuses = $this->getCurrentStatuses();
+        $worker = NULL;
+        $affected = array();
+        $removed = array();
+
+        foreach($statuses as $status) {
+            if (is_null($worker)) {
+                $worker = $app->bpmn->worker($status->tus_worker);
+            }
+            
+            $next = $worker->next($status->tus_status, $payload);
+            $affected[] = $status->tus_status;
+
+            if (count($next['data']) > 0) {
+                $nextids = array_map(function($n){ return $n['id']; }, $next['data']);
+
+                TaskStatus::get()
+                    ->inWhere('tus_status', $nextids)
+                    ->andWhere('tus_su_id = :id:', array('id' => $this->su_id))
+                    ->execute()
+                    ->delete();
+
+                foreach($next['data'] as $n) {
+                    $affected[] = $n['id'];
+
+                    $found = TaskStatus::findFirst(array(
+                        'tus_su_id = :id: AND tus_status = :status: AND tus_deleted = 0',
+                        'bind' => array(
+                            'id' => $this->su_id,
+                            'status' => $n['id']
+                        )
+                    ));
+
+                    if ( ! $found) {
+                        $item = new TaskStatus();
+                        
+                        $create = array(
+                            'tus_su_id' => $this->su_id,
+                            'tus_status' => $n['id'],
+                            'tus_target' => $n['target'],
+                            'tus_worker' => $worker->name(),
+                            'tus_deleted' => 0,
+                            'tus_created' => date('Y-m-d H:i:s')
+                        );
+                        
+                        if ($item->save($create)) {
+                            $removed[] = $status;
+                        }
+                    } else {
+                        // $removed[] = $status;
+                    }
+                }
+            }
+        }
+
+        // nothing changed
+        if (count($removed) > 0) {
+            foreach($removed as $m) {
+                $m->save(array('tus_deleted' => 1));
+            }
+        }
+        
+        $affected = array_values(array_unique($affected));
+        
+        return $affected;
+    }
 }

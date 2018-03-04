@@ -7,7 +7,7 @@ class BpmnProvider extends \Micro\Component {
     protected static $_workers = array();
     protected $_config;
 
-    public function __construct() {
+    public function ready() {
         $app = $this->getApp();
 
         if ($app->config->offsetExists('bpmn')) {

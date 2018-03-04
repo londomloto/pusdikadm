@@ -1,6 +1,7 @@
 <?php
+
 switch($_SERVER['SERVER_ADMIN']) {
-    case 'roso@xampp.local':
+    case 'roso@localhost':
         $databases = array(
             'db' => array(
                 'host' => '192.168.56.5',

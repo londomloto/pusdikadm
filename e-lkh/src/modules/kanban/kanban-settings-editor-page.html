@@ -25,9 +25,13 @@
                 height: 100%;
             }
             .west {
-                width: 250px;
+                width: 260px;
                 background-color: var(--paper-grey-200);
                 z-index: 2;
+            }
+            .center {
+                position: relative;
+                overflow: hidden;
             }
             kct-kanban {
                 width: var(--kanban-width, auto);
@@ -72,6 +76,7 @@
                 margin-bottom: 8px;
             }
             .form-group > label {
+                display: block;
                 font-size: 12px;
                 color: #666;
                 margin-bottom: 5px;
@@ -319,7 +324,7 @@
 
             activate() {
                 if (this.$.kanban) {
-                    this.$.kanban.resize();
+                    //this.$.kanban.resize();
                 }
                 this.__loadWorkers();
             }
@@ -394,7 +399,7 @@
                 let styles = {};
 
                 if (width && height) {
-                    styles['--kanban-width'] = (width - 250) + 'px';
+                    styles['--kanban-width'] = (width - 260) + 'px';
 
                     this.updateStyles(styles);
 

@@ -9,7 +9,7 @@
 <link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
 <link rel="import" href="../settings/blocks/setting-header-block.html">
 
-<dom-module id="pendaftaran-page">
+<dom-module id="registration-page">
     <template>
         <style include="theme-helper">
             :host {
@@ -69,7 +69,7 @@
         <iron-pages id="switcher" attr-for-selected="id" selected="[[ page ]]">
             <kct-grid 
                 id="grid" 
-                url="/pendaftaran" 
+                url="/registration" 
                 header-text="Monitoring" 
                 header-desc="Pendaftaran Peserta" 
                 selection-model="row" 
@@ -130,10 +130,10 @@
         </kct-grid>
     </template>
     <script>
-        class PendaftaranPage extends KctView {
+        class RegistrationPage extends KctView {
 
             static get is() {
-                return 'pendaftaran-page';
+                return 'registration-page';
             }
 
             static get properties() {
@@ -153,8 +153,8 @@
                                     return '<kct-grid-action on-tap="__onViewRecordTap" rounded icon-only accent="blue" icon="search"></kct-grid-action>';
                                 }
                             },
-                            { text: 'Username (Email)', dataIndex: 'su_email' },
-                            { text: 'Nama Lengkap', dataIndex: 'su_fullname' }
+                            { text: 'Nama Lengkap', dataIndex: 'su_fullname' },
+                            { text: 'Email', dataIndex: 'su_email' }
                         ])
                     }
                 };
@@ -194,6 +194,6 @@
             }
         }
 
-        customElements.define(PendaftaranPage.is, PendaftaranPage);
+        customElements.define(RegistrationPage.is, RegistrationPage);
     </script>
 </dom-module>

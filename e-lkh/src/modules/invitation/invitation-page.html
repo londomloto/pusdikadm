@@ -2,6 +2,7 @@
 <link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
 <link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-feed/kct-feed.html">
 <link rel="import" href="../../../../cores/mixins/location.html">
 
 <dom-module id="invitation-page">
@@ -72,6 +73,7 @@
 
         <kct-ajax id="ajax"></kct-ajax>
         <kct-auth id="auth" config="[[ config ]]" user="{{ user }}"></kct-auth>
+        <kct-feed id="feed"></kct-feed>
 
         <div class="container">
             <div class="header text-center">
@@ -143,8 +145,6 @@
 
             handleRouteParams() {
                 let token = this._param('code');
-                console.log(token);
-                //let token = this.route.query.code;
                 this.set('token', token);
                 this.__validate();
             }
@@ -226,20 +226,27 @@
                 let data = Object.assign({}, this.record);
                 data.password = this.password1;
 
-                // logout any active user
-                this.$.auth.logout();
-
                 this.mask();
 
                 this.$.ajax.POST('/users/activate', data).then(res => {
                     if (res.success) {
-                        this.$.auth.login(data.su_email, data.password, false, false).then((user) => {
-                            this.unmask();
-                            if (user) {
-                                this.set('__activated', true);
-                                this.__redirecting(res.data.redir);
-                            }
+
+                        this.$.feed.notify({
+                            title: 'Pendaftaran',
+                            body: data.su_fullname + ' baru saja melakukan aktivasi pendaftaran'
+                        }).then(() => {
+                            // logout any active user
+                            this.$.auth.logout();
+
+                            this.$.auth.login(data.su_email, data.password, false, false).then((user) => {
+                                this.unmask();
+                                if (user) {
+                                    this.set('__activated', true);
+                                    this.__redirecting(res.data.redir);
+                                }
+                            });
                         });
+                        
                     } else {
                         this.unmask();
                     }

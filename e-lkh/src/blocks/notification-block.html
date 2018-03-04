@@ -1,0 +1,259 @@
+<link rel="import" href="../../../cores/bower_components/paper-menu-button/paper-menu-button.html">
+<link rel="import" href="../../../cores/bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../cores/bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../cores/elements/kct-html/kct-html.html">
+
+<dom-module id="notification-block">
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
+            .container {
+                position: relative;
+            }
+            .popup {
+                color: #666;
+                background-color: #fff; 
+                padding: 8px 0; 
+                width: var(--popup-width, 300px);
+                height: var(--popup-height, auto);
+            }
+            paper-menu-button {
+                padding: 0;
+            }
+            paper-icon-button {
+                padding: 8px;
+                width: 40px;
+                height: 40px;
+                color: var(--paper-blue-grey-300);;
+                --paper-icon-button-ink-color: var(--paper-blue-grey-500);
+            }
+            
+            paper-item {
+                cursor: pointer;
+                font-weight: normal;
+                padding-top: 5px;
+                padding-bottom: 5px;
+            }
+            paper-item:hover {
+                background-color: #f4f4f4;
+            }
+            paper-item + paper-item {
+                border-top: 1px solid #f0f0f0;
+            }
+            paper-item iron-icon {
+                --iron-icon-width: 24px;
+                --iron-icon-height: 24px;
+            }
+            .header {
+                padding: 0 15px 8px 15px;
+                font-size: 13px;
+                border-bottom: 1px solid #f0f0f0;
+            }
+            .footer {
+                text-align: right;
+                padding: 15px 15px 8px 15px;
+                font-size: 13px;
+                border-top: 1px solid #f0f0f0;
+            }
+            .icon {
+                display: block;
+                width: 24px;
+                height: 24px;
+                margin-right: 10px;
+            }
+            .time {
+                font-size: 11px;
+                color: #999;
+            }
+            .text {
+                font-size: 12px;
+                --paragraph: { margin: 2px 0; };
+                --strong: { font-weight: 500; color: var(--paper-purple-900); };
+            }
+            .badge {
+                display: block;
+                position: absolute;
+                top: 5px;
+                right: 10px;
+                padding: 2px 3px;
+                font-size: 11px;
+                line-height: 1;
+                color: #fff;
+                border-radius: 3px;
+                background-color: var(--paper-red-400);
+                opacity: 0;
+                pointer-events: none;
+            }
+            :host([dirty]) .badge {
+                animation-name: nb-bouncing;
+                animation-duration: 450ms;
+                animation-timing-function: linear;
+                animation-fill-mode: forwards;
+            }
+            @keyframes nb-bouncing {
+                0%{ opacity: 0; transform: scale(0.3) translate3d(0,0,0); }
+                50%{ opacity: 0.9; transform: scale(1.1); }
+                80%{ opacity: 1; transform: scale(0.89); }
+                100%{ opacity: 1; transform: scale(1) translate3d(0,0,0); }
+            }
+            .container.sm .hidden-sm { display: none;  }
+            .container.md .hidden-md { display: none;  }
+            .container.lg .hidden-lg { display: none;  }
+            .container.xl .hidden-xl { display: none;  }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class$="container [[ screen ]]">
+            <paper-icon-button class="hidden-lg hidden-xl  hidden-md" on-tap="__onResponsiveTap" icon="social:notifications"></paper-icon-button>
+            <paper-menu-button 
+                id="menu" 
+                class="hidden-sm" 
+                horizontal-align="right" 
+                horizontal-offset="[[ offsetX ]]" 
+                vertical-offset="[[ offsetY ]]" 
+                on-paper-dropdown-open="__onPopupOpen" 
+                no-animations 
+                no-overlap>
+                <paper-icon-button slot="dropdown-trigger" icon="social:notifications"></paper-icon-button>    
+                <div class="popup" slot="dropdown-content">
+                    <div class="header">
+                        Anda memiliki notifikasi baru
+                    </div>
+                    <template is="dom-repeat" items="[[ items ]]">
+                        <paper-item on-tap="__onItemTap">
+                            <div class="icon">
+                                <iron-icon icon="[[ item.ta_icon ]]"></iron-icon>
+                            </div>
+                            <paper-item-body>
+                                <div class="time">[[ item.ta_time ]]</div>
+                                <kct-html class="text" html="[[ item.ta_verb ]]"></kct-html>
+                            </paper-item-body>
+                        </paper-item>    
+                    </template>
+                    
+                    <div class="footer">
+                        <a href="javascript:;" on-tap="__onReadAllTap">Lihat semua notifikasi</a>
+                    </div>
+                </div>
+            </paper-menu-button>
+            <span class="badge">!</span>
+        </div>
+        
+    </template>
+    <script>
+        class NotificationBlock extends Polymer.Element {
+            static get is() {
+                return 'notification-block';
+            }
+
+            static get properties() {
+                return {
+                    items: { type: Array, value: () => ([]) },
+                    total: { type: Number, value: 0 },
+                    dirty: { type: Boolean, value: false, reflectToAttribute: true},
+                    screen: { type: String },
+                    offsetX: { type: Number, value: 0 },
+                    offsetY: { type: Number, value: 0 }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__userChanged(user.*)'
+                ];
+            }
+
+            ready() {
+                super.ready();
+                this.verify();
+            }
+
+            __userChanged(changed) {
+                if (changed.path == 'user' && this.user && this.user.su_id) {
+                    this.verify();
+                }
+            }
+
+            verify() {
+                
+                this.$.ajax.GET('/notifications?display=top').then(res => {
+                    let keys = (res.data || []).map(e => e.ta_id + ':' + e.ta_sender);
+                    if (keys.length) {
+                        let feed = this.user.su_feed_read ? JSON.parse(this.user.su_feed_read) : false;
+                        
+                        if ( ! feed) {
+                            this.set('dirty', true);
+                        } else {
+                            let d = diff(keys, feed);
+                            if (d.length) {
+                                d = d.filter(e => {
+                                    let p = e.split(':');
+                                    return p[1] != this.user.su_id;
+                                });
+                                if (d.length) {
+                                    this.set('dirty', true);    
+                                }
+                            }
+                        }
+                    }
+                });    
+
+                function diff(a, b) {
+                    if (a.length >= b.length) {
+                        return a.filter(e => b.indexOf(e) < 0);
+                    } else {
+                        return b.filter(e => a.indexOf(e) < 0);
+                    }
+                }
+            }
+
+            load() {
+                return this.$.ajax.GET('/notifications?display=top').then(res => {
+                    this.set('total', res.data.length);
+                    this.set('items', res.data);
+                    this.$.menu.$.dropdown.notifyResize();
+
+                    let keys = (res.data || []).map(e => e.ta_id + ':' + e.ta_sender);
+                    this.__save(keys);
+                });
+            }
+
+            __save(feed) {
+                feed = JSON.stringify(feed);
+
+                this.set('user.su_feed_read', feed);
+                this.$.ajax.PUT('/users/' + this.user.su_id, { su_feed_read: feed });
+            }
+
+            __onReadAllTap() {
+                this.$.menu.close();
+                this.set('route.path', '/notifications');
+            }
+
+            __onResponsiveTap() {
+                this.set('route.path', '/notifications');
+            }
+
+            __onItemTap(e) {
+                this.$.menu.close();
+
+                let item = e.model.item;
+
+                if (item.ta_link) {
+                    this.set('route.data.task', null);
+                    this.set('route.path', item.ta_link);
+                }
+            }
+
+            __onPopupOpen() {
+                this.set('dirty', false);
+                this.load();
+            }
+        }
+        customElements.define(NotificationBlock.is, NotificationBlock);
+    </script>
+</dom-module>

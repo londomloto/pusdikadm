@@ -9,7 +9,7 @@
             <div>
                 <p>Menunggu konfirmasi dari peserta. Jika dalam beberapa waktu tidak ada konfirmasi, lakukan konfirmasi ulang dengan menekan tombol di bawah.</p>
                 <div class="m-t">
-                    <paper-button class="btn-green" on-tap="__onInviteTap">Kirim Ulang Konfirmasi</paper-button> 
+                    <paper-button class="btn-cyan" on-tap="__onInviteTap">Kirim Ulang Konfirmasi</paper-button> 
                     <span>atau lakukan <a on-tap="__onActivateTap" href="javascript:;">aktivasi manual</a></span>
                 </div>
             </div>
@@ -18,24 +18,43 @@
         <div class="section">
             <h3 class="section-title">Data Peserta</h3>
             <div>
-                <paper-input label="Nama Lengkap" value="{{ record.data.su_fullname }}" readonly></paper-input>
-                <paper-input label="Jenis Kelamin" value="{{ record.data.su_sex }}" readonly></paper-input>
+                <paper-input label="Nama Lengkap *" value="{{ record.task.su_fullname }}" required auto-validate error-message="Nama lengkap wajib diisi"></paper-input>
+                <paper-input label="Jenis Kelamin" value="{{ record.task.su_sex }}"></paper-input>
 
                 <kct-column columns="2">
                     <div>
-                        <paper-input label="Tempat Lahir" value="{{ record.data.su_pob }}" readonly></paper-input>
+                        <paper-input label="Tempat Lahir" value="{{ record.task.su_pob }}"></paper-input>
                     </div>
                     <div>
-                        <paper-input label="Tanggal Lahir" value="{{ record.data.su_dob }}" readonly></paper-input>
+                        <vaadin-date-picker label="Tanggal Lahir" value="{{ record.task.su_dob }}"></vaadin-date-picker>
                     </div>
                 </kct-column>
 
-                <paper-input label="No. Induk Pagawai" value="{{ record.data.su_no }}" readonly></paper-input>
-                <paper-input label="Pangkat / Gol. Ruang" value="{{ record.data.su_grade }}" readonly></paper-input>
-                <paper-input label="Jabatan (Pekerjaan)" value="{{ record.data.su_sj_name }}" readonly></paper-input>
-                <paper-input label="Unit Kerja" value="{{ record.data.su_sdp_name }}" readonly></paper-input>
-                <paper-input label="Organisasi (Instansi)" value="{{ record.data.su_scp_name }}" readonly></paper-input>
+                <paper-input label="No. Induk Pagawai" value="{{ record.task.su_no }}"></paper-input>
+                <paper-input label="Pangkat / Gol. Ruang" value="{{ record.task.su_grade }}"></paper-input>
                 
+                <kct-combobox 
+                    url="/jobs" 
+                    label="Jabatan (Pekerjaan)" 
+                    value="{{ record.task.su_sj_id }}" 
+                    page-size="10" 
+                    item-label-path="sj_name" 
+                    item-value-path="sj_id"></kct-combobox>
+
+                <kct-combobox 
+                    url="/departments" 
+                    label="Unit Kerja" 
+                    value="{{ record.task.su_sdp_id }}" 
+                    page-size="10" 
+                    item-label-path="sdp_name" 
+                    item-value-path="sdp_id"></kct-combobox>
+                <kct-combobox 
+                    url="/company" 
+                    label="Organisasi" 
+                    value="{{ record.task.su_scp_id }}" 
+                    page-size="10" 
+                    item-label-path="scp_name" 
+                    item-value-path="scp_id"></kct-combobox>
 
             </div>
         </div>
@@ -43,33 +62,21 @@
         <div class="section">
             <h3 class="section-title">Data Akun</h3>
             <div>
-                <paper-input type="email" label="Alamat Email *" value="{{ record.data.su_email }}"  readonly></paper-input>
-                <paper-input label="Group Akses (Role)" value="{{ record.data.sr_name }}"  readonly></paper-input>
+                <paper-input type="email" label="Alamat Email *" value="{{ record.task.su_email }}" required auto-validate error-message="Alamat email harus valid"></paper-input>
+                <kct-combobox 
+                    url="/roles" 
+                    label="Group Akses (Role) *" 
+                    value="{{ record.task.su_sr_id }}" 
+                    page-size="10" 
+                    item-label-path="sr_name" 
+                    item-value-path="sr_id" 
+                    required 
+                    auto-validate 
+                    error-message="Group akses wajib diisi" 
+                    autoload></kct-combobox>
             </div>
         </div>
 
-        <div class="section">
-            <h3 class="section-title">Data Autentikasi</h3>
-            <div>
-                <paper-input label="Catatan autentikasi" value="{{ record.data.su_validation }}" readonly></paper-input>
-            </div>
-        </div>
-
-        <div class="section" hidden>
-            <h3 class="section-title">Data Kegiatan</h3>
-            <div>
-                <paper-input label="Nama Kegiatan" value="{{ record.task.tt_title }}" readonly></paper-input>
-                <kct-column columns="2">
-                    <div>
-                        <paper-input label="Dibuat Oleh" value="{{ record.task.creator_su_fullname }}" readonly></paper-input>    
-                    </div>
-                    <div>
-                        <paper-input label="Tanggal" value="{{ record.task.tt_created_dt_formatted }}" readonly></paper-input>    
-                    </div>
-                </kct-column>
-                
-            </div>
-        </div>
     </template>
     <script>
         class FormPendaftaranConf extends FormBase {
@@ -77,24 +84,48 @@
                 return 'form-pendaftaran-conf';
             }
 
+            static get observers() {
+                return [
+                    '__validationChanged(record.task.su_fullname, record.task.su_email, record.task.su_sr_id)'
+                ];
+            }
+
             initialize() {
-                if (this.action == 'update') {
-                    return this.$.ajax.GET('/users/' + this.record.status.tts_data_id).then(res => {
-                        this.set('record.data', res.data);
+                if (this.action == 'create') {
+                    this.set('buttons', 'save');
+                } else {
+                    this.set('buttons', 'save,send,remove');    
+                }
+                
+                this.shadowRoot.querySelectorAll('kct-combobox[page-size]').forEach(c => c.load());
+                return this.resolve();
+            }
+
+            save(options) {
+                if (options.send) {
+                    // send invitation email
+                    return this.$.ajax.POST('/users/invite', {
+                        email: this.record.task.su_email,
+                        role: this.record.task.sr_id
                     });
                 } else {
-                    return this.resolve();
+                    return this.resolve({ success: true });    
                 }
             }
 
-            ready() {
-                super.ready();
-                this.set('readonly', true);
+            __validationChanged(fullname, email, role) {
+                let valid = true;
+
+                valid = valid && fullname;
+                valid = valid && email;
+                valid = valid && role;
+
+                this.set('invalid', !valid);
             }
 
             __onInviteTap() {
                 let payload = {
-                    email: this.record.data.su_email
+                    email: this.record.task.su_email
                 };
 
                 this.$.ajax.POST('/users/reinvite', payload).then(res => {
@@ -105,21 +136,17 @@
             __onActivateTap() {
                 this.confirm('Konfirmasi', 'Lakukan konfirmasi manual?').then(y => {
                     if (y) {
-                        let payload = this.record.data;
-
+                        let payload = this.record.task;
                         this.trigger('before-update');
 
-                        this.$.ajax.POST('/users/activate', payload).then(res => {
-                            
+                        this.$.ajax.POST('/users/activate', payload).then(() => {
                             this.trigger('after-update', { back: true });
-
                         });
                     }
                 });
                 
             }
         }
-
         customElements.define(FormPendaftaranConf.is, FormPendaftaranConf);
     </script>
 </dom-module>

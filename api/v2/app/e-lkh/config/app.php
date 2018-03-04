@@ -23,7 +23,8 @@ return array(
         'bpmn' => 'Micro\Bpmn\BpmnProvider',
         'ldap' => 'Micro\Ldap\LdapProvider',
         'dx'   => 'Micro\Dx\DxProvider',
-        'socket' => 'Micro\Socket\SocketProvider'
+        'socket' => 'Micro\Socket\SocketProvider',
+        'gcm' => 'Micro\Google\MessagingProvider'
     ),
 
     'middleware' => array(

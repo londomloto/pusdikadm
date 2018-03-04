@@ -104,35 +104,21 @@
                         opened: { type: Boolean, value: false, reflectToAttribute: true }, 
                         subscribed: { type: Boolean, value: false, notify: true },
                         storageKey: { type: String },
-                        messageToken: { type: String }
+                        token: { type: String }
                     }
                 }
 
                 static get observers() {
                     return [
-                        '__messageTokenChanged(messageToken)'
+                        '__tokenChanged(token)'
                     ]
-                }
-
-                constructor() {
-                    super();
-
-                    let scopes = [
-                        'https://www.googleapis.com/auth/firebase',
-                        'https://www.googleapis.com/auth/firebase.database',
-                        'https://www.googleapis.com/auth/firebase.messaging',
-                        'https://www.googleapis.com/auth/identitytoolkit',
-                        'https://www.googleapis.com/auth/userinfo.email'
-                    ];
-
-                    this.__scopes = scopes.join(' ');
-                    this.__context = null;
                 }
 
                 ready() {
                     super.ready();
+
                     this.__loadStorage().then(() => {
-                        this.set('messageToken', this._getStorageItem(this.storageKey, 'message_token'));
+                        this.set('token', this._getStorageItem(this.storageKey, 'token'));
                     });
                     
                 }
@@ -204,12 +190,8 @@
                 }
 
                 notify(payload = {}) {
-                    this.__loadAuthenticator().then(authenticated => {
-                        if (authenticated) {
-                            payload.token = this._getStorageItem(this.storageKey, 'access_token');
-                            this.$.ajax.POST('/notifications/notify', payload);
-                        }
-                    });
+                    payload.topic = this._browser();
+                    return this.$.ajax.POST('/notifications/notify', payload);
                 }
 
                 __loadStorage() {
@@ -221,8 +203,7 @@
                         let storageKey = this._getStorageKey(this.config.app_name, this.constructor.is);
 
                         this._initStorage(storageKey, {
-                            message_token: null,
-                            access_token: null
+                            token: null
                         });
 
                         this.set('storageKey', storageKey);
@@ -272,23 +253,17 @@
                     messanger.onTokenRefresh(() => {
                         messanger.getToken()
                             .then(refreshedToken => {
-                                this.set('messageToken', null);
+                                this.set('token', null);
                                 this.__registerToken(refreshedToken);
                             })
                             .catch(err => {});
                     });
 
-                    let local = false,
-                        https = location.protocol == 'https:';
+                    let https = location.protocol == 'https:';
+                    let numericAddress = /\d\./.test(this.config.app_host);
 
-                    if (/(\.?local|127\.|)/.test(this.config.app_host)) {
-                        local = true;
-                    }
-
-                    let support = !local && https && navigator.serviceWorker;
+                    let support = !numericAddress && https && navigator.serviceWorker;
                     
-                    support = true;
-
                     if (support) {
                         let worker = this.config.app_base + 'service-worker.js';
 
@@ -324,12 +299,10 @@
                     if ( ! this.subscribed) {
                         return this.$.ajax.POST('/notifications/subscribe', {
                             token: token,
-                            device: this._browser()
+                            topic: this._browser()
                         }).then(res => {
-                            let status = res.data.http_code;
-
-                            if (status == 200) {
-                                this.set('messageToken', token);
+                            if (res.success) {
+                                this.set('token', token);
                                 return true;
                             } else {
                                 return false;
@@ -343,12 +316,12 @@
                 __unregisterToken(token) {
                     return this.$.ajax.POST('/notifications/unsubscribe', {
                         token: token,
-                        device: this._browser()
+                        topic: this._browser()
                     }).then(res => {
                         if (res.success) {
                             return messanger.deleteToken(token)
                                 .then(() => {
-                                    this.set('messageToken', null);
+                                    this.set('token', null);
                                     return true; 
                                 })
                                 .catch(err => {
@@ -361,144 +334,11 @@
                     
                 }
 
-                __authenticate() {
-                    this.__authenticating = this._defer();
-
-                    this.__loadStorage().then(() => {
-                        this.__loadAuthenticator();
-                    });
-
-                    return this.__authenticating.promise;
-                }
-
-                __loadAuthenticator() {
-                    this.__authenticating = this._defer();
-
-                    if (window.GoogleAuth === undefined) {
-                        let ga = document.createElement('script');
-
-                        ga.src = 'https://apis.google.com/js/api.js';
-                        ga.defer = true;
-                        ga.async = true;
-                        ga.onload = _ => {
-                            gapi.load('client:auth2', _ => {
-
-                                gapi.client.init({
-                                    apiKey: 'AIzaSyB8HreVpMd2SRwRdW8bSdgw8uyMK4ClSHw',
-                                    clientId: '240276356095-ktmik9r38jmietfkfmn1s3ctc7tpcsbj.apps.googleusercontent.com',
-                                    scope: this.__scopes
-                                }).then(() => {
-                                    window.GoogleAuth = gapi.auth2.getAuthInstance();
-                                    
-                                    GoogleAuth.isSignedIn.listen(status => {
-                                        validate.bind(this)();
-                                    });
-
-                                    validate.bind(this)();
-                                });
-                            });
-                        };
-
-                        document.body.appendChild(ga);
-                    } else {
-                        validate.bind(this)();
-                    }
-
-                    return this.__authenticating.promise;
-
-                    function validate() {
-                        let user = GoogleAuth.currentUser.get();
-
-                        if ( ! user.hasGrantedScopes(this.__scopes)) {
-                            this.__showAuthenticator();
-                        } else {
-                            this.__hideAuthenticator();
-                            this._setStorageItem(this.storageKey, 'access_token', user.getAuthResponse().access_token);
-
-                            if (this.__authenticating) {
-                                this.__authenticating.resolve(true);
-                            }
-                        }
-                    }
-                }
-
-                __authenticationChanged(auth) {
-                    if ( ! auth) {
-                        this.__showAuthenticator();
-                    } else {
-                        this.__hideAuthenticator();
-                    }
-                }
-
-                __showAuthenticator() {
-                    this.__resolveContext();
-
-                    if ( ! this.opened) {
-                        document.body.appendChild(this);
-                    }
-
-                    let timer = setTimeout(() => {
-                        clearTimeout(timer);
-                        timer = null;
-                        this.set('opened', true);
-                        this.$.authenticator.classList.add('opened');
-                    }, 10);
-                }
-
-                __hideAuthenticator() {
-                    this.__resolveContext();
-
-                    if (this.opened) {
-                        this.__context.appendChild(this);
-                    }
-
-                    let timer = setTimeout(() => {
-                        clearTimeout(timer);
-                        timer = null;
-                        this.set('opened', false);
-                        this.$.authenticator.classList.remove('opened');
-                    }, 10);
-                    
-                }
-
-                __resolveContext() {
-                    if ( ! this.__context) {
-                        let parent = this.parentNode;
-                        let context = null;
-
-                        while(parent) {
-                            if (parent.nodeType === Node.ELEMENT_NODE ) {
-                                context = parent;
-                                break;
-                            }
-
-                            if (parent.host) {
-                                context = parent.host;
-                                break;
-                            }
-
-                            parent = parent.parentNode;
-                        }
-
-                        this.__context = context;
-                    }
-                    
-                }
-
-                __messageTokenChanged(token) {
+                __tokenChanged(token) {
                     if (this.storageKey) {
                         this.set('subscribed', !!token);
-                        this._setStorageItem(this.storageKey, 'message_token', token);
+                        this._setStorageItem(this.storageKey, 'token', token);
                     }
-                }
-
-                __onAuthenticateTap() {
-                    GoogleAuth.signIn().catch(err => {
-                        this.__hideAuthenticator();
-                        if (this.__authenticating) {
-                            this.__authenticating.resolve(false);
-                        }
-                    });
                 }
 
 

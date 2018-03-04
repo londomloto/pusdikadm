@@ -562,6 +562,16 @@
                     });
                 }
 
+                findRow(handler) {
+                    let rows = [];
+
+                    this.api.forEachNode(node => {
+                        rows.push(node.data);
+                    });
+
+                    return rows.find(handler);
+                }
+
                 __injectStyles() {
                     let owner = (this.parentNode && this.parentNode.host) || this;
                     let styleBaseURI = '';

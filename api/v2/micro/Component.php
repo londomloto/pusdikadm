@@ -3,10 +3,23 @@ namespace Micro;
 
 abstract class Component {
 
+    protected $_di;
     protected $_providers = array();
 
+    public function ready() {
+        
+    }
+
+    public function setDI($di) {
+        $this->_di = $di;
+    }
+
+    public function getDI() {
+        return $this->_di;
+    }
+
     public function getApp() {
-        return \Micro\App::getDefault();
+        return $this->_di->get('app', TRUE);
     }
 
     public function __get($key) {
@@ -14,7 +27,7 @@ abstract class Component {
             return $this->_providers[$key];
         }
 
-        $di = $this->getApp()->getDI();
+        $di = $this->getDI();
 
         if ($di->has($key)) {
             $provider = $di->get($key, TRUE);

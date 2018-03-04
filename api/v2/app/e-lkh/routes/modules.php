@@ -2,10 +2,8 @@
 
 Router::group(array(
     'prefix' => '/notifications',
-    'handler' => 'App\Notifications\Controllers\NotificationsController',
-    'middleware' => 'auth'
+    'handler' => 'App\Notifications\Controllers\NotificationsController'
 ))
-->get('/status', 'status')
 ->post('/subscribe', 'subscribe')
 ->post('/unsubscribe', 'unsubscribe')
 ->post('/notify', 'notify');

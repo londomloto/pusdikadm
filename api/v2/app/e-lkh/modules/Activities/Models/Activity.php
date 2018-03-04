@@ -208,7 +208,7 @@ class Activity extends \Micro\Model {
                 $verb = sprintf(
                     '**%s** mengubah deadline ke **%s** %s',
                     $sender_name,
-                    self::__formatDate($this->ta_data, 'd M Y'),
+                    self::_formatDate($this->ta_data, 'd M Y'),
                     $time
                 );
                 break;
@@ -281,6 +281,10 @@ class Activity extends \Micro\Model {
     public static function log($type, $data) {
         $auth = \Micro\App::getDefault()->auth->user();
 
+        if ( ! $auth) {
+            return;
+        }
+
         $data['ta_type'] = $type;
         $data['ta_created'] = date('Y-m-d H:i:s');
         $data['ta_sender'] = $auth['su_id'];
@@ -315,7 +319,7 @@ class Activity extends \Micro\Model {
         return FALSE;
     }
 
-    private static function __formatDate($date, $format = "M dS, Y h:i a") {
+    protected static function _formatDate($date, $format = "M dS, Y h:i a") {
         if (empty($date)) {
             return '';
         }

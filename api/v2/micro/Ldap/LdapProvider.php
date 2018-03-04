@@ -8,7 +8,7 @@ class LdapProvider extends \Micro\Component {
     private $__conn;
     private $__auth;
 
-    public function __construct() {
+    public function ready() {
 
         // default config
         $config = array_merge(array(

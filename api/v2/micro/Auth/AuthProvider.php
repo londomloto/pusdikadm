@@ -8,9 +8,9 @@ class AuthProvider extends \Micro\Component {
     protected $_captcha;
     protected $_user;
     
-    public function __construct() {
+    public function ready() {
         $config = $this->getApp()->config->auth;
-
+        
         $this->_providers = $config->providers;
         $this->_captcha = $config->captcha;
     }
@@ -35,7 +35,7 @@ class AuthProvider extends \Micro\Component {
     public function user($token = NULL, $model = FALSE) {
         if (empty($token)) {
             $user = $this->_user;
-            $data = NULL;
+            $data = FALSE;
 
             if (is_null($user)) {
                 $token = $this->token();
@@ -53,15 +53,15 @@ class AuthProvider extends \Micro\Component {
                         }
                     }  catch(\Exception $ex) {}
                 }
-            } else {
+            } else if ($user) {
                 $data = $user->toArray();
             }
 
             return $model ? $user : $data;
 
         } else {
-            $data = NULL;
-            $user = NULL;
+            $data = FALSE;
+            $user = FALSE;
 
             try {
                 $decode = $this->security->decodeToken($token);

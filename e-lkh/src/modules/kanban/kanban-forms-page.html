@@ -26,7 +26,7 @@
             }
             .sidebar {
                 background-color: var(--paper-grey-100);
-                width: 250px;
+                width: 260px;
                 height: var(--kanban-dynamic-sidebar-height, 100%);
                 overflow-y: auto;
                 overflow-x: hidden;
@@ -371,7 +371,6 @@
 
             __loadActivities(worker) {
                 this.set('activities', []);
-
                 if (worker) {
                     this.$.ajax.GET('/bpmn/activities/' + worker).then((res) => {
                         let activities = res.data;
@@ -384,12 +383,14 @@
             }
 
             __loadForms(activity) {
-                this.set('forms', []);
+                
                 if (activity) {
                     this.$.ajax.GET('/bpmn/forms?activity=' + activity).then((res) => {
                         let forms = res.data;
                         this.set('forms', forms);
                     });
+                } else {
+                    this.set('forms', []);    
                 }
             }
 

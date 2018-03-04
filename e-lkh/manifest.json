@@ -1,7 +1,7 @@
 {
   "name": "pusdikadm",
   "short_name": "pusdikadm",
-  "start_url": "/pusdikadm/e-office/",
+  "start_url": "/pusdikadm/e-lkh/",
   "display": "standalone",
   "theme_color": "#4caf50",
   "background_color": "#4caf50",
@@ -16,5 +16,6 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ]
+  ],
+  "gcm_sender_id": "103953800507"
 }

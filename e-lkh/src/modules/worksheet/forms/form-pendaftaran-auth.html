@@ -4,56 +4,46 @@
 
         <kct-ajax id="ajax"></kct-ajax>
 
-        <div class="section section-primary">
-            <h3 class="section-title">Data Autentikasi</h3>
-            <div>
-                <paper-input label="Catatan autentikasi" value="{{ record.data.su_validation }}"></paper-input>
-            </div>
-        </div>
-        
         <div class="section">
             <h3 class="section-title">Data Peserta</h3>
             <div>
-                <paper-input label="Nama Lengkap *" value="{{ record.data.su_fullname }}" required auto-validate error-message="Nama lengkap wajib diisi"></paper-input>
-                <paper-input label="Jenis Kelamin" value="{{ record.data.su_sex }}"></paper-input>
+                <paper-input label="Nama Lengkap *" value="{{ record.task.su_fullname }}" required auto-validate error-message="Nama lengkap wajib diisi"></paper-input>
+                <paper-input label="Jenis Kelamin" value="{{ record.task.su_sex }}"></paper-input>
 
                 <kct-column columns="2">
                     <div>
-                        <paper-input label="Tempat Lahir" value="{{ record.data.su_pob }}"></paper-input>
+                        <paper-input label="Tempat Lahir" value="{{ record.task.su_pob }}"></paper-input>
                     </div>
                     <div>
-                        <vaadin-date-picker label="Tanggal Lahir" value="{{ record.data.su_dob }}"></vaadin-date-picker>
+                        <vaadin-date-picker label="Tanggal Lahir" value="{{ record.task.su_dob }}"></vaadin-date-picker>
                     </div>
                 </kct-column>
 
-                <paper-input label="No. Induk Pagawai" value="{{ record.data.su_no }}"></paper-input>
-                <paper-input label="Pangkat / Gol. Ruang" value="{{ record.data.su_grade }}"></paper-input>
+                <paper-input label="No. Induk Pagawai" value="{{ record.task.su_no }}"></paper-input>
+                <paper-input label="Pangkat / Gol. Ruang" value="{{ record.task.su_grade }}"></paper-input>
                 
                 <kct-combobox 
                     url="/jobs" 
                     label="Jabatan (Pekerjaan)" 
-                    value="{{ record.data.su_sj_id }}" 
+                    value="{{ record.task.su_sj_id }}" 
                     page-size="10" 
                     item-label-path="sj_name" 
-                    item-value-path="sj_id" 
-                    autoload></kct-combobox>
+                    item-value-path="sj_id"></kct-combobox>
 
                 <kct-combobox 
                     url="/departments" 
                     label="Unit Kerja" 
-                    value="{{ record.data.su_sdp_id }}" 
+                    value="{{ record.task.su_sdp_id }}" 
                     page-size="10" 
                     item-label-path="sdp_name" 
-                    item-value-path="sdp_id" 
-                    autoload></kct-combobox>
+                    item-value-path="sdp_id"></kct-combobox>
                 <kct-combobox 
                     url="/company" 
                     label="Organisasi" 
-                    value="{{ record.data.su_scp_id }}" 
+                    value="{{ record.task.su_scp_id }}" 
                     page-size="10" 
                     item-label-path="scp_name" 
-                    item-value-path="scp_id" 
-                    autoload></kct-combobox>
+                    item-value-path="scp_id"></kct-combobox>
 
             </div>
         </div>
@@ -61,11 +51,11 @@
         <div class="section">
             <h3 class="section-title">Data Akun</h3>
             <div>
-                <paper-input type="email" label="Alamat Email *" value="{{ record.data.su_email }}" required auto-validate error-message="Alamat email harus valid"></paper-input>
+                <paper-input type="email" label="Alamat Email *" value="{{ record.task.su_email }}" required auto-validate error-message="Alamat email harus valid"></paper-input>
                 <kct-combobox 
                     url="/roles" 
                     label="Group Akses (Role) *" 
-                    value="{{ record.data.su_sr_id }}" 
+                    value="{{ record.task.su_sr_id }}" 
                     page-size="10" 
                     item-label-path="sr_name" 
                     item-value-path="sr_id" 
@@ -73,13 +63,6 @@
                     auto-validate 
                     error-message="Group akses wajib diisi" 
                     autoload></kct-combobox>
-            </div>
-        </div>
-
-        <div class="section" hidden>
-            <h3 class="section-title">Data Kegiatan</h3>
-            <div>
-                <paper-input label="Nama Kegiatan" value="{{ record.task.tt_title }}"></paper-input>    
             </div>
         </div>
 
@@ -92,53 +75,38 @@
 
             static get observers() {
                 return [
-                    '__fullnameChanged(record.data.su_fullname)',
-                    '__validationChanged(record.data.su_fullname, record.data.su_email, record.data.su_sr_id)'
+                    '__validationChanged(record.task.su_fullname, record.task.su_email, record.task.su_sr_id)'
                 ];
             }
 
             initialize() {
-                this.shadowRoot.querySelectorAll('kct-combobox[page-size]').forEach(c => c.load());
-                
-                if (this.record.status.tts_data_id) {
-                    return this.$.ajax.GET('/users/' + this.record.status.tts_data_id).then(res => {
-                        this.set('record.data', res.data);
-                    });
+                if (this.action == 'create') {
+                    this.set('buttons', 'save');
                 } else {
-                    return this.resolve();
+                    this.set('buttons', 'save,send,remove');    
                 }
+                
+                this.shadowRoot.querySelectorAll('kct-combobox[page-size]').forEach(c => c.load());
+                return this.resolve();
             }
 
             save(options) {
-                let payload = this.record.data;
-
                 if (options.send) {
-                    payload.su_invite = true;
-                    payload.su_ticket = this.record.task.tt_id;
-                }
+                    
+                    this.record.task.su_task_flag = 'CONFIRMATION';
 
-                if (this.action == 'create') {
-                    return this.$.ajax.POST('/users', payload).then(done.bind(this));
+                    // send invitation email
+                    return this.$.ajax.POST('/users/invite', {
+                        email: this.record.task.su_email,
+                        role: this.record.task.sr_id
+                    }).then(res => {
+                        if (res.success) {
+                            this.record.task.su_invite_token = res.data.su_invite_token;
+                        }
+                        return res;
+                    });
                 } else {
-                    return this.$.ajax.PUT('/users/' + payload.su_id, payload).then(done.bind(this));
-                }
-
-                function done(res) {
-                    this.set('record.data', res.data || {});
-
-                    if ( ! res.success) {
-                        res.success = false;
-                        this.toast('Warning', res.message, 'warn');
-                    } else {
-                        this.saveResult({
-                            data: res.data,
-                            author: res.data.su_id
-                        });
-                        
-                        this.set('record.status.tts_data_id', res.data.su_id);
-                    }
-
-                    return res;
+                    return this.resolve({ success: true });    
                 }
             }
 
@@ -151,12 +119,7 @@
 
                 this.set('invalid', !valid);
             }
-
-            __fullnameChanged(fullname) {
-                this.set('record.task.tt_title', fullname || '');
-            }
         }
-
         customElements.define(FormPendaftaranAuth.is, FormPendaftaranAuth);
     </script>
 </dom-module>

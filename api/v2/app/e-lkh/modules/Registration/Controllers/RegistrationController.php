@@ -1,13 +1,13 @@
 <?php
-namespace App\Pendaftaran\Controllers;
+namespace App\Registration\Controllers;
 
-use App\Users\Models\User;
+use App\Registration\Models\Task;
 
-class PendaftaranController extends \Micro\Controller {
+class RegistrationController extends \Micro\Controller {
 
     public function findAction() {
 
-        return User::get()->filterable()->sortable()->paginate();
+        return Task::get()->filterable()->sortable()->paginate();
 
     }
 
