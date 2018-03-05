@@ -5,12 +5,13 @@ use App\Activities\Models\Activity;
 use Micro\Helpers\Date as DateHelper;
 use Phalcon\Mvc\Model\Relation;
 
-class Task extends \Micro\Model implements \App\Tasks\Interfaces\TaskModel {
+class Task extends Presence implements \App\Tasks\Interfaces\TaskModel {
     
     private $__loggable = TRUE;
     private $__snapshot = NULL;
     
     public function initialize() {
+        parent::initialize();
 
         $this->hasMany(
             'tpr_id',
@@ -49,15 +50,6 @@ class Task extends \Micro\Model implements \App\Tasks\Interfaces\TaskModel {
         );
 
         $this->hasOne(
-            'tpr_su_id',
-            'App\Users\Models\User',
-            'su_id',
-            array(
-                'alias' => 'Author'
-            )
-        );
-
-        $this->hasOne(
             'tpr_created_by',
             'App\Users\Models\User',
             'su_id',
@@ -74,10 +66,6 @@ class Task extends \Micro\Model implements \App\Tasks\Interfaces\TaskModel {
                 'alias' => 'Project'
             )
         );
-    }
-
-    public function getSource() {
-        return 'trx_presence';
     }
 
     public function getNamespace() {
@@ -141,24 +129,15 @@ class Task extends \Micro\Model implements \App\Tasks\Interfaces\TaskModel {
         
         $data['tpr_icon'] = $this->getIcon();
         $data['tpr_title'] = $this->getTitle();
-        $data['tpr_date_formatted'] = DateHelper::format($this->tpr_date, 'd M Y');
+        
         $data['tpr_task_due_formatted'] = DateHelper::format($this->tpr_task_due, 'd M Y');
         $data['tpr_created_dt_relative'] = DateHelper::formatRelative($this->tpr_created_dt);
-
-        if ($this->author) {
-            $data['tpr_su_fullname'] = $this->author->getName();
-            $data['tpr_su_sj_name'] = $this->author->job ? $this->author->job->sj_name : '';
-            $data['tpr_su_sdp_name'] = $this->author->department ? $this->author->department->sdp_name : '';
-        }
 
         if ($this->creator) {
             $data['creator_su_fullname'] = $this->creator->getName();
             $data['creator_sr_name'] = $this->creator->role ? $this->creator->role->sr_name : '';
             $data['creator_su_avatar_thumb'] = $this->creator->getAvatarThumb();
         }
-
-        $data['tpr_has_file'] = !empty($this->tpr_filename);
-        $data['tpr_has_time'] = $this->tpr_type == 'Masuk';
 
         return $data;
     }
@@ -171,17 +150,8 @@ class Task extends \Micro\Model implements \App\Tasks\Interfaces\TaskModel {
         $this->__loggable = TRUE;
     }
 
-    public function getIcon() {
-        switch($this->tpr_type) {
-            case 'Masuk':
-                return 'social:mood';
-            default:
-                return 'social:mood';
-        }
-    }
-
     public function getTitle() {
-        $title  = $this->author ? $this->author->getName() : '(dihapus)';
+        $title  = $this->user ? $this->user->getName() : '(dihapus)';
         $title .= ' - '.DateHelper::format($this->tpr_date, 'd M Y');
         return $title;
     }

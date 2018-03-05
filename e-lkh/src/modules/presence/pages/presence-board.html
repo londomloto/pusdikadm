@@ -1,0 +1,90 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../settings/blocks/setting-header-block.html">
+
+<dom-module id="presence-board">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            .container {
+                
+            }
+            .menu {
+                padding: .5em;
+                text-align: center;
+            }
+            .menu .card {
+                display: block;
+                cursor: pointer;
+                color: var(--paper-blue-grey-500);
+                box-shadow:0 2px 2px rgba(0,0,0,0.03),0 1px 0 rgba(0,0,0,0.03);
+            }
+            .menu .card:hover {
+                @apply --shadow-elevation-2dp;
+            }
+            .menu .icon {
+                display: inline-block;
+                margin: 15px 0;
+                padding: 12px;
+                background-color: var(--paper-blue-grey-500);
+                color: #fff;
+                border-radius: 50%;
+            }
+            .menu .text {
+                font-size: 16px;
+                font-weight: 400;
+                margin-bottom: 15px;
+            }
+            .menu paper-button {
+                font-size: 11px;
+                font-weight: 500;
+                width: 100%;
+                border-radius: 2px;
+                background-color: var(--paper-cyan-500);
+                color: #fff;
+            }
+            .menu .icon iron-icon {
+                --iron-icon-width: 32px;
+                --iron-icon-height: 32px;
+            }
+        </style>
+
+        <kct-vbox class="container">
+            <setting-header-block icon="dashboard" text="Monitoring" desc="Statistik Absensi" on-back-tap="__onBackTap"></setting-header-block>
+            <div class="main flex"></div>
+        </kct-vbox>
+
+    </template>
+    <script>
+        class PresenceBoard extends KctView {
+            static get is() {
+                return 'presence-board';
+            }
+
+            static get properties() {
+                return {
+                    menus: {
+                        type: Array,
+                        value: () => ([
+                            { text: 'Statistik', icon: 'dashboard', name: 'board' },
+                            { text: 'Datasheet', icon: 'perm-identity', name: 'sheet' }
+                        ])
+                    }
+                };
+            }
+
+            __onMenuTap(e) {
+                let menu = e.model.item;
+                this.set('route.path', '/presence/pages/' + menu.name);
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/presence');
+            }
+        }
+        customElements.define(PresenceBoard.is, PresenceBoard);
+    </script>
+</dom-module>

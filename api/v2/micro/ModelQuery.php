@@ -203,7 +203,7 @@ class ModelQuery {
 
     public function execute() {
         $query = $this->__builder->getQuery()->getSql();
-        // print_r($query);
+        //print_r($query);
         $columns = $this->__builder->getColumns();
 
         $manager = \Phalcon\DI::getDefault()->get('modelsManager');
@@ -229,7 +229,7 @@ class ModelQuery {
             }
         }
 
-        // print_r($this->__builder->getQuery()->getSql());
+        //print_r($this->__builder->getQuery()->getSql());
 
         $columns = $this->__builder->getColumns();
         $pageset = new ModelPageset($this);

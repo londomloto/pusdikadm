@@ -1,12 +1,26 @@
 <?php
 namespace App\Presence\Controllers;
 
-use App\Presence\Models\Task;
+use App\Presence\Models\Presence;
 
 class PresenceController extends \Micro\Controller {
 
     public function findAction() {
-        return Task::get()->filterable()->sortable()->paginate();
+        $display = $this->request->getQuery('display');
+
+        switch($display) {
+            case 'report':
+
+                $report = json_decode($this->request->getQuery('report'), TRUE);
+
+                if ($report['type'] == 'monthly') {
+                    return Presence::reportMonthly($report['user'], $report['month'], $report['year']);
+                } else {
+                    return Presence::reportDaily($report['user'], $report['from'], $report['to']);
+                }
+            default:
+                return Presence::get()->filterable()->sortable()->paginate();
+        }
     }
 
     public function findByIdAction($id) {

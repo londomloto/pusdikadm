@@ -8,12 +8,16 @@
                 height: 100%;
                 background-color: var(--page-background-color);
             }
+            #switcher {
+                display: block;
+                height: 100%;
+            }
         </style>
 
         <kct-pages id="switcher" attr-for-selected="name" selected="[[ page ]]" lazy-load>
-            <presence-index name="index" import="pages/presence-index.html"></presence-index>    
-            <presence-sheet name="sheet" import="pages/presence-sheet.html"></presence-sheet>    
-            <presence-board name="board" import="pages/presence-board.html"></presence-board>
+            <presence-index name="index" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" import="pages/presence-index.html"></presence-index>    
+            <presence-sheet name="sheet" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" import="pages/presence-sheet.html"></presence-sheet>    
+            <presence-board name="board" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" import="pages/presence-board.html"></presence-board>
         </kct-pages>
     </template>
     <script>
@@ -28,6 +32,13 @@
                     page: { type: String },
                     title: { type: String, value: 'Absensi', notify: true }
                 };
+            }
+
+            handleResizing() {
+                let pageItem = this.$.switcher.selectedItem;
+                if (pageItem && pageItem.handleResizing) {
+                    pageItem.handleResizing();
+                }
             }
 
             handleRouteParams(page) {

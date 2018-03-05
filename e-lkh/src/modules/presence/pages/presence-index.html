@@ -56,36 +56,23 @@
 
         <div class="container">
             <div class="app-grid">
-                <div class="menu">
-                    <paper-card class="card">
-                        <div class="card-content">
-                            <div class="icon">
-                                <iron-icon icon="dashboard"></iron-icon>
+                <template is="dom-repeat" items="[[ menus ]]">
+                    <div class="menu">
+                        <paper-card class="card" on-tap="__onMenuTap">
+                            <div class="card-content">
+                                <div class="icon">
+                                    <iron-icon icon="[[ item.icon ]]"></iron-icon>
+                                </div>
+                                <div class="text">
+                                    [[ item.text ]]
+                                </div>
+                                <div class="open">
+                                    <paper-button>Buka Module</paper-button>
+                                </div>
                             </div>
-                            <div class="text">
-                                Statistik
-                            </div>
-                            <div class="open">
-                                <paper-button>Buka Module</paper-button>
-                            </div>
-                        </div>
-                    </paper-card>    
-                </div>
-                <div class="menu">
-                    <paper-card class="card">
-                        <div class="card-content">
-                            <div class="icon">
-                                <iron-icon icon="perm-identity"></iron-icon>
-                            </div>
-                            <div class="text">
-                                Datasheet
-                            </div>
-                            <div class="open">
-                                <paper-button>Buka Module</paper-button>
-                            </div>
-                        </div>
-                    </paper-card>    
-                </div>
+                        </paper-card>    
+                    </div>
+                </template>
                 
                 
             </div>
@@ -96,6 +83,23 @@
         class PresenceIndex extends KctView {
             static get is() {
                 return 'presence-index';
+            }
+
+            static get properties() {
+                return {
+                    menus: {
+                        type: Array,
+                        value: () => ([
+                            { text: 'Statistik', icon: 'dashboard', name: 'board' },
+                            { text: 'Datasheet', icon: 'perm-identity', name: 'sheet' }
+                        ])
+                    }
+                };
+            }
+
+            __onMenuTap(e) {
+                let menu = e.model.item;
+                this.set('route.path', '/presence/pages/' + menu.name);
             }
         }
         customElements.define(PresenceIndex.is, PresenceIndex);

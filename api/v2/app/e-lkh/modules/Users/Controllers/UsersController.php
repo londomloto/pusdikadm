@@ -7,7 +7,7 @@ use App\Users\Models\User,
 class UsersController extends \Micro\Controller {
 
     public function testAction() {
-        
+        \App\Calendar\Models\Calendar::fill();
     }
 
     public function findAction() {

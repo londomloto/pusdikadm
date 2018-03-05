@@ -59,7 +59,8 @@
     "relative-time": "Juravenator/relative-time#^0.1.5",
     "marked": "^0.3.6",
     "hopscotch": "linkedin/hopscotch#^0.3.1",
-    "socket.io-client": "^2.0.4"
+    "socket.io-client": "^2.0.4",
+    "highcharts": "^6.0.7"
   },
   "resolutions": {
     "polymer": "^2.0.0",
