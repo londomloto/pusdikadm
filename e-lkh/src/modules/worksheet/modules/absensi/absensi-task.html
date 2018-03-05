@@ -87,18 +87,19 @@
                     metadata: { 
                         type: Object,
                         value: () => ({
-                            namespace: '/registration',
-                            service_url: '/registration/kanban',
+                            namespace: '/presence',
+                            service_url: '/presence/kanban',
                             primary_val: null,
-                            primary_key: 'su_id',
-                            project_key: 'su_task_project',
-                            due_key: 'su_task_due',
-                            due_formatted_key: 'su_task_due_formatted',
-                            status_primary_key: 'tus_id',
+                            primary_key: 'tpr_id',
+                            project_key: 'tpr_task_project',
+                            due_key: 'tpr_task_due',
+                            due_formatted_key: 'tpr_task_due_formatted',
+                            creator_primary_key: 'tpr_created_by',
+                            status_primary_key: 'tps_id',
                             status_primary_val: null,
-                            status_status_key: 'tus_status',
-                            status_worker_key: 'tus_worker',
-                            status_target_key: 'tus_target'
+                            status_status_key: 'tps_status',
+                            status_worker_key: 'tps_worker',
+                            status_target_key: 'tps_target'
                         })
                     }
                 };

@@ -1,9 +1,13 @@
 <?php
 namespace App\Presence\Controllers;
 
-use App\Presence\Models\Presence;
+use App\Presence\Models\Task;
 
 class PresenceController extends \Micro\Controller {
+
+    public function findAction() {
+        return Task::get()->filterable()->sortable()->paginate();
+    }
 
     public function findByIdAction($id) {
         return Presence::get($id);
@@ -58,6 +62,24 @@ class PresenceController extends \Micro\Controller {
         }
 
         return array('success' => FALSE);
+    }
+
+    public function attachAction() {
+        $success = $this->uploader->initialize(array(
+            'path' => APPPATH.'public/resources/attachments/',
+            'encrypt' => TRUE
+        ))->upload();
+
+        $data = $this->uploader->getResult();
+
+        if ( ! is_null($data)) {
+            unset($data->filepath);
+        }
+
+        return array(
+            'success' => $success,
+            'data' => $data
+        );
     }
 
     public function uploadAction($id) {

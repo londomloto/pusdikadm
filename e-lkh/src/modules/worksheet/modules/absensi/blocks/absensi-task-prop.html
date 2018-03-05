@@ -13,8 +13,8 @@
                 <div class="label">Status Dokumen</div>
                 <div class="field">
                     <div class="display">
-                        <div class="empty" hidden$="[[ __hideEmptyStatus(record.status.tus_status) ]]">Belum ada</div>
-                        <div class="value" hidden$="[[ !__hideEmptyStatus(record.status.tus_status) ]]">
+                        <div class="empty" hidden$="[[ __hideEmptyStatus(record.status.status_text) ]]">Belum ada</div>
+                        <div class="value" hidden$="[[ !__hideEmptyStatus(record.status.status_text) ]]">
                             <iron-icon icon="bookmark-border" class="value-icon"></iron-icon>    
                             <span class="value-text">[[ record.status.status_text ]]</span>
                         </div>
@@ -53,10 +53,10 @@
                             on-value-changed="__onDuePickerChange"></task-date-picker>
                     </div>
                     <div class="display">
-                        <div class="empty" hidden$="[[ __hideEmptyDue(record.task.su_task_due) ]]">Belum ada</div>
-                        <div class="value" hidden$="[[ !__hideEmptyDue(record.task.su_task_due) ]]">
+                        <div class="empty" hidden$="[[ __hideEmptyDue(record.task.tpr_task_due) ]]">Belum ada</div>
+                        <div class="value" hidden$="[[ !__hideEmptyDue(record.task.tpr_task_due) ]]">
                             <iron-icon icon="today" class="value-icon"></iron-icon>    
-                            <span class="value-text">[[ record.task.su_task_due_formatted ]]</span> - <a on-tap="__onDueRemoveTap" href="javascript:;">Hapus</a>
+                            <span class="value-text">[[ record.task.tpr_task_due_formatted ]]</span> - <a on-tap="__onDueRemoveTap" href="javascript:;">Hapus</a>
                         </div>
                     </div>
                 </div>
@@ -99,6 +99,17 @@
                 return 'absensi-task-prop';
             }
 
+            initialize() {
+                let today = moment();
+
+                this.set('record.task.tpr_task_due', today.format('YYYY-MM-DD'));
+                this.set('record.task.tpr_task_due_formatted', today.format('DD MMM YYYY'));
+                this.set('record.task.creator_su_fullname', this.user.su_fullname);
+                this.set('record.task.creator_su_avatar_thumb', this.user.su_avatar_thumb);
+                this.set('record.task.creator_sr_name', this.user.sr_name);
+
+                this.set('record.status.status_text', 'Draft Absensi');
+            }
         }
 
         customElements.define(AbsensiTaskProp.is, AbsensiTaskProp);

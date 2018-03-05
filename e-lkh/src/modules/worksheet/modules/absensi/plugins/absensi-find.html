@@ -116,13 +116,77 @@
                                         on-change="__onDatePickerChange"></kct-search-date>
 
                                     <kct-search-combo 
+                                        name="type" 
+                                        url="/presence/presence-types" 
+                                        class="popup" 
+                                        item-value-path="tpt_name" 
+                                        item-label-path="tpt_name" 
+                                        item-query-path="tpt_name" 
+                                        page-size="10" 
+                                        on-change="__onComboChange" 
+                                        on-beforeload="__onComboBeforeload">
+                                        <template>
+                                            <style>
+                                                paper-item {
+                                                    --paper-item-min-height: 34px;
+                                                    font-size: 13px;
+                                                    font-weight: 400;
+                                                }
+                                                paper-item iron-icon {
+                                                    --iron-icon-width: 16px;
+                                                    --iron-icon-height: 16px;
+                                                    margin-right: 5px;
+                                                }
+                                            </style>
+
+                                            <paper-item>
+                                                <iron-icon icon="social:mood"></iron-icon>
+                                                <paper-item-body>[[ item.tpt_name ]]</paper-item-body>    
+                                            </paper-item>
+
+                                        </template>        
+                                    </kct-search-combo>
+
+                                    <kct-search-combo 
+                                        name="time" 
+                                        url="/presence/presence-times" 
+                                        class="popup" 
+                                        item-value-path="tpr_checkin" 
+                                        item-label-path="tpr_checkin" 
+                                        item-query-path="tpr_checkin" 
+                                        page-size="10" 
+                                        on-change="__onComboChange" 
+                                        on-beforeload="__onComboBeforeload">
+                                        <template>
+                                            <style>
+                                                paper-item {
+                                                    --paper-item-min-height: 34px;
+                                                    font-size: 13px;
+                                                    font-weight: 400;
+                                                }
+                                                paper-item iron-icon {
+                                                    --iron-icon-width: 16px;
+                                                    --iron-icon-height: 16px;
+                                                    margin-right: 5px;
+                                                }
+                                            </style>
+
+                                            <paper-item>
+                                                <iron-icon icon="schedule"></iron-icon>
+                                                <paper-item-body>[[ item.tpr_checkin ]]</paper-item-body>    
+                                            </paper-item>
+
+                                        </template>        
+                                    </kct-search-combo>
+
+                                    <kct-search-combo 
                                         name="label" 
                                         url="/labels" 
                                         class="popup" 
                                         item-value-path="sl_id" 
                                         item-label-path="sl_label" 
                                         item-query-path="sl_label" 
-                                        page-size="4" 
+                                        page-size="10" 
                                         on-change="__onComboChange" 
                                         on-beforeload="__onComboBeforeload">
                                         <template>
@@ -200,6 +264,8 @@
                             { field: 'search', label: 'Search', icon: 'search', hint: 'Tekan enter untuk pencarian' },
                             { field: 'user', label: 'Peserta', icon: 'social:person-outline', hint: 'Filter peserta: <b>@peserta</b>' },
                             { field: 'date', label: 'Tanggal', icon: 'today', hint: 'Filter tanggal: <b>!tanggal</b>' },
+                            { field: 'time', label: 'Jam', icon: 'schedule', hint: 'Filter jam: <b>&jam</b>' },
+                            { field: 'type', label: 'Absensi', icon: 'social:mood', hint: 'Filter absensi: <b>#absensi</b>' },
                             { field: 'label', label: 'Label', icon: 'label-outline', hint: 'Filter label: <b>~label</b>' }
                         ])
                     },
@@ -210,8 +276,8 @@
                         type: Array,
                         value: () => ([
                             { field: 'name', sort: 'ASC', label: 'Nama' },
-                            { field: 'created', sort: 'ASC', label: 'Lama' },
-                            { field: 'created', sort: 'DESC', label: 'Baru' }
+                            { field: 'date', sort: 'ASC', label: 'Lama' },
+                            { field: 'date', sort: 'DESC', label: 'Baru' }
                         ])
                     },
 
@@ -223,8 +289,8 @@
             ready() {
                 super.ready();
                 
-                this.set('selectedSorter', this.sorters[0]);
-                this.set('sorters.0.checked', true);
+                this.set('selectedSorter', this.sorters[2]);
+                this.set('sorters.2.checked', true);
             }
 
         }

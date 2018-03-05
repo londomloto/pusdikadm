@@ -49,7 +49,6 @@
     "moment": "^2.18.1",
     "graph-svg": "^1.0.9",
     "vaadin-combo-box": "^2.0.0",
-    "vaadin-charts": "^5.0.0",
     "crypto-js": "^3.1.9",
     "paper-dialog-scrollable": "PolymerElements/paper-dialog-scrollable#^2.1.0",
     "vaadin-date-picker": "^2.0.7",

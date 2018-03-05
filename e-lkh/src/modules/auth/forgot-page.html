@@ -32,7 +32,7 @@
             .container {
                 height: 100vh;
                 background-color: var(--app-login-background);
-                background-image: var(--login-background-image, url(../../../images/backgrounds/background-1.jpg));
+                background-image: var(--login-background-image, url(../../../images/backgrounds/background-2.jpg));
                 background-repeat: no-repeat;
                 background-size: cover;
                 background-position: 0 0;
@@ -71,6 +71,8 @@
             .column-right {
                 position: relative;
                 z-index: 2;
+                overflow-x: hidden;
+                overflow-y: auto;
             }
 
             .column-left.sm { display: none; }
@@ -136,7 +138,7 @@
                 color: #fff;
                 padding-left: 15px;
                 padding-right: 15px;
-                margin: 0;
+                margin: 0 15px 15px 0;
                 font-weight: 500;
             }
             .forgot paper-button[disabled] {
@@ -181,7 +183,7 @@
                         <paper-input id="email" value="{{ email }}" type="email" label="Masukan alamat email" required auto-validate error-message="Alamat email wajib diisi"></paper-input>
                     </div>
                     <div class="m-t">
-                        <paper-button on-tap="__onRequestPasswordTap" disabled$="[[ __forgotInvalid ]]">Kirim Pengaturan Ulang</paper-button>&nbsp;&nbsp;atau&nbsp;&nbsp;<a href="javascript:;" on-tap="__onBackTap">kembali ke login</a>
+                        <paper-button on-tap="__onRequestPasswordTap" disabled$="[[ __forgotInvalid ]]">Kirim Pengaturan Ulang</paper-button>atau&nbsp;&nbsp;<a href="javascript:;" on-tap="__onBackTap">kembali ke login</a>
                     </div>
                     <div class="notes">
                         <h4>Catatan tentang filter spam</h4>

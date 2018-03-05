@@ -1,0 +1,41 @@
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-pages/kct-pages.html">
+
+<dom-module id="presence-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--page-background-color);
+            }
+        </style>
+
+        <kct-pages id="switcher" attr-for-selected="name" selected="[[ page ]]" lazy-load>
+            <presence-index name="index" import="pages/presence-index.html"></presence-index>    
+            <presence-sheet name="sheet" import="pages/presence-sheet.html"></presence-sheet>    
+            <presence-board name="board" import="pages/presence-board.html"></presence-board>
+        </kct-pages>
+    </template>
+    <script>
+        class PresencePage extends KctView {
+
+            static get is() {
+                return 'presence-page';
+            }
+
+            static get properties() {
+                return {
+                    page: { type: String },
+                    title: { type: String, value: 'Absensi', notify: true }
+                };
+            }
+
+            handleRouteParams(page) {
+                page = page || 'index';
+                this.set('page', page)
+            }
+        }
+
+        customElements.define(PresencePage.is, PresencePage);
+    </script>
+</dom-module>

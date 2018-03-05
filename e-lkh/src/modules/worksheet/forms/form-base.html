@@ -26,8 +26,26 @@
                     record: { type: Object, notify: true },
                     action: { type: String, value: 'create'},
                     invalid: { type: Boolean, notify: true },
-                    buttons: { type: String, notify: true }
+                    buttons: { type: String, notify: true },
+                    phantom: { type: Boolean, value: true }
                 };
+            }
+
+            static get observers() {
+                return [
+                    '__actionChanged(action)'
+                ];
+            }
+
+            defer() {
+                let def = {};
+
+                def.promise = new Promise((res, rej) => {
+                    def.resolve = res;
+                    def.reject = rej;
+                });
+
+                return def;
             }
 
             save(options) {
@@ -87,6 +105,10 @@
 
             initialize() {
                 return this.resolve();
+            }
+
+            __actionChanged(action) {
+                this.set('phantom', action != 'update');
             }
         }
         customElements.define(FormBase.is, FormBase);

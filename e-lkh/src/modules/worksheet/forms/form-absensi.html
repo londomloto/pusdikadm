@@ -1,5 +1,6 @@
 <link rel="import" href="../../../../../cores/vendors/moment/moment.html">
 <link rel="import" href="../../../../../cores/elements/kct-media/kct-media.html">
+<link rel="import" href="../../../../../cores/elements/kct-file/kct-file-button.html">
 
 <dom-module id="form-absensi">
     <template>
@@ -9,23 +10,32 @@
         <kct-media screen="{{ screen }}"></kct-media>
 
         <div class="section">
-            <h3 class="section-title">Data Identitas</h3>
-            <div>
-                <paper-input label="Nama Lengkap" value="{{ record.data.tpr_su_fullname }}" readonly></paper-input>
-                <paper-input label="Jabatan" value="{{ record.data.tpr_su_sj_name }}" readonly></paper-input>
-                <paper-input label="Unit Kerja" value="{{ record.data.tpr_su_sdp_name }}" readonly></paper-input>
-            </div>
-        </div>
-
-        <div class="section">
             <h3 class="section-title">Data Absensi</h3>
             <div>
-                
-                <vaadin-date-picker label="Tanggal Absensi" value="{{ record.data.tpr_date }}"></vaadin-date-picker>
+                <template is="dom-if" if="[[ phantom ]]">
+                    <kct-combobox 
+                        label="Nama Lengkap" 
+                        value="{{ record.task.tpr_su_id }}"
+                        url="/users" 
+                        page-size="10" 
+                        item-label-path="su_fullname" 
+                        item-value-path="su_id" 
+                        on-change="__onComboUserChange"></kct-combobox>
+                    <paper-input label="Jabatan" value="{{ record.task.tpr_su_sj_name }}"></paper-input>
+                    <paper-input label="Unit Kerja" value="{{ record.task.tpr_su_sdp_name }}"></paper-input>    
+                    <vaadin-date-picker label="Tanggal" value="{{ record.task.tpr_date }}"></vaadin-date-picker>                    
+                </template>
+
+                <template is="dom-if" if="[[ !phantom ]]">
+                    <paper-input label="Nama Lengkap" value="[[ record.task.tpr_su_fullname ]]" readonly></paper-input>
+                    <paper-input label="Jabatan" value="[[ record.task.tpr_su_sj_name ]]" readonly></paper-input>
+                    <paper-input label="Unit Kerja" value="[[ record.task.tpr_su_sdp_name ]]" readonly></paper-input>
+                    <paper-input label="Tanggal" value="[[ record.task.tpr_date_formatted ]]" readonly></paper-input>
+                </template>
 
                 <div class="form-group">
                     <label>Absensi (Kehadiran)</label>
-                    <paper-radio-group selected="{{ record.data.tpr_type }}" attr-for-selected="name" class$="hbox [[ screen ]]">
+                    <paper-radio-group selected="{{ record.task.tpr_type }}" attr-for-selected="name" class$="hbox [[ screen ]]">
                         <paper-radio-button name="Masuk">Masuk</paper-radio-button>
                         <paper-radio-button name="Izin">Izin</paper-radio-button>
                         <paper-radio-button name="Sakit">Sakit</paper-radio-button>
@@ -35,18 +45,10 @@
                     </paper-radio-group>
                 </div>
 
-                <paper-input label="Keterangan" value="{{ record.data.tpr_desc }}" hidden$="[[ __otherHidden ]]"></paper-input>
+                <paper-input label="Keterangan" value="{{ record.task.tpr_desc }}" hidden$="[[ __otherHidden ]]"></paper-input>
 
-                <paper-input label="Jam Absensi" value="{{ record.data.tpr_checkin }}" hidden$="[[ __timeHidden ]]"></paper-input>
-                <kct-input-file id="attachment" value="{{ record.data.tpr_file }}" label="Attachment"></kct-input-file>
-
-            </div>
-        </div>
-
-        <div class="section" hidden>
-            <h3 class="section-title">Data Kegiatan</h3>
-            <div>
-                <paper-input label="Nama Kegiatan" value="{{ record.task.tt_title }}"></paper-input>
+                <paper-input label="Jam Absensi" value="{{ record.task.tpr_checkin }}" hidden$="[[ __timeHidden ]]"></paper-input>
+                <kct-file-button label="Attachment" id="attachment" value="{{ record.task.tpr_filename }}"></kct-file-button>
             </div>
         </div>
 
@@ -59,9 +61,8 @@
 
             static get observers() {
                 return [
-                    '__typeChanged(record.data.tpr_type)',
-                    '__computeTask(record.data.tpr_su_fullname, record.data.tpr_date)',
-                    '__computeContent(record.data.tpr_type, record.data.tpr_checkin, record.data.tpr_desc)'
+                    '__typeChanged(record.task.tpr_type)',
+                    '__validationChanged(record.task.tpr_su_id, record.task.tpr_date)'
                 ];
             }
 
@@ -72,115 +73,90 @@
             }
 
             initialize() {
-                if (this.action == 'create')  {
+                this.shadowRoot.querySelectorAll('kct-combobox[page-size]').forEach(c => c.load);
+
+                if (this.action == 'create') {
+                    
+                    this.set('buttons', 'save');
+
                     let today = moment();
 
-                    this.set('record.data', {
-                        tpr_date: today.format('YYYY-MM-DD'),
-                        tpr_su_id: this.user.su_id,
-                        tpr_su_fullname: this.user.su_fullname,
-                        tpr_su_sdp_name: this.user.su_sdp_name,
-                        tpr_su_sj_name: this.user.su_sj_name,
-                        tpr_type: 'Masuk',
-                        tpr_checkin: today.format('HH.mm')
-                    });
-
-                    this.set('record.task.tt_due_date', today.format('YYYY-MM-DD'));
-                    this.set('record.task.tt_due_date_formatted', today.format('DD MMM YYYY'));
-
-                    return this.resolve();
+                    this.set('record.task.tpr_su_id', this.user.su_id);
+                    this.set('record.task.tpr_su_sj_name', this.user.su_sj_name);
+                    this.set('record.task.tpr_su_sdp_name', this.user.su_sdp_name);
+                    this.set('record.task.tpr_date', today.format('YYYY-MM-DD'));
+                    this.set('record.task.tpr_type', 'Masuk');
                 } else {
-                    if (this.record.task.tt_is_authorized) {
-                        if (this.record.status.tts_data_id) {
-                            return this.$.ajax.GET('/presence/' + this.record.status.tts_data_id).then(res => {
-                                this.set('record.data', res.data);
-                            });
-                        } else {
-                            return this.resolve();
-                        }
-                    } else { 
-                        this.set('readonly', true);
-                        this.set('removable', false);
-                        this.toast('Warning', 'Anda tidak memiliki otorisasi membuka kegiatan ini', 'danger');
-                        this.trigger('authorize', { auth: false });
-
-                        return this.resolve();
-                    }
+                    this.set('buttons', 'save,remove');
                 }
+
+                return this.resolve();
+                
             }
 
             save(options) {
-                if (this.record.data.tpr_type != 'Masuk') {
-                    this.set('record.data.tpr_checkin', '');
-                }
+                let def = this.defer();
 
-                let data = this.record.data;
-
-                if (data.tpr_id) {
-                    return this.$.ajax.PUT('/presence/' + data.tpr_id, data).then(next.bind(this));
-                } else {
-                    return this.$.ajax.POST('/presence', data).then(next.bind(this));
-                }
-
-                function next(res) {
-                    if (res.success) {
-
-                        this.saveResult({
-                            data: res.data,
-                            date: res.data.tpr_date,
-                            author: res.data.tpr_su_id
-                        });
-                        
-                        this.set('record.status.tts_data_id', res.data.tpr_id);
-
-                        if (this.$.attachment.file) {
-                            return this.$.ajax.UPLOAD('/presence/' + res.data.tpr_id + '/upload', {
-                                files: [{ name: 'userfile', file: this.$.attachment.file }]
-                            }).then(upload => {
-                                if (upload.data) {
-                                    this.set('record.data.tpr_file', upload.data.tpr_file);
-                                }
-                                return done.bind(this)(res);
-                            });
+                if (this.phantom) {
+                    this.__validate().then(valid => {
+                        if ( ! valid) {
+                            def.resolve({ success: false });
                         } else {
-                            return done.bind(this)(res);
+                            save.bind(this, def)();
                         }
-                    } else {
-                        this.toast('Warning', res.message, 'warn');
-                        return res;
-                    }
+                    });    
+                } else {
+                    save.bind(this, def)();
                 }
 
-                function done(res) {
-                    if (options.send) {
-                        let payload = {
-                            lkh_tpr_id: this.record.data.tpr_id,
-                            lkh_date: this.record.data.tpr_date,
-                            lkh_su_id: this.record.data.tpr_su_id,
-                            lkh_volume: 1,
-                            lkh_desc: ''
-                        };
+                return def.promise;
 
-                        return this.$.ajax.POST('/lkh', payload).then(r => {
-                            if (r.success) {
-                                this.set('record.status.tts_data_id', r.data.lkh_id);
+                function save(def) {
+                    // upload attachments
+                    if (this.$.attachment.file) {
+                        this.$.attachment.upload('/presence/attach').then(res => {
+                            if (res.success) {
+                                this.set('record.task.tpr_filename', res.data.filename);
+                                this.set('record.task.tpr_filetype', res.data.filetype);
                             }
-                            return res;
+                            def.resolve({ success: true });
                         });
                     } else {
-                        return res;
+                        def.resolve({ success: true });
                     }
                 }
             }
 
             remove() {
-                let key = (this.record.data || {}).tpr_id;
+                let key = (this.record.task || {}).tpr_id;
 
                 if (key) {
                     return this.$.ajax.DELETE('/presence/' + key);
                 } else {
                     return this.resolve({ success: true });
                 }
+            }
+
+            __validate() {
+                let params = {
+                    tpr_su_id: this.record.task.tpr_su_id,
+                    tpr_date: this.record.task.tpr_date
+                };
+
+                return this.$.ajax.GET('/presence', { params: params }).then(res => {
+                    if (res.data.length > 0) {
+                        this.toast('Gagal', 'Absensi Anda sudah pernah dibuat', 'danger');
+                        return false;
+                    }
+                    return true;
+                });
+            }
+
+            __validationChanged(user, date) {
+                let valid = true;
+                valid = valid && !!user;
+                valid = valid && !!date;
+                this.set('invalid', !valid);
             }
 
             __typeChanged(type) {
@@ -191,32 +167,18 @@
                     this.set('__timeHidden', true);
                     this.set('__otherHidden', false);
                 }
-            }
+            } 
 
-            __computeTask(fullname, date) {
-                fullname = fullname || '';
+            __onComboUserChange(e) {
+                let author = e.target.getModelForValue(e.target.value);
 
-                if (date) {
-                    date = moment(date).format('DD MMM YYYY');
+                if (author) {
+                    this.set('record.task.tpr_su_sj_name', author.su_sj_name);
+                    this.set('record.task.tpr_su_sdp_name', author.su_sdp_name);
                 } else {
-                    date = moment().format('DD MMM YYYY');
+                    this.set('record.task.tpr_su_sj_name', '');
+                    this.set('record.task.tpr_su_sdp_name', '');
                 }
-
-                this.set('record.task.tt_title', (fullname ? fullname + ' - ' : '') + date);
-            }
-
-            __computeContent(type, time, desc) {
-                let content = '<iron-icon icon="label-outline"></iron-icon>&nbsp;';
-
-                if (type == 'Masuk') {
-                    content += `${type}&nbsp;`;
-                    content += time ? `( ${time} )` : '';
-                } else {
-                    content += `${type}&nbsp;`;
-                    // content += desc ? `( ${desc} )` : '';
-                }
-
-                this.set('record.status.tts_content', content);
             }
         }
         customElements.define(FormAbsensi.is, FormAbsensi);

@@ -127,6 +127,24 @@ class User extends \Micro\Model {
             )
         );
 
+        $this->hasOne(
+            'su_sj_id',
+            'App\Jobs\Models\Job',
+            'sj_id',
+            array(
+                'alias' => 'Job'
+            )
+        );
+
+        $this->hasOne(
+            'su_sdp_id',
+            'App\Departments\Models\Department',
+            'sdp_id',
+            array(
+                'alias' => 'Department'
+            )
+        );
+
     }
 
     public function getSource() {
@@ -182,6 +200,14 @@ class User extends \Micro\Model {
 
         if ( ! empty($array['su_invite_token'])) {
             $array['su_need_reinvite'] = TRUE;
+        }
+
+        if ($this->job) {
+            $array['su_sj_name'] = $this->job->sj_name;
+        }
+
+        if ($this->department) {
+            $array['su_sdp_name'] = $this->department->sdp_name;
         }
 
         return $array;

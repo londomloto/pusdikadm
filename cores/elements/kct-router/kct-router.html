@@ -221,6 +221,13 @@
                             };
                         }
 
+                        if (routes['/:module/pages/:page'] === undefined) {
+                            routes['/:module/pages/:page'] = {
+                                partial: true,
+                                module: 1
+                            };    
+                        }
+
                         if (routes['/:module/:page/:params'] === undefined) {
                             routes['/:module/:page/:params'] = {
                                 module: 1,
@@ -361,7 +368,12 @@
                                                 // Array.prototype.push.apply(params, [data]);
                                             } else if (name == 'page') {
                                                 data = matches[index];
-                                                route.page = data + '-page';
+                                                if (route.partial) {
+                                                    route.page = route.module + '-page';
+                                                    Array.prototype.push.apply(params, [data]);
+                                                } else {
+                                                    route.page = data + '-page';    
+                                                }
                                                 // Array.prototype.push.apply(params, [data]);
                                             } else {
                                                 if (name == 'params') {

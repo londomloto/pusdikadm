@@ -85,14 +85,18 @@
             .column-right.xl {
                 width: 460px;
             }
-            .column-right { padding: 20px; }
+            .column-right { 
+                padding: 20px; 
+                overflow-x: hidden;
+                overflow-y: auto;
+                position: relative;
+            }
 
             .cover {
                 height: 100%;
             }
             
             .login {
-                
                 overflow: hidden;
                 /*background-color: var(--app-login-background);*/
                 padding: 1rem;

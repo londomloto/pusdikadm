@@ -24,7 +24,8 @@ return array(
         'ldap' => 'Micro\Ldap\LdapProvider',
         'dx'   => 'Micro\Dx\DxProvider',
         'socket' => 'Micro\Socket\SocketProvider',
-        'gcm' => 'Micro\Google\MessagingProvider'
+        'gcm' => 'Micro\Google\MessagingProvider',
+        'uploader' => 'Micro\File\UploadProvider'
     ),
 
     'middleware' => array(

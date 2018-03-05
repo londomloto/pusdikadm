@@ -43,6 +43,7 @@ Router::group(array(
     'handler' => 'App\Presence\Controllers\PresenceController',
     'middleware' => 'auth'
 ))
+->post('/attach', 'attach')
 ->post('/{id}/upload', 'upload')
 ->post('/{id}/download', 'download');
 

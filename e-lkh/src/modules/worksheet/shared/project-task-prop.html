@@ -42,14 +42,14 @@
                 this.stopEditing();
                 // this.assignSelf();
 
-                console.log(this.metadata);
-
                 // set creator
                 
-                this.set('record.task.tt_creator_id', this.user.su_id);
+                this.set('record.task.' + this.metadata.creator_primary_key , this.user.su_id);
                 this.set('record.task.creator_su_avatar_thumb', this.user.su_avatar_thumb);
                 this.set('record.task.creator_su_fullname', this.user.su_fullname);
                 this.set('record.task.creator_sr_name', this.user.sr_name);
+
+                console.log(this.record.task);
 
                 if (this.project) {
                     this.set('record.task.' + this.metadata.due_key, this.project.sp_end_date);
