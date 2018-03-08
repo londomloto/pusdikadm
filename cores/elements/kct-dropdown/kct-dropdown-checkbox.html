@@ -28,9 +28,11 @@
             }
             .list {
                 max-height: 300px;
+                min-width: 250px;
                 position: relative;
                 overflow-x: hidden;
                 overflow-y: auto;
+                text-align: left;
                 /*@apply --layout-flex;*/
             }
             .paginator {
@@ -38,6 +40,7 @@
                 border-top: 1px solid #dfdfdf;
                 font-size: 12px;
                 text-align: center;
+                color: #222;
             }
             .paginator paper-icon-button {
                 width: 36px;
@@ -45,17 +48,36 @@
             }
             .badge {
                 position: absolute;
-                width: 16px;
-                height: 16px;
-                border-radius: 50%;
-                text-align: center;
-                line-height: 16px;
+                padding: 1px 2px;
+                border-radius: 3px;
                 font-size: 9px;
-                background-color: var(--paper-blue-500);
+                background-color: var(--paper-pink-500);
                 color: #fff;
-                right: 2px;
-                top: 0;
+                right: 10px;
+                top: -6px;
             }
+            .input {
+                padding: 1px 15px 1px 40px;
+                border-bottom: 1px solid #dfdfdf;
+                text-align: left;
+                position: relative;
+                --paper-input-container-underline: {
+                    display: none;
+                };
+                --paper-input-container-underline-focus: {
+                    display: none;
+                };
+            }   
+
+            .input iron-icon {
+                display: block;
+                position: absolute;
+                left: 10px;
+                top: 50%;
+                margin-top: -12px;
+                color: #ccc;
+            }
+
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
@@ -69,6 +91,10 @@
             no-animations>
             <paper-icon-button class="btn-trigger" icon="[[ icon ]]" slot="dropdown-trigger"></paper-icon-button>
             <div class="dropdown-content" slot="dropdown-content">
+                <div class="input">
+                    <paper-input on-keydown="__onQueryKeydown" value="{{ query }}" label="Pencarian..." no-label-float></paper-input>
+                    <iron-icon icon="search"></iron-icon>
+                </div>
                 <div class="list">
                     <template is="dom-repeat" items="[[ items ]]">
                         <kct-dropdown-item 
@@ -104,11 +130,13 @@
                 return {
                     url: { type: String },
                     pageSize: { type: Number },
-                    autoload: { type: Boolean, value: false },
+                    autoload: { type: Boolean, value: false }, 
+                    multiple: { type: Boolean, value: false, reflectToAttribute: true },
                     params: { 
                         type: Object, 
                         value: () => ({})
                     },
+                    query: { type: String, value: '' },
                     paging: {
                         type: Object,
                         value: () => ({
@@ -121,8 +149,9 @@
                     icon: { type: String, value: 'menu' },
                     items: { type: Array, value: () => ([])},
                     itemLabelPath: { type: String, value: 'label' },
-                    itemValuePath: { type: String, value: 'value' },
-                    horizontalAlign: { type: String, value: 'left' },
+                    itemValuePath: { type: String, value: 'value' }, 
+                    itemQueryPath: { type: String, value: 'value' },
+                    horizontalAlign: { type: String, value: 'left' }, 
                     values: { type: Array, value: () => ([]), notify: true }
                 };
             }
@@ -175,6 +204,14 @@
                 }
 
                 let payload = Object.assign({}, this.params);
+
+                if (this.query) {
+                    payload.query = this.query;
+                    payload.fields = JSON.stringify([this.itemQueryPath]);
+                } else {
+                    payload.query = '';
+                    payload.fields = '[]';
+                }
 
                 if (this.__pagingEnabled && this.paging.start !== undefined) {
                     payload.start = this.paging.start;
@@ -236,7 +273,11 @@
                         }
                     }
                     
+                    this.$.popup.$.dropdown.notifyResize();
+
                 });
+
+
             }
 
             autoCheck() {
@@ -301,15 +342,32 @@
                 if (key) {
                     let pos = this.values.indexOf(key);
 
-                    if (pos === -1) {
-                        this.push('values', key);
-                        // this.values.push(key);
-                        this.set('items.' + e.model.index + '.checked', true);
+                    if (this.multiple) {
+                        if (pos === -1) {
+                            this.push('values', key);
+                            // this.values.push(key);
+                            this.set('items.' + e.model.index + '.checked', true);
+                        } else {
+                            this.splice('values', pos, 1);
+                            // this.values.splice(pos, 1);
+                            this.set('items.' + e.model.index + '.checked', false);
+                        }    
                     } else {
-                        this.splice('values', pos, 1);
-                        // this.values.splice(pos, 1);
-                        this.set('items.' + e.model.index + '.checked', false);
+                        (this.items || []).forEach((item, i) => {
+                            this.set('items.' + i + '.checked', false);
+                        });
+
+                        if (pos === -1) {
+                            this.set('values', [key]);
+                            this.set('items.' + e.model.index + '.checked', true);    
+                        } else {
+                            this.set('values', []);
+                            this.set('items.' + e.model.index + '.checked', false);    
+                        }
+
+                        this.$.popup.close();
                     }
+                    
                 }
             }
 
@@ -346,6 +404,17 @@
 
                 this.set('paging.start', start);
                 this.load();
+            }
+
+            __onQueryKeydown() {
+                this.__q = Polymer.Debouncer.debounce(
+                    this.__q,
+                    Polymer.Async.timeOut.after(300),
+                    () => {
+                        this.load();
+                    }
+                );
+                Polymer.enqueueDebouncer(this.__q);
             }
 
             __onClose() {

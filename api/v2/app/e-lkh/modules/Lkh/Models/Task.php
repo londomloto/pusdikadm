@@ -5,12 +5,15 @@ use App\Activities\Models\Activity;
 use Micro\Helpers\Date as DateHelper;
 use Phalcon\Mvc\Model\Relation;
 
-class Task extends \Micro\Model implements \App\Tasks\Interfaces\TaskModel {
+class Task extends Lkh implements \App\Tasks\Interfaces\TaskModel {
     
     private $__loggable = TRUE;
     private $__snapshot = NULL;
     
     public function initialize() {
+        
+        parent::initialize();
+
 
         $this->hasMany(
             'lkh_id',
@@ -45,15 +48,6 @@ class Task extends \Micro\Model implements \App\Tasks\Interfaces\TaskModel {
             'sl_id',
             array(
                 'alias' => 'Labels'
-            )
-        );
-
-        $this->hasOne(
-            'lkh_su_id',
-            'App\Users\Models\User',
-            'su_id',
-            array(
-                'alias' => 'Author'
             )
         );
 
@@ -139,9 +133,8 @@ class Task extends \Micro\Model implements \App\Tasks\Interfaces\TaskModel {
     public function toArray($columns = NULL) {
         $data = parent::toArray($columns);
         
-        $data['lkh_title'] = $this->getTitle();
         $data['lkh_task_due_formatted'] = DateHelper::format($this->lkh_task_due);
-        $data['su_created_dt_relative'] = DateHelper::formatRelative($this->su_created_dt);
+        $data['lkh_created_dt_relative'] = DateHelper::formatRelative($this->lkh_created_dt);
 
         if ($this->creator) {
             $data['creator_su_fullname'] = $this->creator->getName();
@@ -158,13 +151,6 @@ class Task extends \Micro\Model implements \App\Tasks\Interfaces\TaskModel {
 
     public function resumeLog() {
         $this->__loggable = TRUE;
-    }
-
-    public function getTitle() {
-        $title  = 'LKH ';
-        $title .= $this->author ? $this->author->getName() : '(dihapus)';
-        $title .= ' ('.DateHelper::format($this->lkh_date).')';
-        return $title;
     }
 
     public function getLink() {

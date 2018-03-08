@@ -2,6 +2,7 @@
 <link rel="import" href="../../../../../cores/elements/kct-socket/kct-socket.html">
 <link rel="import" href="../../../../../cores/bower_components/paper-spinner/paper-spinner-lite.html">
 <link rel="import" href="../../../../../cores/mixins/mixins.html">
+<link rel="import" href="../../../../../cores/vendors/moment/moment.html">
 
 <!-- <link rel="import" href="../plugins/task-combo-user.html"> -->
 <link rel="import" href="../plugins/task-combo-label.html">
@@ -49,8 +50,6 @@
                 this.set('record.task.creator_su_fullname', this.user.su_fullname);
                 this.set('record.task.creator_sr_name', this.user.sr_name);
 
-                console.log(this.record.task);
-
                 if (this.project) {
                     this.set('record.task.' + this.metadata.due_key, this.project.sp_end_date);
                     this.set('record.task.' + this.metadata.due_formatted_key, this.project.sp_end_date_formatted);
@@ -61,7 +60,7 @@
                 this.stopEditingLabel();
                 // this.stopEditingUser();
                 // this.stopEditingStatus();
-                this.stopEditingDue();
+                // this.stopEditingDue();
             }
 
             startEditingUser() {

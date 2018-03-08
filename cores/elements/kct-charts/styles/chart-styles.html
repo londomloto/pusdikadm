@@ -1,0 +1,60 @@
+<dom-module id="chart-styles">
+    <template>
+        <style>
+            :host {
+                display: block;
+                width: 100%;
+                height: 100%;
+            }
+            :host([theme="dark"]) {
+                background-color: #343435;
+            }
+            :host([theme="light"]) {
+                background-color: #fff;
+                @apply --shadow-elevation-2dp;
+            }
+            .panel {
+                height: 100%;
+            }
+            :host([theme="dark"]) .panel {
+                border: 1px solid #444444;
+            }
+            #chart {
+                width: 100%;
+                height: 100%;
+            }
+            .content {
+                width: 100%;
+                box-sizing: border-box;
+            }
+            .toolbar {
+                padding: 5px 15px;
+                text-align: right;
+            }
+            :host([theme="light"]) .toolbar {
+                border-bottom: 1px solid #dfdfdf;
+                color: var(--paper-blue-grey-500);
+            }
+            :host([theme="dark"]) .toolbar {
+                color: #E0E0E0;
+            }
+            .vbox {
+                box-sizing: border-box;
+                @apply --layout-vertical;
+            }
+            .vbox > .flex {
+                box-sizing: border-box;
+                @apply --layout-flex;
+            }
+            .highcharts-credits {
+                display: none;
+            }
+            /*.toolbar paper-icon-button,
+            .toolbar ::slotted(paper-icon-button) {
+                padding: 5px;
+                width: 34px;
+                height: 34px;
+            }*/
+        </style>
+    </template>
+</dom-module>

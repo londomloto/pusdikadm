@@ -315,10 +315,15 @@
 
             __onComboUserChange(e) {
                 let user = e.target.getModelForValue(e.target.value);
+
                 if (user) {
                     this.set('__title', 'Absensi ' + user.su_fullname);
                 } else {
                     this.set('__title', 'Absensi Pegawai');
+                }
+
+                if ( ! this.invalid) {
+                    this.__loadGrid();
                 }
             }
 

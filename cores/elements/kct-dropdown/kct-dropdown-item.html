@@ -4,15 +4,17 @@
     <template>
         <style>
             paper-item {
+                color: #222;
                 cursor: pointer;
                 font-size: 13px;
                 font-weight: 400;
+                padding-left: 10px;
                 --paper-item-min-height: 36px;
             }
             paper-item iron-icon {
-                --iron-icon-width: 18px;
-                --iron-icon-height: 18px;
-                margin-right: 5px;
+                --iron-icon-width: 24px;
+                --iron-icon-height: 24px;
+                margin-right: 10px;
             }
         </style>
         <paper-item>
@@ -36,7 +38,7 @@
             static get properties() {
                 return {
                     checkedIcon: { type: Boolean, value: 'done' },
-                    uncheckedIcon: { type: Boolean, value: '' },
+                    uncheckedIcon: { type: Boolean, value: 'check-box-outline-blank' },
                     checked: { type: Boolean, value: false },
                     item: { type: Object },
                     label: { type: String }

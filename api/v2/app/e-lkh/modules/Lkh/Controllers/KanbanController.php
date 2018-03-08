@@ -30,7 +30,7 @@ class KanbanController extends \Micro\Controller {
             ->join('App\Lkh\Models\Task', 'task_status.lks_lkh_id = task.lkh_id', 'task')
             ->join('App\Lkh\Models\TaskLabel', 'task.lkh_id = task_label.lkl_lkh_id', 'task_label', 'left')
             ->join('App\Labels\Models\Label', 'task_label.lkl_sl_id = label.sl_id', 'label', 'left')
-            ->join('App\Users\Models\User', 'task.lkh_created_by = creator.su_id', 'creator', 'left')
+            ->join('App\Users\Models\User', 'task.lkh_su_id = user.su_id', 'user', 'left')
             ->groupBy('task_status.lks_id');
 
         if ($project) {
@@ -44,8 +44,8 @@ class KanbanController extends \Micro\Controller {
         $query->andWhere('task_status.lks_deleted = 0');
 
         //self::applySearch($query, $params);
-        //self::applyFilter($query, $params);
-        //self::applySorter($query, $params, $columns);
+        self::applyFilter($query, $params);
+        self::applySorter($query, $params, $columns);
 
         $result = $query->paginate()
             ->filter(function($stat) {
@@ -57,10 +57,13 @@ class KanbanController extends \Micro\Controller {
                 $item['task'] = NULL;
                 $item['status'] = $stat;
                 $item['labels'] = array();
-                
+                $item['items'] = array();
+
                 if ($task) {
                     $item['task'] = $task->toArray();
                     $item['labels'] = $task->labels->filter(function($label){ return $label->toArray(); });
+                    $item['items'] = $task->items->filter(function($item){ return $item->toArray(); });
+
                 }
 
                 return $item;
@@ -82,21 +85,25 @@ class KanbanController extends \Micro\Controller {
                 $task = new Task();
                 $form = $post['record'];
 
-                if (empty($form['task']['su_due_date'])) {
+                if (empty($form['task']['lkh_task_date'])) {
                     $today = new \DateTime();
                     $today->modify('+1 day');
-                    $form['task']['su_due_date'] = $today->format('Y-m-d');
+                    $form['task']['lkh_due_date'] = $today->format('Y-m-d');
                 }
 
-                $form['task']['su_created_by'] = $auth['su_id'];
-                $form['task']['su_created_dt'] = date('Y-m-d H:i:s');
-                $form['task']['su_updated_by'] = $form['task']['su_created_by'];
-                $form['task']['su_updated_dt'] = $form['task']['su_created_dt'];
+                $form['task']['lkh_created_by'] = $auth['su_id'];
+                $form['task']['lkh_created_dt'] = date('Y-m-d H:i:s');
+                $form['task']['lkh_updated_by'] = $form['task']['lkh_created_by'];
+                $form['task']['lkh_updated_dt'] = $form['task']['lkh_created_dt'];
 
                 if ($task->save($form['task'])) {
 
                     if (isset($form['labels'])) {
                         $task->saveLabels($form['labels']);
+                    }
+
+                    if (isset($form['items'])) {
+                        $task->saveItems($form['items']);
                     }
 
                     $affected = array();
@@ -106,16 +113,16 @@ class KanbanController extends \Micro\Controller {
                         $status = new TaskStatus();
 
                         $create = array(
-                            'tus_su_id' => $task->su_id,
-                            'tus_status' => $init['data']['id'],
-                            'tus_target' => $init['data']['target'],
-                            'tus_worker' => $worker->name(),
-                            'tus_deleted' => 0,
-                            'tus_created' => date('Y-m-d H:i:s')
+                            'lks_lkh_id' => $task->lkh_id,
+                            'lks_status' => $init['data']['id'],
+                            'lks_target' => $init['data']['target'],
+                            'lks_worker' => $worker->name(),
+                            'lks_deleted' => 0,
+                            'lks_created' => date('Y-m-d H:i:s')
                         );
 
                         if ($status->save($create)) {
-                            $affected[] = $status->tus_status;
+                            $affected[] = $status->lks_status;
                         }
                         
                     }
@@ -153,11 +160,11 @@ class KanbanController extends \Micro\Controller {
 
             $auth = $this->auth->user();
 
-            $form['task']['su_updated_dt'] = date('Y-m-d H:i:s');
-            $form['task']['su_updated_by'] = $auth['su_id'];
+            $form['task']['lkh_updated_dt'] = date('Y-m-d H:i:s');
+            $form['task']['lkh_updated_by'] = $auth['su_id'];
 
-            if (empty($form['task']['su_task_due'])) {
-                $form['task']['su_task_due'] = NULL;
+            if (empty($form['task']['lkh_task_due'])) {
+                $form['task']['lkh_task_due'] = NULL;
             }
 
             $affected = array();
@@ -172,6 +179,10 @@ class KanbanController extends \Micro\Controller {
                     $task->saveLabels($form['labels']);
                 }
 
+                if (isset($form['items'])) {
+                    $task->saveItems($form['items']);
+                }
+
                 $task->resumeLog();
 
                 if ($send) {
@@ -181,17 +192,17 @@ class KanbanController extends \Micro\Controller {
                     $worker = $this->bpmn->worker($post['worker']);
 
                     foreach($curr as $c) {
-                        $next = $worker->next($c->tus_status, $form['task']);
+                        $next = $worker->next($c->lks_status, $form['task']);
                         
-                        $affected[] = $c->tus_status;
+                        $affected[] = $c->lks_status;
 
                         if (count($next['data']) > 0) {
 
                             $nextids = array_map(function($n){ return $n['id']; }, $next['data']);
                             
                             TaskStatus::get()
-                                ->andWhere('tus_su_id = :id: AND tus_deleted = 0', array('id' => $task->su_id))
-                                ->inWhere('tus_status', $nextids)
+                                ->andWhere('lks_lkh_id = :id: AND lks_deleted = 0', array('id' => $task->lkh_id))
+                                ->inWhere('lks_status', $nextids)
                                 ->execute()
                                 ->delete();
                             
@@ -200,9 +211,9 @@ class KanbanController extends \Micro\Controller {
                                 $affected[] = $n['id'];
 
                                 $found = TaskStatus::findFirst(array(
-                                    'tus_su_id = :id: AND tus_status = :status: AND tus_deleted = 0',
+                                    'lks_lkh_id = :id: AND lks_status = :status: AND lks_deleted = 0',
                                     'bind' => array(
-                                        'id' => $task->su_id,
+                                        'id' => $task->lkh_id,
                                         'status' => $n['id']
                                     )
                                 ));
@@ -211,12 +222,12 @@ class KanbanController extends \Micro\Controller {
                                     $status = new TaskStatus();
 
                                     $create = array(
-                                        'tus_su_id' => $task->su_id,
-                                        'tus_status' => $n['id'],
-                                        'tus_target' => $n['target'],
-                                        'tus_worker' => $worker->name(),
-                                        'tus_deleted' => 0,
-                                        'tus_created' => date('Y-m-d H:i:s')
+                                        'lks_lkh_id' => $task->lkh_id,
+                                        'lks_status' => $n['id'],
+                                        'lks_target' => $n['target'],
+                                        'lks_worker' => $worker->name(),
+                                        'lks_deleted' => 0,
+                                        'lks_created' => date('Y-m-d H:i:s')
                                     );
                                     
                                     if ($status->save($create)) {
@@ -233,14 +244,14 @@ class KanbanController extends \Micro\Controller {
                     // nothing changed
                     if (count($move) > 0) {
                         foreach($move as $m) {
-                            $m->save(array('tus_deleted' => 1));
+                            $m->save(array('lks_deleted' => 1));
                         }
                     }
                 } else {
                     $curr = $task->getCurrentStatuses();
 
                     foreach ($curr as $c) {
-                        $affected[] = $c->tus_status;                 
+                        $affected[] = $c->lks_status;                 
                     }
                 }
             }
@@ -322,19 +333,19 @@ class KanbanController extends \Micro\Controller {
         if (isset($params['params'])) {
             $json = json_decode($params['params']);
             
-            if (isset($json->tus_id)) {
-                $query->andWhere('(task_status.tus_id = :tus_id:)', array('tus_id' => $json->tus_id));
+            if (isset($json->lks_id)) {
+                $query->andWhere('(task_status.lks_id = :lks_id:)', array('lks_id' => $json->lks_id));
             } else {
                 if (isset($json->user) && count($json->user) > 0) {
-                    $query->inWhere('task.su_id', $json->user[1]);
+                    $query->inWhere('user.su_id', $json->user[1]);
                 }
                 
                 if (isset($json->label) && count($json->label) > 0) {
-                    $query->inWhere('task_label.tul_sl_id', $json->label[1]);
+                    $query->inWhere('task_label.lkl_sl_id', $json->label[1]);
                 }
 
                 if (isset($json->date) && count($json->date) > 0) {
-                    $query->inWhere('task_status.tus_created', $json->date[1]);
+                    $query->inWhere('task.lkh_date', $json->date[1]);
                 }
             }
         }
@@ -342,17 +353,14 @@ class KanbanController extends \Micro\Controller {
 
     public static function applySorter($query, $params, $cols) {
         if ( ! isset($params['sort'])) {
-            $cols[] = 'MAX(task.su_created_dt) AS su_created_dt';
+            $cols[] = 'MAX(task.lkh_date) AS lkh_date';
             $query->columns($cols);
-            $query->orderBy('su_created_dt DESC');
+            $query->orderBy('lkh_date DESC');
         } else {
             $ps = json_decode($params['sort']);
 
             $sort = array();
-            $maps = array(
-                'title' => 'su_fullname',
-                'due' => 'su_due_date'
-            );
+            $maps = array();
 
             foreach($ps as $e) {
                 $dirs = $e->direction;
@@ -362,12 +370,12 @@ class KanbanController extends \Micro\Controller {
                     $name = $maps[$e->property];
                     $sort[] = $name.' '.$dirs;
                     $cols[] = $aggr.'(task.'.$name.') AS '.$name;
-                } else if ($e->property == 'created') {
-                    $sort[] = 'su_created_dt '.$dirs;
-                    $cols[] = $aggr.'(task.su_created_dt) AS su_created_dt';
-                } else if ($e->property == 'creator') {
+                } else if ($e->property == 'date') {
+                    $sort[] = 'lkh_date '.$dirs;
+                    $cols[] = $aggr.'(task.lkh_date) AS lkh_date';
+                } else if ($e->property == 'user') {
                     $sort[] = 'su_fullname '.$dirs;
-                    $cols[] = $aggr.'(creator.su_fullname) AS su_fullname';
+                    $cols[] = $aggr.'(user.su_fullname) AS su_fullname';
                 }
             }
 

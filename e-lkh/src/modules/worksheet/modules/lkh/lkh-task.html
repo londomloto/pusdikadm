@@ -103,6 +103,16 @@
                     }
                 };
             }
+
+            init() {
+                this.set('taskRecord', {
+                    task: {},
+                    status: {},
+                    labels: [],
+                    items: []
+                });
+            }
+
         }
         
         customElements.define(LkhTask.is, LkhTask);

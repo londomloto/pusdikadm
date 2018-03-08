@@ -128,7 +128,7 @@ class Task extends Presence implements \App\Tasks\Interfaces\TaskModel {
         $data = parent::toArray($columns);
         
         $data['tpr_icon'] = $this->getIcon();
-        $data['tpr_title'] = $this->getTitle();
+        
         
         $data['tpr_task_due_formatted'] = DateHelper::format($this->tpr_task_due, 'd M Y');
         $data['tpr_created_dt_relative'] = DateHelper::formatRelative($this->tpr_created_dt);
@@ -150,11 +150,7 @@ class Task extends Presence implements \App\Tasks\Interfaces\TaskModel {
         $this->__loggable = TRUE;
     }
 
-    public function getTitle() {
-        $title  = $this->user ? $this->user->getName() : '(dihapus)';
-        $title .= ' - '.DateHelper::format($this->tpr_date, 'd M Y');
-        return $title;
-    }
+    
 
     public function getLink() {
         $stat = $this->getCurrentStatuses()->getFirst();

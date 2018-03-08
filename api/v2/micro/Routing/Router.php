@@ -78,7 +78,7 @@ class Router {
         $group->post('', 'create');
         $group->put('/{id:[0-9]+}', 'update');
         $group->delete('/{id:[0-9]+}', 'delete');
-
+        
         $group->mount();
 
         // $group->options('', 'preflight');

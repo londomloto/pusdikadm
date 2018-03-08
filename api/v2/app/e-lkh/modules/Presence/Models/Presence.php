@@ -21,6 +21,12 @@ class Presence extends \Micro\Model {
         return 'trx_presence';
     }
 
+    public function getTitle() {
+        $title  = $this->user ? $this->user->getName() : '(dihapus)';
+        $title .= ' - '.DateHelper::format($this->tpr_date, 'd M Y');
+        return $title;
+    }
+
     public function getIcon() {
         switch($this->tpr_type) {
             case 'Masuk':
@@ -39,7 +45,7 @@ class Presence extends \Micro\Model {
 
     public function toArray($columns = NULL) {
         $data = parent::toArray($columns);
-        
+        $data['tpr_title'] = $this->getTitle();
         $data['tpr_date_formatted'] = DateHelper::format($this->tpr_date, 'd M Y');
         $data['tpr_has_file'] = !empty($this->tpr_filename);
         $data['tpr_has_time'] = $this->tpr_type == 'Masuk';

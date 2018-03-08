@@ -88,6 +88,14 @@
                 this.$.taskprop.stopEditing();
             }
 
+            init() {
+                this.set('taskRecord', {
+                    task: {},
+                    status: {},
+                    labels: []
+                });
+            }
+
             save(options = {}) {
 
                 if ( ! this.workspaceRecord.worker) return;
@@ -169,7 +177,7 @@
             }
 
             __computeSaveLabel(action) {
-                return action == 'create' ? 'Simpan Data' : 'Update';
+                return action == 'create' ? 'Simpan' : 'Update';
             }
 
             __hideActivity() {
@@ -328,12 +336,7 @@
                     });
 
                     this.set('formRecord', form);
-                    
-                    this.set('taskRecord', {
-                        task: {},
-                        status: {},
-                        labels: []
-                    });
+                    this.init();
 
                     if (form) {
                         this.$.taskform.render().then(() => {

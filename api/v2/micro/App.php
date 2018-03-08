@@ -157,10 +157,9 @@ class App extends \Phalcon\Mvc\Micro {
         }
 
         if ( ! headers_sent()) {
-            header('App-Name: '.$this->config->app->name);
-            header('App-Version: '.$this->config->app->version);
-            header('App-Author: '.$this->config->app->author);
-            header('App-Platform: Worksaurus');
+            header('X-App-Name: '.$this->config->app->name);
+            header('X-App-Version: '.$this->config->app->version);
+            header('X-App-Author: '.$this->config->app->author);
         }
 
     }

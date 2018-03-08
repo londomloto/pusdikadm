@@ -1,6 +1,8 @@
 <?php
 namespace App\Lkh\Models;
 
+use Micro\Helpers\Date as DateHelper;
+
 class Lkh extends \Micro\Model {
 
     public function initialize() {
@@ -9,7 +11,7 @@ class Lkh extends \Micro\Model {
             'App\Users\Models\User',
             'su_id',
             array(
-                'alias' => 'Creator'
+                'alias' => 'Author'
             )
         );
 
@@ -27,7 +29,7 @@ class Lkh extends \Micro\Model {
 
         $this->hasMany(
             'lkh_id',
-            'App\Lkh\Models\Item',
+            'App\Lkh\Models\LkhItem',
             'lki_lkh_id',
             array(
                 'alias' => 'Items'
@@ -47,60 +49,31 @@ class Lkh extends \Micro\Model {
 
     public function toArray($columns = NULL) {
         $data = parent::toArray($columns);
-        $data['lkh_date_formatted'] = date('d M Y', strtotime($this->lkh_date));
+        $data['lkh_title'] = $this->getTitle();
+        $data['lkh_date_formatted'] = DateHelper::format($this->lkh_date, 'd M Y');
 
-        $data['lkh_is_validating'] = $this->lkh_validation == 0;
-        
-        $data['lkh_is_approved'] = $this->lkh_validation == 1;
-        $data['lkh_is_rejected'] = $this->lkh_validation == 2;
-        $data['lkh_is_revision'] = $this->lkh_validation == 3;
-
-
-        if ($this->creator) {
-            $creator = $this->creator->toArray();
+        if ($this->author) {
+            $author = $this->author->toArray();
             
-            $data['lkh_su_fullname'] = $creator['su_fullname'];
-            $data['lkh_su_no'] = $creator['su_no'];
-            $data['lkh_su_grade'] = $creator['su_grade'];
-            $data['lkh_su_sj_name'] = $creator['su_sj_name'];
-            $data['lkh_su_sdp_name'] = $creator['su_sdp_name'];
+            $data['lkh_su_fullname'] = $author['su_fullname'];
+            $data['lkh_su_no'] = $author['su_no'];
+            $data['lkh_su_grade'] = $author['su_grade'];
+            $data['lkh_su_sj_name'] = $author['su_sj_name'];
+            $data['lkh_su_sdp_name'] = $author['su_sdp_name'];
+            $data['lkh_su_avatar_thumb'] = $author['su_avatar_thumb'];
         }
 
         if ($this->presence) {
-            $presence = $this->presence->toArray();
-
-            foreach($presence as $key => $val) {
-                $data['lkh_'.$key] = $val;
-            }
-        }
-
-        $data['items'] = array();
-
-        foreach($this->items as $item) {
-            $data['items'][] = $item->toArray();
+               
         }
 
         return $data;
     }
 
-    public static function dbcreate($data = array()) {
-        $model = new Lkh();
-
-        if ($model->save($data)) {
-            return $model->get($model->lkh_id);
-        }
-
-        return self::none();
-    }
-
-    public static function dbupdate($id, $data = array()) {
-        $query = self::get($id);
-
-        if ($query->data) {
-            $query->data->save($data);
-        }
-
-        return $query;
+    public function getTitle() {
+        $title  = $this->author ? $this->author->getName() : '(dihapus)';
+        $title .= ' ('.DateHelper::format($this->lkh_date, 'd M Y').')';
+        return $title;
     }
 
     public function saveItems($post) {
@@ -124,13 +97,13 @@ class Lkh extends \Micro\Model {
         $current = array_values(array_keys($current));
 
         if (count($current) > 0) {
-            Item::get()->inWhere('lki_id', $current)->execute()->delete();
+            LkhItem::get()->inWhere('lki_id', $current)->execute()->delete();
         }
 
         if (count($created) > 0) {
             foreach($created as $elem) {
                 if ( ! empty($elem['lki_desc'])) {
-                    $item = new Item();
+                    $item = new LkhItem();
                     $elem['lki_lkh_id'] = $this->lkh_id;
                     $item->save($elem);
                 }

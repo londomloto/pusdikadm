@@ -1,0 +1,106 @@
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="mixins/chart.html">
+<link rel="import" href="styles/chart-styles.html">
+
+<dom-module id="kct-chart-pie">
+    <template>
+        <style include="chart-styles"></style>
+        <div class="panel vbox">
+            <div class="toolbar">
+                <slot name="toolbar"></slot>
+                <paper-icon-button on-tap="__onPrintTap" icon="print"></paper-icon-button>    
+            </div>
+            <div class="content flex">
+                <div id="chart"></div>
+            </div>
+        </div>
+    </template>
+    <script>
+        class KctChartPie extends Mixins(Polymer.Element).use(Mixins.Chart) {
+            static get is() {
+                return 'kct-chart-pie';
+            }
+            static get properties() {
+                return {
+                    title: { type: String },
+                    subtitle: { type: String },
+                    series: { type: Array },
+                    donut: { type: Boolean, value: false, reflectToAttribute: true }
+                };
+            }
+            static get observers() {
+                return [
+                    '__seriesChanged(series.*)'
+                ];
+            }
+            ready() {
+                super.ready();
+                this.__setup();
+            }
+            __setup() {
+                let options = Object.assign(this.defaults(), {
+                    chart: {
+                        type: 'pie',
+                        renderTo: this.$.chart,
+                        reflow: false
+                    },
+                    tooltip: {
+                        pointFormat: '{point.y} of {point.total} ({point.percentage:.1f}%)'
+                    },
+                    plotOptions: {
+                        pie: {
+                            allowPointSelect: true,
+                            cursor: 'pointer',
+                            dataLabels: {
+                                distance: 10,
+                                enabled: true,
+                                format: '<b>{point.name}</b><br> {point.percentage:.1f} %'
+                            },
+                            showInLegend: false
+                        }
+                    },
+                    exporting: {
+                        enabled: false
+                    },
+                    series: [
+                        {
+                            name: 'main',
+                            colorByPoint: true,
+                            data: []
+                        }
+                    ]
+                });
+
+                if (this.title) {
+                    options.title.text = this.title;
+                }
+
+                if (this.subtitle) {
+                    options.subtitle.text = this.subtitle;
+                }
+
+                this.chart = new Highcharts.Chart(options);
+            }
+
+            __updateSeries() {
+                if ( ! this.chart) return;
+                
+                let serie = ((this.series || []).slice().shift() || {});
+
+                serie.data = serie.data || [];
+                serie.innerSize = '60%';
+
+                (this.chart.series || []).forEach(s => {
+                    s.remove();
+                });
+
+                this.chart.addSeries(serie);
+            }
+
+            __seriesChanged(changed) {
+                this.__updateSeries();
+            }
+        }
+        customElements.define(KctChartPie.is, KctChartPie);
+    </script>
+</dom-module>

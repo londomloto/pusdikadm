@@ -60,7 +60,8 @@
     "marked": "^0.3.6",
     "hopscotch": "linkedin/hopscotch#^0.3.1",
     "socket.io-client": "^2.0.4",
-    "highcharts": "^6.0.7"
+    "highcharts": "^6.0.7",
+    "range-datepicker": "^0.0.20"
   },
   "resolutions": {
     "polymer": "^2.0.0",
