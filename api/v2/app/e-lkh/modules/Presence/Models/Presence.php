@@ -54,6 +54,7 @@ class Presence extends \Micro\Model {
             $data['tpr_su_fullname'] = $this->user->getName();
             $data['tpr_su_sj_name'] = $this->user->job ? $this->user->job->sj_name : '';
             $data['tpr_su_sdp_name'] = $this->user->department ? $this->user->department->sdp_name : '';
+            $data['tpr_su_avatar_thumb'] = $this->user->getAvatarThumb();
         }
 
         return $data;

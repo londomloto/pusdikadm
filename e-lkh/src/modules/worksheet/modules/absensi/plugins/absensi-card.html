@@ -105,7 +105,7 @@
         
         <div class="box box-shadow-z2 item" style$="border-left: 2px solid [[ accent ]]">
             <div class="box-body" on-tap="__onCardTap">
-                <h3 class="item-title">[[ record.task.tpr_title ]]</h3>
+                <h3 class="item-title">[[ record.task.tpr_su_fullname ]]</h3>
                 <p class="item-meta">
                     Dibuat oleh <b>[[ record.task.creator_su_fullname ]]</b> [[ record.task.tpr_created_dt_relative ]]
                 </p>
@@ -117,12 +117,15 @@
                 </div>
             </div>
             <div class="box-user">
-                <div class="item-user" title$="Didaftarkan oleh [[ record.task.creator_su_fullname ]]">
-                    <img src$="[[ record.task.creator_su_avatar_thumb ]]&w=30&h=30" alt=".">
+                <div class="item-user" title$="Absensi [[ record.task.tpr_su_fullname ]]">
+                    <img src$="[[ record.task.tpr_su_avatar_thumb ]]&w=30&h=30" alt=".">
                 </div>
                 <!-- <user-dock items="[[ record.users ]]"></user-dock> -->
             </div>
             <div class="box-foot">
+                <paper-button class="item-badge">
+                    <iron-icon icon="today"></iron-icon>&nbsp;[[ record.task.tpr_date_formatted ]]    
+                </paper-button>
                 <paper-button class="item-badge">
                     <iron-icon icon="perm-identity"></iron-icon>&nbsp;[[ record.task.tpr_type ]]    
                 </paper-button>
@@ -130,7 +133,7 @@
                     <iron-icon icon="schedule"></iron-icon>&nbsp;[[ record.task.tpr_checkin ]]
                 </paper-button>
                 <paper-button class="item-badge" hidden$="[[ !record.task.tpr_has_file ]]">
-                    <iron-icon icon="attachment"></iron-icon>&nbsp;Attachment    
+                    <iron-icon icon="attachment"></iron-icon>&nbsp;Dokumen    
                 </paper-button>
                 <div class="clearfix"></div>
             </div>
