@@ -18,8 +18,17 @@ class PresenceController extends \Micro\Controller {
                 } else {
                     return Presence::reportDaily($report['user'], $report['from'], $report['to']);
                 }
+            case 'unused':
+                return Presence::get()
+                    ->join('App\Lkh\Models\Lkh', 'lkh_tpr_id = tpr_id', '', 'LEFT')
+                    ->andWhere('lkh_id IS NULL')
+                    ->filterable()
+                    ->sortable()
+                    ->paginate();
+                    
             default:
                 return Presence::get()->filterable()->sortable()->paginate();
+
         }
     }
 

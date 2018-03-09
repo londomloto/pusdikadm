@@ -136,10 +136,12 @@ class Task extends Lkh implements \App\Tasks\Interfaces\TaskModel {
         $data['lkh_task_due_formatted'] = DateHelper::format($this->lkh_task_due);
         $data['lkh_created_dt_relative'] = DateHelper::formatRelative($this->lkh_created_dt);
 
-        if ($this->creator) {
-            $data['creator_su_fullname'] = $this->creator->getName();
-            $data['creator_sr_name'] = $this->creator->role ? $this->creator->role->sr_name : '';
-            $data['creator_su_avatar_thumb'] = $this->creator->getAvatarThumb();
+        if (($creator = $this->creator)) {
+            
+            $data['creator_su_fullname'] = $creator->getName();
+            $data['creator_sr_name'] = $creator->role ? $creator->role->sr_name : '';
+            $data['creator_su_avatar_thumb'] = $creator->getAvatarThumb();
+            $data['creator_su_sj_name'] = $creator->job ? $creator->job->sj_name : '';
         }
 
         return $data;

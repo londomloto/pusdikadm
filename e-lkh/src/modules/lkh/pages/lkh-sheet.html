@@ -1,0 +1,426 @@
+
+<link rel="import" href="../../../../../cores/bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
+<link rel="import" href="../../../../../cores/bower_components/app-layout/app-drawer/app-drawer.html">
+<link rel="import" href="../../../../../cores/bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../../cores/elements/kct-table/kct-table.html">
+<link rel="import" href="../../settings/blocks/setting-header-block.html">
+<link rel="import" href="../../worksheet/plugins/combo-user.html">
+
+<dom-module id="lkh-sheet">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                overflow: hidden;
+            }
+            
+            paper-button[disabled] {
+                background-color: var(--paper-grey-500);
+            }
+
+            app-drawer {
+                top: -48px;
+                --app-drawer-width: 300px;
+                @apply --shadow-elevation-2dp;
+            }
+
+            app-toolbar {
+                height: 53px;
+                border-bottom: 1px solid #dfdfdf;
+                background-color: #fff;
+            }
+
+            app-toolbar paper-icon-button {
+                width: 36px;
+                height: 36px;
+            }
+
+            .main, 
+            .side {
+                height: calc(100vh - 128px);
+            }
+
+            .main {
+                background-color: #fff;
+            }
+
+            .side {
+                background-color: #fff;
+                box-sizing: border-box;
+                padding: 15px 20px;
+                overflow-x: hidden;
+                overflow-y: auto;
+                text-align: left;
+            }
+
+            .side h3 {
+                font-size: 14px;
+                font-weight: 500;
+                display: block;
+                margin-bottom: 8px;
+            }
+
+            .tabs {
+                box-sizing: border-box;
+                background-color: #fff;
+                border-top: 2px solid var(--tabs-border-color, var(--paper-blue-grey-500));
+            }
+
+            paper-tabs {
+                height: 32px;
+                font-weight: normal;
+                --paper-tabs-scroller-opacity: 0.3;
+                --paper-tabs-selection-bar-color: var(--paper-blue-grey-500);
+            }
+
+            paper-tab {
+                min-width: 40px;
+                position: relative;
+                --paper-tab-ink: var(--paper-blue-grey-500);
+            }
+
+            paper-tab.iron-selected {
+                color: #fff;
+            }
+
+            paper-tab .overlay {
+                display: none;
+                position: absolute;
+                top: 0;
+                left: -12px;
+                right: -12px;
+                bottom: 0;
+            }
+
+            paper-tab .caption {
+                position: relative;
+                z-index: 2;
+            }
+
+            paper-tab.iron-selected .overlay {
+                display: block;
+            }
+
+            .table-container {
+                height: 100%;
+                position: relative;
+                overflow-x: hidden;
+                overflow-y: auto;
+            }
+
+            .item-card {
+                display: block;
+                box-shadow:0 1px 2px rgba(0,0,0,0.15),0 -1px 0px rgba(0,0,0,0.02);
+            }
+
+            .item-card + .item-card {
+                margin-top: 10px;
+            }
+
+            .table th {
+                font-weight: 500;
+            }
+
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox class="container">
+            <setting-header-block 
+                icon="today" 
+                text="Kinerja Bulanan" 
+                desc="[[ __title ]]" 
+                on-back-tap="__onBackTap">
+                <div class="separator"></div>
+                <paper-button><iron-icon icon="print"></iron-icon>&nbsp;Download</paper-button>
+                <paper-icon-button slot="right-toolbar" icon="menu" on-tap="__onOpenDrawerTap"></paper-icon-button>
+            </setting-header-block>
+            <div class="workspace flex">
+
+                <app-drawer-layout id="drawer-layout" force-narrow>
+                    <app-drawer id="drawer" slot="drawer" align="end">
+                        <app-toolbar>
+                            <paper-icon-button icon="close" on-tap="__onCloseDrawerTap"></paper-icon-button>
+                        </app-toolbar>
+                        <div class="side">
+                            <h3>Parameter</h3>
+                            <div>
+                                <combo-user 
+                                    id="combo-user" 
+                                    label="Pegawai" 
+                                    value="{{ params.user }}" 
+                                    on-change="__onComboUserChange"></combo-user>
+                                <vaadin-combo-box 
+                                    items="[[ years ]]" 
+                                    value="{{ params.year }}" 
+                                    item-label-path="value" 
+                                    item-value-path="value" 
+                                    on-change="__onComboYearChange" 
+                                    label="Tahun"></vaadin-combo-box>
+                            </div>
+                            <div class="m-t">
+                                <paper-button on-tap="__onQueryTap" class="btn-primary">Query Data</paper-button>
+                            </div>
+                        </div>
+                    </app-drawer>
+                    <div class="main">
+                        
+                        <kct-vbox>
+                            <div class="table-container flex">
+
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 50px;">No</th>
+                                            <th style="width: 120px;">Tanggal</th>
+                                            <th class="text-left">Uraian Tugas / Kegiatan</th>
+                                            <th style="width: 100px">Volume</th>
+                                            <th class="text-left" style="width: 100px">Satuan</th>
+                                            <th class="text-right" style="width: 100px">Biaya</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template is="dom-repeat" items="[[ items ]]">
+                                            <tr class="group-row">
+                                                <td class="text-center">[[ __computeNo(index) ]]</td>
+                                                <td class="text-center">[[ item.lkh_date_formatted ]]</td>
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+                                            </tr>
+                                            <template is="dom-repeat" items="[[ item.items ]]">
+                                                <tr>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td>
+                                                        <kct-hbox>
+                                                            <div>&bull;&nbsp;&nbsp;</div>
+                                                            <div class="flex">[[ item.lki_desc ]]</div>
+                                                        </kct-hbox>
+                                                    </td>
+                                                    <td class="text-center">[[ item.lki_volume ]]</td>
+                                                    <td>[[ item.lki_unit ]]</td>
+                                                    <td class="text-right">[[ item.lki_cost_formatted ]]</td>
+                                                </tr>
+                                            </template>
+                                        </template>
+                                    </tbody>
+                                </table>
+
+                            </div>
+
+                            <div class="tabs">
+                                <paper-tabs attr-for-selected="value" selected="{{ params.month }}" no-bar scrollable align-bottom>
+                                    <template is="dom-repeat" items="[[ months ]]">
+                                        <paper-tab value="[[ item.value ]]">
+                                            <div class="overlay" style$="background-color: [[ item.accent ]]"></div>
+                                            <span class="caption">[[ item.label ]]</span>
+                                        </paper-tab>
+                                    </template>
+                                </paper-tabs>
+                            </div>
+                        </kct-vbox>
+
+                    </div>
+                </app-drawer-layout>
+            </div>
+        </kct-vbox>
+
+    </template>
+    <script>
+        class LkhSheet extends KctView {
+            static get is() {
+                return 'lkh-sheet';
+            }
+
+            static get properties() {
+                return {
+                    items: { type: Array, value: () => ([]) },
+                    years: { type: Array, value: () => ([]) },
+                    months: { type: Array, value: () => ([]) },
+                    invalid: { type: Boolean, value: false },
+                    params: { type: Object, value: () => ({}) }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__monthChanged(params.month)',
+                    '__validationChanged(params.user, params.year)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__title = 'Identitas Pegawai'
+            }
+
+            handleRouteParams() {
+                this.__loadYears();
+                this.__loadMonths();
+
+                this.$['combo-user'].load().then(() => {
+                    let today = new Date();
+
+                    this.set('params.user', this.user.su_id);
+                    this.set('params.year', today.getFullYear());
+                    this.set('params.month', today.getMonth() + 1);
+                    this.set('__title', this.user.su_fullname);
+                });
+            }
+
+            __computeNo(index) {
+                return index + 1;
+            }
+
+            __computeAlpha(index) {
+                return String.fromCharCode(97 + index);
+            }
+
+            __loadYears() {
+                let today = new Date(),
+                    year = today.getFullYear(),
+                    min = year - 10,
+                    max = year + 10;
+
+                let years = [];
+
+                for (let i = min; i <= max; i++) {
+                    years.push({
+                        value: i
+                    });
+                }
+
+                this.set('years', years);
+            }
+
+            __loadMonths() {
+                let names = [
+                    'Januari',
+                    'Februari',
+                    'Maret',
+                    'April',
+                    'Mei',
+                    'Juni',
+                    'Juli',
+                    'Agustus',
+                    'September',
+                    'Oktober',
+                    'Nopember',
+                    'Desember'
+                ];  
+
+                let accents = [
+                    'var(--paper-red-500)',
+                    'var(--paper-pink-500)',
+                    'var(--paper-purple-500)',
+                    'var(--paper-indigo-500)',
+                    'var(--paper-blue-500)',
+                    'var(--paper-cyan-500)',
+                    'var(--paper-green-500)',
+                    'var(--paper-yellow-500)',
+                    'var(--paper-amber-500)',
+                    'var(--paper-orange-500)',
+                    'var(--paper-grey-500)',
+                    'var(--paper-blue-grey-500)'
+                ];
+
+                let months = [];
+
+                names.forEach((n, i) => {
+                    months.push({
+                        label: n,
+                        value: (i + 1) + '',
+                        accent: accents[i]
+                    });
+                });
+
+                this.set('months', months);
+            }
+
+            __load() {
+                if (this.invalid) return;
+
+                let payload = {
+                    report: {
+                        user: this.params.user,
+                        month: this.params.month,
+                        year: this.params.year
+                    }
+                };
+
+                this.$.ajax.GET('/lkh?display=report', payload).then(res => {
+                    this.set('items', res.data);
+                });
+            }
+
+            __toggleDrawer() {
+                let layout = this.$['drawer-layout'];
+
+                if (layout.forceNarrow || !layout.narrow) {
+                    layout.forceNarrow = !layout.forceNarrow;
+                } else {
+                    layout.drawer.toggle();
+                }
+            }
+
+            __monthChanged(value) {
+                let month = (this.months || []).find(e => e.value == value );
+
+                if (month) {
+                    this.updateStyles({
+                        '--tabs-border-color': month.accent
+                    });    
+                    this.__load();
+                }
+            }
+
+            __validationChanged(user, year) {
+                let valid = true;
+
+                valid = valid && !!user;
+                valid = valid && !!year;
+
+                this.set('invalid', !valid);
+            }
+
+            __onOpenDrawerTap() {
+                this.__toggleDrawer();
+            }
+
+            __onCloseDrawerTap() {
+                this.__toggleDrawer();
+            }
+
+            __onComboUserChange(e) {
+                let model = e.target.getModelForValue(e.target.value);
+
+                if (model) {
+                    this.set('__title', model.su_fullname);
+                    this.__load();
+                } else {
+                    this.set('__title', 'Identitas Pegawai');
+                }
+            }
+
+            __onComboYearChange() {
+                this.__load();
+            }
+
+            __onQueryTap() {
+                this.__load();
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/lkh');
+            }
+        }
+        customElements.define(LkhSheet.is, LkhSheet);
+    </script>
+</dom-module>

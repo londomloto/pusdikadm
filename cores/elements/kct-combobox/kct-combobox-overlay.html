@@ -73,15 +73,15 @@
             /** noresult */
             .noresult paper-item {
                 cursor: pointer;
-                color: #999;
+                color: #666;
                 --paper-item-min-height: 36px;
             }
 
             .noresult paper-item-body {
                 @apply --layout-flex;
-                font-size: 11px;
-                text-align: center;
-                text-transform: uppercase;
+                font-size: 14px;
+                text-align: left;
+                /*text-transform: uppercase;*/
             }
 
             /** toolbar */
@@ -113,7 +113,7 @@
 
         <div class="noresult" hidden$="[[ hasResult ]]">
             <paper-item on-tap="__onNoResultTap">
-                <paper-item-body>No result found!</paper-item-body>
+                <paper-item-body>Data tidak ditemukan...</paper-item-body>
             </paper-item>
         </div>
 

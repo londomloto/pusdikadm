@@ -1,0 +1,69 @@
+<dom-module id="kct-table">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            .container {
+                height: 100%;
+                @apply --layout-vertical;
+            }
+            .table-body {
+                @apply --layout-flex;
+            }
+        </style>
+        <div class="container">
+            <div class="table-header">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <template is="dom-repeat" items="[[ columns ]]">
+                                <th style$="width: [[ item.width ]]" inner-h-t-m-l="[[ item.text ]]"></th>
+                            </template>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+            <div class="table-body">
+                <slot id="slot"></slot>
+            </div>
+        </div>
+    </template>
+    <script>
+        class KctTable extends Polymer.Element {
+            static get is() {
+                return 'kct-table';
+            }
+            static get properties() {
+                return {
+                    columns: { type: Array, value: () => ([]) }    
+                }
+            }
+            ready() {
+                super.ready();
+                let nodes = this.$.slot.assignedNodes().filter(node => {
+                    return node.nodeType && node.nodeType == Node.ELEMENT_NODE && node.localName == 'table';
+                });
+
+                if (nodes.length) {
+                    let table = nodes[0];
+                    let columns = [];
+
+                    table.querySelectorAll('th').forEach(elem => {
+                        let width = elem.style.width;
+                        console.log(width);
+
+                        let column = {
+                            text: elem.innerHTML,
+                            width: width
+                        };
+                        columns.push(column);
+                    });
+
+                    this.set('columns', columns);
+                }
+            }
+        }
+        customElements.define(KctTable.is, KctTable);
+    </script>
+</dom-module>

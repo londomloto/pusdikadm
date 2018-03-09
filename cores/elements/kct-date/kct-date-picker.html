@@ -1,55 +1,32 @@
 <link rel="import" href="../../bower_components/vaadin-material-theme/vaadin-date-picker.html">
 <link rel="import" href="../../bower_components/vaadin-date-picker/vaadin-date-picker.html">
-<link rel="import" href="../../bower_components/paper-menu-button/paper-menu-button.html">
-<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
-<link rel="import" href="../../bower_components/paper-input/paper-input.html">
 
 <dom-module id="kct-date-picker">
-    <template>
-        <style>
-            #button {
-                padding: 0;
-            }
-            #popup {
-                padding: 15px;
-                text-align: left;
-            }
-            .hbox {
-                @apply --layout-horizontal;
-            }
-            .flex {
-                box-sizing: border-box;
-                @apply --layout-flex;
-            }
-            .divider {
-                width: 15px;
-            }
-        </style>
-        <paper-menu-button 
-            id="button" 
-            no-animations>
-            <paper-icon-button icon="today" slot="dropdown-trigger"></paper-icon-button>
-            <div id="popup" slot="dropdown-content">
-                <div class="hbox">
-                    <div class="flex">
-                        <vaadin-date-picker label="Tanggal Mulai" opened></vaadin-date-picker>
-                    </div>
-                    <div class="divider"></div>
-                    <div class="flex">
-                        <vaadin-date-picker label="Tanggal Akhir" opened></vaadin-date-picker>
-                    </div>
-                </div>
-            </div>
-        </paper-menu-button>   
-    </template>
     <script>
-        class KctDatePicker extends Polymer.Element {
+        class KctDatePicker extends Vaadin.DatePickerElement {
+            
             static get is() {
                 return 'kct-date-picker';
             }
-            open() {
-                this.$.popup.open();
+
+            constructor() {
+                super();
+                
+                this.i18n.formatDate = d => {
+                    let yearStr = String(d.getFullYear());
+                    yearStr = yearStr.replace(/\d+/, y => '0000'.substr(y.length) + y);
+
+                    let dateStr = String(d.getDate());
+                    dateStr = dateStr.replace(/\d+/, e => '00'.substr(e.length) + e);
+
+                    let monthIndex = d.getMonth();
+                    let monthAbbr = this.i18n.monthNames[monthIndex].substr(0, 3);
+                    
+                    return [dateStr, monthAbbr, yearStr].join(' ');
+                    // return [d.getMonth() + 1, d.getDate(), yearStr].join('/');
+                };
             }
+            
         }
         customElements.define(KctDatePicker.is, KctDatePicker);
     </script>

@@ -1,0 +1,96 @@
+<link rel="import" href="../../../../../cores/elements/kct-combobox/kct-combobox.html">
+
+<dom-module id="combo-user">
+    <template>
+        <kct-combobox 
+            id="combo" 
+            url="/users" 
+            label="[[ label ]]" 
+            value="{{ value }}" 
+            page-size="[[ pageSize ]]" 
+            item-label-path="[[ itemLabelPath ]]" 
+            item-value-path="[[ itemValuePath ]]" 
+            invalid$="{{ invalid }}" 
+            required$="[[ required ]]" 
+            disabled$="[[ disabled ]]" 
+            auto-validate="[[ autoValidate ]]" 
+            error-message="[[ errorMessage ]]" 
+            autoload$="[[ autoload ]]">
+            <template>
+                <style>
+
+                    .clear { clear: both; }
+                    .icon {
+                        float: left;
+                        width: 30px;
+                        margin-right: 10px;
+                    }
+                    .text {
+                        position: relative;
+                        top: -4px;
+                    }
+                    .name {
+                        font-weight: 500;
+                    }
+                    .meta {
+                        display: block;
+                        font-size: 12px;
+                        color: #888;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                    }
+                </style>
+                <div class="item">
+                    <div class="icon">
+                        <img alt="" src$="[[ item.su_avatar_thumb ]]&w=30&h=30">
+                    </div>
+                    <div class="text">
+                        <div class="name">[[ item.su_fullname ]]</div>
+                        <div class="meta">[[ __computeMeta(item) ]]</div>
+                    </div>
+                    <div class="clear"></div>
+                </div>
+            </template>        
+        </kct-combobox>
+    </template>
+    <script>
+        class ComboUser extends Polymer.Element {
+            static get is() {
+                return 'combo-user';
+            }
+            static get properties() {
+                return {
+                    label: { type: String },
+                    value: { type: String, value: '', notify: true },
+                    pageSize: { type: Number, value: 10 },
+                    itemLabelPath: { type: String, value: 'su_fullname' },
+                    itemValuePath: { type: String, value: 'su_id' },
+                    invalid: { type: Boolean, value: false, notify: true, reflectToAttribute: true },
+                    required: { type: Boolean, value: false, reflectToAttribute: true },
+                    disabled: { type: Boolean, value: false, reflectToAttribute: true },
+                    autoValidate: { type: Boolean, value: false },
+                    errorMessage: { type: String },
+                    autoload: { type: Boolean, value: false }
+                };
+            }
+            load(options) {
+                return this.$.combo.load(options);
+            }
+            getModelForValue(value) {
+                return this.$.combo.getModelForValue(value);
+            }
+            __computeMeta(item) {
+                let meta = '';
+                if (item.su_no) {
+                    meta += item.su_no;
+                }
+                if (item.su_sj_name) {
+                    meta += (meta ? ' - ' : '') + item.su_sj_name
+                }
+                return meta || 'Tidak ada keterangan';
+            }
+        }
+        customElements.define(ComboUser.is, ComboUser);
+    </script>
+</dom-module>

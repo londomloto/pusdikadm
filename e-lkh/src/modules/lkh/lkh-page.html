@@ -1,0 +1,38 @@
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-pages/kct-pages.html">
+
+<dom-module id="lkh-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--page-background-color);
+            }
+            #switcher {
+                display: block;
+                height: 100%;
+            }
+        </style>        
+        <kct-pages id="switcher" attr-for-selected="name" selected="[[ page ]]" lazy-load>
+            <lkh-index name="index" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" import="pages/lkh-index.html"></lkh-index>
+            <lkh-sheet name="sheet" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" import="pages/lkh-sheet.html"></lkh-sheet>
+        </kct-pages>
+    </template>
+    <script>
+        class LkhPage extends KctView {
+            static get is() {
+                return 'lkh-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Kinerja Harian', notify: true }
+                };
+            }
+            handleRouteParams(page) {
+                page = page || 'index';
+                this.set('page', page)
+            }
+        }
+        customElements.define(LkhPage.is, LkhPage);
+    </script>
+</dom-module>

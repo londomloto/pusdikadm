@@ -23,7 +23,7 @@
                         on-change="__onComboUserChange"></kct-combobox>
                     <paper-input label="Jabatan" value="{{ record.task.tpr_su_sj_name }}"></paper-input>
                     <paper-input label="Unit Kerja" value="{{ record.task.tpr_su_sdp_name }}"></paper-input>    
-                    <vaadin-date-picker label="Tanggal" value="{{ record.task.tpr_date }}"></vaadin-date-picker>                    
+                    <kct-date-picker label="Tanggal" value="{{ record.task.tpr_date }}"></kct-date-picker>                    
                 </template>
 
                 <template is="dom-if" if="[[ !phantom ]]">
@@ -94,7 +94,7 @@
                 
             }
 
-            save(options) {
+            beforeSave(options) {
                 let def = this.defer();
 
                 if (this.phantom) {
@@ -127,7 +127,7 @@
                 }
             }
 
-            remove() {
+            beforeRemove() {
                 let key = (this.record.task || {}).tpr_id;
 
                 if (key) {

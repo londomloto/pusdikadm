@@ -4,12 +4,16 @@
         <style include="form-style">
             .input-task {
                 margin: 15px 0 5px 0;
-                padding: 14px;
+                padding: 15px 40px 15px 15px;
                 background-color: var(--paper-grey-100);
                 border-radius: 3px;
+                position: relative;
             }
-            .input-task paper-input {
-                
+            .input-task paper-icon-button {
+                position: absolute;
+                right: 5px;
+                top: 50%;
+                margin-top: -20px;
             }
             .task-item {
                 padding: 15px 15px 15px 6px;
@@ -47,15 +51,29 @@
         <div class="section">
             <h3 class="section-title">Kegiatan Harian</h3>
             <div>
-                <kct-combobox 
-                    id="combo-user" 
-                    label="Identitas Pegawai" 
-                    value="{{ record.task.lkh_su_id }}" 
-                    url="/users" 
-                    page-size="10" 
-                    item-label-path="su_fullname" 
-                    item-value-path="su_id" 
-                    on-change="__onComboUserChange"></kct-combobox>
+                <template is="dom-if" if="[[ phantom ]]">
+                    <combo-user 
+                        id="combo-user" 
+                        label="Identitas Pegawai *)" 
+                        value="{{ record.task.lkh_su_id }}" 
+                        on-change="__onComboUserChange" 
+                        required 
+                        auto-validate 
+                        error-message="Identitas pegawai wajib diisi"></combo-user>
+                    <!-- <kct-combobox 
+                        id="combo-user" 
+                        label="Identitas Pegawai" 
+                        value="{{ record.task.lkh_su_id }}" 
+                        url="/users" 
+                        page-size="10" 
+                        item-label-path="su_fullname" 
+                        item-value-path="su_id" 
+                        on-change="__onComboUserChange"></kct-combobox>     -->
+                </template>
+
+                <template is="dom-if" if="[[ !phantom ]]">
+                    <paper-input label="Identitas Pegawai" value="[[ record.task.lkh_su_fullname ]]"></paper-input>
+                </template>
 
                 <kct-column columns="2">
                     <div>
@@ -69,22 +87,40 @@
                 <paper-input label="Jabatan" value="[[ record.task.lkh_su_sj_name ]]"></paper-input>
                 <paper-input label="Unit Kerja" value="[[ record.task.lkh_su_sdp_name ]]"></paper-input>
 
-                <kct-column columns="2">
-                    <div>
-                        <kct-combobox 
-                            id="combo-presence" 
-                            label="Referensi absensi" 
-                            value="{{ record.task.lkh_tpr_id }}" 
-                            url="/presence" 
-                            page-size="10" 
-                            item-label-path="tpr_date_formatted" 
-                            item-value-path="tpr_id" 
-                            on-change="__onComboPresenceChange"></kct-combobox>
-                    </div>
-                    <div>
-                        <paper-input label="Tanggal Kegiatan" value="{{ record.task.lkh_date_formatted }}"></paper-input>
-                    </div>
-                </kct-column>
+                <template is="dom-if" if="[[ phantom ]]">
+                    <kct-column columns="2">
+                        <div>
+                            <kct-combobox 
+                                id="combo-presence" 
+                                label="Referensi Absensi" 
+                                value="{{ record.task.lkh_tpr_id }}" 
+                                url="/presence?display=unused" 
+                                page-size="10" 
+                                item-label-path="tpr_date_formatted" 
+                                item-value-path="tpr_id" 
+                                on-change="__onComboPresenceChange"></kct-combobox>
+                        </div>
+                        <div>
+                            <kct-date-picker 
+                                label="Tanggal Kegiatan *)" 
+                                value="{{ record.task.lkh_date }}" 
+                                required 
+                                auto-validate 
+                                error-message="Tanggal kegiatan wajib diisi"></kct-date-picker>
+                        </div>
+                    </kct-column>    
+                </template>
+
+                <template is="dom-if" if="[[ !phantom ]]">
+                    <kct-column columns="2">
+                        <div>
+                            <paper-input label="Referensi absensi" value="[[ record.task.lkh_tpr_date_formatted ]]"></paper-input>
+                        </div>
+                        <div>
+                            <paper-input label="Tanggal kegiatan" value="[[ record.task.lkh_date_formatted ]]"></paper-input>
+                        </div>
+                    </kct-column>
+                </template>
                 
             </div>
         </div>
@@ -93,7 +129,8 @@
             <h3 class="section-title">Daftar Kegiatan</h3>
             <div>Tambahkan kegiatan-kegiatan yang Anda lakukan pada kolom di bawah ini.</div>
             <div class="input-task">
-                <paper-input on-keydown="__onInputKeydown" placeholder="Tulis kegiatan di sini kemudian tekan enter..." no-label-float></paper-input>
+                <paper-input id="input" on-keydown="__onInputKeydown" placeholder="Tulis kegiatan di sini kemudian tekan enter..." no-label-float></paper-input>
+                <paper-icon-button on-tap="__onAddItemTap" icon="add"></paper-icon-button>
             </div>
             <div class="task-list">
                 <template is="dom-repeat" items="[[ record.items ]]">
@@ -110,14 +147,14 @@
                                 <div class="flex p-l-sm p-r-sm">
                                     <kct-combobox 
                                         label="Satuan" 
-                                        value="{{ item.lki_unit }}"
                                         items="[[ units ]]" 
+                                        value="{{ item.lki_unit }}"
                                         item-label-path="sun_name" 
                                         item-value-path="sun_name"  
                                         always-float-label></kct-combobox>
                                 </div>
                                 <div class="flex p-l-sm">
-                                    <paper-input label="Biaya" value="{{ item.lki_cost }}" always-float-label></paper-input>
+                                    <kct-input-number label="Biaya" mask="#.###,00" value="{{ item.lki_cost }}" always-float-label></kct-input-number>
                                 </div>
                             </kct-hbox>
                         </div>
@@ -142,36 +179,81 @@
 
             static get observers() {
                 return [
-                    '__validationChanged(record.task.lkh_su_id)'
+                    '__validationChanged(record.task.lkh_su_id, record.task.lkh_date)'
                 ];
             }
 
             initialize() {
 
-                this.$.ajax.GET('/units').then(res => {
-                    this.set('units', res.data);
-                });
-
-                this.$['combo-user'].load();
-
                 if (this.action == 'create') {
-                    this.set('buttons', 'save');
-                } else {
-                    this.set('buttons', 'save,remove');
-                }
 
-                return this.resolve({ success: true });
+                    if ( ! this.$['combo-user']) {
+                        this.$['combo-user'] = this.shadowRoot.querySelector('#combo-user');
+                    }
+
+                    if ( ! this.$['combo-presence']) {
+                        this.$['combo-presence'] = this.shadowRoot.querySelector('#combo-presence');
+                    }
+
+                    // resolve dependencies
+                    return Promise.all([
+                        this.__loadUnits(),
+                        this.$['combo-user'].load()
+                    ]).then(() => {
+                        this.set('buttons', 'save');
+                    });    
+                } else {
+                    return this.__loadUnits().then(() => {
+                        this.set('buttons', 'save,remove');
+                    });
+                }
             }
 
-            __validationChanged(user) {
+            afterSave(res) {
+                if (res.success) {
+                    this.set('record.items', res.data.items);
+                }
+            }
+
+
+            __loadUnits() {
+                return this.$.ajax.GET('/units').then(res => {
+                    this.set('units', res.data);
+                });
+            }
+
+            __validationChanged(user, date) {
                 let valid = true;
                 valid = valid && !!user;
+                valid = valid && !!date;
                 this.set('invalid', !valid);
+            }
+
+            __addItem() {
+                let value = this.$.input.value;
+                if (value) {
+
+                    if (/lorem/.test(value)) {
+                        value = 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua';
+                    }
+
+                    this.unshift('record.items', {
+                        lki_desc: value,
+                        lki_unit: 'dokumen',
+                        lki_cost: 0,
+                        lki_volume: 1
+                    });
+                }
+                this.$.input.value = '';
             }
 
             __onRemoveItemTap(e) {
                 let index = e.model.index;
                 this.splice('record.items', index, 1);
+            }
+
+            __onAddItemTap() {
+                this.__addItem();
             }
 
             __onComboUserChange(e) {
@@ -208,24 +290,10 @@
                 }
             }
 
+            
             __onInputKeydown(e) {
                 if (e.code == 'Enter') {
-                    let value = e.target.value;
-                    if (value) {
-
-                        if (/lorem/.test(value)) {
-                            value = 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua';
-                        }
-
-                        this.unshift('record.items', {
-                            lki_desc: value,
-                            lki_unit: 'dokumen',
-                            lki_cost: 0,
-                            lki_volume: 1
-                        });
-                    }
-                    //e.target.focus();
-                    e.target.value = '';
+                    this.__addItem();
                 }
                 
             }

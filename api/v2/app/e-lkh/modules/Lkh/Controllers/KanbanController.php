@@ -62,7 +62,7 @@ class KanbanController extends \Micro\Controller {
                 if ($task) {
                     $item['task'] = $task->toArray();
                     $item['labels'] = $task->labels->filter(function($label){ return $label->toArray(); });
-                    $item['items'] = $task->items->filter(function($item){ return $item->toArray(); });
+                    $item['items'] = $task->getSortedItems()->filter(function($item){ return $item->toArray(); });
 
                 }
 
@@ -135,7 +135,8 @@ class KanbanController extends \Micro\Controller {
                         'success' => TRUE,
                         'data' => array(
                             'affected' => $affected,
-                            'task' => $task->toArray()
+                            'task' => $task->toArray(),
+                            'items' => $task->getSortedItems()->filter(function($e){ return $e->toArray(); })
                         )
                     );
                 }
@@ -264,7 +265,8 @@ class KanbanController extends \Micro\Controller {
                 'success' => TRUE,
                 'data' => array(
                     'affected' => $affected,
-                    'task' => $task->toArray()
+                    'task' => $task->toArray(),
+                    'items' => $task->getSortedItems()->filter(function($e){ return $e->toArray(); })
                 )
             ); 
         }

@@ -1,0 +1,20 @@
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+
+<dom-module id="skp-page">
+    <template>
+        
+    </template>
+    <script>
+        class SkpPage extends KctView {
+            static get is() {
+                return 'skp-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Sasaran Kerja', notify: true }
+                };
+            }
+        }
+        customElements.define(SkpPage.is, SkpPage);
+    </script>
+</dom-module>

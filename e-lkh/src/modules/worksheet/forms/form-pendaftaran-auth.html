@@ -15,7 +15,7 @@
                         <paper-input label="Tempat Lahir" value="{{ record.task.su_pob }}"></paper-input>
                     </div>
                     <div>
-                        <vaadin-date-picker label="Tanggal Lahir" value="{{ record.task.su_dob }}"></vaadin-date-picker>
+                        <kct-date-picker label="Tanggal Lahir" value="{{ record.task.su_dob }}"></kct-date-picker>
                     </div>
                 </kct-column>
 
@@ -90,7 +90,7 @@
                 return this.resolve();
             }
 
-            save(options) {
+            beforeSave(options) {
                 if (options.send) {
                     
                     this.record.task.su_task_flag = 'CONFIRMATION';

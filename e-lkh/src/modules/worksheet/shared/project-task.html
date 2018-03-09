@@ -106,7 +106,7 @@
 
                 this.mask('Sedang menyimpan...');
 
-                this.$.taskform.save(options).then(res => {
+                this.$.taskform.beforeSave(options).then(res => {
 
                     if ( ! res.success) {
                         this.unmask();
@@ -131,8 +131,9 @@
                 });
 
                 function done(res) {
-                    
                     this.unmask();
+
+                    this.$.taskform.afterSave(res);
 
                     if (back) {
                         this.set('route.path', this.actionBack);    
@@ -377,7 +378,7 @@
                     if (y) {
                         this.mask('Sedang menghapus...');
 
-                        this.$.taskform.remove().then(res => {
+                        this.$.taskform.beforeRemove().then(res => {
                             if (res.success) {
                                 this.$.ajax.DELETE('/worksheet/kanban/' + this.taskRecord.task.tt_id).then(() => {
                                     this.unmask();
@@ -390,27 +391,6 @@
                         });
                     }
                 }); 
-            }
-
-            __onFormBeforeUpdate() {
-                this.mask('Sedang menyimpan...');
-            }
-
-            __onFormAfterUpdate(e) {
-                this.unmask();
-
-                this.$.tasklogs.initialize();
-                this.$.publisher.publish('notify');
-
-                if (e.detail.back) {
-                    this.set('route.path', this.actionBack);
-                }
-            }
-
-            __onFormAuthorize(e) {
-                if ( ! e.detail.auth) {
-                    this.set('route.path', this.actionBack);
-                }
             }
 
             __onPropAfterUpdate(e) {

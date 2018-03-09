@@ -367,25 +367,31 @@
                         return;
                     }
                     
-                    let reload = false;
-
-                    if (filter == '') {
-                        reload = true;
-                    } else {
+                    if ( ! this.__pagingEnabled) {
                         if (this.items) {
                             this.filteredItems = this._filterItems(this.items, filter);
-                            reload = this.filteredItems.length == 0;
-                        }  else {
+                        }
+                    } else {
+                        let reload = false;
+
+                        if (filter == '') {
                             reload = true;
-                        }    
-                    }
-                    
-                    if (reload) {
-                        this.__setPayload({ 
-                            query: filter,
-                            start: 0,
-                            fields: [ this.getQueryField() ]
-                        }, true);
+                        } else {
+                            if (this.items) {
+                                this.filteredItems = this._filterItems(this.items, filter);
+                                reload = this.filteredItems.length == 0;
+                            }  else {
+                                reload = true;
+                            }    
+                        }
+                        
+                        if (reload) {
+                            this.__setPayload({ 
+                                query: filter,
+                                start: 0,
+                                fields: [ this.getQueryField() ]
+                            }, true);
+                        }
                     }
                 }
 
@@ -437,48 +443,50 @@
 
                         if (this._getItemValue(this.selectedItem) !== value) {
                             var valueIndex = this._indexOfValue(value, this.filteredItems);
-
+                            
                             if (valueIndex >= 0) {
                                 this.selectedItem = this.filteredItems[valueIndex];
                             } else {
                                 this.selectedItem = null;
 
-                                let params = {};
-                                params[this.itemValuePath] = value
+                                if (this.__pagingEnabled) {
+                                    let params = {};
 
-                                this.__setPayload({ 
-                                    start: 0,  
-                                    limit: 1,
-                                    params: params
-                                    //fields: [ this.itemValuePath ],
-                                    //query: value
-                                });
+                                    params[this.itemValuePath] = value
 
-                                this.load().then(() => {
-                                    this.__setPayload({
-                                        limit: this.pageSize,
-                                        params: {}
+                                    this.__setPayload({ 
+                                        start: 0,  
+                                        limit: 1,
+                                        params: params
                                     });
-                                    let valueIndex = this._indexOfValue(value, this.filteredItems);
-                                    if (valueIndex >= 0) {
-                                        this.selectedItem = this.filteredItems[valueIndex];    
-                                    } else {
-                                        this.selectedItem = null;
 
-                                        if (this.allowCustomValue) {
-                                            this._inputElementValue = value;
+                                    this.load().then(() => {
+                                        this.__setPayload({
+                                            limit: this.pageSize,
+                                            params: {}
+                                        });
+                                        let valueIndex = this._indexOfValue(value, this.filteredItems);
+
+                                        if (valueIndex >= 0) {
+                                            this.selectedItem = this.filteredItems[valueIndex];    
+                                        } else {
+                                            this.selectedItem = null;
+
+                                            if (this.allowCustomValue) {
+                                                this._inputElementValue = value;
+                                            }
+
+                                            this._setHasValue(this.value !== '');
+                                            this._lastCommittedValue = undefined;
+
+                                            this.__setPayload({ 
+                                                start: 0,  
+                                                fields: [ this.getQueryField() ],
+                                                query: ''
+                                            }, true);
                                         }
-
-                                        this._setHasValue(this.value !== '');
-                                        this._lastCommittedValue = undefined;
-
-                                        this.__setPayload({ 
-                                            start: 0,  
-                                            fields: [ this.getQueryField() ],
-                                            query: ''
-                                        }, true);
-                                    }
-                                });
+                                    });
+                                }
 
                             }
 

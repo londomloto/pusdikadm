@@ -2,17 +2,19 @@
 <link rel="import" href="../../../../../cores/bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../../../../cores/bower_components/paper-radio-group/paper-radio-group.html">
 <link rel="import" href="../../../../../cores/bower_components/paper-radio-button/paper-radio-button.html">
-<link rel="import" href="../../../../../cores/bower_components/vaadin-material-theme/vaadin-date-picker.html">
-<link rel="import" href="../../../../../cores/bower_components/vaadin-date-picker/vaadin-date-picker.html">
 <link rel="import" href="../../../../../cores/elements/kct-combobox/kct-combobox.html">
 <link rel="import" href="../../../../../cores/elements/kct-layouts/kct-column.html">
 <link rel="import" href="../../../../../cores/elements/kct-layouts/kct-hbox.html">
 <link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../../../../cores/elements/kct-file/kct-file.html">
+<link rel="import" href="../../../../../cores/elements/kct-input/kct-input-number.html">
 <link rel="import" href="../../../../../cores/elements/kct-checkbox/kct-checkbox.html">
 <link rel="import" href="../../../../../cores/elements/kct-message/kct-confirm.html">
+<link rel="import" href="../../../../../cores/elements/kct-message/kct-alert.html">
+<link rel="import" href="../../../../../cores/elements/kct-date/kct-date-picker.html">
 <link rel="import" href="../../../../../cores/mixins/resolver.html">
 <link rel="import" href="../../../../../cores/mixins/types.html">
+<link rel="import" href="../plugins/combo-user.html">
 
 <dom-module id="form-base">
     <script>
@@ -48,11 +50,15 @@
                 return def;
             }
 
-            save(options) {
+            beforeSave(options) {
                 return this.resolve({ success: true });
             }
 
-            remove() {
+            afterSave(response) {
+                return response;
+            }
+
+            beforeRemove() {
                 return this.resolve({success: true});
             }
 
@@ -80,6 +86,14 @@
 
                 document.body.appendChild(toast);
                 toast.open();
+            }
+
+            warning(title, message) {
+                let dialog = document.createElement('kct-alert');
+                dialog.title = title;
+                dialog.message = message;
+                document.body.appendChild(dialog);
+                dialog.open();
             }
 
             confirm(title, message) {

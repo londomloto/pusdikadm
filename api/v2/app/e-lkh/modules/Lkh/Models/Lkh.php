@@ -11,7 +11,7 @@ class Lkh extends \Micro\Model {
             'App\Users\Models\User',
             'su_id',
             array(
-                'alias' => 'Author'
+                'alias' => 'User'
             )
         );
 
@@ -52,26 +52,30 @@ class Lkh extends \Micro\Model {
         $data['lkh_title'] = $this->getTitle();
         $data['lkh_date_formatted'] = DateHelper::format($this->lkh_date, 'd M Y');
 
-        if ($this->author) {
-            $author = $this->author->toArray();
-            
-            $data['lkh_su_fullname'] = $author['su_fullname'];
-            $data['lkh_su_no'] = $author['su_no'];
-            $data['lkh_su_grade'] = $author['su_grade'];
-            $data['lkh_su_sj_name'] = $author['su_sj_name'];
-            $data['lkh_su_sdp_name'] = $author['su_sdp_name'];
-            $data['lkh_su_avatar_thumb'] = $author['su_avatar_thumb'];
+        if (($user = $this->user)) {
+            $data['lkh_su_fullname'] = $user->getName();
+            $data['lkh_su_no'] = $user->su_no;
+            $data['lkh_su_grade'] = $user->su_grade;
+            $data['lkh_su_sj_name'] = $user->job ? $user->job->sj_name : '';
+            $data['lkh_su_sdp_name'] = $user->department ? $user->department->sdp_name : '';
+            $data['lkh_su_avatar_thumb'] = $user->getAvatarThumb();
+
         }
 
         if ($this->presence) {
-               
+            $data['lkh_tpr_date_formatted'] = DateHelper::format($this->presence->tpr_date, 'd M Y');
         }
 
         return $data;
     }
 
+    public function getSortedItems() {
+        return $this->getItems(array('orderBy' => 'lki_id DESC'));
+    }
+
     public function getTitle() {
-        $title  = $this->author ? $this->author->getName() : '(dihapus)';
+        $user = $this->user;
+        $title  = $user ? $user->getName() : '(dihapus)';
         $title .= ' ('.DateHelper::format($this->lkh_date, 'd M Y').')';
         return $title;
     }
@@ -81,34 +85,37 @@ class Lkh extends \Micro\Model {
         $updated = array();
         $current = array();
 
-        foreach($this->items as $elem) {
-            $current[$elem->lki_id] = TRUE;
+        foreach($this->items as $model) {
+            $current[$model->lki_id] = $model;
         }
 
-        foreach($post as $elem) {
-            if ( ! isset($elem['lki_id'])) {
-                $created[] = $elem;
-            } else if (isset($current[$elem['lki_id']])) {
-                $updated[] = $elem;
-                unset($current[$elem['lki_id']]);
+        foreach($post as $item) {
+            if ( ! isset($item['lki_id'])) {
+                $created[] = $item;
+            } else if (isset($current[$item['lki_id']])) {
+                $model = $current[$item['lki_id']];
+                $model->save($item);
+                
+                unset($current[$item['lki_id']]);
             }
         }
 
-        $current = array_values(array_keys($current));
-
         if (count($current) > 0) {
-            LkhItem::get()->inWhere('lki_id', $current)->execute()->delete();
+            foreach($current as $model) {
+                $model->delete();
+            }
         }
 
         if (count($created) > 0) {
-            foreach($created as $elem) {
-                if ( ! empty($elem['lki_desc'])) {
-                    $item = new LkhItem();
-                    $elem['lki_lkh_id'] = $this->lkh_id;
-                    $item->save($elem);
+            foreach($created as $item) {
+                if ( ! empty($item['lki_desc'])) {
+                    $model = new LkhItem();
+                    $item['lki_lkh_id'] = $this->lkh_id;
+                    $model->save($item);
                 }
             }
         }
+
         
     }
 

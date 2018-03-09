@@ -115,12 +115,16 @@
                 return this.$.form ? this.$.form.initialize() : this.resolve({ success: true });
             }
 
-            save(options) {
-                return this.$.form ? this.$.form.save(options) : this.resolve({ success: true });
+            beforeSave(options) {
+                return this.$.form ? this.$.form.beforeSave(options) : this.resolve({ success: true });
             }
 
-            remove() {
-                return this.$.form ? this.$.form.remove() : this.resolve({ success: true });
+            afterSave(response) {
+                return this.$.form && this.$.form.afterSave(response);
+            }
+
+            beforeRemove() {
+                return this.$.form ? this.$.form.beforeRemove() : this.resolve({ success: true });
             }
 
             __createTemplate(name) {
