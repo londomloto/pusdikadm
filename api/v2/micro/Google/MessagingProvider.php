@@ -42,7 +42,49 @@ class MessagingProvider extends \Micro\Component {
         return $result;
     }
 
-    public function send($topic, $data) {
+    public function send($token, $data) {
+        $scopes = implode(' ', $this->_config->scopes->toArray());
+
+        $serviceAccount = new ServiceAccountCredentials(
+            $scopes,
+            $this->_config->credential
+        );
+
+        $middleware = new AuthTokenMiddleware($serviceAccount);
+        $stack = HandlerStack::create();
+        $stack->push($middleware);
+
+        $client = new Client(array(
+            'handler' => $stack,
+            'base_uri' => 'https://fcm.googleapis.com/v1/projects/',
+            'auth' => 'google_auth'
+        ));
+
+        $response = $client->post(
+            $this->_config->project_id.'/messages:send',
+            array(
+                RequestOptions::JSON => array(
+                    'message' => array(
+                        'token' => $token,
+                        'data' => $data
+                    )
+                )
+            )
+        );
+
+        $result = new \stdClass();
+        $result->success = $response->getStatusCode() == 200;
+
+        try {
+            $result->data = json_decode((string) $response->getBody());
+        } catch(\Exception $ex) {
+            $result->data = NULL;
+        }
+
+        return $result;
+    }
+
+    public function broadcast($topic, $data) {
         
         $scopes = implode(' ', $this->_config->scopes->toArray());
 

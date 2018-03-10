@@ -82,7 +82,6 @@ class NotificationsController extends \Micro\Controller {
             $data['link'] = $post['link'];
         }
 
-        return $this->gcm->send($post['topic'], $data);
-        // return $this->gcm->send('chrome', $data);
+        return $this->gcm->broadcast($post['topic'], $data);
     }
 }

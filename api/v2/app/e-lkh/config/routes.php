@@ -57,6 +57,14 @@ return array(
         '/registration/:id' => array(
             'module' => 'registration',
             'page' => 'registration-page'
+        ),
+        '/messages/:section/:id' => array(
+            'module' => 'messages',
+            'page' => 'messages-page'
+        ),
+        '/messages/:section' => array(
+            'module' => 'messages',
+            'page' => 'messages-page'
         )
     )
 );

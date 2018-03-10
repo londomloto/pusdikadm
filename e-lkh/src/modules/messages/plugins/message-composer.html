@@ -1,0 +1,202 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-spinner/paper-spinner.html">
+<link rel="import" href="../../../../../cores/elements/kct-editor/kct-html-editor.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../../cores/elements/kct-combobox/kct-combobox-multi.html">
+<link rel="import" href="../../../../../cores/elements/kct-toast/kct-toast.html">
+
+<dom-module id="message-composer">
+    <template>
+        <style include="theme-helper">
+            :host {
+
+            }
+            .html-editor {
+                height: 200px;
+                border: 1px solid #dfdfdf;
+                --wysiwyg-toolbar-background: #fff;
+                --wysiwyg-toolbar-color: var(--paper-blue-grey-500);
+                --wysiwyg-tool-icon-disabled-color: var(--paper-grey-500);
+                --wysiwyg-toolbar: {
+                    border-bottom: 1px solid #dfdfdf;
+                };
+                --wysiwyg-editable: {
+                    line-height: 24px;
+                    font-size: 15px;
+                };
+            }
+            .form-head {
+                margin-bottom: 20px;
+            }
+            .form-body {
+                margin-bottom: 20px;
+            }
+            .mask {
+                display: none;
+                position: absolute;
+                left: 0;
+                right: 0;
+                top: 0;
+                bottom: 0;
+                z-index: 9999999;
+
+            }
+            .mask-body {
+                height: 100%;
+            }
+            .mask-text {
+                width: 170px;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                margin-left: -85px;
+                margin-top: -31px;
+                border-radius: 3px;
+                padding: 15px;
+                box-sizing: border-box;
+                background: #fff;
+                @apply --shadow-elevation-2dp;
+            }
+            .mask-text > span {
+                position: relative;
+                top: -8px;
+                padding-left: 8px;
+            }
+            :host([busy]) .mask {
+                display: block;
+            }
+        </style>        
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="form">
+            <div class="form-head">
+                
+                <kct-combobox-multi label="Kepada" values="{{ message.smo_recipients }}">
+                    <kct-combobox 
+                        url="/users" 
+                        page-size="10" 
+                        item-label-path="su_fullname" 
+                        item-value-path="su_id" 
+                        autoload>
+                        <template>
+                            <style>
+                                .name { font-weight: 500; color: #333;  }
+                                .meta { font-size: 12px; color: #777;  }
+                                .icon { float: left;  }
+                                .text { margin-left: 40px; position: relative; top: -4px;  }
+                                .clear { clear: both;  }
+                            </style>
+                            <div class="item">
+                                <div class="icon">
+                                    <img alt="" src$="[[ item.su_avatar_thumb ]]&w=30&h=30">
+                                </div>
+                                <div class="text">
+                                    <div class="name">[[ item.su_fullname ]]</div>
+                                    <div class="meta">[[ item.su_no ]] - [[ item.su_sj_name ]]</div>
+                                </div>
+                                <div class="clear"></div>
+                            </div>
+                        </template>        
+                    </kct-combobox>
+                </kct-combobox-multi>
+                <paper-input label="Perihal" value="{{ message.smo_subject }}" always-float-label></paper-input>
+            </div>
+            <div class="form-body">
+                <kct-html-editor value="{{ message.smo_text }}" class="html-editor">
+                    
+                </kct-html-editor>
+            </div>
+            <div class="form-foot">
+                <paper-button on-tap="__onSendTap" class="btn-blue-grey">Kirim Pesan</paper-button> atau <a href="javascript:;" on-click="__onSaveTap">simpan sebagai draft</a>
+            </div>
+        </div>
+
+        <div class="mask">
+            <div class="mask-body">
+                <div class="mask-text">
+                    <paper-spinner active></paper-spinner>
+                    <span>[[ masking ]]</span>
+                </div>
+            </div>
+        </div>
+
+    </template>
+    <script>
+        class MessageComposer extends Polymer.Element {
+            static get is() {
+                return 'message-composer';
+            }
+
+            static get properties() {
+                return {
+                    busy: { type: Boolean, value: false, reflectToAttribute: true },
+                    masking: { type: String, value: 'Menyimpan...' },
+                    message: {
+                        type: Object,
+                        value: () => ({
+                            smo_recipients: []
+                        })
+                    }
+                };
+            }
+
+            initialize() {
+                this.set('busy', false);
+                this.set('message', {
+                    smo_recipients: []
+                });
+            }
+
+            mask(masking) {
+                this.set('busy', true);
+                this.set('masking', masking);
+            }
+
+            unmask() {
+                this.set('busy', false);
+            }
+
+            toast(title, message, type = 'info') {
+                let toast = document.createElement('kct-toast');
+                toast.title = title;
+                toast.message = message;
+                toast.duration = 3000;
+                toast.type = type;
+                document.body.appendChild(toast);
+                toast.open();
+            }
+
+            __onSendTap() {
+                let payload = this.message;
+
+                if ( ! payload.smo_recipients.length) {
+                    return;
+                }
+
+                this.mask('Mengirim...');
+
+                this.$.ajax.POST('/messages/outbox/send', payload).then(res => {
+                    this.unmask();
+                    this.initialize();
+                    this.toast('Berhasil', 'Pesan sudah dikirimkan');
+                    this.dispatchEvent(new CustomEvent('after-send', { detail: res }));
+                });
+            }
+
+            __onSaveTap() {
+                let payload = this.message;
+
+                this.mask('Menyimpan...');
+
+                this.$.ajax.POST('/messages/outbox/save', payload).then(res => {
+                    this.unmask();
+                    this.initialize();
+                    this.toast('Berhasil', 'Pesan sudah disimpan sebagai draft');
+                    this.dispatchEvent(new CustomEvent('after-save', { detail: res }));
+                });
+            }
+        }
+        customElements.define(MessageComposer.is, MessageComposer);
+    </script>
+</dom-module>

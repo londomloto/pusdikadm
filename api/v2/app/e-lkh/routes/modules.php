@@ -63,3 +63,24 @@ Router::group(array(
 ))
 ->get('/modules', 'modules')
 ->post('/init', 'init');
+
+Router::group(array(
+    'prefix' => '/messages/inbox',
+    'handler' => 'App\Messages\Controllers\InboxController',
+    'middleware' => 'auth'
+))
+->get('/info', 'info')
+->get('/{code}/read', 'read')
+->post('/trash', 'trash')
+->post('/remove', 'remove')
+->post('/restore', 'restore');
+
+Router::group(array(
+    'prefix' => '/messages/outbox',
+    'handler' => 'App\Messages\Controllers\OutboxController',
+    'middleware' => 'auth'
+))
+->get('/{code}/open', 'open')
+->post('/save', 'save')
+->post('/send', 'send')
+->post('/trash', 'trash');

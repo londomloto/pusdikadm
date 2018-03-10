@@ -162,7 +162,7 @@ class ModelQuery {
         $params = $request->getQuery('params');
 
         if ( ! empty($params)) {
-            $params = is_string($params) ? json_decode($params) : $params;
+            $params = is_string($params) ? json_decode($params, TRUE) : $params;
             
             foreach($params as $key => $val) {
                 $attr = isset($this->__fields->{$key}) ? $this->__fields->{$key} : FALSE;
@@ -183,6 +183,9 @@ class ModelQuery {
                             case '>=':
                                 $bind[$pkey] = $val[1];
                                 $this->__builder->andWhere($attr['field']." $oper :{$pkey}:", $bind);
+                                break;
+                            case 'in':
+                                $this->__builder->inWhere($attr['field'], $val[1]);
                                 break;
                             case 'not in':
                                 $this->__builder->notInWhere($attr['field'], $val[1]);

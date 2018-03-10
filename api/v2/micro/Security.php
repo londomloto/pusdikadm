@@ -123,7 +123,7 @@ class Security extends \Phalcon\Security {
     public function verifyHash($password, $hashed) {
         return $this->checkHash($password, $hashed);
     }
-
+    
     public function createRandom($length = 16) {
         return $this->getRandom()->base64($length);
     }
