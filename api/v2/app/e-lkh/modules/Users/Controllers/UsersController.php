@@ -20,7 +20,7 @@ class UsersController extends \Micro\Controller {
     
     public function createAction() {
         $post = $this->request->getJson();
-        $auth = $app->auth->user();
+        $auth = $this->auth->user();
 
         $user = new User();
 
@@ -28,7 +28,7 @@ class UsersController extends \Micro\Controller {
         $post['su_created_by'] = $auth['su_fullname'];
 
         if (isset($post['su_passwd']) && ! empty($post['su_passwd'])) {
-            $post['su_passwd'] = $app->security->createHash($post['su_passwd']);
+            $post['su_passwd'] = $this->security->createHash($post['su_passwd']);
         }
 
         if (isset($post['su_email'])) {
@@ -74,7 +74,7 @@ class UsersController extends \Micro\Controller {
         if ($query->data) {
 
             if (isset($post['su_passwd']) && ! empty($post['su_passwd'])) {
-                $post['su_passwd'] = $app->security->createHash($post['su_passwd']);
+                $post['su_passwd'] = $this->security->createHash($post['su_passwd']);
             }
 
             if ($query->data->save($post)) {
