@@ -8,14 +8,14 @@
             _browser() {
                 return this._isIE()
                     ? 'IE'
-                    : this._isChrome()
-                        ? 'chrome' 
+                    : this._isOpera()
+                        ? 'opera' 
                         : this._isFirefox() 
                             ? 'firefox'
                             : this._isSafari() 
                                 ? 'safari'
-                                : this._isOpera()
-                                    ? 'opera'
+                                : this._isChrome()
+                                    ? 'chrome'
                                     : this._isEdge()
                                         ? 'edge'
                                         : null;
@@ -30,7 +30,7 @@
             }
 
             _isOpera() {
-                return /opera/i.test(navigator.userAgent);
+                return /(opera|opr)/i.test(navigator.userAgent);
             }
 
             _isSafari() {

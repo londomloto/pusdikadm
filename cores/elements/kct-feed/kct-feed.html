@@ -117,6 +117,8 @@
                 ready() {
                     super.ready();
 
+                    console.log(this._browser());
+
                     this.__loadStorage().then(() => {
                         this.set('token', this._getStorageItem(this.storageKey, 'token'));
                     });
