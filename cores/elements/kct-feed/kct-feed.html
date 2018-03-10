@@ -104,7 +104,7 @@
                         opened: { type: Boolean, value: false, reflectToAttribute: true }, 
                         subscribed: { type: Boolean, value: false, notify: true },
                         storageKey: { type: String },
-                        token: { type: String }
+                        token: { type: String, notify: true }
                     }
                 }
 
@@ -161,9 +161,15 @@
                                     });
                                 });
                             } else {
+
+                                this.$.ajax.POST('/notifications/sync', {
+                                    token: this._getStorageItem(this.storageKey, 'token'),
+                                    topic: this.__defineTopic()
+                                });
+
                                 return {
                                     success: true
-                                }
+                                };    
                             }
                         });
                     }

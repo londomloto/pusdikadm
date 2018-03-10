@@ -84,4 +84,30 @@ class NotificationsController extends \Micro\Controller {
 
         return $this->gcm->broadcast($post['topic'], $data);
     }
+
+    public function syncAction() {
+        $post = $this->request->getJson();
+        $user = $this->auth->user();
+
+        $find = UserToken::findFirst(array(
+            'sut_token = :token:',
+            'bind' => array(
+                'token' => $post['token']
+            )
+        ));
+
+        if ( ! $find) {
+            $sync = new UserToken();
+            $sync->sut_type = 'gcm';
+            $sync->sut_su_id = $user['su_id'];
+            $sync->sut_token = $post['token'];
+            $sync->sut_topic = $post['topic'];
+            $sync->sut_created = date('Y-m-d H:i:s');
+            $sync->save();
+        }
+
+        return array(
+            'success' => TRUE
+        );
+    }
 }

@@ -6,7 +6,8 @@ Router::group(array(
 ))
 ->post('/subscribe', 'subscribe')
 ->post('/unsubscribe', 'unsubscribe')
-->post('/notify', 'notify');
+->post('/notify', 'notify')
+->post('/sync', 'sync');
 
 Router::group(array(
     'prefix' => '/company',
