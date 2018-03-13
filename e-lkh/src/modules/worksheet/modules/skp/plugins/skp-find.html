@@ -75,12 +75,12 @@
                                     </kct-search-combo>
 
                                     <kct-search-combo 
-                                        name="sender" 
-                                        url$="/references/sender?project=[[ project ]]" 
+                                        name="user" 
+                                        url="/users" 
                                         class="popup" 
-                                        item-value-path="tsn_name" 
-                                        item-label-path="tsn_name" 
-                                        item-query-path="tsn_name" 
+                                        item-value-path="su_id" 
+                                        item-label-path="su_fullname" 
+                                        item-query-path="su_fullname" 
                                         list-width="400" 
                                         page-size="10" 
                                         on-change="__onComboChange" 
@@ -104,44 +104,7 @@
                                             <paper-item>
                                                 <div>
                                                     <iron-icon icon="social:person-outline"></iron-icon>
-                                                    <span>[[ item.tsn_name ]]</span>
-                                                </div>
-                                            </paper-item>
-
-                                        </template>        
-                                    </kct-search-combo>
-
-                                    <kct-search-combo 
-                                        name="receiver" 
-                                        url$="/references/receiver?project=[[ project ]]" 
-                                        class="popup" 
-                                        item-value-path="trc_name" 
-                                        item-label-path="trc_name" 
-                                        item-query-path="trc_name" 
-                                        list-width="400" 
-                                        page-size="10" 
-                                        on-change="__onComboChange" 
-                                        on-beforeload="__onComboBeforeload">
-                                        <template>
-                                            <style>
-                                                paper-item {
-                                                    --paper-item-min-height: 34px;
-                                                    font-size: 13px;
-                                                    font-weight: 400;
-                                                }
-                                                paper-item iron-icon {
-                                                    --iron-icon-width: 16px;
-                                                    --iron-icon-height: 16px;
-                                                    margin-right: 5px;
-                                                    position: relative;
-                                                    top: -1px;
-                                                }
-                                            </style>
-
-                                            <paper-item>
-                                                <div>
-                                                    <iron-icon icon="social:person-outline"></iron-icon>
-                                                    <span>[[ item.trc_name ]]</span>
+                                                    <span>[[ item.su_fullname ]]</span>
                                                 </div>
                                             </paper-item>
 
@@ -235,9 +198,8 @@
                         type: Array,
                         value: () => ([
                             { field: 'search', label: 'Search', icon: 'search', hint: 'Tekan enter untuk pencarian' },
-                            { field: 'sender', label: 'Pengirim', icon: 'social:person-outline', hint: 'Filter pengirim: <b>@pengirim</b>' },
-                            { field: 'receiver', label: 'Tujuan', icon: 'communication:mail-outline', hint: 'Filter tujuan: <b>$tujuan</b>' },
-                            { field: 'date', label: 'Tanggal', icon: 'today', hint: 'Filter tanggal surat: <b>!tanggal</b>' },
+                            { field: 'user', label: 'Pegawai', icon: 'social:person-outline', hint: 'Filter pegawai: <b>@pegawai</b>' },
+                            { field: 'date', label: 'Tanggal', icon: 'today', hint: 'Filter tanggal: <b>!tanggal</b>' },
                             { field: 'label', label: 'Label', icon: 'label-outline', hint: 'Filter data label: <b>~label</b>' }
                         ])
                     },
@@ -248,8 +210,8 @@
                         type: Array,
                         value: () => ([
                             { field: 'name', sort: 'ASC', label: 'Nama' },
-                            { field: 'created', sort: 'ASC', label: 'Lama' },
-                            { field: 'created', sort: 'DESC', label: 'Baru' }
+                            { field: 'date', sort: 'ASC', label: 'Lama' },
+                            { field: 'date', sort: 'DESC', label: 'Baru' }
                         ])
                     },
 
@@ -261,8 +223,8 @@
             ready() {
                 super.ready();
                 
-                this.set('selectedSorter', this.sorters[0]);
-                this.set('sorters.0.checked', true);
+                this.set('selectedSorter', this.sorters[2]);
+                this.set('sorters.2.checked', true);
             }
 
         }

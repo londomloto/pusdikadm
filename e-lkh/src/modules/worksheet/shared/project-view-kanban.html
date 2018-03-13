@@ -36,14 +36,6 @@
                 this.__paging = {};
             }
 
-            handleRouteParams(project, action, type) {
-                if (project === undefined  || project == 'tour' || project == 'create') return;
-                if (action != 'view') return;
-                if (type != 'kanban') return;
-                
-                this.set('project', project);
-            }
-
             handleResizing(width, height) {
                 if (this.$.worksheet) {
                     this.$.worksheet.resize();
@@ -55,9 +47,7 @@
             }
 
             __projectChanged(project) {
-                if (project) {
-                    this.__loadProject();
-                }
+                this.__loadProject();
             }
 
             __paramsChanged(changed) {

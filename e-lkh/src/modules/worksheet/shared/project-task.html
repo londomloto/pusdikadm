@@ -57,9 +57,6 @@
             }
 
             handleRouteParams(project, action, type, id) {
-                if (project === undefined  || project == 'tour' || project == 'create') return;
-                if (action != 'task') return;
-
                 let actionBack = '/worksheet/' + project + '/view/kanban';
 
                 this.set('formButtons', '');
@@ -80,12 +77,10 @@
                 this.set('actionRecord', type);
                 this.set('metadata.status_primary_val', id);
 
-                this.set('project', project);
-                this.set('loading', true);
-
-                this.__loadProject();
-
                 this.$.taskprop.stopEditing();
+
+                this.set('project', project);
+                this.__loadProject();
             }
 
             init() {
@@ -157,10 +152,13 @@
             __loadProject() {
                 if ( ! this.project) return;
 
+                this.set('loading', true);
                 this.set('__projectTitle', 'Loading...');
 
                 this.$.ajax.GET('/projects/' + this.project + '/load' ).then(res => {
                     this.set('projectRecord', res.data);
+                    this.set('loading', false);
+
                     this.__loadWorkspaces();
                 });
             }
@@ -200,9 +198,13 @@
             }
 
             __loadWorkspaces() {
-                if ( ! this.projectRecord) return;
+                if ( ! this.projectRecord) {
+                    return;
+                }
+
                 let sheet = this.projectRecord.sp_worksheet_id;
 
+                this.set('loading', true);
                 this.set('workspaces', []);
 
                 this.$.ajax.GET('/kanban/kanban-workspaces?kanban=' + sheet).then(res => {
@@ -219,6 +221,7 @@
 
             __initUpdate() {
                 if ( ! this.metadata.status_primary_val) {
+                    this.set('loading', false);
                     return;
                 }
 
@@ -227,7 +230,7 @@
                 } else {
                     let params = {};
                     params[this.metadata.status_primary_key] = this.metadata.status_primary_val;
-
+                    
                     this.$.ajax.GET(this.metadata.service_url, { params: params }).then(res => {
                         let record = res.data.length ? res.data[0] : null;
                         handle.bind(this)(record);
@@ -237,7 +240,10 @@
                 function handle(record) {
                     if ( ! record) {
                         this.toast('Warning', 'Data tidak ditemukan', 'warn');
+
                         this.set('route.path', this.actionBack);
+                        this.set('loading', false);
+
                         return;
                     }
 

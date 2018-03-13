@@ -138,6 +138,7 @@
                     if (this.secure) {
                         // opt.secure = true;
                         // opt.verify = false;
+                        opt.rejectUnauthorized = false;
                     }
                     
                     this.__socket = io(url, opt);

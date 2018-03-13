@@ -267,24 +267,13 @@
                 __pagingChanged(changed) {
 
                     if (changed.path == 'paging') {
-                        let paging =  (this.paging || {});
-
-                        let total = isNaN(+paging.total) ? 0 : +paging.total;
-                        let limit = isNaN(+paging.limit) ? 0 : +paging.limit;
-                        let start = isNaN(+paging.start) ? 0 : +paging.start;
-
-                        let pages = 0;
-                        let page = 0;
-
-                        if (limit > 0) {
-                            pages = Math.ceil(total / limit);
-                        }
-
-                        page = Math.ceil((start - 1) / limit) + 1;
+                        let paging =  (this.paging || {}),
+                            pages = isNaN(+paging.pages) ? 0 : +paging.pages,
+                            page = isNaN(+paging.page) ? 1 : +paging.page;
 
                         this.set('paging.pages', pages);
                         this.set('paging.page', page);
-
+                        
                         // update button state
                         
                         this.set('__firstDisabled', false);

@@ -291,12 +291,9 @@
                 this.__selectedRole = null;
             }
 
-            handleRouteParams(project, action) {
-                if (project === undefined  || project == 'tour' || project == 'create') return;
-                if (action != 'info') return;
-
+            handleRouteParams(project) {
                 this.set('project', project);
-                this.__loadProject();
+                this.__loadProject();  
             }
 
             __hideBlockUser(type) {
@@ -384,10 +381,12 @@
                             // name has been changed? update URL
                             if (this.project != res.data.sp_name) {
                                 this.set('project', res.data.sp_name);
-                                this.set('route.addr', '/worksheet/' + this.project + '/setting');
+                                this.set('route.addr', '/worksheet/' + this.project + '/info');
                             }
 
-                            this.$['event-publisher'].publish('project-saved');
+                            this.$['event-publisher'].publish('project-saved', {
+                                response: res
+                            });
 
                         }
                     });

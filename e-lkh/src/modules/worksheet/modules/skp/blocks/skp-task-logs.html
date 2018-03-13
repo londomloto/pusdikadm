@@ -1,0 +1,102 @@
+<link rel="import" href="../../../shared/project-task-logs.html">
+
+<dom-module id="skp-task-logs">
+    <template>
+        <style include="project-task-logs-style"></style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-file id="file" filename="{{ filename }}" on-change="__onFileChange"></kct-file>
+        <kct-confirm id="confirm"></kct-confirm>
+
+        <h3 class="timeline-title">Logs Dokumen</h3>
+
+        <div class="timeline">
+            
+            <div class="timeline-item">
+                <div class="timeline-icon">
+                    <iron-icon icon="add"></iron-icon>
+                </div>
+                <div class="timeline-body">
+                    <div class="msgbox-wrapper">
+                        <div class="msgbox-body">
+                            <kct-html-editor id="msgbox"></kct-html-editor>
+                        </div>
+
+                        <div class="msgbox-footer">
+                            <kct-hbox>
+                                <div>
+                                    <paper-button on-tap="__onAttachTap">
+                                        <iron-icon icon="attachment"></iron-icon>&nbsp;Attachment
+                                    </paper-button>
+                                </div>
+                                <div class="flex text-right">
+                                    <paper-button class="btn-cyan" on-tap="__onSubmitTap">
+                                        Komentar
+                                    </paper-button>
+                                </div>
+                            </kct-hbox>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <template is="dom-repeat" items="[[ activities ]]">
+                <div class="timeline-item">
+                    <div class="timeline-icon">
+                        <iron-icon icon="[[ item.ta_icon ]]"></iron-icon>
+                    </div>
+                    <div class="timeline-body">
+                        <template is="dom-if" if="[[ item.ta_is_history ]]">
+                            <div class="history-wrapper">
+                                <div class="history-body">
+                                    <kct-html html="[[ item.ta_verb ]]"></kct-html>
+                                </div>
+                            </div>
+                        </template>
+                        <template is="dom-if" if="[[ item.ta_is_comment ]]">
+                            <div class="comment-wrapper">
+                                <div class="comment-header">
+                                    <kct-html html="[[ item.ta_verb ]]"></kct-html>
+                                </div>
+                                <div class="comment-body">
+                                    <div class="comment-view" hidden$="[[ item.ta_editing ]]">
+                                        <kct-html html="[[ item.ta_text ]]"></kct-html>    
+                                    </div>
+                                    <div class="comment-edit" hidden$="[[ !item.ta_editing ]]">
+                                        <kct-html-editor value="{{ item.ta_data }}"></kct-html-editor>
+                                    </div>
+                                </div>
+                                <div class="comment-footer" hidden$="[[ item.ta_editing ]]">
+                                    <!-- <paper-button checked><iron-icon icon="thumb-up"></iron-icon>&nbsp;5 Likes</paper-button>  -->
+                                    <paper-button on-tap="__onEditCommentTap" hidden$="[[ !item.ta_is_editable ]]"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button> 
+                                    <label hidden$="[[ !item.ta_is_editable ]]">&nbsp;&nbsp;atau&nbsp;&nbsp;<a href="javascript:void(0);" on-tap="__onRemoveCommentTap">hapus komentar</a></label>
+                                    <div class="clearfix"></div>
+                                </div>
+                                <div class="comment-footer" hidden$="[[ !item.ta_editing ]]">
+                                    <paper-button on-tap="__onSaveCommentTap"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
+                                    <label>&nbsp;&nbsp;or&nbsp;&nbsp;<a href="javascript:void(0)" on-tap="__onCancelEditCommentTap">cancel editing</a></label>
+                                    <div class="clearfix"></div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+
+        </div>
+
+        <div class="paginator" hidden$="[[ __hidePaginator ]]">
+            <paper-button on-tap="__onPaginatorTap">Lihat data sebelumnya...</paper-button>
+        </div>
+    </template>
+    <script>
+        class SkpTaskLogs extends Mixins(Polymer.Element).use(Mixins.ProjectTaskLogs) {
+            static get is() {
+                return 'skp-task-logs';
+            }
+        }
+
+        customElements.define(SkpTaskLogs.is, SkpTaskLogs);
+    </script>
+</dom-module>

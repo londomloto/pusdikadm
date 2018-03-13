@@ -268,10 +268,10 @@
                                                 </div>
                                                 <div hidden$="[[ !inbox.editing ]]">
                                                     <div>
-                                                        <kct-html-editor class="html-editor"></kct-html-editor>    
+                                                        <kct-html-editor value="{{ inbox.reply.smo_text }}" class="html-editor"></kct-html-editor>    
                                                     </div>
                                                     <div class="footer">
-                                                        <paper-button class="btn-blue">Kirim Pesan</paper-button>
+                                                        <paper-button on-tap="__onInboxReplyTap" class="btn-blue">Kirim Pesan</paper-button>
                                                     </div>    
                                                 </div>
                                                 
@@ -440,6 +440,7 @@
                             total: 0,
                             unread: 0,
                             message: {},
+                            reply: {},
                             editing: false
                         })
                     },
@@ -834,7 +835,25 @@
             }
 
             __onReplyTap() {
+                this.set('inbox.reply.smo_text', '');
                 this.set('inbox.editing', true);
+            }
+
+            __onInboxReplyTap() {
+
+                let reply = this.inbox.reply;
+                
+                reply.smo_sender = this.user.su_id;
+                reply.smo_subject = 'Reply: ' + this.inbox.message.smi_subject.replace(/^reply:\s+/i, '');
+                reply.smo_recipients = [this.inbox.message.smi_sender];
+
+                this.mask('Mengirim balasan...');
+                this.$.ajax.POST('/messages/outbox/send', reply).then(res => {
+                    this.unmask();
+                    this.toast('Berhasil', 'Pesan balasan sudah dikirim');
+                });
+
+                this.set('inbox.editing', false);
             }
 
             __onRefreshTap() {

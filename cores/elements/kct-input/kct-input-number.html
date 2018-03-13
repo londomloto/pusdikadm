@@ -4,6 +4,9 @@
 <dom-module id="kct-input-number">
     <template>
         <style>
+            :host {
+                display: block;
+            }
             .add-on {
                 font-size: 11px;
                 text-align: right;
@@ -24,7 +27,8 @@
             on-invalid-changed="__onInputInvalidChange"  
             required$="[[ required ]]" 
             auto-validate$="[[ autoValidate ]]" 
-            error-message$="[[ errorMessage ]]"></paper-input>
+            error-message$="[[ errorMessage ]]" 
+            always-float-label$="[[ alwaysFloatLabel ]]"></paper-input>
         <div class="add-on" hide$="[[ !__typing ]]">[[ __helper ]]</div>
     </template>
     <script>
@@ -46,7 +50,8 @@
                     required: { type: Boolean, value: false, notify: true, reflectToAttribute: true },
                     autoValidate: { type: Boolean, value: false, reflectToAttribute: true },
                     errorMessage: { type: String, reflectToAttribute: true },
-                    noLabelFloat: { type: Boolean, value: false }
+                    noLabelFloat: { type: Boolean, value: false },
+                    alwaysFloatLabel: { type: Boolean, value: false }
                 };
             }
 

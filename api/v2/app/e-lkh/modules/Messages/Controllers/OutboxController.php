@@ -67,7 +67,17 @@ class OutboxController extends \Micro\Controller {
                 $outbox->sendTo($e);
             }
 
+            // notify
+            $sender = $user['su_id'];
+
+            $recipients = array_filter($recipients, function($e) use ($sender){
+                if ($e != $sender) {
+                    return $e;
+                }
+            });
+            
             if (count($recipients) > 0) {
+
                 $subscribers = UserToken::get()
                     ->columns(array('sut_token'))
                     ->inWhere('sut_su_id', $recipients)

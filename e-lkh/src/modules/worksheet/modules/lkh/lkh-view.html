@@ -37,9 +37,9 @@
 
             <div class="flex main">
 
-                <kct-pages id="view-switcher" attr-for-selected="name" selected="[[ view ]]" lazy-load>
-                    <lkh-view-kanban import="lkh-view-kanban.html" busy="{{ busy }}" name="kanban" route="{{ route }}" state="[[ state ]]" params="[[ search ]]"></lkh-view-kanban>
-                    <lkh-view-grid import="lkh-view-grid.html" busy="{{ busy }}" name="list" route="{{ route }}" state="[[ state ]]" params="[[ search ]]"></lkh-view-grid>
+                <kct-pages id="view-switcher" attr-for-selected="name" selected="[[ view ]]" on-itemactivate="__onViewActivate" lazy-load>
+                    <lkh-view-kanban import="lkh-view-kanban.html" busy="{{ busy }}" name="kanban" route="{{ route }}" project="[[ project ]]" params="[[ search ]]"></lkh-view-kanban>
+                    <lkh-view-grid import="lkh-view-grid.html" busy="{{ busy }}" name="list" route="{{ route }}" project="[[ project ]]" params="[[ search ]]"></lkh-view-grid>
                 </kct-pages>
 
             </div>
@@ -50,6 +50,7 @@
             static get is() {
                 return 'lkh-view';
             }
+            
         }
 
         customElements.define(LkhView.is, LkhView);

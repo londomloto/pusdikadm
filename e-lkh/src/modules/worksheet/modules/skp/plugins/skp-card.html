@@ -16,17 +16,14 @@
                 pointer-events: none;
             }
             .item .box-foot {
-                padding: 5px 10px;
+                padding: 5px 5px;
                 font-size: 11px;
-                color: var(--paper-grey-500);
-                pointer-events: none;
+                color: var(--paper-blue-grey-500);
             }
             .item .box-foot iron-icon {
                 --iron-icon-width: 16px;
                 --iron-icon-height: 16px;
-                margin-right: 3px;
                 position: relative;
-                top: -1px;
             }
             .item .box-user {
                 position: absolute;
@@ -42,14 +39,30 @@
                 float: left;
                 margin-left: 2px;
             }
+            .item .box-content {
+                color: var(--paper-blue-grey-500);
+                margin-bottom: 5px;
+            }
+            .item-prop {
+                font-size: 12px;
+                font-weight: 500;
+            }
+            .item-prop iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
+                position: relative;
+                top: -2px;
+            }
             .item-badge {
+                font-size: 11px;
+                font-weight: 500;
+                text-transform: none;
+                padding: 3px 5px;
+                margin: 0;
                 float: left;
             }
-            .item-badge + .item-badge {
-                margin-left: 20px;
-            }
             .item-title {
-                font-weight: 400;
+                font-weight: 500;
                 color: var(--paper-blue-grey-500);
                 font-size: 15px;
             }
@@ -99,13 +112,27 @@
                 display: block;
                 clear: both;
             }
+            .item-desc {
+                padding-right: 50px;
+                font-size: 12px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                color: var(--paper-blue-grey-500);
+            }
+            .item-desc iron-icon {
+                --iron-icon-width: 14px;
+                --iron-icon-height: 14px;
+                position: relative;
+                top: -1px;
+            }
         </style>
         
         <div class="box box-shadow-z2 item" style$="border-left: 2px solid [[ accent ]]">
             <div class="box-body" on-tap="__onCardTap">
-                <h3 class="item-title">[[ record.task.tt_title ]]</h3>
+                <h3 class="item-title">[[ record.task.skp_su_fullname ]]</h3>
                 <!-- <p class="item-meta">
-                    Dibuat oleh <b>[[ record.task.creator_su_fullname ]]</b> [[ record.task.tt_created_dt_relative ]]
+                    Dibuat oleh <b>[[ record.task.creator_su_fullname ]]</b> [[ record.task.skp_created_dt_relative ]]
                 </p> -->
                 <div class="box-label">
                     <template is="dom-repeat" items="[[ record.labels ]]">
@@ -113,18 +140,26 @@
                     </template>
                     <span class="item-clear"></span>
                 </div>
-                <div class="item-content" inner-h-t-m-l="[[ record.task.tt_content ]]"></div>
+                <div class="box-content">
+                    <div class="item-prop">
+                        <iron-icon icon="today"></iron-icon>&nbsp;[[ record.task.skp_period ]]    
+                    </div>
+                </div>
+                <div class="box-items">
+                    <template is="dom-repeat" items="[[ items ]]">
+                        <div class="item-desc"><iron-icon icon="done"></iron-icon>&nbsp;[[ item.text ]]</div>
+                    </template>
+                </div>
             </div>
             <div class="box-user">
-                <div class="item-user" title$="Dibuat oleh [[ record.task.creator_su_fullname ]]">
-                    <img src$="[[ record.task.creator_su_avatar_thumb ]]&w=30&h=30" alt=".">
+                <div class="item-user" title$="Sasaran kerja [[ record.task.skp_su_fullname ]]">
+                    <img src$="[[ record.task.skp_su_avatar_thumb ]]&w=30&h=30" alt=".">
                 </div>
-                <!-- <user-dock items="[[ record.users ]]"></user-dock> -->
             </div>
             <div class="box-foot">
-                <!-- <div class="item-badge">
-                    <iron-icon icon="today"></iron-icon>&nbsp;Dibuat [[ record.task.tt_created_dt_relative ]]    
-                </div>
+                <!-- <paper-button class="item-badge">
+                    <iron-icon icon="today"></iron-icon>&nbsp;[[ record.task.skp_date_formatted ]]    
+                </paper-button>
                 <div class="clearfix"></div> -->
             </div>
         </div>
@@ -139,8 +174,32 @@
             static get properties() {
                 return {
                     accent: { type: String },
-                    record: { type: Object }
+                    record: { type: Object },
+                    items: { type: Array, value: () => ([]) }
                 };
+            }
+
+            static get observers() {
+                return [
+                    '__itemsChanged(record.items.*)'
+                ]
+            }
+
+            __itemsChanged() {
+                let items = (this.record.items || []);
+                let items__ = [];
+
+                if (items.length == 1) {
+                    items__ = [
+                        { text: items[0].ski_desc }
+                    ];
+                } else if (items.length > 1) {
+                    items__ = [
+                        { text: items[0].ski_desc },
+                        { text: '...... ( ' + (items.length - 1) + '+ )' }
+                    ];
+                }
+                this.set('items', items__);
             }
 
             __onCardTap() {

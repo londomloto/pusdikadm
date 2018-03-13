@@ -9,7 +9,6 @@
 <link rel="import" href="../plugins/combo-project.html">
 <link rel="import" href="../styles/project-view-style.html">
 
-
 <script>
     Mixins.ProjectView = Polymer.dedupingMixin(superclass => {
         return class extends superclass {
@@ -22,11 +21,14 @@
                 };
             }
 
-            handleRouteParams(project, action, type) {
-                if (project === undefined  || project == 'tour' || project == 'create') return;
-                if (action != 'view') return;
+            constructor() {
+                super();
+                this.__initialized = false;
+            }
 
-                switch(type) {
+            handleRouteParams(project, action, view) {
+
+                switch(view) {
                     case 'list':
                         this.set('view', 'list');
                         break;
@@ -34,14 +36,19 @@
                         this.set('view', 'kanban');
                 }
 
-                this.__loadReferences().then(() => {
+                if ( ! this.__initialized) {
+                    this.__initialized = true;
+                    this.__loadReferences().then(() => {
+                        this.set('project', project);
+                    });
+                } else {
                     this.set('project', project);
-                });
-
+                }
             }
 
             handleResizing(width, height) {
                 let viewItem = this.$['view-switcher'].selectedItem;
+
                 if (viewItem && viewItem.handleResizing) {
                     viewItem.handleResizing(width, height);
                 }
@@ -65,12 +72,21 @@
                 return type == view ? 'active' : '';
             }
 
+            __onViewActivate(e) {
+                let view = e.detail.activeItem;
+                view.activate && view.activate();
+            }
+
             __onComboProjectChange(e) {
-                let project = e.target.value;
+                let combo = this.$['combo-project'];
+                let project = combo.value;
+
                 if (project) {
-                    this.set('route.path', '/worksheet/' + project + '/view/' + this.view);    
+                    this.set('route.path', '/worksheet/' + project + '/view/' + this.view);
+                    // revert back
+                    combo.value = this.project;
                 } else {
-                    e.target.value = this.project;
+                    // combo.value = this.project;
                 }
             }
 

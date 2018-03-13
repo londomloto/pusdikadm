@@ -9,6 +9,7 @@
 <link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
 <link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
 <link rel="import" href="../../../../cores/elements/kct-form/kct-form-validator.html">
+<link rel="import" href="../../../../cores/elements/kct-date/kct-date-picker.html">
 <link rel="import" href="../../../../cores/elements/kct-combobox/kct-combobox.html">
 <link rel="import" href="../settings/blocks/setting-header-block.html">
 
@@ -58,7 +59,7 @@
                                         <paper-input label="Tempat Lahir" value="{{ record.su_pob }}"></paper-input>
                                     </div>
                                     <div>
-                                        <paper-input label="Tanggal Lahir" value="{{ record.su_dob }}"></paper-input>
+                                        <kct-date-picker label="Tanggal Lahir" value="{{ record.su_dob }}"></kct-date-picker>
                                     </div>
                                 </kct-column>
                                 <paper-input label="Nomor Induk Pegawai" value="{{ record.su_no }}"></paper-input>

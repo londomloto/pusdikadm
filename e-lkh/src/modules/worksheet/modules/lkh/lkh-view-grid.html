@@ -14,7 +14,8 @@
             columns="[[ columns ]]" 
             selection-model="row" 
             row-height="50" 
-            hide-header>
+            hide-header 
+            pagination>
             <template preserve-content>
                 <style>
                     .item-title { color: var(--paper-cyan-500);  }
@@ -58,13 +59,6 @@
                                         <div class="item-title">${e.data.lkh_title}</div>
                                         <div class="item-meta">Dibuat oleh <b>${e.data.creator_su_fullname}</b> ${e.data.su_created_dt_relative}</div>
                                     `;
-                                }
-                            },
-                            { 
-                                text: 'Target Penyelesaian',
-                                dataIndex: 'su_task_due',
-                                renderer: (e) => {
-                                    return e.data.su_task_due_formatted;
                                 }
                             },
                             { 

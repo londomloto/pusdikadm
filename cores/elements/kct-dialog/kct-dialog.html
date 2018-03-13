@@ -256,7 +256,9 @@
 
                 open() {
                     this.__relocate();
-                    this.$.dialog.open();
+                    this.__stamp.promise.then(() => {
+                        this.$.dialog.open();
+                    });
                 }
 
                 recenter() {

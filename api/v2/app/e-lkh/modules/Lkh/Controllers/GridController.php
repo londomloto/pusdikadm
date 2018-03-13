@@ -1,22 +1,30 @@
 <?php
-namespace App\Registration\Controllers;
+namespace App\Lkh\Controllers;
 
-use App\Registration\Models\Task;
-use App\Registration\Models\TaskStatus;
-use App\Registration\Models\TaskLabel;
+use App\Lkh\Models\Task;
+use App\Lkh\Models\TaskStatus;
+use App\Lkh\Models\TaskLabel;
 use App\Projects\Models\Project;
 use Micro\Helpers\Theme;
 
 class GridController extends \Micro\Controller {
 
     public function findAction() {
+        return array(
+            'success' => TRUE,
+            'data' => array(),
+            'total' => 0
+        );
+    }
+
+    public function findxAction() {
         $params = $this->request->getQuery();
         $columns = array('task.su_id');
         $query = Task::get()
             ->alias('task')
             ->columns('task.su_id')
-            ->join('App\Registration\Models\TaskStatus', 'task.su_id = task_status.tus_su_id', 'task_status', 'left')
-            ->join('App\Registration\Models\TaskLabel', 'task.su_id = task_label.tul_su_id', 'task_label', 'left')
+            ->join('App\Lkh\Models\TaskStatus', 'task.su_id = task_status.tus_su_id', 'task_status', 'left')
+            ->join('App\Lkh\Models\TaskLabel', 'task.su_id = task_label.tul_su_id', 'task_label', 'left')
             ->join('App\Users\Models\User', 'task.su_created_by = creator.su_id', 'creator', 'left')
             ->groupBy('task.su_id');
 

@@ -1,0 +1,241 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../../cores/elements/kct-checkbox/kct-checkbox.html">
+
+<dom-module id="lookup-items">
+    <template>
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-dialog id="dialog" title="Cari Kegiatan" width="480" height="100%" fit-content>
+            <template preserve-content>
+                <style>
+                    .vbox {
+                        height: 100%;
+                        @apply --layout-vertical;
+                    }
+                    .vbox > .flex {
+                        overflow-x: hidden;
+                        overflow-y: auto;
+                        position: relative;
+                        @apply --layout-flex;
+                    }
+                    .header {
+                        border-bottom: 1px solid #dfdfdf;
+                        padding: 0 1.5rem;
+                    }
+                    .footer {
+                        text-align: center;
+                        padding: 8px 0;
+                        border-top: 1px solid #dfdfdf;
+                    }
+                    .footer > div {
+                        display: inline-block;
+                    }
+                    .body {
+
+                    }
+                    .query {
+                        --paper-input-container-underline: {
+                            display: none;
+                        };
+                        --paper-input-container-underline-focus: {
+                            display: none;
+                        };
+                    }
+                    paper-listbox {
+                        padding: 0;
+                    }
+                    paper-item {
+                        padding: 0 1.5rem;
+                        font-weight: normal;
+                        cursor: pointer;
+                    }
+                    paper-item + paper-item {
+                        border-top: 1px solid #dfdfdf;
+                    }
+                    .check {
+                        float: left;
+                        width: 24px;
+                        height: 24px;
+
+                    }
+                    .text {
+                        margin-left: 15px;
+                    }
+                    .clear {
+                        clear: both;
+                    }
+                    kct-checkbox {
+                        --paper-checkbox-margin: 0;
+                    }
+                </style>
+                <div slot="dialog-body">
+                    <div class="vbox">
+                        <div class="header">
+                            <paper-input class="query" value="{{ query }}" placeholder="Pencarian..." no-label-float></paper-input>
+                        </div>
+                        <div class="body flex">
+                            <paper-listbox>
+                                <template is="dom-repeat" items="[[ items ]]">
+                                    <paper-item>
+                                        <div class="check">
+                                            <kct-checkbox value="{{ item.lki_checked }}"></kct-checkbox>
+                                        </div>
+                                        <div class="text">[[ item.lki_desc ]]</div>
+                                        <div class="clear"></div>
+                                    </paper-item>
+                                </template>
+                            </paper-listbox>
+                        </div>
+                        <div class="footer">
+                            <paper-icon-button data-action="first" on-tap="__onPageTap" icon="first-page"></paper-icon-button>
+                            <paper-icon-button data-action="prev" on-tap="__onPageTap" icon="chevron-left"></paper-icon-button>
+                            <div>
+                                [[ paging.page ]] of [[ paging.pages ]]
+                            </div>
+                            <paper-icon-button data-action="next" on-tap="__onPageTap" icon="chevron-right"></paper-icon-button>
+                            <paper-icon-button data-action="last" on-tap="__onPageTap" icon="last-page"></paper-icon-button>
+                        </div>
+                    </div>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onSubmitTap">Tambah</paper-button>
+                    <paper-button on-tap="__onCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+    </template>
+    <script>
+        class LookupItems extends Polymer.Element {
+            static get is() {
+                return 'lookup-items';
+            }
+            static get properties() {
+                return {
+                    selection: { type: Array, value: () => ([]) },
+                    query: { type: String },
+                    paging: {
+                        type: Object,
+                        value: () => ({
+                            start: 0,
+                            limit: 10,
+                            total: 0,
+                            pages: 0,
+                            page: 1
+                        })
+                    }
+                };
+            }
+            static get observers() {
+                return [
+                    '__queryChanged(query)'
+                ];
+            }
+            open() {
+                this.set('selection', []);
+                this.$.dialog.open();
+                this.__load();
+            }
+            close() {
+                this.dispatchEvent(new CustomEvent('close'));
+                this.$.dialog.close();
+            }
+            __load() {
+                let payload = {};
+                
+                if (this.query) {
+                    payload.query = this.query;
+                    payload.fields = ['lki_desc'];
+                }
+
+                payload.start = this.paging.start;
+                payload.limit = this.paging.limit;
+
+                this.dispatchEvent(new CustomEvent('beforeload', {
+                    detail: {
+                        options: payload
+                    }
+                }));
+
+                this.$.ajax.GET('/lkh/lkh-items', payload).then(res => {
+                    let items = res.data.map(e => {
+                        e.lki_checked = 0;
+                        return e;
+                    });
+
+                    let total = +res.total,
+                        start = this.paging.start, 
+                        limit = this.paging.limit,
+                        pages = Math.ceil(total / this.paging.limit),
+                        page  = Math.ceil((start - 1) / limit) + 1;
+
+                    this.set('paging.total', total);
+                    this.set('paging.pages', pages);
+                    this.set('paging.page', page);
+
+                    this.set('items', items);
+                });
+            }
+            __queryChanged(query) {
+                this.__debounce = Polymer.Debouncer.debounce(
+                    this.__debounce,
+                    Polymer.Async.timeOut.after(200),
+                    () => {
+                        this.set('paging.start', 0);
+                        this.__load();
+                    }
+                );
+                Polymer.enqueueDebouncer(this.__debounce);
+            }
+            __onPageTap(e) {
+                let action = e.target.dataset.action,
+                    limit = this.paging.limit,
+                    pages = this.paging.pages,
+                    page = this.paging.page;
+
+                switch(action) {
+                    case 'first':
+                        page = 1;
+                        break;
+                    case 'prev':
+                        page -= 1;
+                        if (page < 1) {
+                            page = 1;
+                        }
+                        break;
+                    case 'next':
+                        page += 1;
+                        if (page >= pages) {
+                            page = pages;
+                        }
+                        break;
+                    case 'last':
+                        page = pages;
+                        break;
+                }
+                
+                let start = (page - 1) * limit;
+
+                this.set('paging.start', start);
+                this.__load();
+            }
+            __onSubmitTap() {
+                let selection = (this.items || []).filter(e => {
+                    return e.lki_checked == 1;
+                });
+                this.set('selection', selection);
+                this.close();
+            }
+            __onCloseTap() {
+                this.set('selection', []);
+                this.close();
+            }
+        }
+        customElements.define(LookupItems.is, LookupItems);
+    </script>
+</dom-module>

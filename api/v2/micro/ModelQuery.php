@@ -190,6 +190,15 @@ class ModelQuery {
                             case 'not in':
                                 $this->__builder->notInWhere($attr['field'], $val[1]);
                                 break;
+                            case 'between':
+                                $pkey1 = $pkey.'_1';
+                                $pkey2 = $pkey.'_2';
+
+                                $bind[$pkey1] = $val[1][0];
+                                $bind[$pkey2] = $val[1][1];
+
+                                $this->__builder->andWhere($attr['field']." $oper :{$pkey1}: AND :{$pkey2}: ", $bind);
+                                break;
                         }
                     } else {
                         $bind[$pkey] = $val;

@@ -26,18 +26,9 @@
                 ];
             }
 
-            handleRouteParams(project, action, type) {
-                if (project === undefined  || project == 'tour' || project == 'create') return;
-                if (action != 'view') return;
-                if (type != 'list') return;
-
+            activate() {
                 if (this.$.grid) {
-                    let resizing = setTimeout(() => {
-                        clearTimeout(resizing);
-                        resizing = null;
-                        this.$.grid.resize();
-                        this.set('project', project);
-                    }, 10);
+                    this.$.grid.deferAutoresize();
                 }
             }
 

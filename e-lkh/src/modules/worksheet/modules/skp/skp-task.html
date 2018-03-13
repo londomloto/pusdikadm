@@ -1,5 +1,9 @@
 <link rel="import" href="../../shared/project-task.html">
 
+<link rel="import" href="blocks/skp-task-prop.html">
+<link rel="import" href="blocks/skp-task-logs.html">
+<link rel="import" href="blocks/skp-task-form.html">
+
 <dom-module id="skp-task">
     <template>
         <style include="project-task-style"></style>
@@ -29,8 +33,8 @@
                 
                 <kct-hbox class="workspace-wrapper">
                     <div class="flex workspace-body">
-                        <taskform-block 
-                            id="form" 
+                        <skp-task-form 
+                            id="taskform" 
                             project="[[ projectRecord ]]" 
                             record="{{ taskRecord }}" 
                             workspace="[[ workspaceRecord ]]" 
@@ -40,16 +44,17 @@
                             route="{{ route }}" 
                             invalid="{{ formInvalid }}" 
                             buttons="{{ formButtons }}"
-                            loading="[[ loading ]]"></taskform-block>
+                            loading="[[ loading ]]"></skp-task-form>
 
-                        <activity-block 
-                            id="activity" 
+                        <skp-task-logs 
+                            id="tasklogs" 
                             record="{{ taskRecord }}" 
                             hidden$="[[ __phantom ]]" 
-                            loading="[[ loading ]]"></activity-block> 
+                            metadata="[[ metadata ]]" 
+                            loading="[[ loading ]]"></skp-task-logs> 
                     </div>
                     <div class="workspace-side hidden-sm hidden-md">
-                        <taskprop-block 
+                        <skp-task-prop 
                             id="taskprop" 
                             project="[[ projectRecord ]]" 
                             action="[[ actionRecord ]]" 
@@ -58,7 +63,8 @@
                             user="[[ user ]]" 
                             route="{{ route }}"
                             loading="[[ loading ]]" 
-                            on-after-update="__onPropAfterUpdate"></taskprop-block>
+                            metadata="[[ metadata ]]" 
+                            on-after-update="__onPropAfterUpdate"></skp-task-prop>
                     </div>
                 </kct-hbox>
 
@@ -72,6 +78,38 @@
             static get is() {
                 return 'skp-task';
             }
+
+            static get properties() {
+                return {
+                    metadata: { 
+                        type: Object,
+                        value: () => ({
+                            namespace: '/skp',
+                            service_url: '/skp/kanban',
+                            primary_val: null,
+                            primary_key: 'skp_id',
+                            project_key: 'skp_task_project',
+                            due_key: 'skp_task_due',
+                            due_formatted_key: 'skp_task_due_formatted',
+                            status_primary_key: 'sks_id',
+                            status_primary_val: null,
+                            status_status_key: 'sks_status',
+                            status_worker_key: 'sks_worker',
+                            status_target_key: 'sks_target'
+                        })
+                    }
+                };
+            }
+
+            init() {
+                this.set('taskRecord', {
+                    task: {},
+                    status: {},
+                    labels: [],
+                    items: []
+                });
+            }
+
         }
         
         customElements.define(SkpTask.is, SkpTask);

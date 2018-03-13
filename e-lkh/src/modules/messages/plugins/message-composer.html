@@ -74,11 +74,11 @@
                 
                 <kct-combobox-multi label="Kepada" values="{{ message.smo_recipients }}">
                     <kct-combobox 
+                        id="combo-user" 
                         url="/users" 
                         page-size="10" 
                         item-label-path="su_fullname" 
-                        item-value-path="su_id" 
-                        autoload>
+                        item-value-path="su_id">
                         <template>
                             <style>
                                 .name { font-weight: 500; color: #333;  }
@@ -142,6 +142,7 @@
             }
 
             initialize() {
+                this.$['combo-user'].load();
                 this.set('busy', false);
                 this.set('message', {
                     smo_recipients: []

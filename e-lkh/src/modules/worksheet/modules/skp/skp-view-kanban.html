@@ -8,7 +8,7 @@
         
         <kct-ajax id="ajax"></kct-ajax>
         <kct-event-subscriber on-notify="__onNotify"></kct-event-subscriber>
-        
+
         <kct-worksheet id="worksheet" columns="3">
             <template is="dom-repeat" items="[[ worksheetRecord.ks_panels ]]" as="panel">
                 <kct-worksheet-panel title="[[ panel.kp_title ]]" accent="[[ panel.kp_accent ]]" hide-condensed hide-secondary>
@@ -33,6 +33,18 @@
         class SkpViewKanban extends Mixins(KctView).use(Mixins.ProjectViewKanban) {
             static get is() {
                 return 'skp-view-kanban';
+            }
+
+            static get properties() {
+                return {
+                    metadata: {
+                        type: Object,
+                        value: () => ({
+                            service_url: '/skp/kanban',
+                            status_primary_key: 'sks_id'
+                        })
+                    }
+                };
             }
         }
 

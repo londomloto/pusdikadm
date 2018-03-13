@@ -37,9 +37,9 @@
 
             <div class="flex main">
 
-                <kct-pages id="view-switcher" attr-for-selected="name" selected="[[ view ]]" lazy-load>
-                    <pendaftaran-view-kanban import="pendaftaran-view-kanban.html" busy="{{ busy }}" name="kanban" route="{{ route }}" state="[[ state ]]" params="[[ search ]]"></pendaftaran-view-kanban>
-                    <pendaftaran-view-grid import="pendaftaran-view-grid.html" busy="{{ busy }}" name="list" route="{{ route }}" state="[[ state ]]" params="[[ search ]]"></pendaftaran-view-grid>
+                <kct-pages id="view-switcher" attr-for-selected="name" selected="[[ view ]]" on-itemactivate="__onViewActivate" lazy-load>
+                    <pendaftaran-view-kanban import="pendaftaran-view-kanban.html" busy="{{ busy }}" name="kanban" route="{{ route }}" project="[[ project ]]" params="[[ search ]]"></pendaftaran-view-kanban>
+                    <pendaftaran-view-grid import="pendaftaran-view-grid.html" busy="{{ busy }}" name="list" route="{{ route }}" project="[[ project ]]" params="[[ search ]]"></pendaftaran-view-grid>
                 </kct-pages>
 
             </div>

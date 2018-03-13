@@ -153,9 +153,9 @@
         <kct-media screen="{{ screen }}"></kct-media>
 
         <kct-event-subscriber 
-            on-project-saved="__onProjectSaved" 
-            on-project-removed="__onProjectRemoved"></kct-event-subscriber>
-
+            on-project-saved="__onProjectSavedPublished" 
+            on-project-removed="__onProjectRemovedPublished"></kct-event-subscriber>
+            
         <kct-vbox>
             <header-block hide-nav hide-header hidden></header-block>
             <div class="flex main">
@@ -284,11 +284,11 @@
                 this.set('route.path', '/worksheet/' + projectItem.sp_name + '/info');
             }
 
-            __onProjectSaved() {
+            __onProjectSavedPublished() {
                 this.__loadProjects();
             }
 
-            __onProjectRemoved() {
+            __onProjectRemovedPublished() {
                 this.__loadProjects();
             }
         }

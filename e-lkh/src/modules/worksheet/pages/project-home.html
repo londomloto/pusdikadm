@@ -1,6 +1,7 @@
 <link rel="import" href="../../../../../cores/elements/kct-view/kct-view.html">
 <link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../../../../cores/elements/kct-pages/kct-pages.html">
+<link rel="import" href="../../../../../cores/elements/kct-event/kct-event-subscriber.html">
 
 <dom-module id="project-home">
     <template>
@@ -16,7 +17,7 @@
         
         <kct-ajax id="ajax"></kct-ajax>
         <kct-pages id="switcher" attr-for-selected="name" selected="[[ page ]]"></kct-pages>
-
+        <kct-event-subscriber on-project-saved="__onProjectSavedPublished"></kct-event-subscriber>
     </template>
     <script>
         {
@@ -29,17 +30,20 @@
 
                 static get properties() {
                     return {
-                        page: { type: String },
-                        projectRecord: { type: Object }
+                        page: { type: String }
                     };
                 }
 
                 constructor() {
                     super();
+
                     this.__pages = {};
+                    this.__projects = {};
                 }
 
-                handleRouteParams(project, action) {
+                handleRouteParams(...params) {
+                    let [project, action] = params;
+
                     if (project === undefined  || project == 'tour' || project == 'create') return;
 
                     if (action == undefined) {
@@ -53,8 +57,8 @@
                         this.set('page', '');
                         this.mask('Loading..');
 
-                        this.__resolveProject(project).then(() => {
-                            let module = this.projectRecord && this.projectRecord.sp_worksheet_module;
+                        this.__resolveProject(project).then(projectRecord => {
+                            let module = projectRecord && projectRecord.sp_worksheet_module;
 
                             if (module) {
 
@@ -74,19 +78,23 @@
                                     Polymer.importHref(path, () => {
                                         this.unmask();
 
-                                        let node = this.__createPage(page);
-                                        this.$.switcher.appendChild(node);
+                                        let fragment = this.__createPage(page);
+                                        this.$.switcher.appendChild(fragment);
+
+                                        page.node = this.$.switcher.querySelector(name);
 
                                         let timer = setTimeout(() => {
                                             clearTimeout(timer);
                                             timer = null;
                                             this.set('page', page.name);
+                                            page.node.handleRouteParams.apply(page.node, params);
                                         }, 10);
                                         
                                     });
                                 } else {
                                     this.unmask();
                                     this.set('page', page.name);
+                                    page.node.handleRouteParams.apply(page.node, params);
                                 }
 
                             } else {
@@ -106,14 +114,16 @@
                 }
 
                 __resolveProject(project) {
-                    let reload = (this.projectRecord && this.projectRecord.sp_name != project) || !this.projectRecord;
-                    
-                    if (reload) {
+                    let record = this.__projects[project];
+
+                    if ( ! record) {
                         return this.$.ajax.GET('/projects/' + project + '/load').then(res => {
-                            this.set('projectRecord', res.data);
+                            record = res.data;
+                            this.__projects[project] = record;
+                            return record;
                         });
                     } else {
-                        return Promise.resolve();
+                        return Promise.resolve(record);
                     }
                 }
 
@@ -122,12 +132,31 @@
 
                     if ( ! template) {
                         template = document.createElement('template');
-                        template.innerHTML = `<${page.name} name="${page.name}" config="{{ config }}" route="{{ route }}" state="[[ state ]]" user="[[ user ]]"></${page.name}>`;
+                        template.innerHTML = `
+                            <${page.name} 
+                                name="${page.name}" 
+                                config="{{ config }}" 
+                                route="{{ route }}"
+                                user="[[ user ]]"></${page.name}>
+                        `;
+
                         cachedTemplates[page.name] = template;
                     }
 
-                    let node = this._stampTemplate(template);
-                    return node;
+                    let fragment = this._stampTemplate(template);
+                    return fragment;
+                }
+
+                __onProjectSavedPublished(e) {
+                    let res = e.detail.response;
+                    if (res.success) {
+                        // update cached
+                        let project = res.data.sp_name;
+
+                        if (this.__projects[project]) {
+                            this.__projects[project] = res.data;
+                        }
+                    }
                 }
             }
 

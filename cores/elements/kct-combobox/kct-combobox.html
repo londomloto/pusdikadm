@@ -228,7 +228,9 @@
                             value: () => ({
                                 start: 0,
                                 limit: 0,
-                                total: 0
+                                total: 0,
+                                pages: 0,
+                                page: 0
                             })
                         },
                         pageSize: { type: Number },
@@ -334,7 +336,18 @@
                         let items = res.data;
                         this.set('items', items);
 
-                        this.__setPaging({ total: res.total });
+                        let total = +res.total;
+                        let limit = +this.paging.limit;
+                        let start = +this.paging.start;
+                        let pages = Math.ceil(total / limit);
+                        let page  = Math.ceil((start - 1) / limit) + 1;
+
+                        this.__setPaging({ 
+                            total: total,
+                            pages: pages,
+                            page: page
+                        });
+
                         this.dispatchEvent(new CustomEvent('load'));
                     });
                 }
@@ -452,7 +465,7 @@
                                 if (this.__pagingEnabled) {
                                     let params = {};
 
-                                    params[this.itemValuePath] = value
+                                    params[this.itemValuePath] = value;
 
                                     this.__setPayload({ 
                                         start: 0,  
@@ -465,6 +478,8 @@
                                             limit: this.pageSize,
                                             params: {}
                                         });
+
+                                        
                                         let valueIndex = this._indexOfValue(value, this.filteredItems);
 
                                         if (valueIndex >= 0) {
@@ -600,43 +615,36 @@
                 __onPagination(e) {
                     let action = e.detail.action,
                         paging = this.paging,
-                        total  = isNaN(+paging.total) ? 0 : +paging.total,
                         pages  = isNaN(+paging.pages) ? 0 : +paging.pages,
                         limit  = isNaN(+paging.limit) ? 0 : +paging.limit,
-                        start  = isNaN(+paging.start) ? 0 : +paging.start;
+                        page = isNaN(+paging.page) ? 1 : +paging.page;
 
                     switch(action) {
                         case 'first':
-                            start = 0;
-
+                            page = 1;
                             break   
                         case 'prev':
-                            start -= limit;
-
-                            if (start <= 0) {
-                                start = 0;
+                            page -= 1;
+                            
+                            if (page <= 1) {
+                                page = 1;
                             }
 
                             break
                         case 'next':
-
-                            start += limit;
-
-                            if (start >= total) {
-                                start = total - limit;
+                            page += 1;
+                            if (page >= pages) {
+                                page = pages;
                             }
 
                             break
                         case 'last':
-
-                            start = total - limit;
-
-                            if (start < 0) {
-                                start = 0;
-                            }
-
+                            page = pages;
+                            
                             break
                     }
+
+                    let start = (page - 1) * limit;
 
                     this.__setPayload({ start: start });
                     this.load();

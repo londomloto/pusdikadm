@@ -62,12 +62,12 @@
                                     path,
                                     () => {
                                         
-                                        this.__activatePage();
                                         this.__resizing = Polymer.Debouncer.debounce(
                                             this.__resizing,
                                             Polymer.Async.timeOut.after(300),
                                             () => {
                                                 this.notifyResize();
+                                                this.__activatePage();
                                             }
                                         );
                                         Polymer.enqueueDebouncer(this.__resizing);

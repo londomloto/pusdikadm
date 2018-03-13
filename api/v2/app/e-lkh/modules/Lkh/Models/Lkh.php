@@ -50,6 +50,7 @@ class Lkh extends \Micro\Model {
     public function toArray($columns = NULL) {
         $data = parent::toArray($columns);
         $data['lkh_title'] = $this->getTitle();
+        $data['lkh_period'] = DateHelper::format($this->lkh_date, 'l, d M Y');
         $data['lkh_date_formatted'] = DateHelper::format($this->lkh_date, 'd M Y');
 
         if (($user = $this->user)) {
@@ -70,7 +71,7 @@ class Lkh extends \Micro\Model {
     }
 
     public function getSortedItems() {
-        return $this->getItems(array('orderBy' => 'lki_id DESC'));
+        return $this->getItems(array('order' => 'lki_id DESC'));
     }
 
     public function getTitle() {

@@ -37,9 +37,9 @@
 
             <div class="flex main">
 
-                <kct-pages id="view-switcher" attr-for-selected="name" selected="[[ view ]]" lazy-load>
-                    <absensi-view-kanban import="absensi-view-kanban.html" busy="{{ busy }}" name="kanban" route="{{ route }}" state="[[ state ]]" params="[[ search ]]"></absensi-view-kanban>
-                    <absensi-view-grid import="absensi-view-grid.html" busy="{{ busy }}" name="list" route="{{ route }}" state="[[ state ]]" params="[[ search ]]"></absensi-view-grid>
+                <kct-pages id="view-switcher" attr-for-selected="name" selected="[[ view ]]" on-itemactivate="__onViewActivate" lazy-load>
+                    <absensi-view-kanban import="absensi-view-kanban.html" busy="{{ busy }}" name="kanban" route="{{ route }}" project="[[ project ]]" params="[[ search ]]"></absensi-view-kanban>
+                    <absensi-view-grid import="absensi-view-grid.html" busy="{{ busy }}" name="list" route="{{ route }}" project="[[ project ]]" params="[[ search ]]"></absensi-view-grid>
                 </kct-pages>
 
             </div>

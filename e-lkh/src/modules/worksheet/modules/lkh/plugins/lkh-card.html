@@ -39,6 +39,20 @@
                 float: left;
                 margin-left: 2px;
             }
+            .item .box-content {
+                color: var(--paper-blue-grey-500);
+                margin-bottom: 5px;
+            }
+            .item-prop {
+                font-size: 12px;
+                font-weight: 500;
+            }
+            .item-prop iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
+                position: relative;
+                top: -2px;
+            }
             .item-badge {
                 font-size: 11px;
                 font-weight: 500;
@@ -46,9 +60,6 @@
                 padding: 3px 5px;
                 margin: 0;
                 float: left;
-            }
-            .item-badge + .item-badge {
-                
             }
             .item-title {
                 font-weight: 500;
@@ -129,6 +140,11 @@
                     </template>
                     <span class="item-clear"></span>
                 </div>
+                <div class="box-content">
+                    <div class="item-prop">
+                        <iron-icon icon="today"></iron-icon>&nbsp;[[ record.task.lkh_period ]]    
+                    </div>
+                </div>
                 <div class="box-items">
                     <template is="dom-repeat" items="[[ items ]]">
                         <div class="item-desc"><iron-icon icon="done"></iron-icon>&nbsp;[[ item.text ]]</div>
@@ -141,10 +157,10 @@
                 </div>
             </div>
             <div class="box-foot">
-                <paper-button class="item-badge">
+                <!-- <paper-button class="item-badge">
                     <iron-icon icon="today"></iron-icon>&nbsp;[[ record.task.lkh_date_formatted ]]    
                 </paper-button>
-                <div class="clearfix"></div>
+                <div class="clearfix"></div> -->
             </div>
         </div>
 

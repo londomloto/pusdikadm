@@ -4,7 +4,7 @@
         <style include="form-style">
             .input-task {
                 margin: 15px 0 5px 0;
-                padding: 15px 40px 15px 15px;
+                padding: 15px 15px 15px 15px;
                 background-color: var(--paper-grey-100);
                 border-radius: 3px;
                 position: relative;
@@ -14,6 +14,12 @@
                 right: 5px;
                 top: 50%;
                 margin-top: -20px;
+                color: #888;
+            }
+            .input-task paper-button {
+                background-color: var(--paper-blue-500);
+                font-size: 12px;
+                color: #fff;
             }
             .task-item {
                 padding: 15px 15px 15px 6px;
@@ -129,10 +135,15 @@
             <h3 class="section-title">Daftar Kegiatan</h3>
             <div>Tambahkan kegiatan-kegiatan yang Anda lakukan pada kolom di bawah ini.</div>
             <div class="input-task">
-                <paper-input id="input" on-keydown="__onInputKeydown" placeholder="Tulis kegiatan di sini kemudian tekan enter..." no-label-float></paper-input>
-                <paper-icon-button on-tap="__onAddItemTap" icon="add"></paper-icon-button>
+                <paper-input id="input" on-keydown="__onInputKeydown" placeholder="Tambahkan kegiatan di sini kemudian tekan enter..." no-label-float></paper-input>
+                <div class="m-t-sm">
+                    <paper-button on-tap="__onAddItemTap">Tambahkan ke daftar</paper-button>&nbsp;&nbsp;atau cari dari <a on-tap="__onLookupTap" href="javascript:;">kegiatan harian</a> yang sudah pernah dilakukan
+                </div>
             </div>
             <div class="task-list">
+                <div class="task-item" hidden$="[[ !__savingItem ]]">
+                    <div style="padding: 0 10px">Sedang menambahkan item...</div>
+                </div>
                 <template is="dom-repeat" items="[[ record.items ]]">
                     <kct-hbox class="task-item">
                         <div class="icon">
@@ -154,7 +165,7 @@
                                         always-float-label></kct-combobox>
                                 </div>
                                 <div class="flex p-l-sm">
-                                    <kct-input-number label="Biaya" mask="#.###,00" value="{{ item.lki_cost }}" always-float-label></kct-input-number>
+                                    <kct-input-number label="Biaya" mask="#.###" value="{{ item.lki_cost }}" always-float-label></kct-input-number>
                                 </div>
                             </kct-hbox>
                         </div>
@@ -181,6 +192,11 @@
                 return [
                     '__validationChanged(record.task.lkh_su_id, record.task.lkh_date)'
                 ];
+            }
+
+            constructor() {
+                super();
+                this.__savingItem = false;
             }
 
             initialize() {
@@ -237,12 +253,29 @@
                         value = 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua';
                     }
 
-                    this.unshift('record.items', {
-                        lki_desc: value,
-                        lki_unit: 'dokumen',
-                        lki_cost: 0,
-                        lki_volume: 1
+                    let data = {
+                        ti_desc: value,
+                        ti_user: this.record.task.lkh_su_id,
+                        ti_type: 'lkh'
+                    };
+
+                    this.set('__savingItem', true);
+
+                    this.$.ajax.POST('/items', data).then(res => {
+                        this.set('__savingItem', false);
+
+                        if (res.success) {
+                            this.unshift('record.items', {
+                                lki_desc: value,
+                                lki_unit: 'dokumen',
+                                lki_cost: 0,
+                                lki_volume: 1,
+                                lki_ti_id: res.data.ti_id
+                            });
+                        }
                     });
+
+                    
                 }
                 this.$.input.value = '';
             }
@@ -290,6 +323,37 @@
                 }
             }
 
+            __onLookupTap() {
+                if ( ! this.$['lookup-items']) {
+                    Polymer.importHref(this.resolveUrl('../plugins/lookup-items.html'), () => {
+                        let lov = document.createElement('lookup-items');
+                        
+                        lov.addEventListener('beforeload', e => {
+                            e.detail.options.lookup = 'lkh';
+                            e.detail.options.params = {
+                                ti_user: this.record.task.lkh_su_id
+                            };
+                        });
+
+                        lov.addEventListener('close', () => {
+                            lov.selection.forEach(item => {
+                                this.unshift('record.items', {
+                                    lki_desc: item.lki_desc,
+                                    lki_volume: 1,
+                                    lki_unit: 'dokumen',
+                                    lki_cost: 0,
+                                    lki_ti_id: item.lki_ti_id
+                                });
+                            });
+                        });
+                        this.shadowRoot.appendChild(lov);
+                        lov.open();
+                        this.$['lookup-items'] = lov;
+                    });
+                } else {
+                    this.$['lookup-items'].open();
+                }
+            }
             
             __onInputKeydown(e) {
                 if (e.code == 'Enter') {
