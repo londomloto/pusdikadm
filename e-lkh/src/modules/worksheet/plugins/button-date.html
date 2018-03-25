@@ -1,0 +1,48 @@
+<link rel="import" href="../../../../../cores/bower_components/vaadin-date-picker/vaadin-date-picker-light.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-input/paper-input.html">
+
+<dom-module id="button-date">
+    <template>
+        <style>
+            paper-item {
+                cursor: pointer;
+                color: #888;
+            }
+            paper-input {
+                display: none;
+            }
+        </style>
+        <vaadin-date-picker-light 
+            min="[[ min ]]" 
+            max="[[ max ]]" 
+            on-iron-overlay-closed="__onPickerClose" 
+            attr-for-value="value">
+            <paper-item>
+                <iron-icon icon="[[ icon ]]"></iron-icon>
+                <paper-input></paper-input>
+            </paper-item>
+        </vaadin-date-picker-light>
+    </template>
+    <script>
+        class ButtonDate extends Polymer.Element {
+            static get is() {
+                return 'button-date';
+            }
+            static get properties() {
+                return {
+                    icon: { type: String, value: 'today' },
+                    value: { type: String, value: '', notify: true },
+                    min: { type: String },
+                    max: { type: String }
+                };
+            }
+            __onPickerClose(e) {
+                let value = e.target.value;
+                this.set('value', value);
+                this.dispatchEvent(new CustomEvent('change'));
+            }
+        }
+        customElements.define(ButtonDate.is, ButtonDate);
+    </script>
+</dom-module>

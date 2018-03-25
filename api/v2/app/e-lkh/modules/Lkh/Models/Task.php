@@ -14,7 +14,6 @@ class Task extends Lkh implements \App\Tasks\Interfaces\TaskModel {
         
         parent::initialize();
 
-
         $this->hasMany(
             'lkh_id',
             'App\Lkh\Models\TaskStatus',
@@ -24,6 +23,30 @@ class Task extends Lkh implements \App\Tasks\Interfaces\TaskModel {
                 'foreignKey' => array(
                     'action' => Relation::ACTION_CASCADE
                 )
+            )
+        );
+
+        $this->hasMany(
+            'lkh_id',
+            'App\Lkh\Models\TaskUser',
+            'lku_lkh_id',
+            array(
+                'alias' => 'TaskUsers',
+                'foreignKey' => array(
+                    'action' => Relation::ACTION_CASCADE
+                )
+            )
+        );
+
+        $this->hasManyToMany(
+            'lkh_id',
+            'App\Lkh\Models\TaskUser',
+            'lku_lkh_id',
+            'lku_su_id',
+            'App\Users\Models\User',
+            'su_id',
+            array(
+                'alias' => 'Users'
             )
         );
 
@@ -139,9 +162,9 @@ class Task extends Lkh implements \App\Tasks\Interfaces\TaskModel {
         if (($creator = $this->creator)) {
             
             $data['creator_su_fullname'] = $creator->getName();
-            $data['creator_sr_name'] = $creator->role ? $creator->role->sr_name : '';
+            $data['creator_su_no'] = $creator->su_no;
+            $data['creator_su_grade'] = $creator->su_grade;
             $data['creator_su_avatar_thumb'] = $creator->getAvatarThumb();
-            $data['creator_su_sj_name'] = $creator->job ? $creator->job->sj_name : '';
         }
 
         return $data;
@@ -226,6 +249,77 @@ class Task extends Lkh implements \App\Tasks\Interfaces\TaskModel {
                 'ta_data' => json_encode($indexes)
             ));
         }
+    }
+
+    public function saveUsers($post) {
+        $created = array();
+        $updated = array();
+        $current = array();
+
+        foreach($this->getUsers() as $e) {
+            $current[$e->su_id] = TRUE;
+        }
+
+        foreach($post as $e) {
+            if (isset($current[$e['su_id']])) {
+                $updated[] = $e;
+                unset($current[$e['su_id']]);
+            } else {
+                $created[] = $e;
+            }
+        }
+
+        $current = array_values(array_keys($current));
+
+        if (count($current) > 0) {
+            TaskUser::get()
+                ->inWhere('lku_su_id', $current)
+                ->andWhere('lku_lkh_id = :task:', array('task' => $this->lkh_id))
+                ->execute()
+                ->delete();
+
+            Activity::log('remove_user', array(
+                'ta_task_ns' => $this->getNamespace(),
+                'ta_sp_id' => $this->lkh_task_project,
+                'ta_task_id' => $this->lkh_id,
+                'ta_data' => json_encode($indexes)
+            ));
+        }
+
+        if (count($created) > 0) {
+            $indexes = array();
+
+            foreach($created as $e) {
+                $r = new TaskUser();
+
+                $r->lku_lkh_id = $this->lkh_id;
+                $r->lku_su_id = $e['su_id'];
+                $r->save();
+
+                $indexes[] = $e['su_id'];
+            }
+
+            Activity::log('add_user', array(
+                'ta_task_ns' => $this->getNamespace(),
+                'ta_sp_id' => $this->lkh_task_project,
+                'ta_task_id' => $this->lkh_id,
+                'ta_data' => json_encode($indexes)
+            ));
+        }
+    }
+
+    public function getAssignee() {
+        return $this->getUsers()->filter(function($user){
+            $data = array();
+            
+            $data['su_id'] = $user->su_id;
+            $data['su_avatar_thumb'] = $user->getAvatarThumb();
+            $data['su_fullname'] = $user->su_fullname;
+            $data['su_grade'] = $user->su_grade;
+            $data['su_no'] = $user->su_no;
+
+            return $data;
+        });
     }
 
     public function forward() {

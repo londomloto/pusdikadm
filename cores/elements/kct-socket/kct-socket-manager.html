@@ -17,7 +17,7 @@
                         host: { type: String },
                         port: { type: Number },
                         path: { type: String },
-                        session: { type: String },
+                        session: { type: String, value: '' },
                         namespace: { type: String },
                         secure: { type: Boolean, value: false, reflectToAttribute: true },
                         autoConnect: { type: Boolean, value: false, reflectToAttribute: true }
@@ -132,7 +132,8 @@
                     let nsp = this.__resolveNamespace();
                     let opt = {
                         query: { room: nsp },
-                        reconnectionDelay: 10000
+                        reconnectionDelay: 1000,
+                        reconnectionAttempts: 10
                     };
 
                     if (this.secure) {

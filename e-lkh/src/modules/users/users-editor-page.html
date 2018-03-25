@@ -1,6 +1,7 @@
 <link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
 <link rel="import" href="../../../../cores/bower_components/paper-card/paper-card.html">
 <link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../../../../cores/bower_components/vaadin-combo-box/vaadin-combo-box.html">
 <link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
 <link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
@@ -11,6 +12,7 @@
 <link rel="import" href="../../../../cores/elements/kct-form/kct-form-validator.html">
 <link rel="import" href="../../../../cores/elements/kct-date/kct-date-picker.html">
 <link rel="import" href="../../../../cores/elements/kct-combobox/kct-combobox.html">
+<link rel="import" href="../../../../cores/elements/kct-input/kct-input-file.html">
 <link rel="import" href="../settings/blocks/setting-header-block.html">
 
 <dom-module id="users-editor-page">
@@ -50,7 +52,7 @@
                 <kct-form-validator id="validator" invalid="{{ __formInvalid }}" auto-validate>
                     <paper-card class="block">
                         <div class="card-content">
-                            <h3 class="block-title">Data Pengguna</h3>
+                            <h3 class="block-title">Data Pegawai</h3>
                             <div>
                                 <paper-input label="Nama Lengkap" value="{{ record.su_fullname }}" required auto-validate error-message="Nama lengkap wajib diisi"></paper-input>
                                 <paper-input label="Jenis Kelamin" value="{{ record.su_sex }}"></paper-input>
@@ -88,6 +90,7 @@
                                     item-label-path="scp_name" 
                                     item-value-path="scp_id" 
                                     autoload></kct-combobox>
+                                <kct-input-file id="avatar" label="Foto Profile" value="{{ record.su_avatar }}"></kct-input-file>
                             </div>
                         </div>
                     </paper-card>
@@ -227,8 +230,19 @@
                     this.unmask();
 
                     if (res.success) {
-                        this.toast('Sukses', 'Data pengguna sudah disimpan');
-                        this.__back();
+                        if (this.$.avatar.file) {
+                            this.$.ajax.UPLOAD('/users/' + res.data.su_id + '/upload', {
+                                files: [
+                                    { name: 'userfile', file: this.$.avatar.file }
+                                ]
+                            }).then(() => {
+                                this.toast('Sukses', 'Data pengguna sudah disimpan');
+                                this.__back();    
+                            });
+                        } else {
+                            this.toast('Sukses', 'Data pengguna sudah disimpan');
+                            this.__back();    
+                        }
                     }
                 }
             }

@@ -10,6 +10,14 @@ class ConfigController extends \Micro\Controller {
         $data['app_version'] = '2.0.6';
         $data['app_push_server'] = $this->socket->host;
 
+        $session = $this->request->getHeader('X-Session');
+
+        if ( ! $session) {
+            $session = $this->security->getRandom()->uuid();
+        }
+
+        $data['app_session'] = $session;
+
         // handle package info
         if (isset($data['app_package']) && $data['app_package'] != 'FREE') {
             $data['notif_global'] = '';

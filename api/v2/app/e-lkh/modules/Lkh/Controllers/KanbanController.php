@@ -9,6 +9,7 @@ use App\Projects\Models\Project;
 class KanbanController extends \Micro\Controller {
 
     public function findAction() {
+        $auth = $this->auth->user();
         $params = $this->request->getQuery();
 
         $project = isset($params['project']) ? $params['project'] : FALSE;
@@ -29,10 +30,13 @@ class KanbanController extends \Micro\Controller {
             ->columns($columns) 
             ->join('App\Lkh\Models\Task', 'task_status.lks_lkh_id = task.lkh_id', 'task')
             ->join('App\Lkh\Models\TaskLabel', 'task.lkh_id = task_label.lkl_lkh_id', 'task_label', 'left')
+            ->join('App\Lkh\Models\TaskUser', 'task.lkh_id = task_user.lku_lkh_id', 'task_user', 'left')
             ->join('App\Labels\Models\Label', 'task_label.lkl_sl_id = label.sl_id', 'label', 'left')
             ->join('App\Users\Models\User', 'task.lkh_su_id = user.su_id', 'user', 'left')
             ->groupBy('task_status.lks_id');
 
+        $query->inWhere('task_user.lku_su_id', array($auth['su_id']));
+        
         if ($project) {
             $query->andWhere('task.lkh_task_project = :project:', array('project' => $project));
         }
@@ -43,7 +47,7 @@ class KanbanController extends \Micro\Controller {
 
         $query->andWhere('task_status.lks_deleted = 0');
 
-        //self::applySearch($query, $params);
+        self::applySearch($query, $params);
         self::applyFilter($query, $params);
         self::applySorter($query, $params, $columns);
 
@@ -58,12 +62,14 @@ class KanbanController extends \Micro\Controller {
                 $item['status'] = $stat;
                 $item['labels'] = array();
                 $item['items'] = array();
+                $item['users'] = array();
 
                 if ($task) {
                     $item['task'] = $task->toArray();
                     $item['labels'] = $task->labels->filter(function($label){ return $label->toArray(); });
-                    $item['items'] = $task->getSortedItems()->filter(function($item){ return $item->toArray(); });
-
+                    $item['items'] = $task->getSampleItems();
+                    $item['users'] = $task->getAssignee();
+                    
                 }
 
                 return $item;
@@ -85,10 +91,10 @@ class KanbanController extends \Micro\Controller {
                 $task = new Task();
                 $form = $post['record'];
 
-                if (empty($form['task']['lkh_task_date'])) {
+                if (empty($form['task']['lkh_task_due'])) {
                     $today = new \DateTime();
                     $today->modify('+1 day');
-                    $form['task']['lkh_due_date'] = $today->format('Y-m-d');
+                    $form['task']['lkh_task_due'] = $today->format('Y-m-d');
                 }
 
                 $form['task']['lkh_created_by'] = $auth['su_id'];
@@ -102,8 +108,8 @@ class KanbanController extends \Micro\Controller {
                         $task->saveLabels($form['labels']);
                     }
 
-                    if (isset($form['items'])) {
-                        $task->saveItems($form['items']);
+                    if (isset($form['users'])) {
+                        $task->saveUsers($form['users']);
                     }
 
                     $affected = array();
@@ -136,7 +142,8 @@ class KanbanController extends \Micro\Controller {
                         'data' => array(
                             'affected' => $affected,
                             'task' => $task->toArray(),
-                            'items' => $task->getSortedItems()->filter(function($e){ return $e->toArray(); })
+                            'items' => $task->getSampleItems(),
+                            'users' => $task->getAssignee()
                         )
                     );
                 }
@@ -180,8 +187,8 @@ class KanbanController extends \Micro\Controller {
                     $task->saveLabels($form['labels']);
                 }
 
-                if (isset($form['items'])) {
-                    $task->saveItems($form['items']);
+                if (isset($form['users'])) {
+                    $task->saveUsers($form['users']);
                 }
 
                 $task->resumeLog();
@@ -266,7 +273,8 @@ class KanbanController extends \Micro\Controller {
                 'data' => array(
                     'affected' => $affected,
                     'task' => $task->toArray(),
-                    'items' => $task->getSortedItems()->filter(function($e){ return $e->toArray(); })
+                    'items' => $task->getSampleItems(),
+                    'users' => $task->getAssignee()
                 )
             ); 
         }
@@ -347,7 +355,13 @@ class KanbanController extends \Micro\Controller {
                 }
 
                 if (isset($json->date) && count($json->date) > 0) {
-                    $query->inWhere('task.lkh_date', $json->date[1]);
+                    $query->andWhere(
+                        'task.lkh_start_date >= :start_date: AND task.lkh_end_date <= :end_date:', 
+                        array(
+                            'start_date' => $json->date[1],
+                            'end_date' => $json->date[1]
+                        )
+                    );
                 }
             }
         }
@@ -355,9 +369,9 @@ class KanbanController extends \Micro\Controller {
 
     public static function applySorter($query, $params, $cols) {
         if ( ! isset($params['sort'])) {
-            $cols[] = 'MAX(task.lkh_date) AS lkh_date';
+            $cols[] = 'MAX(task.lkh_created_dt) AS lkh_created_dt';
             $query->columns($cols);
-            $query->orderBy('lkh_date DESC');
+            $query->orderBy('lkh_created_dt DESC');
         } else {
             $ps = json_decode($params['sort']);
 
@@ -373,8 +387,8 @@ class KanbanController extends \Micro\Controller {
                     $sort[] = $name.' '.$dirs;
                     $cols[] = $aggr.'(task.'.$name.') AS '.$name;
                 } else if ($e->property == 'date') {
-                    $sort[] = 'lkh_date '.$dirs;
-                    $cols[] = $aggr.'(task.lkh_date) AS lkh_date';
+                    $sort[] = 'lkh_created_dt '.$dirs;
+                    $cols[] = $aggr.'(task.lkh_created_dt) AS lkh_created_dt';
                 } else if ($e->property == 'user') {
                     $sort[] = 'su_fullname '.$dirs;
                     $cols[] = $aggr.'(user.su_fullname) AS su_fullname';

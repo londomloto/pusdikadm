@@ -14,56 +14,19 @@ class SkpController extends \Micro\Controller {
     }
     
     public function createAction() {
-        $post = $this->request->getJson();
-        $year = date('Y', strtotime($post['skp_date']));
 
-        $find = Skp::get()
-            ->where(
-                'YEAR(skp_date) = :year: AND skp_su_id = :user:',
-                array(
-                    'year' => $year,
-                    'user' => $post['skp_su_id']
-                )
-            )
-            ->execute();
-
-        if ($find->count() > 0) {
-            return array(
-                'success' => FALSE,
-                'message' => 'Dokumen SKP untuk tahun ' . $year .' sudah dibuat'
-            );
-        }
-
-        $auth = $this->auth->user();
-        
-        $post['skp_created_dt'] = date('Y-m-d H:i:s');
-        $post['skp_created_by'] = $auth['su_id'];
-
-        $data = new Skp();
-
-        if ($data->save($post)) {
-            if (isset($post['items'])) {
-                $data->saveItems($post['items']);
-            }
-
-            return Skp::get($data->skp_id);
-        }
-        return Skp::none();
     }
 
+    // only for update total & performance & behaviors
     public function updateAction($id) {
-        $query = Skp::get($id);
         $post = $this->request->getJson();
+        $query = Skp::get($id);
 
         if ($query->data) {
-            if ($query->data->save($post)) {
-                if (isset($post['items'])) {
-                    $query->data->saveItems($post['items']);
-                }
-            }
+            $query->data->save($post);
         }
 
-        return Skp::get($id);
+        return $query;
     }
 
     public function deleteAction($id) {
@@ -75,5 +38,21 @@ class SkpController extends \Micro\Controller {
         }
 
         return array('success' => $done);
+    }
+
+    public function saveBehaviorsAction($id) {
+        $skp = Skp::get($id)->data;
+        if ($skp) {
+            $post = $this->request->getJson();
+            $skp->saveBehaviors($post['behaviors']);
+
+            return array(
+                'success' => TRUE
+            );
+        }
+
+        return array(
+            'success' => FALSE
+        );
     }
 }

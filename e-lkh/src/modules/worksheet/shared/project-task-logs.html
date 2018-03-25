@@ -15,7 +15,8 @@
             static get properties() {
                 return {
                     record: { type: Object, notify: true },
-                    message: { type: String },
+                    message: { type: String }, 
+                    project: { type: Object },
                     activities: { 
                         type: Array, 
                         value: () => ([]), 
@@ -38,7 +39,7 @@
                 this.__hidePaginator = true;
             }
 
-            initialize() {
+            start() {
                 this.load({ start: 0 });
             }
             
@@ -105,12 +106,14 @@
                 }
 
                 let data = {
-                    tta_type: 'comment',
-                    tta_data: message,
-                    tta_tt_id: this.record.task.tt_id
+                    ta_type: 'comment',
+                    ta_data: message,
+                    ta_task_id: this.record.task[this.metadata.primary_key],
+                    ta_task_ns: this.metadata.namespace,
+                    ta_sp_id: this.project.sp_id
                 };
 
-                this.$.ajax.POST('/tasks/tasks-activities', data).then(res => {
+                this.$.ajax.POST('/activities', data).then(res => {
                     if (res.success) {
                         let activity = res.data;
                         // this.unshift('activities', activity);
@@ -152,23 +155,23 @@
 
             __onEditCommentTap(e) {
                 let index = e.model.index;
-                this.set('activities.' + index + '.tta_editing', true);
+                this.set('activities.' + index + '.ta_editing', true);
             }
 
             __onSaveCommentTap(e) {
                 let data = e.model.item;
-                this.$.ajax.PUT('/tasks/tasks-activities/' + data.tta_id, data).then(res => {
+                this.$.ajax.PUT('/activities/' + data.ta_id, data).then(res => {
                     if (res.success) {
-                        this.set('activities.' + e.model.index + '.tta_data', res.data.tta_data);    
-                        this.set('activities.' + e.model.index + '.tta_text', res.data.tta_text);
+                        this.set('activities.' + e.model.index + '.ta_data', res.data.ta_data);    
+                        this.set('activities.' + e.model.index + '.ta_text', res.data.ta_text);
                     }
-                    this.set('activities.' + e.model.index + '.tta_editing', false);
+                    this.set('activities.' + e.model.index + '.ta_editing', false);
                 });
             }
 
             __onCancelEditCommentTap(e) {
                 let index = e.model.index;
-                this.set('activities.' + index + '.tta_editing', false);
+                this.set('activities.' + index + '.ta_editing', false);
             }
 
             __onRemoveCommentTap(e) {
@@ -176,7 +179,7 @@
                 this.$.confirm.message = 'Anda yakin akan menghapus komentar ini?';
                 this.$.confirm.open().then(y => {
                     if (y == 'yes') {
-                        this.$.ajax.DELETE('/tasks/tasks-activities/' + e.model.item.tta_id).then(res => {
+                        this.$.ajax.DELETE('/activities/' + e.model.item.ta_id).then(res => {
                             this.load({start: 0});
                         });
                     }

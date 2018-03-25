@@ -1,8 +1,11 @@
+<link rel="import" href="../../../../../cores/bower_components/iron-selector/iron-selector.html">
 <link rel="import" href="../../../../../cores/bower_components/paper-input/paper-input.html">
 <link rel="import" href="../../../../../cores/bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../../../../cores/bower_components/paper-radio-group/paper-radio-group.html">
 <link rel="import" href="../../../../../cores/bower_components/paper-radio-button/paper-radio-button.html">
 <link rel="import" href="../../../../../cores/bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-item/paper-item.html">
 <link rel="import" href="../../../../../cores/bower_components/paper-spinner/paper-spinner-lite.html">
 <link rel="import" href="../../../../../cores/elements/kct-combobox/kct-combobox.html">
 <link rel="import" href="../../../../../cores/elements/kct-layouts/kct-column.html">
@@ -10,6 +13,7 @@
 <link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../../../../cores/elements/kct-file/kct-file.html">
 <link rel="import" href="../../../../../cores/elements/kct-input/kct-input-number.html">
+<link rel="import" href="../../../../../cores/elements/kct-input/kct-input-file.html">
 <link rel="import" href="../../../../../cores/elements/kct-checkbox/kct-checkbox.html">
 <link rel="import" href="../../../../../cores/elements/kct-message/kct-confirm.html">
 <link rel="import" href="../../../../../cores/elements/kct-message/kct-alert.html">
@@ -17,7 +21,9 @@
 <link rel="import" href="../../../../../cores/elements/kct-media/kct-media.html">
 <link rel="import" href="../../../../../cores/mixins/resolver.html">
 <link rel="import" href="../../../../../cores/mixins/types.html">
+<link rel="import" href="../plugins/button-date.html">
 <link rel="import" href="../plugins/combo-user.html">
+<link rel="import" href="../plugins/file-viewer.html">
 
 <dom-module id="form-base">
     <script>
@@ -58,7 +64,7 @@
             }
 
             afterSave(response) {
-                return response;
+                return this.resolve({ success: true });
             }
 
             beforeRemove() {
@@ -122,6 +128,10 @@
 
             initialize() {
                 return this.resolve();
+            }
+
+            start() {
+                
             }
 
             __actionChanged(action) {

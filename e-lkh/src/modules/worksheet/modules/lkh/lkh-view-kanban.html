@@ -9,7 +9,7 @@
         <kct-ajax id="ajax"></kct-ajax>
         <kct-event-subscriber on-notify="__onNotify"></kct-event-subscriber>
 
-        <kct-worksheet id="worksheet" columns="3">
+        <kct-worksheet id="worksheet" columns="4">
             <template is="dom-repeat" items="[[ worksheetRecord.ks_panels ]]" as="panel">
                 <kct-worksheet-panel title="[[ panel.kp_title ]]" accent="[[ panel.kp_accent ]]" hide-condensed hide-secondary>
                     <div class="panel-content">

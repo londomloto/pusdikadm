@@ -1,0 +1,308 @@
+<link rel="import" href="../../../../../../cores/mixins/mixins.html">
+
+<script>
+    
+    Mixins.SkpBehavior = Polymer.dedupingMixin(superclass => {
+
+        return class extends superclass {
+
+            __addAssignee(user) {
+
+                if ( ! this.record.users) {
+                    this.set('record.users', []);
+                }
+
+                let index = this.record.users.findIndex(e => {
+                    return e.su_id == user.su_id;
+                });
+
+                if (index === -1) {
+                    this.push('record.users', {
+                        su_id: user.su_id,
+                        su_fullname: user.su_fullname,
+                        su_avatar_thumb: user.su_avatar_thumb,
+                        su_grade: user.su_grade,
+                        su_no: user.su_no
+                    });
+                }
+
+            }
+            
+            __computeCriteria(value, mandatory = 1) {
+                if (mandatory == 0 && (value == '' || value === null)) {
+                    return '';
+                }
+
+                value = +value;
+                value = isNaN(value) ? 0 : value;
+
+                let c = (this.criteria || []);
+                let n = c.length;
+
+                for (let i = 0; i < n; i++) {
+                    if (value <= +c[i].tcr_max) {
+                        return c[i].tcr_name;
+                    }
+                }
+
+                return '';
+            }
+
+            __computeItem(item, index) {
+                // calculate AK
+                let factor = +item.ski_ak_factor;
+                factor = isNaN(factor) ? 0 : factor;
+
+                let volume = +item.ski_volume;
+                let volumeReal = +item.ski_volume_real;
+
+                volume = isNaN(volume) ? 0 : volume;
+                volumeReal = isNaN(volumeReal) ? 0 : volumeReal;
+
+                let ak = factor * volume;
+                let akReal = factor * volumeReal;
+                let volumeCounter = volume > 0 ? 1 : 0;
+
+                ak = ak > 0 ? ak : null;
+                akReal = akReal > 0 ? akReal : null;
+
+                this.set('record.items.' + index + '.ski_ak', ak);
+                this.set('record.items.' + index + '.ski_ak_real', akReal);
+                this.set('record.items.' + index + '.calculation.volume_counter', volumeCounter);
+
+                // duration
+                let durationPercentage = 100;
+                let duration = +item.ski_duration;
+                let durationReal = +item.ski_duration_real;
+
+                duration = isNaN(duration) ? 0 : duration;
+                durationReal = isNaN(durationReal) ? 0 : durationReal;
+
+                if (duration > 0) {
+                    durationPercentage = (100 - (durationReal / duration * 100));
+                }
+
+                this.set('record.items.' + index + '.calculation.duration_percentage', durationPercentage);
+
+                // cost
+                let costPercentage = 100;
+                let cost = +item.ski_cost;
+                let costReal = +item.ski_cost_real;
+
+                cost = isNaN(cost) ? 0 : cost;
+                costReal = isNaN(costReal) ? 0 : costReal;
+
+                if (cost > 0) {
+                    costPercentage = (100 - (costReal / cost * 100));
+                }
+
+                this.set('record.items.' + index + '.calculation.cost_percentage', costPercentage);
+
+                // volume
+                let volumeTotal = 0;
+
+                if (volume > 0) {
+                    volumeTotal = (volumeReal / volume * 100);
+                }
+
+                this.set('record.items.' + index + '.calculation.volume_total', volumeTotal);
+
+                // quality
+                let qualityTotal = 0;
+                let quality = +item.ski_quality;
+                let qualityReal = +item.ski_quality_real;
+
+                quality = isNaN(quality) ? 0 : quality;
+                qualityReal = isNaN(qualityReal) ? 0 : qualityReal;
+
+                if (quality > 0) {
+                    qualityTotal = (qualityReal / quality * 100);
+                }
+
+                this.set('record.items.' + index + '.calculation.quality_total', qualityTotal);
+
+                // duration total
+                let durationLower = 0;
+                let durationUpper = (+item.calculation.duration_limit - 100);
+
+                if (duration > 0) {
+                    durationLower = ((+item.calculation.duration_factor * duration - durationReal) / duration) * 100; 
+                    durationUpper = (+item.calculation.duration_limit - (durationLower - 100));
+                }
+
+                let durationTotal = durationPercentage > +item.calculation.duration_tolerance ? durationUpper : durationLower;
+
+                this.set('record.items.' + index + '.calculation.duration_upper', durationUpper);
+                this.set('record.items.' + index + '.calculation.duration_lower', durationLower);
+                this.set('record.items.' + index + '.calculation.duration_total', durationTotal);
+
+                // cost total
+                let costLower = 0;
+                let costUpper = (+item.calculation.cost_limit - 100);
+
+                if (cost > 0) {
+                    costLower = ((+item.calculation.cost_factor * cost - costReal) / cost) * 100;
+                    costUpper = (+item.calculation.cost_limit - (costLower - 100));
+                }
+
+                let costTotal = costPercentage > +item.calculation.cost_tolerance ? costUpper : costLower;
+
+                this.set('record.items.' + index + '.calculation.cost_upper', costUpper);
+                this.set('record.items.' + index + '.calculation.cost_lower', costLower);
+                this.set('record.items.' + index + '.calculation.cost_total', costTotal);
+
+                // summary item
+                let total = 0;
+                let performance = 0;
+
+                if (item.ski_cost_real === null) {
+                    total = (volumeTotal + qualityTotal + durationTotal);
+                    performance = (total / 3);
+                } else {
+                    total = (volumeTotal + qualityTotal + durationTotal + costTotal);
+                    performance = (total / 4);
+                }
+
+                this.set('record.items.' + index + '.calculation.total', total);
+                this.set('record.items.' + index + '.calculation.performance', performance);
+
+                this.set('record.items.' + index + '.ski_total', Math.round(total));
+                this.set('record.items.' + index + '.ski_performance', performance.toFixed(2));
+
+            }
+
+            __computeSummary() {
+                let count = 0;
+                let total = 0;
+
+                (this.record.items || []).forEach(row => {
+                    let volumeCounter = +row.calculation.volume_counter;
+                    let performance = +row.ski_performance;
+
+                    volumeCounter = isNaN(volumeCounter) ? 0 : volumeCounter;
+                    performance = isNaN(performance) ? 0 : performance;
+
+                    count += volumeCounter;
+                    total += performance;
+                });
+
+                let summary = count > 0 ? (total / count) : null;
+                let criteria = '';
+
+                // add extra
+                (this.record.extra || []).forEach(row => {
+                    let performance = +row.ski_performance;
+                    performance = isNaN(performance) ? 0 : performance;
+                    summary += performance;
+                });
+
+                if (summary !== null) {
+                    summary = +(summary.toFixed(2));
+                    criteria = this.__computeCriteria(summary, 0);
+                }
+
+                this.set('record.task.skp_performance', summary);
+                this.set('record.task.skp_performance_criteria', criteria);
+                this.set('record.task.skp_performance_criteria_text', criteria != '' ? '(' + criteria + ')' : '');
+
+                // reports
+                let performanceValue = 0;
+                let behaviorValue = 0;
+                let reportValue = 0;
+                let reportCriteria = '';
+
+                if (this.record.task.skp_performance !== null) {
+                    performanceValue = +this.record.task.skp_performance_portion * +this.record.task.skp_performance / 100;
+                }
+
+                if (this.record.task.skp_behavior_average !== null) {
+                    behaviorValue = +this.record.task.skp_behavior_portion * +this.record.task.skp_behavior_average / 100;
+                }
+
+                reportValue = performanceValue + behaviorValue;
+                reportCriteria = this.__computeCriteria(reportValue, 0);
+
+                this.set('record.task.skp_performance_value', performanceValue);
+                this.set('record.task.skp_behavior_value', behaviorValue);
+                this.set('record.task.skp_value', reportValue);
+                this.set('record.task.skp_criteria', reportCriteria);
+                this.set('record.task.skp_criteria_text', reportCriteria != '' ? '(' + reportCriteria + ')' : '');
+
+                this.__saveSummary();
+            }
+
+            __computeBehavior(item, index) {
+                
+                let criteria;
+                criteria = this.__computeCriteria(item.tsb_value, item.tsb_tbh_mandatory);
+
+                this.set('behaviors.' + index + '.tsb_criteria', criteria); 
+                this.set('behaviors.' + index + '.tsb_criteria_text', criteria ? '(' + criteria + ')' : '');
+
+                let total = 0;
+                let average = 0;
+                let counter = 0;
+                let value;
+
+                (this.behaviors || []).forEach(e => {
+                    value = +e.tsb_value;
+                    value = isNaN(value) ? 0 : value;
+
+                    if (e.tsb_tbh_mandatory == 1) {
+                        total += value;
+                        counter++;
+                    } else if (e.tsb_tbh_mandatory == 0 && e.tsb_value !== null) {
+                        total += value;
+                        counter++;
+                    }
+                });
+
+                if (counter > 0) {
+                    average = (total / counter).toFixed(2);
+                }
+
+                this.set('record.task.skp_behavior_total', total);
+                this.set('record.task.skp_behavior_average', average);
+
+                criteria = this.__computeCriteria(average);
+
+                this.set('record.task.skp_behavior_criteria', criteria);
+                this.set('record.task.skp_behavior_criteria_text', criteria ? '(' + criteria + ')' : '');
+            }
+
+            __saveSummary() {
+                this.$.ajax.PUT('/skp/' + this.record.task.skp_id, {
+                    skp_performance: this.record.task.skp_performance,
+                    skp_performance_criteria: this.record.task.skp_performance_criteria,
+                    skp_performance_value: this.record.task.skp_performance_value,
+                    skp_behavior_value: this.record.task.skp_behavior_value,
+                    skp_behavior_total: this.record.task.skp_behavior_total,
+                    skp_behavior_average: this.record.task.skp_behavior_average,
+                    skp_behavior_criteria: this.record.task.skp_behavior_criteria,
+                    skp_value: this.record.task.skp_value,
+                    skp_criteria: this.record.task.skp_criteria
+                });
+            }
+
+            __onBehaviorValueChange(e) {
+                this.__computeBehavior(e.model.item, e.model.index);
+                this.__computeSummary();
+                this.__saveBehaviors();
+            }
+
+            __onItemValueChange(e) {
+                this.__computeItem(e.model.item, e.model.index);
+                this.__computeSummary();
+                this.__saveItem(e.model.item, e.model.index);
+            }
+
+            __onExtraValueChange(e) {
+                this.__computeSummary();
+                this.__saveItem(e.model.item, e.model.index);
+            }
+
+        };
+
+    });
+
+</script>

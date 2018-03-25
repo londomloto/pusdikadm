@@ -31,8 +31,13 @@ class Security extends \Phalcon\Security {
         $captcha->image_width = 120;
         $captcha->image_height = (int)($captcha->image_width * 0.35);
 
-        if ($type == 'image') {
+        $session = $this->getApp()->request->getQuery('session');
 
+        if ($session) {
+            self::$__captcha->setNamespace($session);
+        }
+
+        if ($type == 'image') {
             $captcha->show();
         } else {
             $captcha->createCode();
@@ -46,6 +51,12 @@ class Security extends \Phalcon\Security {
         // captcha not supported
         if (self::$__captcha === FALSE) {
             return TRUE;
+        }
+
+        $session = $this->getApp()->request->getQuery('session');
+
+        if ($session) {
+            self::$__captcha->setNamespace($session);
         }
 
         return self::$__captcha->check($code);

@@ -74,8 +74,11 @@ class Project extends \Micro\Model {
         $data['sp_created_date_formatted'] = date('d M Y', strtotime($this->sp_created_date));
         $data['sp_end_date_formatted'] = $this->sp_end_date ? date('d M Y', strtotime($this->sp_end_date)) : '';
         
-        if ($this->creator) {
-            $data['sp_creator_fullname'] = $this->creator->su_fullname;
+        if (($creator = $this->creator)) {
+            $data['creator_su_fullname'] = $creator->getName();
+            $data['creator_su_avatar_thumb'] = $creator->getAvatarThumb();
+            $data['creator_su_grade'] = $creator->su_grade;
+            $data['creator_su_no'] = $creator->su_no;
         }
         
         $data['sp_worksheet_purpose'] = 0;

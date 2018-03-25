@@ -1,7 +1,7 @@
 <link rel="import" href="../../../cores/bower_components/paper-input/paper-input.html">
 <link rel="import" href="../../../cores/bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../../../cores/elements/kct-auth/kct-auth.html">
-<link rel="import" href="../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../cores/mixins/resolver.html">
 
 <dom-module id="screen-locker">
     <template>
@@ -221,7 +221,6 @@
         </style>
 
         <kct-auth id="auth" config="[[ config ]]" user="{{ user }}"></kct-auth>
-        <kct-ajax id="ajax" config="[[ config ]]"></kct-ajax>
 
         <div class="overlay"></div>
         
@@ -257,7 +256,7 @@
         
     </template>
     <script>
-        class ScreenLocker extends Polymer.Element {
+        class ScreenLocker extends Mixins(Polymer.Element).use(Mixins.Resolver) {
             static get is() {
                 return 'screen-locker';
             }
@@ -335,10 +334,9 @@
                 let username = this.user.su_email,
                     password = this.password;
 
-                // fetch captcha
-                this.$.ajax.GET('/auth/captcha?type=code').then(res => {
-                    let captcha = res.data;
-
+                this.$.auth.captcha().then(captcha => {
+                    console.log(captcha);
+                    
                     this.$.auth.login(username, password, captcha).then(user => {
                         if ( ! user) {
                             this.__showInfo("Pengguna tidak terotorisasi");
@@ -361,8 +359,7 @@
                                 });
                             }
                         });    
-                    });    
-
+                    });  
                 });
             }
 

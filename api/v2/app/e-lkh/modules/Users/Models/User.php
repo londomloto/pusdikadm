@@ -145,6 +145,15 @@ class User extends \Micro\Model {
             )
         );
 
+        $this->hasOne(
+            'su_scp_id',
+            'App\Company\Models\Company',
+            'scp_id',
+            array(
+                'alias' => 'Company'
+            )
+        );
+
     }
 
     public function getSource() {
@@ -167,17 +176,23 @@ class User extends \Micro\Model {
         return $this->validate($validator);
     }
 
-    public function beforeCreate() {
+    public function beforeSave() {
         if (isset($this->su_dob) && $this->su_dob == '') {
             $this->su_dob = NULL;
+        }
+
+        if (isset($this->su_sdp_id) && $this->su_sdp_id == '') {
+            $this->su_sdp_id = NULL;
+        }
+
+        if (isset($this->su_sj_id) && $this->su_sj_id == '') {
+            $this->su_sj_id = NULL;
+        }
+
+        if (isset($this->su_scp_id) && $this->su_scp_id == '') {
+            $this->su_scp_id = NULL;
         }
     }
-
-    public function beforeUpdate() {
-        if (isset($this->su_dob) && $this->su_dob == '') {
-            $this->su_dob = NULL;
-        }
-    }    
 
     // @Override
     public function toArray($columns =  NULL) {
@@ -208,6 +223,10 @@ class User extends \Micro\Model {
 
         if ($this->department) {
             $array['su_sdp_name'] = $this->department->sdp_name;
+        }
+
+        if ($this->company) {
+            $array['su_scp_name'] = $this->company->scp_name;
         }
 
         return $array;

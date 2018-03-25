@@ -9,7 +9,7 @@
         <kct-media screen="{{ screen }}"></kct-media>
 
         <kct-vbox class$="container [[ screen ]]">
-            <header-block text="Module Administrasi" on-back-tap="__onBackTap" hide-header$="[[ __hideHeader(screen) ]]">
+            <header-block text="Module" on-back-tap="__onBackTap" hide-header$="[[ __hideHeader(screen) ]]">
                 <combo-project 
                     id="combo-project" 
                     slot="header-value" 
@@ -31,15 +31,15 @@
                 
                 <lkh-find class="hidden-sm" project="[[ project ]]" search="{{ search }}" slot="center-toolbar"></lkh-find>
                 
-                <paper-icon-button title="Kanban View" data-view="kanban" on-tap="__onDisplayTap" class$="display-button hidden-sm hidden-md [[ __computeSelectedDisplay('kanban', view) ]]" icon="view-column" slot="right-toolbar"></paper-icon-button>
-                <paper-icon-button title="List View" data-view="list" on-tap="__onDisplayTap" class$="display-button hidden-sm hidden-md [[ __computeSelectedDisplay('list', view) ]]" icon="view-list" slot="right-toolbar"></paper-icon-button>
+                <!-- <paper-icon-button title="Kanban View" data-view="kanban" on-tap="__onDisplayTap" class$="display-button hidden-sm hidden-md [[ __computeSelectedDisplay('kanban', view) ]]" icon="view-column" slot="right-toolbar"></paper-icon-button>
+                <paper-icon-button title="List View" data-view="list" on-tap="__onDisplayTap" class$="display-button hidden-sm hidden-md [[ __computeSelectedDisplay('list', view) ]]" icon="view-list" slot="right-toolbar"></paper-icon-button> -->
             </header-block>
 
             <div class="flex main">
 
                 <kct-pages id="view-switcher" attr-for-selected="name" selected="[[ view ]]" on-itemactivate="__onViewActivate" lazy-load>
                     <lkh-view-kanban import="lkh-view-kanban.html" busy="{{ busy }}" name="kanban" route="{{ route }}" project="[[ project ]]" params="[[ search ]]"></lkh-view-kanban>
-                    <lkh-view-grid import="lkh-view-grid.html" busy="{{ busy }}" name="list" route="{{ route }}" project="[[ project ]]" params="[[ search ]]"></lkh-view-grid>
+                    <!-- <lkh-view-grid import="lkh-view-grid.html" busy="{{ busy }}" name="list" route="{{ route }}" project="[[ project ]]" params="[[ search ]]"></lkh-view-grid> -->
                 </kct-pages>
 
             </div>

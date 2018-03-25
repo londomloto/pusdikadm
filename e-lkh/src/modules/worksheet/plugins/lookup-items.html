@@ -86,7 +86,7 @@
                                         <div class="check">
                                             <kct-checkbox value="{{ item.lki_checked }}"></kct-checkbox>
                                         </div>
-                                        <div class="text">[[ item.lki_desc ]]</div>
+                                        <div class="text"  on-click="__onItemTap">[[ item.lki_desc ]]</div>
                                         <div class="clear"></div>
                                     </paper-item>
                                 </template>
@@ -174,6 +174,8 @@
                         pages = Math.ceil(total / this.paging.limit),
                         page  = Math.ceil((start - 1) / limit) + 1;
 
+                    page = page < 1 ? 1 : page;
+
                     this.set('paging.total', total);
                     this.set('paging.pages', pages);
                     this.set('paging.page', page);
@@ -191,6 +193,10 @@
                     }
                 );
                 Polymer.enqueueDebouncer(this.__debounce);
+            }
+            __onItemTap(e) {
+                let check = e.model.item.lki_checked == 1 ? 0 : 1;
+                this.set('items.' + e.model.index + '.lki_checked', check);
             }
             __onPageTap(e) {
                 let action = e.target.dataset.action,

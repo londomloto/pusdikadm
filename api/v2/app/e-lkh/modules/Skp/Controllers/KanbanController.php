@@ -9,6 +9,7 @@ use App\Projects\Models\Project;
 class KanbanController extends \Micro\Controller {
 
     public function findAction() {
+        $auth = $this->auth->user();
         $params = $this->request->getQuery();
 
         $project = isset($params['project']) ? $params['project'] : FALSE;
@@ -29,9 +30,12 @@ class KanbanController extends \Micro\Controller {
             ->columns($columns) 
             ->join('App\Skp\Models\Task', 'task_status.sks_skp_id = task.skp_id', 'task')
             ->join('App\Skp\Models\TaskLabel', 'task.skp_id = task_label.skl_skp_id', 'task_label', 'left')
+            ->join('App\Skp\Models\TaskUser', 'task.skp_id = task_user.sku_skp_id', 'task_user', 'left')
             ->join('App\Labels\Models\Label', 'task_label.skl_sl_id = label.sl_id', 'label', 'left')
             ->join('App\Users\Models\User', 'task.skp_su_id = user.su_id', 'user', 'left')
             ->groupBy('task_status.sks_id');
+
+        $query->inWhere('task_user.sku_su_id', array($auth['su_id']));
 
         if ($project) {
             $query->andWhere('task.skp_task_project = :project:', array('project' => $project));
@@ -58,12 +62,14 @@ class KanbanController extends \Micro\Controller {
                 $item['status'] = $stat;
                 $item['labels'] = array();
                 $item['items'] = array();
+                $item['extra'] = array();
+                $item['users'] = array();
 
                 if ($task) {
                     $item['task'] = $task->toArray();
                     $item['labels'] = $task->labels->filter(function($label){ return $label->toArray(); });
-                    $item['items'] = $task->getSortedItems();
-
+                    // $item['items'] = $task->getSortedItems();
+                    $item['users'] = $task->getAssignee();
                 }
 
                 return $item;
@@ -96,8 +102,8 @@ class KanbanController extends \Micro\Controller {
                         $task->saveLabels($form['labels']);
                     }
 
-                    if (isset($form['items'])) {
-                        $task->saveItems($form['items']);
+                    if (isset($form['users'])) {
+                        $task->saveUsers($form['users']);
                     }
 
                     $affected = array();
@@ -130,7 +136,7 @@ class KanbanController extends \Micro\Controller {
                         'data' => array(
                             'affected' => $affected,
                             'task' => $task->toArray(),
-                            'items' => $task->getSortedItems()
+                            //'items' => $task->getSortedItems()
                         )
                     );
                 }
@@ -174,8 +180,8 @@ class KanbanController extends \Micro\Controller {
                     $task->saveLabels($form['labels']);
                 }
 
-                if (isset($form['items'])) {
-                    $task->saveItems($form['items']);
+                if (isset($form['users'])) {
+                    $task->saveUsers($form['users']);
                 }
 
                 $task->resumeLog();
@@ -260,7 +266,7 @@ class KanbanController extends \Micro\Controller {
                 'data' => array(
                     'affected' => $affected,
                     'task' => $task->toArray(),
-                    'items' => $task->getSortedItems()
+                    //'items' => $task->getSortedItems()
                 )
             ); 
         }
@@ -367,8 +373,8 @@ class KanbanController extends \Micro\Controller {
                     $sort[] = $name.' '.$dirs;
                     $cols[] = $aggr.'(task.'.$name.') AS '.$name;
                 } else if ($e->property == 'date') {
-                    $sort[] = 'skp_date '.$dirs;
-                    $cols[] = $aggr.'(task.skp_date) AS skp_date';
+                    $sort[] = 'skp_created_dt '.$dirs;
+                    $cols[] = $aggr.'(task.skp_created_dt) AS skp_created_dt';
                 } else if ($e->property == 'user') {
                     $sort[] = 'su_fullname '.$dirs;
                     $cols[] = $aggr.'(user.su_fullname) AS su_fullname';

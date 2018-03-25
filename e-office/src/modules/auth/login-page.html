@@ -373,9 +373,29 @@
                 });
             }
 
+            __resolveSession() {
+                if (this.config.app_session) {
+                    return Promise.resolve(this.config.app_session);
+                } else {
+                    return this.$.ajax.GET('/config/session').then(res => {
+                        let session = res.data.session;
+                        this.set('config.app_session', session);
+                        return session;
+                    });
+                }
+            }
+
             __reloadCaptcha() {
                 this.set('__captcha', '');
-                this.$.ajax.__resolveUrl('/auth/captcha?type=image').then(url => {
+                
+                Promise.all([
+                    this.$.ajax.__resolveUrl('/auth/captcha?type=image'),
+                    this.__resolveSession()
+                ]).then(values => {
+                    let [url, session] = values;
+                    if (session) {
+                        url += '&session=' + session;
+                    }
                     this.set('__captcha', url);
                 });
             }

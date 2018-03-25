@@ -4,11 +4,11 @@
             #combo {
                 padding: 0;
                 --paper-input-container-input: {
-                    font-size: 17px;
+                    font-size: 15px;
                     font-weight: 400;
                 };
                 --paper-input-container-label: {
-                    font-size: 17px;
+                    font-size: 15px;
                     font-weight: 400;
                 };
                 --paper-input-container-underline: {
@@ -29,6 +29,7 @@
             item-label-path="sp_title" 
             item-value-path="sp_name" 
             on-beforeload="__onComboBeforeload" 
+            hide-clear 
             no-label-float>
 
             <paper-button slot="toolbar" on-tap="__onCreateTap"><iron-icon icon="add"></iron-icon>&nbsp;Module Baru</paper-button>

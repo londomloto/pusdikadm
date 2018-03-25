@@ -1,0 +1,367 @@
+
+<dom-module id="form-lkh">
+    <template>
+        <style include="form-style">
+            .input-task {
+                margin: 15px 0 5px 0;
+                padding: 15px 15px 15px 15px;
+                background-color: var(--paper-grey-100);
+                border-radius: 3px;
+                position: relative;
+            }
+            .input-task paper-icon-button {
+                position: absolute;
+                right: 5px;
+                top: 50%;
+                margin-top: -20px;
+                color: #888;
+            }
+            .input-task paper-button {
+                background-color: var(--paper-blue-500);
+                font-size: 12px;
+                color: #fff;
+            }
+            .task-item {
+                padding: 15px 15px 15px 6px;
+                background-color: var(--paper-grey-200);
+                border-radius: 3px;
+            }
+            .task-item .icon {
+                width: 40px; 
+                cursor: pointer;
+            }
+            .task-item .icon paper-icon-button {
+                position: relative;
+                top: -8px;
+            }
+            .task-item + .task-item {
+                margin-top: 5px;
+            }
+            .task-item-detail {
+                margin-top: 15px;
+                
+                --paper-input-container-underline: {
+                    border-color: var(--paper-grey-400);
+                };
+            }
+            .task-item-detail kct-combobox {
+                padding: 2px 0;
+                --paper-input-container-label-floating: {
+                    top: 8px;
+                };
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="section">
+            <h3 class="section-title">Kegiatan Harian</h3>
+            <div>
+                <template is="dom-if" if="[[ phantom ]]">
+                    <combo-user 
+                        id="combo-user" 
+                        label="Identitas Pegawai *)" 
+                        value="{{ record.task.lkh_su_id }}" 
+                        on-change="__onComboUserChange" 
+                        required 
+                        auto-validate 
+                        error-message="Identitas pegawai wajib diisi"></combo-user>
+                    <!-- <kct-combobox 
+                        id="combo-user" 
+                        label="Identitas Pegawai" 
+                        value="{{ record.task.lkh_su_id }}" 
+                        url="/users" 
+                        page-size="10" 
+                        item-label-path="su_fullname" 
+                        item-value-path="su_id" 
+                        on-change="__onComboUserChange"></kct-combobox>     -->
+                </template>
+
+                <template is="dom-if" if="[[ !phantom ]]">
+                    <paper-input label="Identitas Pegawai" value="[[ record.task.lkh_su_fullname ]]"></paper-input>
+                </template>
+
+                <kct-column columns="2">
+                    <div>
+                        <paper-input label="No. Induk Pegawai" value="[[ record.task.lkh_su_no ]]"></paper-input>
+                    </div>
+                    <div>
+                        <paper-input label="Pangkat/Gol. Ruang" value="[[ record.task.lkh_su_grade ]]"></paper-input>
+                    </div>
+                </kct-column>
+                
+                <paper-input label="Jabatan" value="[[ record.task.lkh_su_sj_name ]]"></paper-input>
+                <paper-input label="Unit Kerja" value="[[ record.task.lkh_su_sdp_name ]]"></paper-input>
+
+                <template is="dom-if" if="[[ phantom ]]">
+                    <kct-column columns="2">
+                        <div>
+                            <kct-combobox 
+                                id="combo-presence" 
+                                label="Referensi Absensi" 
+                                value="{{ record.task.lkh_tpr_id }}" 
+                                url="/presence?display=unused" 
+                                page-size="10" 
+                                item-label-path="tpr_date_formatted" 
+                                item-value-path="tpr_id" 
+                                on-change="__onComboPresenceChange"></kct-combobox>
+                        </div>
+                        <div>
+                            <kct-date-picker 
+                                label="Tanggal Kegiatan *)" 
+                                value="{{ record.task.lkh_date }}" 
+                                required 
+                                auto-validate 
+                                error-message="Tanggal kegiatan wajib diisi"></kct-date-picker>
+                        </div>
+                    </kct-column>    
+                </template>
+
+                <template is="dom-if" if="[[ !phantom ]]">
+                    <kct-column columns="2">
+                        <div>
+                            <paper-input label="Referensi absensi" value="[[ record.task.lkh_tpr_date_formatted ]]"></paper-input>
+                        </div>
+                        <div>
+                            <paper-input label="Tanggal kegiatan" value="[[ record.task.lkh_date_formatted ]]"></paper-input>
+                        </div>
+                    </kct-column>
+                </template>
+                
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Daftar Kegiatan</h3>
+            <div>Tambahkan kegiatan-kegiatan yang Anda lakukan pada kolom di bawah ini.</div>
+            <div class="input-task">
+                <paper-input id="input" on-keydown="__onInputKeydown" placeholder="Tambahkan kegiatan di sini kemudian tekan enter..." no-label-float></paper-input>
+                <div class="m-t-sm">
+                    <paper-button on-tap="__onAddItemTap">Tambahkan ke daftar</paper-button>&nbsp;&nbsp;atau cari dari <a on-tap="__onLookupTap" href="javascript:;">kegiatan harian</a> yang sudah pernah dilakukan
+                </div>
+            </div>
+            <div class="task-list">
+                <div class="task-item" hidden$="[[ !__savingItem ]]">
+                    <div style="padding: 0 10px">Sedang menambahkan item...</div>
+                </div>
+                <template is="dom-repeat" items="[[ record.items ]]">
+                    <kct-hbox class="task-item">
+                        <div class="icon">
+                            <paper-icon-button on-tap="__onRemoveItemTap" icon="close"></paper-icon-button>
+                        </div>
+                        <div class="flex">
+                            <div>[[ item.lki_desc ]]</div>
+                            <kct-hbox class="task-item-detail">
+                                <div class="flex p-r-sm">
+                                    <paper-input label="Volume" value="{{ item.lki_volume }}" always-float-label></paper-input>
+                                </div>
+                                <div class="flex p-l-sm p-r-sm">
+                                    <kct-combobox 
+                                        label="Satuan" 
+                                        items="[[ units ]]" 
+                                        value="{{ item.lki_unit }}"
+                                        item-label-path="sun_name" 
+                                        item-value-path="sun_name"  
+                                        always-float-label></kct-combobox>
+                                </div>
+                                <div class="flex p-l-sm">
+                                    <kct-input-number label="Biaya" mask="#.###" value="{{ item.lki_cost }}" always-float-label></kct-input-number>
+                                </div>
+                            </kct-hbox>
+                        </div>
+                    </kct-hbox>
+                </template>
+            </div>
+            
+        </div>
+
+    </template>
+    <script>
+        class FormLkh extends FormBase {
+            static get is() {
+                return 'form-lkh';
+            }
+
+            static get properties() {
+                return {
+                    units: { type: Array, value: () => ([]) }
+                }
+            }
+
+            static get observers() {
+                return [
+                    '__validationChanged(record.task.lkh_su_id, record.task.lkh_date)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__savingItem = false;
+            }
+
+            initialize() {
+
+                if (this.action == 'create') {
+
+                    if ( ! this.$['combo-user']) {
+                        this.$['combo-user'] = this.shadowRoot.querySelector('#combo-user');
+                    }
+
+                    if ( ! this.$['combo-presence']) {
+                        this.$['combo-presence'] = this.shadowRoot.querySelector('#combo-presence');
+                    }
+
+                    // resolve dependencies
+                    return Promise.all([
+                        this.__loadUnits(),
+                        this.$['combo-user'].load()
+                    ]).then(() => {
+                        this.set('buttons', 'save');
+                    });    
+                } else {
+                    return this.__loadUnits().then(() => {
+                        this.set('buttons', 'save,remove');
+                    });
+                }
+            }
+
+            afterSave(res) {
+                if (res.success) {
+                    this.set('record.items', res.data.items);
+                }
+            }
+
+
+            __loadUnits() {
+                return this.$.ajax.GET('/units').then(res => {
+                    this.set('units', res.data);
+                });
+            }
+
+            __validationChanged(user, date) {
+                let valid = true;
+                valid = valid && !!user;
+                valid = valid && !!date;
+                this.set('invalid', !valid);
+            }
+
+            __addItem() {
+                let value = this.$.input.value;
+                if (value) {
+
+                    if (/lorem/.test(value)) {
+                        value = 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua';
+                    }
+
+                    let data = {
+                        ti_desc: value,
+                        ti_user: this.record.task.lkh_su_id,
+                        ti_type: 'lkh'
+                    };
+
+                    this.set('__savingItem', true);
+
+                    this.$.ajax.POST('/items', data).then(res => {
+                        this.set('__savingItem', false);
+
+                        if (res.success) {
+                            this.unshift('record.items', {
+                                lki_desc: value,
+                                lki_unit: 'dokumen',
+                                lki_cost: 0,
+                                lki_volume: 1,
+                                lki_ti_id: res.data.ti_id
+                            });
+                        }
+                    });
+
+                    
+                }
+                this.$.input.value = '';
+            }
+
+            __onRemoveItemTap(e) {
+                let index = e.model.index;
+                this.splice('record.items', index, 1);
+            }
+
+            __onAddItemTap() {
+                this.__addItem();
+            }
+
+            __onComboUserChange(e) {
+                let user = e.target.getModelForValue(e.target.value);
+
+                if (user) {
+                    this.set('record.task.lkh_su_no', user.su_no);
+                    this.set('record.task.lkh_su_grade', user.su_grade);
+                    this.set('record.task.lkh_su_sdp_name', user.su_sdp_name);
+                    this.set('record.task.lkh_su_sj_name', user.su_sj_name);
+                } else {
+                    this.set('record.task.lkh_su_no', '');
+                    this.set('record.task.lkh_su_grade', '');
+                    this.set('record.task.lkh_su_sdp_name', '');
+                    this.set('record.task.lkh_su_sj_name', '');
+                }
+
+                this.$['combo-presence'].load({
+                    params: {
+                        tpr_su_id: user ? user.su_id : -1
+                    }
+                });
+            }
+
+            __onComboPresenceChange(e) {
+                let presence = e.target.getModelForValue(e.target.value);
+
+                if (presence) {
+                    this.set('record.task.lkh_date', presence.tpr_date);
+                    this.set('record.task.lkh_date_formatted', presence.tpr_date_formatted);
+                } else {
+                    this.set('record.task.lkh_date', null);
+                    this.set('record.task.lkh_date_formatted', null);
+                }
+            }
+
+            __onLookupTap() {
+                if ( ! this.$['lookup-items']) {
+                    Polymer.importHref(this.resolveUrl('../plugins/lookup-items.html'), () => {
+                        let lov = document.createElement('lookup-items');
+                        
+                        lov.addEventListener('beforeload', e => {
+                            e.detail.options.lookup = 'lkh';
+                            e.detail.options.params = {
+                                ti_user: this.record.task.lkh_su_id
+                            };
+                        });
+
+                        lov.addEventListener('close', () => {
+                            lov.selection.forEach(item => {
+                                this.unshift('record.items', {
+                                    lki_desc: item.lki_desc,
+                                    lki_volume: 1,
+                                    lki_unit: 'dokumen',
+                                    lki_cost: 0,
+                                    lki_ti_id: item.lki_ti_id
+                                });
+                            });
+                        });
+                        this.shadowRoot.appendChild(lov);
+                        lov.open();
+                        this.$['lookup-items'] = lov;
+                    });
+                } else {
+                    this.$['lookup-items'].open();
+                }
+            }
+            
+            __onInputKeydown(e) {
+                if (e.code == 'Enter') {
+                    this.__addItem();
+                }
+                
+            }
+        }
+        customElements.define(FormLkh.is, FormLkh);
+    </script>
+</dom-module>

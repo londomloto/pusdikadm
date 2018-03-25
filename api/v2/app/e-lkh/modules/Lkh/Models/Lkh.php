@@ -16,23 +16,32 @@ class Lkh extends \Micro\Model {
         );
 
         $this->hasOne(
-            'lkh_tpr_id',
-            'App\Presence\Models\Presence',
-            'tpr_id',
+            'lkh_examiner',
+            'App\Users\Models\User',
+            'su_id',
             array(
-                'alias' => 'Presence',
-                'foreignKey' => array(
-                    'action' => \Phalcon\Mvc\Model\Relation::ACTION_CASCADE
-                )
+                'alias' => 'Examiner'
+            )
+        );
+
+        $this->hasOne(
+            'lkh_superior',
+            'App\Users\Models\User',
+            'su_id',
+            array(
+                'alias' => 'Superior'
             )
         );
 
         $this->hasMany(
             'lkh_id',
-            'App\Lkh\Models\LkhItem',
-            'lki_lkh_id',
+            'App\Lkh\Models\LkhDay',
+            'lkd_lkh_id',
             array(
-                'alias' => 'Items'
+                'alias' => 'Days',
+                'foreignKey' => array(
+                    'action' => \Phalcon\Mvc\Model\Relation::ACTION_CASCADE
+                )
             )
         );
     }
@@ -42,16 +51,27 @@ class Lkh extends \Micro\Model {
     }
 
     public function beforeSave() {
-        if (isset($this->lkh_exam_id) && $this->lkh_exam_id == '') {
-            $this->lkh_exam_id = NULL;
+        if (isset($this->lkh_examiner) && $this->lkh_examiner == '') {
+            $this->lkh_examiner = NULL;
         }
-    }
 
+        if (isset($this->lkh_superior) && $this->lkh_superior == '') {
+            $this->lkh_superior = NULL;
+        }
+
+        // create period
+        if (isset($this->lkh_start_date, $this->lkh_end_date)) {
+            $this->lkh_period = DateHelper::formatPeriod($this->lkh_start_date, $this->lkh_end_date);
+        }
+        
+    }
+    
     public function toArray($columns = NULL) {
         $data = parent::toArray($columns);
+
         $data['lkh_title'] = $this->getTitle();
-        $data['lkh_period'] = DateHelper::format($this->lkh_date, 'l, d M Y');
-        $data['lkh_date_formatted'] = DateHelper::format($this->lkh_date, 'd M Y');
+        $data['lkh_start_date_formatted'] = DateHelper::format($this->lkh_start_date, 'd M Y');
+        $data['lkh_end_date_formatted'] = DateHelper::format($this->lkh_end_date, 'd M Y');
 
         if (($user = $this->user)) {
             $data['lkh_su_fullname'] = $user->getName();
@@ -60,64 +80,43 @@ class Lkh extends \Micro\Model {
             $data['lkh_su_sj_name'] = $user->job ? $user->job->sj_name : '';
             $data['lkh_su_sdp_name'] = $user->department ? $user->department->sdp_name : '';
             $data['lkh_su_avatar_thumb'] = $user->getAvatarThumb();
-
         }
 
-        if ($this->presence) {
-            $data['lkh_tpr_date_formatted'] = DateHelper::format($this->presence->tpr_date, 'd M Y');
+        if (($examiner = $this->examiner)) {
+            $data['examiner_su_fullname'] = $examiner->getName();
+            $data['examiner_su_no'] = $examiner->su_no;
+            $data['examiner_su_grade'] = $examiner->su_grade;
+            $data['examiner_su_sj_name'] = $examiner->job ? $examiner->job->sj_name : '';
+            $data['examiner_su_sdp_name'] = $examiner->department ? $examiner->department->sdp_name : '';
+            $data['examiner_su_avatar_thumb'] = $examiner->getAvatarThumb();
+        }
+
+        if (($superior = $this->superior)) {
+            $data['superior_su_fullname'] = $superior->getName();
+            $data['superior_su_no'] = $superior->su_no;
+            $data['superior_su_grade'] = $superior->su_grade;
+            $data['superior_su_sj_name'] = $superior->job ? $superior->job->sj_name : '';
+            $data['superior_su_sdp_name'] = $superior->department ? $superior->department->sdp_name : '';
+            $data['superior_su_avatar_thumb'] = $superior->getAvatarThumb();
+        }
+
+        $auth = \Micro\App::getDefault()->auth->user();
+        $data['lkh_authorized'] = FALSE;
+
+        if ($auth['su_id'] == $this->lkh_su_id || $auth['su_id'] == $this->lkh_created_by) {
+            $data['lkh_authorized'] = TRUE;
         }
 
         return $data;
     }
 
-    public function getSortedItems() {
-        return $this->getItems(array('order' => 'lki_id DESC'));
-    }
-
     public function getTitle() {
         $user = $this->user;
-        $title  = $user ? $user->getName() : '(dihapus)';
-        $title .= ' ('.DateHelper::format($this->lkh_date, 'd M Y').')';
-        return $title;
+        return sprintf('%s (%s)', $user ? $user->getName() : '(dihapus)', $this->lkh_period);
     }
 
-    public function saveItems($post) {
-        $created = array();
-        $updated = array();
-        $current = array();
-
-        foreach($this->items as $model) {
-            $current[$model->lki_id] = $model;
-        }
-
-        foreach($post as $item) {
-            if ( ! isset($item['lki_id'])) {
-                $created[] = $item;
-            } else if (isset($current[$item['lki_id']])) {
-                $model = $current[$item['lki_id']];
-                $model->save($item);
-                
-                unset($current[$item['lki_id']]);
-            }
-        }
-
-        if (count($current) > 0) {
-            foreach($current as $model) {
-                $model->delete();
-            }
-        }
-
-        if (count($created) > 0) {
-            foreach($created as $item) {
-                if ( ! empty($item['lki_desc'])) {
-                    $model = new LkhItem();
-                    $item['lki_lkh_id'] = $this->lkh_id;
-                    $model->save($item);
-                }
-            }
-        }
-
-        
+    public function getSampleItems() {
+        return array();
     }
 
 }

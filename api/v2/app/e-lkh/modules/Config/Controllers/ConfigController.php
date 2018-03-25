@@ -5,11 +5,23 @@ use App\Config\Models\Config;
 
 class ConfigController extends \Micro\Controller {
 
+    public function sessionAction() {
+        $session = $this->security->getRandom()->uuid();
+
+        return array(
+            'success' => TRUE,
+            'data' => array(
+                'session' => $session
+            )
+        );
+    }
+
     public function loadAction() {
         $data = Config::data();
+
         $data['app_version'] = '2.0.5';
         $data['app_push_server'] = $this->socket->host;
-
+        
         // handle package info
         if (isset($data['app_package']) && $data['app_package'] != 'FREE') {
             $data['notif_global'] = '';

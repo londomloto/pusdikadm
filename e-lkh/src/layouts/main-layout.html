@@ -84,7 +84,6 @@
                 position: relative;
                 font-size: 20px;
                 font-weight: 500;
-                top: 2px;
             }
 
             [main-title] .logo-powered {
@@ -106,8 +105,8 @@
                 z-index: 1;
                 --paper-tab-ink: var(--paper-grey-300);
             }
-            kct-tab.iron-selected::before {
-                display: block;
+            kct-tab::before {
+                display: none;
                 content: '';
                 position: absolute;
                 background-color: var(--paper-grey-100);
@@ -117,6 +116,20 @@
                 top: 3px;
                 border-left: 1px solid #dfdfdf;
                 border-right: 1px solid #dfdfdf;
+                border-top: 1px solid #dfdfdf;
+            }
+            kct-tab.iron-selected::before {
+                display: block;
+
+                /*content: '';
+                position: absolute;
+                background-color: var(--paper-grey-100);
+                left: 0;
+                right: 0;
+                bottom: 0;
+                top: 3px;
+                border-left: 1px solid #dfdfdf;
+                border-right: 1px solid #dfdfdf;*/
             }
             
             .navbar {
@@ -204,6 +217,9 @@
                 --paper-icon-button-ink-color: var(--paper-red-500);
             }
 
+            .layout {
+                background-color: var(--paper-grey-100);
+            }
             .layout.sm .hidden-sm { display: none;  }
             .layout.md .hidden-md { display: none;  }
         </style>
@@ -214,7 +230,7 @@
         <kct-socket manager="global-socket" on-notify="__onSocketNotify"></kct-socket>
         <kct-feed id="feed" config="[[ config ]]"></kct-feed>
 
-        <app-drawer-layout id="viewport" class="unresolved" fullbleed>
+        <app-drawer-layout id="viewport" class="unresolved" fullbleed force-narrow>
             
             <app-drawer id="drawer1" slot="drawer" align="start">
                 <navigation-block id="navigation" config="{{ config }}" route="{{ route }}" user="{{ user }}" on-tap="__onNavigationTap"></navigation-block>
@@ -227,7 +243,7 @@
                         <div main-title>
                             <div class="logo">
                                 <span class="logo-text">[[ config.app_title ]]</span>
-                                <span class="logo-powered hidden-sm hidden-md">powered by <b style="color: var(--paper-blue-700)">PUSDIKADM</b></span>
+                                <!-- <span class="logo-powered hidden-sm hidden-md">powered by <b style="color: var(--paper-blue-700)">PUSDIKADM</b></span> -->
                             </div>
                         </div>
                         <div class="navbar">
@@ -240,7 +256,7 @@
                         </div>
                     </app-toolbar>
                     <app-toolbar class="secondary-toolbar">
-                        <kct-tabs id="tabs" selected="{{ page }}" attr-for-selected="name" align-bottom scrollable>
+                        <kct-tabs id="tabs" selected="{{ page }}" attr-for-selected="name" align-bottom scrollable no-slide>
                             <dom-repeat items="{{ pages }}">
                                 <template>
                                     <kct-tab 

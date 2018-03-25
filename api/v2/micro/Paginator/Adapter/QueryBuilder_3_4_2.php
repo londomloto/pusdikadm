@@ -13,8 +13,10 @@ class QueryBuilder extends \Phalcon\Paginator\Adapter\QueryBuilder {
         if (is_null($conn)) {
             $builder = $this->_builder;
             $modelClass = $builder->getFrom();
+            
 
             if (is_array($modelClass)) {
+                $modelClass = array_values($modelClass);
                 $modelClass = $modelClass[0];
             }
             

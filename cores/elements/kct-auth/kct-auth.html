@@ -113,7 +113,25 @@
                 return defer.promise;
             }
 
+            captcha() {
+                let url = '/auth/captcha?type=code';
+                
+                if (this.config.app_session) {
+                    url += '&session=' + this.config.app_session;
+                }
+
+                return this.$.ajax.GET(url).then(res => {
+                    return res.data;
+                });
+            }
+
             login(email, password, captcha = '', remember = false) {
+                let url = this.loginUrl;
+
+                if (this.config.app_session) {
+                    url += '?session=' + this.config.app_session;
+                }
+
                 let payload = {
                     email: email,
                     password: password, 
@@ -122,7 +140,7 @@
                     client: 'browser'
                 };
 
-                return this.$.ajax.POST(this.loginUrl, payload).then(res => {
+                return this.$.ajax.POST(url, payload).then(res => {
                     if (res.success) {
                         let user = res.data;
                         this.set('user', user);

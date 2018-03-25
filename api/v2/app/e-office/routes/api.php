@@ -19,6 +19,7 @@ Router::group(array(
 ->post('/save-package', 'savePackage')
 ->post('/save', 'save');
 
+Router::get('/config/session', 'App\Config\Controllers\ConfigController@session');
 Router::get('/config/routes', 'App\Config\Controllers\ConfigController@routes');
 Router::get('/config/load', 'App\Config\Controllers\ConfigController@load');
 

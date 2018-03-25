@@ -1,8 +1,22 @@
 <link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-pages/kct-pages.html">
 
 <dom-module id="skp-page">
     <template>
-        
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--page-background-color);
+            }
+            #switcher {
+                display: block;
+                height: 100%;
+            }
+        </style>        
+        <kct-pages id="switcher" attr-for-selected="name" selected="[[ page ]]" lazy-load>
+            <skp-index name="index" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" import="pages/skp-index.html"></skp-index>
+            <skp-sheet name="sheet" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" import="pages/skp-sheet.html"></skp-sheet>
+        </kct-pages>
     </template>
     <script>
         class SkpPage extends KctView {
@@ -13,6 +27,10 @@
                 return {
                     title: { type: String, value: 'Sasaran Kerja', notify: true }
                 };
+            }
+            handleRouteParams(page) {
+                page = page || 'index';
+                this.set('page', page)
             }
         }
         customElements.define(SkpPage.is, SkpPage);

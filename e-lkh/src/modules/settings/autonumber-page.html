@@ -15,9 +15,9 @@
 
         <kct-ajax id="ajax"></kct-ajax>
 
-        <div class="page-actions">
+        <!-- <div class="page-actions">
             <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to Setting" on-tap="__onBackTap"></paper-fab>
-        </div>
+        </div> -->
 
         <kct-grid 
             id="grid" 
@@ -25,12 +25,11 @@
             selected="{{ selectedRecord }}"
             columns="{{ columns }}" 
             icon="image:filter-5" 
-            title="Application" 
-            description="Autonumber Settings">
+            header-text="Aplikasi" 
+            header-desc="Penomoran" 
+            on-back-tap="__onBackTap">
 
-            <div slot="grid-toolbar">
-                <paper-button on-tap="__onEditTap"><iron-icon icon="done"></iron-icon>&nbsp;Edit</paper-button>
-            </div>
+            <paper-button slot="left-toolbar" on-tap="__onEditTap"><iron-icon icon="done"></iron-icon>&nbsp;Edit</paper-button>
 
         </kct-grid>
 

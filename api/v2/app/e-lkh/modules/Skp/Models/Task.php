@@ -29,6 +29,30 @@ class Task extends Skp implements \App\Tasks\Interfaces\TaskModel {
 
         $this->hasMany(
             'skp_id',
+            'App\Skp\Models\TaskUser',
+            'sku_skp_id',
+            array(
+                'alias' => 'TaskUsers',
+                'foreignKey' => array(
+                    'action' => Relation::ACTION_CASCADE
+                )
+            )
+        );
+
+        $this->hasManyToMany(
+            'skp_id',
+            'App\Skp\Models\TaskUser',
+            'sku_skp_id',
+            'sku_su_id',
+            'App\Users\Models\User',
+            'su_id',
+            array(
+                'alias' => 'Users'
+            )
+        );
+
+        $this->hasMany(
+            'skp_id',
             'App\Skp\Models\TaskLabel',
             'skl_skp_id',
             array(
@@ -172,6 +196,63 @@ class Task extends Skp implements \App\Tasks\Interfaces\TaskModel {
         ));
     }
 
+    public function saveUsers($post) {
+        $created = array();
+        $updated = array();
+        $current = array();
+
+        foreach($this->getUsers() as $e) {
+            $current[$e->su_id] = TRUE;
+        }
+
+        foreach($post as $e) {
+            if (isset($current[$e['su_id']])) {
+                $updated[] = $e;
+                unset($current[$e['su_id']]);
+            } else {
+                $created[] = $e;
+            }
+        }
+
+        $current = array_values(array_keys($current));
+
+        if (count($current) > 0) {
+            TaskUser::get()
+                ->inWhere('sku_su_id', $current)
+                ->andWhere('sku_skp_id = :task:', array('task' => $this->skp_id))
+                ->execute()
+                ->delete();
+
+            Activity::log('remove_user', array(
+                'ta_task_ns' => $this->getNamespace(),
+                'ta_sp_id' => $this->skp_task_project,
+                'ta_task_id' => $this->skp_id,
+                'ta_data' => json_encode($indexes)
+            ));
+        }
+
+        if (count($created) > 0) {
+            $indexes = array();
+
+            foreach($created as $e) {
+                $r = new TaskUser();
+
+                $r->sku_skp_id = $this->skp_id;
+                $r->sku_su_id = $e['su_id'];
+                $r->save();
+
+                $indexes[] = $e['su_id'];
+            }
+
+            Activity::log('add_user', array(
+                'ta_task_ns' => $this->getNamespace(),
+                'ta_sp_id' => $this->skp_task_project,
+                'ta_task_id' => $this->skp_id,
+                'ta_data' => json_encode($indexes)
+            ));
+        }
+    }
+
     public function saveLabels($post) {
         $created = array();
         $updated = array();
@@ -226,6 +307,20 @@ class Task extends Skp implements \App\Tasks\Interfaces\TaskModel {
                 'ta_data' => json_encode($indexes)
             ));
         }
+    }
+
+    public function getAssignee() {
+        return $this->getUsers()->filter(function($user){
+            $data = array();
+            
+            $data['su_id'] = $user->su_id;
+            $data['su_avatar_thumb'] = $user->getAvatarThumb();
+            $data['su_fullname'] = $user->su_fullname;
+            $data['su_grade'] = $user->su_grade;
+            $data['su_no'] = $user->su_no;
+
+            return $data;
+        });
     }
 
     public function forward() {

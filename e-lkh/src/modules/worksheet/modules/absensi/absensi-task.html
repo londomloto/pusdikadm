@@ -13,9 +13,9 @@
         <kct-media screen="{{ screen }}"></kct-media>
         
         <kct-vbox class$="layout [[ __computeClass(loading) ]]">
-            <header-block id="header" on-back-tap="__onBackTap" text="Module Administrasi" hide-header$="[[ __hideHeader(screen) ]]">
-                <h3 slot="header-value">[[ __projectTitle ]]</h3>
-
+            <header-block id="header" on-back-tap="__onBackTap" text="Module Absensi" hide-header$="[[ __hideHeader(screen) ]]">
+                <h3 slot="header-value">[[ header ]]</h3>
+                
                 <paper-button hidden$="[[ __hideButton('save', formButtons) ]]" disabled$="[[ formInvalid ]]" on-tap="__onSaveTap" class="btn-action primary" slot="right-toolbar" style="margin-left: 8px;">
                     <iron-icon icon="done"></iron-icon>&nbsp;[[ __computeSaveLabel(actionRecord) ]]
                 </paper-button>

@@ -19,7 +19,8 @@
             }
             paper-input-container {
                 position:relative;
-                padding:0;
+                padding: 0;
+                @apply --kct-combobox-container;
             }
             paper-icon-button.clear-button,
             paper-icon-button.toggle-button,
@@ -341,6 +342,8 @@
                         let start = +this.paging.start;
                         let pages = Math.ceil(total / limit);
                         let page  = Math.ceil((start - 1) / limit) + 1;
+
+                        page = page < 1 ? 1 : page;
 
                         this.__setPaging({ 
                             total: total,

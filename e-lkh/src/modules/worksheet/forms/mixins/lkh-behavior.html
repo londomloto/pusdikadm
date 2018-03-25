@@ -1,0 +1,33 @@
+<link rel="import" href="../../../../../../cores/mixins/mixins.html">
+
+<script>
+    Mixins.LkhBehavior = Polymer.dedupingMixin(superclass => {
+
+        return class extends superclass {
+
+            __addAssignee(user) {
+
+                if ( ! this.record.users) {
+                    this.set('record.users', []);
+                }
+
+                let index = this.record.users.findIndex(e => {
+                    return e.su_id == user.su_id;
+                });
+
+                if (index === -1) {
+                    this.push('record.users', {
+                        su_id: user.su_id,
+                        su_fullname: user.su_fullname,
+                        su_avatar_thumb: user.su_avatar_thumb,
+                        su_grade: user.su_grade,
+                        su_no: user.su_no
+                    });
+                }
+
+            }
+
+        };
+
+    }); 
+</script>

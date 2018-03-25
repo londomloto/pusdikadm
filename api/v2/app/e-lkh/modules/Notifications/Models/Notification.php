@@ -69,7 +69,7 @@ class Notification extends \App\Activities\Models\Activity {
         switch($type) {
             case 'create':
                 $verb = sprintf(
-                    '**%s** membuat dokumen %s: "%s"',
+                    '**%s** membuat dokumen %s: "**%s**"',
                     $senderName,
                     $projectTitle,
                     $taskTitle
@@ -99,7 +99,7 @@ class Notification extends \App\Activities\Models\Activity {
             case 'update_title':
             case 'update_description':
                 $verb = sprintf(
-                    '**%s** menyunting dokumen %: "%s"',
+                    '**%s** menyunting dokumen %s: "**%s**"',
                     $senderName,
                     $projectTitle,
                     $taskTitle
@@ -142,13 +142,14 @@ class Notification extends \App\Activities\Models\Activity {
                     $assignee = implode(', ', $assignee);
                 }
 
-                $action = $type == 'add_user' ? 'menugaskan' : 'menghapus';
+                $action = $type == 'add_user' ? 'menambahkan' : 'menghapus';
 
                 $verb = sprintf(
-                    '**%s** %s %s on task: "%s"',
+                    '**%s** %s %s pada dokumen %s: "%s"',
                     $senderName,
                     $action,
                     $assignee,
+                    $projectTitle,
                     $taskTitle
                 );
                 break;

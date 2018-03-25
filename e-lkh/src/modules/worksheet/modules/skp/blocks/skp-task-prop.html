@@ -22,7 +22,7 @@
                 </div>
             </div>
 
-            <div class="form-group">
+            <!-- <div class="form-group">
                 <div class="label">Pembuat Dokumen</div>
                 <div class="field">
                     <div class="display">
@@ -38,9 +38,42 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> -->
 
             <div class="form-group">
+                <div class="tools">
+                    <save-indicator id="user-indicator"></save-indicator>
+                    <paper-button on-tap="__onUserEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
+                </div>
+                <div class="label">Pengakses Dokumen</div>
+                <div class="field">
+                    <div class="editor" hidden$="[[ !__states.editing.user ]]">
+                        <task-combo-user 
+                            id="combo-user" 
+                            project="[[ project ]]" 
+                            on-change="__onComboUserChange" 
+                            on-action="__onComboUserAction"></task-combo-user>
+                    </div>
+                    <div class="display">
+                        <div class="empty" hidden$="[[ __hideEmptyUser(record.users.splices) ]]">(kosong) - <a href="javascript:;" on-tap="__onAssignSelfTap">tambahkan</a></div>
+                        <template is="dom-repeat" items="[[ record.users ]]">
+                            <div class="user-item">
+                                <div class="icon">
+                                    <img src$="[[ item.su_avatar_thumb ]]&w=36&h=36">
+                                </div>
+                                <div class="text">
+                                    <div>[[ item.su_fullname ]]</div>
+                                    <div class="meta">[[ __computeUserMeta(item.su_no, item.su_grade) ]]</div>
+                                    <div hidden$="[[ __hideRemoveUser(item.su_id) ]]"><a on-tap="__onUserRemoveTap" href="javascript:void(0)">Hapus</a></div>
+                                </div>
+                                <div class="clearfix"></div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- <div class="form-group">
                 <div class="label">Tanggal Pembuatan</div>
                 <div class="field">
                     <div class="display">
@@ -51,7 +84,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> -->
 
             <!-- <div class="form-group">
                 <div class="tools">
@@ -112,7 +145,9 @@
                 return 'skp-task-prop';
             }
 
-            initialize() {
+            start() {
+                super.start();
+
                 let today = moment(),
                     formattedToday = today.format('DD MM YYYY');
 
@@ -125,6 +160,16 @@
                 this.set('record.task.skp_task_due', today.format('YYYY-MM-DD'));
                 this.set('record.task.skp_task_due_formatted', formattedToday);
                 this.set('record.task.skp_created_dt_formatted', formattedToday);
+            }
+
+            __hideRemoveUser(id) {
+                let authors = [this.record.task.skp_su_id];
+                
+                if (this.project) {
+                    authors.push(this.project.sp_creator_id);
+                }
+
+                return authors.indexOf(id) !== -1;
             }
 
         }

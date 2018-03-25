@@ -48,7 +48,25 @@ class Activity extends \Micro\Model {
                 return array(
                     'model' => 'App\Registration\Models\Task',
                     'reference_key' => 'su_id',
-                    'project_key' => 'su_sp_id'
+                    'project_key' => 'su_task_project'
+                );
+            case '/presence':
+                return array(
+                    'model' => 'App\Presence\Models\Task',
+                    'reference_key' => 'tpr_id',
+                    'project_key' => 'tpr_task_project'
+                );
+            case '/lkh':
+                return array(
+                    'model' => 'App\Lkh\Models\Task',
+                    'reference_key' => 'lkh_id',
+                    'project_key' => 'lkh_task_project'
+                );
+            case '/skp':
+                return array(
+                    'model' => 'App\Skp\Models\Task',
+                    'reference_key' => 'skp_id',
+                    'project_key' => 'skp_task_project'
                 );
         }
         return FALSE;

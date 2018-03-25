@@ -95,7 +95,7 @@
                         if (this.worksheetRecord) {
                             let cached = {};
                             
-                            this.worksheetRecord.ks_panels.forEach(p => {
+                            (this.worksheetRecord.ks_panels || []).forEach(p => {
                                 cached[p.kp_id] = p.kp_data;
                             });
 
@@ -136,7 +136,7 @@
             }
 
             __loadPanels() {
-                let panels = this.worksheetRecord.ks_panels;
+                let panels = (this.worksheetRecord.ks_panels || []);
                 let count = panels.length;
                 let index = 0;
 

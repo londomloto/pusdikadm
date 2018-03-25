@@ -28,7 +28,7 @@
                     host: { type: String },
                     base: { type: String },
                     config: { type: Object },
-                    secure: { type: Boolean, value: false, reflectToAttribute: true },
+                    secure: { type: Boolean, value: false, reflectToAttribute: true }, 
                     version: { type: String, value: 'api/v2' },
                     loginUrl: { type: String, value: 'login' },
                     novalidate: { type: Boolean, value: false }
@@ -526,7 +526,7 @@
                     return token;
                 });
             }
-
+            
             __sendApiRequest(config) {
                 let xhr = document.createElement('iron-ajax');
                 let d = this._defer();
@@ -567,7 +567,11 @@
                 // add fingerprint
                 // ajax.headers['X-Fingerprint'] = CryptoJS.SHA256(this.fingerprint);
 
-                this.__resolveToken().then((token) => {
+                Promise.all([
+                    this.__resolveToken()
+                ]).then(values => {
+                    let [token] = values;
+
                     if (token) {
                         xhr.headers = xhr.headers || {};
                         xhr.headers['Authorization'] = 'Bearer ' + token;

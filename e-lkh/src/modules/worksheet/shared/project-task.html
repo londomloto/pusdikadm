@@ -25,6 +25,7 @@
         return class extends superclass {
             static get properties() {
                 return {
+                    header: { type: String, value: 'Loading...' },
                     actionRecord: { type: String, value: 'create' },
                     actionBack: { type: String },
                     project: { type: String },
@@ -39,16 +40,13 @@
 
             static get observers() {
                 return [
-                    '__projectRecordChanged(projectRecord.*)',
                     '__actionRecordChanged(actionRecord)'
                 ];
             }
 
             constructor() {
                 super();
-
                 this.__phantom = true;
-                this.__projectTitle = 'Loading...';
             }
 
             ready() {
@@ -87,7 +85,8 @@
                 this.set('taskRecord', {
                     task: {},
                     status: {},
-                    labels: []
+                    labels: [],
+                    users: []
                 });
             }
 
@@ -128,24 +127,28 @@
                 function done(res) {
                     this.unmask();
 
-                    this.$.taskform.afterSave(res);
+                    this.$.taskform.afterSave(res).then(() => {
+                        this.unmask();
 
-                    if (back) {
-                        this.set('route.path', this.actionBack);    
-                    }
-
-                    if (res.success) {
-                        this.$.publisher.publish('notify');
-
-                        if ( ! back) {
-                            this.toast('Sukses', 'Data berhasil disimpan', 'info');
-                            this.$.tasklogs.initialize();
+                        if (back) {
+                            this.set('route.path', this.actionBack);    
                         }
 
-                        if (res.message) {
-                            this.toast('Warning', res.message, 'warn');
+                        if (res.success) {
+                            this.$.publisher.publish('notify');
+
+                            if ( ! back) {
+                                this.toast('Sukses', 'Data berhasil disimpan', 'info');
+                                this.$.tasklogs.start();
+                            }
+
+                            if (res.message) {
+                                this.toast('Warning', res.message, 'warn');
+                            }
                         }
-                    }
+
+                    });
+                    
                 }
             }
 
@@ -153,12 +156,10 @@
                 if ( ! this.project) return;
 
                 this.set('loading', true);
-                this.set('__projectTitle', 'Loading...');
 
                 this.$.ajax.GET('/projects/' + this.project + '/load' ).then(res => {
                     this.set('projectRecord', res.data);
                     this.set('loading', false);
-
                     this.__loadWorkspaces();
                 });
             }
@@ -185,12 +186,6 @@
 
             __hideButton(type, buttons) {
                 return (buttons || '').indexOf(type) === -1;
-            }
-
-            __projectRecordChanged(changed) {
-                if (this.projectRecord) {
-                    this.set('__projectTitle', this.projectRecord.sp_title);
-                }
             }
 
             __actionRecordChanged(action) {
@@ -288,10 +283,11 @@
 
                         if (form) {
                             this.$.taskform.render().then(() => {
-                                this.set('loading', false);
                                 this.$.taskform.initialize().then(() => {
+                                    this.set('loading', false);
                                     this.set('taskRecord', record);
-                                    this.$.tasklogs.initialize();
+                                    this.$.tasklogs.start();
+                                    this.$.taskform.start();
                                 });
                             });
                         } else {
@@ -347,11 +343,12 @@
 
                     if (form) {
                         this.$.taskform.render().then(() => {
-                            this.$.tasklogs.initialize();
-                            this.$.taskprop.initialize();
-
                             this.$.taskform.initialize().then(() => {
                                 this.set('loading', false);
+
+                                this.$.taskform.start();
+                                this.$.tasklogs.start();
+                                this.$.taskprop.start();
                             });
                         });
                     } else {
@@ -386,7 +383,8 @@
 
                         this.$.taskform.beforeRemove().then(res => {
                             if (res.success) {
-                                this.$.ajax.DELETE('/worksheet/kanban/' + this.taskRecord.task.tt_id).then(() => {
+                                let identity = this.taskRecord.task[this.metadata.primary_key];
+                                this.$.ajax.DELETE(this.metadata.service_url + '/' + identity).then(() => {
                                     this.unmask();
                                     this.$.publisher.publish('notify');
                                     this.set('route.path', this.actionBack);
@@ -400,7 +398,7 @@
             }
 
             __onPropAfterUpdate(e) {
-                this.$.tasklogs.initialize();
+                this.$.tasklogs.start();
                 this.$.publisher.publish('notify');
                 
                 if (e.detail.back) {

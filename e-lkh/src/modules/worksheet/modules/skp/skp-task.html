@@ -13,8 +13,8 @@
         <kct-media screen="{{ screen }}"></kct-media>
         
         <kct-vbox class$="layout [[ __computeClass(loading) ]]">
-            <header-block id="header" on-back-tap="__onBackTap" text="Module Administrasi" hide-header$="[[ __hideHeader(screen) ]]">
-                <h3 slot="header-value">[[ __projectTitle ]]</h3>
+            <header-block id="header" on-back-tap="__onBackTap" text="Module SKP" hide-header$="[[ __hideHeader(screen) ]]">
+                <h3 slot="header-value">[[ header ]]</h3>
 
                 <paper-button hidden$="[[ __hideButton('save', formButtons) ]]" disabled$="[[ formInvalid ]]" on-tap="__onSaveTap" class="btn-action primary" slot="right-toolbar" style="margin-left: 8px;">
                     <iron-icon icon="done"></iron-icon>&nbsp;[[ __computeSaveLabel(actionRecord) ]]
@@ -26,6 +26,10 @@
 
                 <paper-button hidden$="[[ __hideButton('remove', formButtons) ]]" on-tap="__onRemoveTap" class="btn-action danger" slot="right-toolbar">
                     <iron-icon icon="close"></iron-icon>&nbsp;Hapus
+                </paper-button>
+
+                <paper-button hidden$="[[ __hideButton('print', formButtons) ]]" on-tap="__onPrintTap" class="btn-action default" slot="right-toolbar">
+                    <iron-icon icon="print"></iron-icon>&nbsp;Cetak
                 </paper-button>
 
             </header-block>
@@ -49,6 +53,7 @@
                         <skp-task-logs 
                             id="tasklogs" 
                             record="{{ taskRecord }}" 
+                            project="[[ projectRecord ]]" 
                             hidden$="[[ __phantom ]]" 
                             metadata="[[ metadata ]]" 
                             loading="[[ loading ]]"></skp-task-logs> 
@@ -101,13 +106,46 @@
                 };
             }
 
+            static get observers() {
+                return [
+                    '__computeHeader(taskRecord.task.skp_su_fullname, taskRecord.task.skp_start_date, taskRecord.task.skp_end_date)'
+                ];
+            }
+
             init() {
                 this.set('taskRecord', {
                     task: {},
                     status: {},
                     labels: [],
-                    items: []
+                    items: [],
+                    extra: [],
+                    users: []
                 });
+            }
+
+            __computeHeader(name, start, end) {
+                if (name) {
+                    let header = name;
+                    
+                    if (start && end) {
+                        start = moment(start);
+                        end = moment(end);
+
+                        if (start.format('YYYY-MM') == end.format('YYYY-MM')) {
+                            header += ' (' + start.format('MMMM YYYY') + ')';
+                        } else if (start.format('YYYY') == end.format('YYYY')) {
+                            header += ' ('+ start.format('MMMM') + ' s/d ' + end.format('MMMM') + ' ' + start.format('YYYY') + ')';
+                        } else {
+                            header += ' (' + start.format('MMMM YYYY') + ' s/d ' + end.format('MMMM YYYY') + ')';
+                        }
+                    }
+
+                    this.set('header', header);
+                }
+            }
+
+            __onPrintTap() {
+                this.$.ajax.DOWNLOAD('/skp/print/document/xls/' + this.taskRecord.task.skp_id);
             }
 
         }

@@ -49,21 +49,11 @@ Router::group(array(
 ->post('/{id}/download', 'download');
 
 Router::group(array(
-    'prefix' => '/lkh/exam',
-    'handler' => 'App\Lkh\Controllers\ExamController',
+    'prefix' => '/lkh/lkh-items',
+    'handler' => 'App\Lkh\Controllers\LkhItemsController',
     'middleware' => 'auth'
 ))
-->get('/modules', 'modules')
-->get('/{id}/flag', 'flag')
-->post('/init', 'init');
-
-Router::group(array(
-    'prefix' => '/skp/exam',
-    'handler' => 'App\Skp\Controllers\ExamController',
-    'middleware' => 'auth'
-))
-->get('/modules', 'modules')
-->post('/init', 'init');
+->post('/{id}/upload', 'upload');
 
 Router::group(array(
     'prefix' => '/messages/inbox',
@@ -85,3 +75,26 @@ Router::group(array(
 ->post('/save', 'save')
 ->post('/send', 'send')
 ->post('/trash', 'trash');
+
+Router::group(array(
+    'prefix' => '/skp',
+    'handler' => 'App\Skp\Controllers\SkpController',
+    'middleware' => 'auth'
+))
+->post('/{id}/save-behaviors', 'saveBehaviors');
+
+Router::group(array(
+    'prefix' => '/skp/print',
+    'handler' => 'App\Skp\Controllers\PrintController',
+    'middleware' => 'auth'
+))
+->post('/document/{format}/{id}', 'document')
+->post('/report/{format}', 'report');
+
+Router::group(array(
+    'prefix' => '/lkh/print',
+    'handler' => 'App\Lkh\Controllers\PrintController',
+    //'middleware' => 'auth'
+))
+->get('/document/{format}/{id}', 'document')
+->post('/report/{format}', 'report');
