@@ -94,7 +94,7 @@ Router::group(array(
 Router::group(array(
     'prefix' => '/lkh/print',
     'handler' => 'App\Lkh\Controllers\PrintController',
-    //'middleware' => 'auth'
+    'middleware' => 'auth'
 ))
-->get('/document/{format}/{id}', 'document')
+->post('/document/{format}/{id}', 'document')
 ->post('/report/{format}', 'report');
