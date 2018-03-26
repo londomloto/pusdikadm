@@ -71,8 +71,10 @@
             }
 
             stopEditingUser() {
-                this.$['combo-user'].close();
-                this.set('__states.editing.user', false);
+                if (this.$['combo-user']) {
+                    this.$['combo-user'].close();
+                    this.set('__states.editing.user', false);    
+                }
             }
 
             startEditingLabel() {
