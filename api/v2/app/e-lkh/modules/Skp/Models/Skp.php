@@ -91,6 +91,14 @@ class Skp extends \Micro\Model {
         if (isset($this->skp_start_date, $this->skp_end_date)) {
             $this->skp_period = DateHelper::formatPeriod($this->skp_start_date, $this->skp_end_date);
         }
+
+        if (isset($this->skp_report_dt) && $this->skp_report_dt == '') {
+            $this->skp_report_dt = NULL;
+        }
+
+        if (isset($this->skp_receive_dt) && $this->skp_receive_dt == '') {
+            $this->skp_receive_dt = NULL;
+        }
     }
 
     public function getTitle() {

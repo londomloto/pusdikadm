@@ -948,6 +948,11 @@
                     this.$.ajax.POST('/skp/skp-items', data).then(res => {
                         if (res.success) {
                             let item = res.data;
+                            if (data.ski_extra == 0) {
+                                this.push('record.items', item);
+                            } else {
+                                this.push('record.extra', item);
+                            }
                             this.__computeSummary();
                         }
                     });
