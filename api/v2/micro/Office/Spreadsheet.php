@@ -69,4 +69,48 @@ class Spreadsheet {
         exit();
     }
 
+    public static function createImage($file, $options = array()) {
+
+        if ( ! file_exists($file)) {
+            return FALSE;
+        }
+
+        if (($info = @getimagesize($file))) {
+            
+            $resource = FALSE;
+            $name = preg_replace('/[^a-z0-9]+/i', '_', basename($file));
+            $width = $info[0];
+            $height = $info[1];
+
+            switch($info['mime']) {
+                case 'image/jpeg':
+                case 'image/jpg':
+                    $resource = @imagecreatefromjpeg($file);
+                    break;
+
+                case 'image/png':
+                    $resource = @imagecreatefrompng($file);
+                    break;
+
+                case 'image/gif':
+                    $resource = @imagecreatefromgif($file);
+                    break;
+            }
+
+            if ($resource) {
+                $image = new \PhpOffice\PhpSpreadsheet\Worksheet\MemoryDrawing();
+                $image->setName($name);
+                $image->setDescription('creator: londomloto');
+                $image->setImageResource($resource);
+                $image->setWidth($width);
+                $image->setHeight($height);
+
+                return $image;
+            }
+        }
+
+        return FALSE;
+
+    }
+
 }

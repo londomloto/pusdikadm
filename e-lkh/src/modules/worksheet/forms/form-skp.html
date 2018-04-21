@@ -355,14 +355,87 @@
                         </div>
                     </div>
 
-                    <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th rowspan="2" style="width: 30px;">NO</th>
+                                <th rowspan="2" style="width: 30px;"></th>
+                                <th rowspan="2" style="min-width: 300px;">KEGIATAN TUGAS JABATAN</th>
+                                <th rowspan="2" style="width: 30px;"></th>
+                                <th rowspan="2" style="width: 50px;">AK</th>
+                                <th colspan="6" style="width: 450px;">TARGET</th>
+                            </tr>
+                            <tr>
+                                <th colspan="2" style="width: 160px;">KUANTITAS</th>
+                                <th style="width: 80px;">MUTU</th>
+                                <th colspan="2" style="width: 130px;">WAKTU</th>
+                                <th style="width: 80px;">BIAYA</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template is="dom-repeat" items="{{ record.items }}">
+                                <tr>
+                                    <td class="text-center">[[ __computeNo(index) ]]</td>
+                                    <td>
+                                        <paper-icon-button icon="close" on-tap="__onRemoveItemTap"></paper-icon-button>
+                                    </td>
+                                    <td>
+                                        <div on-input="__onItemDescriptionChange" class="task-item-text" contenteditable spellcheck="false">[[ item.ski_text ]]</div>
+                                    </td>
+                                    <td>
+                                        <kct-input-number mask="#.###,00" value="{{ item.ski_ak_factor }}" on-change="__onItemValueChange" no-label-float></kct-input-number>
+                                    </td>
+                                    <td>
+                                        <kct-input-number mask="#.###,00" value="{{ item.ski_ak }}" no-label-float></kct-input-number>
+                                    </td>
+                                    <td>
+                                        <kct-input-number mask="#.###,00" value="{{ item.ski_volume }}" on-change="__onItemValueChange" no-label-float></kct-input-number>
+                                    </td>
+                                    <td>
+                                        <paper-input value="{{ item.ski_unit }}" no-label-float></paper-input>
+                                    </td>
+                                    <td>
+                                        <kct-input-number mask="#.###,00" value="{{ item.ski_quality }}" on-change="__onItemValueChange" no-label-float></kct-input-number>
+                                    </td>
+                                    <td>
+                                        <kct-input-number mask="#.###,00" value="{{ item.ski_duration }}" on-change="__onItemValueChange" no-label-float></kct-input-number>
+                                    </td>
+                                    <td>
+                                        <paper-input value="{{ item.ski_duration_unit }}" no-label-float></paper-input>
+                                    </td>
+                                    <td>
+                                        <kct-input-number mask="#.###,00" value="{{ item.ski_cost }}" on-change="__onItemValueChange" no-label-float></kct-input-number>
+                                    </td>
+                                </tr>
+                            </template>
+                            <tr class="header">
+                                <td>NO</td>
+                                <td colspan="2">TUGAS TAMBAHAN</td>
+                                <td colspan="8"></td>
+                            </tr>
+                            <template is="dom-repeat" items="{{ record.extra }}">
+                                <tr>
+                                    <td class="text-center">[[ __computeNo(index) ]]</td>
+                                    <td>
+                                        <paper-icon-button icon="close" on-tap="__onRemoveItemTap"></paper-icon-button>
+                                    </td>
+                                    <td>
+                                        <div on-input="__onItemDescriptionChange" class="task-item-text" contenteditable spellcheck="false">[[ item.ski_text ]]</div>
+                                    </td>
+                                    <td colspan="8"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+
+                    <!-- <div class="table-responsive">
                         <div class="table-scroller">
                             <table class="table">
                                 <thead>
                                     <tr>
                                         <th rowspan="2" style="width: 30px;">NO</th>
                                         <th rowspan="2" style="width: 30px;"></th>
-                                        <th rowspan="2" style="width: 300px;">KEGIATAN TUGAS JABATAN</th>
+                                        <th rowspan="2" style="min-width: 300px;">KEGIATAN TUGAS JABATAN</th>
                                         <th rowspan="2" style="width: 30px;"></th>
                                         <th rowspan="2" style="width: 50px;">AK</th>
                                         <th colspan="6" style="width: 450px;">TARGET</th>
@@ -430,7 +503,7 @@
                                 </tbody>
                             </table>
                         </div>
-                    </div>
+                    </div> -->
 
                     
 
@@ -726,7 +799,7 @@
                 this.__duration = null;
             }
 
-            initialize() {
+            setup() {
 
                 if ( ! this.$['combo-examiner']) {
                     this.$['combo-examiner'] = this.shadowRoot.querySelector('#combo-examiner');
@@ -760,10 +833,10 @@
                     });
                 } else {
                     return Promise.all([
-                        this.__loadCriteria(),
-                        this.$['combo-examiner'].load(),
-                        this.$['combo-evaluator'].load(),
-                        this.$['combo-superior'].load()
+                        // this.__loadCriteria(),
+                        // this.$['combo-examiner'].load(),
+                        // this.$['combo-evaluator'].load(),
+                        // this.$['combo-superior'].load()
                     ]).then(() => {
                         this.set('buttons', 'save,send,remove,print');
                         this.set('page', 'kegiatan');
@@ -772,7 +845,7 @@
                 }
             }
 
-            start() {
+            initialize() {
                 if (this.action == 'create') {
                     let today = moment();
                     let startDate = today.clone().startOf('year');
@@ -816,7 +889,8 @@
                 });
 
                 let timer = setTimeout(() => {
-                    let width = this.clientWidth - 60;
+                    //let width = this.clientWidth - 60;
+                    let width = 500;
 
                     tables.forEach(t => {
                         t.style.width = width + 'px';

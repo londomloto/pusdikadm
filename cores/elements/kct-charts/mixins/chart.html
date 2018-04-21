@@ -4,11 +4,12 @@
 <script>
     Mixins.Chart = Polymer.dedupingMixin(superclass => {
 
-        let themes = {
+        const THEMES = {
             dark: {
                 colors: ['#2b908f', '#90ee7e', '#f45b5b', '#7798BF', '#aaeeee', '#ff0066', '#eeaaee', '#55BF3B', '#DF5353', '#7798BF', '#aaeeee'],
                 chart: {
-                    backgroundColor: '#343435',
+                    // backgroundColor: '#343435',
+                    backgroundColor: 'rgba(255,255,255,0)',
                     style: {
                         fontFamily: '"Segoe UI", Roboto, Arial, sans-serif'
                     },
@@ -16,15 +17,16 @@
                 },
                 title: {
                     style: {
-                        color: '#E0E0E0',
-                        fontSize: '13px',
-                        fontWeight: 'bold'
+                        color: '#FFFFFF',
+                        fontSize: '16px',
+                        fontWeight: '500',
+                        textDecoration: 'underline'
                     }
                 },
                 subtitle: {
                     style: {
-                        color: '#ccc',
-                        fontSize: '11px',
+                        color: '#FFFFFF',
+                        fontSize: '13px',
                         fontWeight: 'normal'
                     }
                 },
@@ -73,9 +75,18 @@
                         borderColor: '#343435',
                         borderWidth: 0
                     },
-                    series: {
+                    column: {
                         dataLabels: {
-                            color: '#B0B0B3'
+                            enabled: false
+                        }
+                    },
+                    series: {
+                        animation: false,
+                        dataLabels: {
+                            color: '#FFFFFF',
+                            style: {
+                                textOutline: 'none'
+                            }
                         },
                         marker: {
                             lineColor: '#333'
@@ -195,46 +206,112 @@
             },
 
             light: {
+                colors: ['#7cb5ec', '#434348', '#90ed7d', '#f7a35c', '#8085e9', '#f15c80', '#e4d354', '#2b908f', '#f45b5b', '#91e8e1'],
                 chart: {
                     style: {
                         fontFamily: '"Segoe UI", Roboto, Arial, sans-serif'
                     }
                 },
                 title: {
+                    margin: 10,
                     style: {
                         color: '#607D8B',
-                        fontSize: '13px',
-                        fontWeight: 'bold'
+                        fontSize: '16px',
+                        fontWeight: '500'
                     }
                 },
                 subtitle: {
+                    y: 30,
+                    margin: 10,
                     style: {
                         color: '#607D8B',
-                        fontSize: '11px',
+                        fontSize: '12px',
                         fontWeight: 'normal'
                     }
                 },
+                xAxis: {
+                    gridLineColor: '#e6e6e6',
+                    labels: {
+                        style: {
+                            color: '#607D8B'
+                        }
+                    },
+                    lineColor: '#e6e6e6',
+                    minorGridLineColor: '#e6e6e6',
+                    tickColor: '#e6e6e6',
+                    title: {
+                        style: {
+                            color: '#607D8B'
+
+                        }
+                    }
+                },
+                yAxis: {
+                    gridLineColor: '#e6e6e6',
+                    labels: {
+                        style: {
+                            color: '#607D8B'
+                        }
+                    },
+                    lineColor: '#e6e6e6',
+                    minorGridLineColor: '#e6e6e6',
+                    tickColor: '#e6e6e6',
+                    tickWidth: 1,
+                    title: {
+                        style: {
+                            color: '#607D8B'
+                        }
+                    }
+                },
                 plotOptions: {
+                    column: {
+                        dataLabels: {
+                            enabled: false
+                        }
+                    },
                     series: {
+                        animation: false,
                         dataLabels: {
                             color: '#607D8B'
                         }
+                    }
+                },
+                legend: {
+                    itemStyle: {
+                        color: '#607D8B'
+                    },
+                    itemHoverStyle: {
+                        color: '#607D8B'
+                    },
+                    itemHiddenStyle: {
+                        color: '#CCCCCC'
                     }
                 }
             }
         };
 
-        Highcharts.setOptions(themes.light);
+        // Highcharts.setOptions(THEMES.light);
+        // Highcharts.setOptions(THEMES.dark);
+        // Highcharts.setOptions(THEMES.phantom);
 
         return class extends superclass {
+            static get properties() {
+                return {
+                    title: { type: String },
+                    subtitle: { type: String },
+                    theme: { type: String, value: 'light', reflectToAttribute: true },
+                    legend: { type: Boolean, value: false },
+                    styles: { type: Object, computed: '__computeStyles(theme)' },
+                    animation: { type: Boolean, value: false },
+                    showToolbar: { type: Boolean, value: false }
+                };
+            }
             static get observers() {
                 return [
-                    '__titleChanged(title, subtitle)'
+                    '__titleChanged(title, subtitle)',
+                    '__themeChanged(theme)',
+                    '__animationChanged(animation)'
                 ];
-            }
-            ready() {
-                super.ready();
-                this._ensureAttribute('theme', 'light');
             }
             resize() {
                 if ( ! this.chart) return;
@@ -253,22 +330,32 @@
             refresh() {
 
             }
-            defaults() {
-                return {
-                    title: {
-                        margin: 15,
-                        style: {
-                            fontSize: '13px',
-                            fontWeight: 'bold'
-                        }
-                    },
-                    subtitle: {
-                        style: {
-                            fontSize: '11px',
-                            fontWeight: 'normal'
+            __animationChanged(animation) {
+                if ( ! this.chart) return;
+
+                this.chart.update({
+                    plotOptions: {
+                        series: {
+                            animation: animation
                         }
                     }
-                };
+                });
+            }
+            __themeChanged(theme) {
+                if (this.chart) {
+                    let styles = this.styles;
+                    this.chart.update(styles);
+                }
+            }
+            __computeStyles(theme) {
+
+                let styles = {};
+
+                if (theme) {
+                    Object.assign(styles, THEMES[theme]);
+                }
+
+                return styles;
             }
             __titleChanged(title, subtitle) {
                 if ( ! this.chart) return;

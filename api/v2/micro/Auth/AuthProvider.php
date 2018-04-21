@@ -158,6 +158,7 @@ class AuthProvider extends \Micro\Component {
         unset($user['su_passwd']);
         unset($user['su_invite_token']);
         unset($user['su_recover_token']);
+        unset($user['su_device_token']);
 
         return $user;
     }

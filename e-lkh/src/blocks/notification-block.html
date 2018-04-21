@@ -3,6 +3,8 @@
 <link rel="import" href="../../../cores/bower_components/paper-item/paper-item.html">
 <link rel="import" href="../../../cores/elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../../cores/elements/kct-html/kct-html.html">
+<link rel="import" href="../../../cores/elements/kct-socket/kct-socket.html">
+<link rel="import" href="../../../cores/elements/kct-event/kct-event-subscriber.html">
 
 <dom-module id="notification-block">
     <template>
@@ -17,7 +19,7 @@
                 color: #666;
                 background-color: #fff; 
                 padding: 8px 0; 
-                width: var(--popup-width, 300px);
+                width: var(--popup-width, 400px);
                 height: var(--popup-height, auto);
             }
             paper-menu-button {
@@ -31,38 +33,58 @@
                 --paper-icon-button-ink-color: var(--paper-blue-grey-500);
             }
             
-            paper-item {
-                cursor: pointer;
-                font-weight: normal;
-                padding-top: 5px;
-                padding-bottom: 5px;
-            }
-            paper-item:hover {
-                background-color: #f4f4f4;
-            }
-            paper-item + paper-item {
-                border-top: 1px solid #f0f0f0;
-            }
-            paper-item iron-icon {
-                --iron-icon-width: 24px;
-                --iron-icon-height: 24px;
-            }
+            
             .header {
                 padding: 0 15px 8px 15px;
                 font-size: 13px;
-                border-bottom: 1px solid #f0f0f0;
+                border-bottom: 1px solid #dddfe2;
             }
             .footer {
                 text-align: right;
                 padding: 15px 15px 8px 15px;
                 font-size: 13px;
-                border-top: 1px solid #f0f0f0;
+                border-top: 1px solid #dddfe2;
             }
             .icon {
                 display: block;
                 width: 24px;
                 height: 24px;
                 margin-right: 10px;
+            }
+            .item {
+                cursor: pointer;
+                font-weight: normal;
+                padding-top: 5px;
+                padding-bottom: 5px;
+            }
+
+            .item + .item {
+                border-top: 1px solid var(--paper-grey-100);
+            }
+            .item.item-unread {
+                background-color: #edf2fa;
+            }
+            .item + .item.item-unread,
+            .item.item-unread + .item, 
+            .item.item-unread + .item.item-unread {
+                border-top-color: #dddfe2;
+            }
+            .item:hover:not(.item-unread) {
+                background-color: var(--paper-grey-100);
+            }
+            .item.item-unread:hover {
+                background-color: #E5EAF2;
+            }
+
+            .item iron-icon {
+                --iron-icon-width: 24px;
+                --iron-icon-height: 24px;
+            }
+            .item.item-warning .icon {
+                color: var(--paper-red-500);
+            }
+            .item.item-alert .icon {
+                color: var(--paper-red-500);
             }
             .time {
                 font-size: 11px;
@@ -76,13 +98,15 @@
             .badge {
                 display: block;
                 position: absolute;
-                top: 5px;
-                right: 10px;
-                padding: 2px 3px;
+                top: 3px;
+                right: 5px;
+                width: 16px;
+                height: 16px;
+                text-align: center;
+                line-height: 16px;
+                border-radius: 50%;
                 font-size: 11px;
-                line-height: 1;
                 color: #fff;
-                border-radius: 3px;
                 background-color: var(--paper-red-400);
                 opacity: 0;
                 pointer-events: none;
@@ -103,9 +127,15 @@
             .container.md .hidden-md { display: none;  }
             .container.lg .hidden-lg { display: none;  }
             .container.xl .hidden-xl { display: none;  }
+
+            .sound {
+                display: none;
+            }
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
+        <kct-socket manager="global-socket" on-notify="__onSocketNotify"></kct-socket>
+        <kct-event-subscriber on-notification-change="__onLocalNotificationChange"></kct-event-subscriber>
 
         <div class$="container [[ screen ]]">
             <paper-icon-button class="hidden-lg hidden-xl  hidden-md" on-tap="__onResponsiveTap" icon="social:notifications"></paper-icon-button>
@@ -121,10 +151,10 @@
                 <paper-icon-button slot="dropdown-trigger" icon="social:notifications"></paper-icon-button>    
                 <div class="popup" slot="dropdown-content">
                     <div class="header">
-                        Anda memiliki notifikasi baru
+                        Anda memiliki [[ __renderUnreads(unreads) ]] notifikasi baru
                     </div>
                     <template is="dom-repeat" items="[[ items ]]">
-                        <paper-item on-tap="__onItemTap">
+                        <paper-item class$="item [[ __computeItemClass(item.ta_type, item.ta_unread) ]]" on-tap="__onItemTap">
                             <div class="icon">
                                 <iron-icon icon="[[ item.ta_icon ]]"></iron-icon>
                             </div>
@@ -140,7 +170,7 @@
                     </div>
                 </div>
             </paper-menu-button>
-            <span class="badge">!</span>
+            <span class="badge">[[ __renderUnreads(unreads) ]]</span>
         </div>
         
     </template>
@@ -153,7 +183,7 @@
             static get properties() {
                 return {
                     items: { type: Array, value: () => ([]) },
-                    total: { type: Number, value: 0 },
+                    unreads: { type: Number, value: 0 },
                     dirty: { type: Boolean, value: false, reflectToAttribute: true},
                     screen: { type: String },
                     offsetX: { type: Number, value: 0 },
@@ -167,66 +197,84 @@
                 ];
             }
 
-            ready() {
-                super.ready();
-                // this.verify();
-            }
-
             __userChanged(changed) {
                 if (changed.path == 'user' && this.user && this.user.su_id) {
-                    this.verify();
+                    this.validate();
                 }
             }
 
-            verify() {
+            __renderUnreads(unreads) {
+                return unreads > 9 ? '9+' : '' + unreads;
+            }
+
+            __computeItemClass(type, unread) {
+                return 'item-' + type + (unread ? ' item-unread' : '');
+            }
+
+            validate(sound = true) {
+                let userId = this.user && this.user.su_id;
                 
-                this.$.ajax.GET('/notifications?display=top').then(res => {
-                    let keys = (res.data || []).map(e => e.ta_id + ':' + e.ta_sender);
-                    if (keys.length) {
-                        let feed = this.user.su_feed_read ? JSON.parse(this.user.su_feed_read) : false;
-                        
-                        if ( ! feed) {
-                            this.set('dirty', true);
-                        } else {
-                            let d = diff(keys, feed);
-                            if (d.length) {
-                                d = d.filter(e => {
-                                    let p = e.split(':');
-                                    return p[1] != this.user.su_id;
-                                });
-                                if (d.length) {
-                                    this.set('dirty', true);    
-                                }
-                            }
-                        }
-                    }
-                });    
-
-                function diff(a, b) {
-                    if (a.length >= b.length) {
-                        return a.filter(e => b.indexOf(e) < 0);
-                    } else {
-                        return b.filter(e => a.indexOf(e) < 0);
-                    }
+                if ( ! userId) {
+                    return;
                 }
-            }
 
-            load() {
-                return this.$.ajax.GET('/notifications?display=top').then(res => {
-                    this.set('total', res.data.length);
-                    this.set('items', res.data);
-                    this.$.menu.$.dropdown.notifyResize();
-
-                    let keys = (res.data || []).map(e => e.ta_id + ':' + e.ta_sender);
-                    this.__save(keys);
+                this.$.ajax.GET('/notifications/' + userId + '/summary').then(res => {
+                    let summary = res.data || {};
+                    let unreads = +summary.unreads;
+                    unreads = isNaN(unreads) ? 0 : unreads;
+                    this.set('unreads', unreads);
+                    
+                    if (unreads > 0) {
+                        this.set('dirty', true);
+                        sound && this.play();
+                    } else {
+                        this.set('dirty', false);
+                    }
                 });
             }
 
-            __save(feed) {
-                feed = JSON.stringify(feed);
+            load(options = {}) {
+                let payload = {
+                    display: 'top'
+                };
 
-                this.set('user.su_feed_read', feed);
-                this.$.ajax.PUT('/users/' + this.user.su_id, { su_feed_read: feed });
+                return this.$.ajax.GET('/notifications', payload).then(res => {
+                    let data = res.data || [];
+                    this.set('items', data);
+                    this.$.menu.$.dropdown.notifyResize();
+                });
+            }
+
+            play() {
+                if ( ! window.Audio) return;
+
+                let audio, source;
+
+                audio = document.createElement('audio');
+                audio.volume = 0.3;
+                audio.classList.add('sound');
+                audio.addEventListener('ended', ended);
+
+                source = document.createElement('source');
+                source.type = 'audio/ogg';
+                source.src = this.resolveUrl('../sounds/notification.ogg');
+
+                audio.appendChild(source);
+
+                source = document.createElement('source');
+                source.type = 'audio/mpeg';
+                source.src = this.resolveUrl('../sounds/notification.mp3');
+
+                audio.appendChild(source);
+
+                this.shadowRoot.appendChild(audio);
+
+                audio.play();
+
+                function ended() {
+                    audio.removeEventListener('ended', ended);
+                    audio.parentNode.removeChild(audio);
+                }
             }
 
             __onReadAllTap() {
@@ -243,15 +291,42 @@
 
                 let item = e.model.item;
 
+                if (item.ta_unread) {
+                    this.$.ajax.POST('/notifications/' + item.ta_id + '/read').then(res => {
+                        if (res.success) {
+                            this.set('items.' + e.model.index + '.ta_unread', false);
+                            let unreads = +this.unreads;
+                            unreads = isNaN(unreads) ? 0 : unreads;
+                            unreads--;
+                            unreads = unreads < 0 ? 0 : unreads;
+                            this.set('unreads', unreads);
+
+                            if (unreads > 0) {
+                                this.set('dirty', true);
+                            } else {
+                                this.set('dirty', false);
+                            }
+
+                        }
+                    });
+                }
+
                 if (item.ta_link) {
                     this.set('route.data.task', null);
                     this.set('route.path', item.ta_link);
                 }
             }
 
+            __onLocalNotificationChange(e) {
+                this.validate(false);
+            }
+
             __onPopupOpen() {
-                this.set('dirty', false);
                 this.load();
+            }
+
+            __onSocketNotify(e) {
+                this.validate();
             }
         }
         customElements.define(NotificationBlock.is, NotificationBlock);

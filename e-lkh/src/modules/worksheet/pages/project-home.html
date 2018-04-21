@@ -21,7 +21,7 @@
     </template>
     <script>
         {
-            let cachedTemplates = {};
+            let templates = {};
 
             class ProjectHome extends KctView {
                 static get is() {
@@ -55,7 +55,7 @@
                     } else {
                         
                         this.set('page', '');
-                        this.mask('Loading..');
+                        this.mask('Loading...');
 
                         this.__resolveProject(project).then(projectRecord => {
                             let module = projectRecord && projectRecord.sp_worksheet_module;
@@ -66,6 +66,8 @@
 
                                 let path = this.resolveUrl('../modules/' + module + '/' + name + '.html');
                                 let page = this.__pages[name];
+                                let pageState = Object.assign({}, this.state);
+                                pageState.scope = module;
 
                                 if ( ! page) {
                                     page = {
@@ -87,14 +89,20 @@
                                             clearTimeout(timer);
                                             timer = null;
                                             this.set('page', page.name);
-                                            page.node.handleRouteParams.apply(page.node, params);
+
+                                            page.node.state = pageState;
+
+                                            //page.node.handleRouteParams.apply(page.node, params);
                                         }, 10);
                                         
                                     });
                                 } else {
+                                    // keep own state
                                     this.unmask();
                                     this.set('page', page.name);
-                                    page.node.handleRouteParams.apply(page.node, params);
+                                    page.node.state = pageState;
+
+                                    //page.node.handleRouteParams.apply(page.node, params);
                                 }
 
                             } else {
@@ -128,19 +136,20 @@
                 }
 
                 __createPage(page) {
-                    let template = cachedTemplates[page.name];
+                    let template = templates[page.name];
 
                     if ( ! template) {
                         template = document.createElement('template');
+
                         template.innerHTML = `
                             <${page.name} 
                                 name="${page.name}" 
                                 config="{{ config }}" 
-                                route="{{ route }}"
+                                route="{{ route }}" 
                                 user="[[ user ]]"></${page.name}>
                         `;
 
-                        cachedTemplates[page.name] = template;
+                        templates[page.name] = template;
                     }
 
                     let fragment = this._stampTemplate(template);

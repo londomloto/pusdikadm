@@ -37,17 +37,51 @@ class Text extends \Phalcon\Text {
         return $abbr;
     }
 
-    public static function limitWords($text, $limit) {
-        if (str_word_count($text, 0) > $limit) {
-            $words = str_word_count($text, 2);
-            $pos = array_keys($words);
-            $text = substr($text, 0, $pos[$limit]).'...';
+    public static function limitWords($text, $limit = 100, $suffix = '&#8230;') {
+        if (trim($text) == '') {
+            return $text;
         }
-        return $text;
+
+        preg_match('/^\s*+(?:\S++\s*+){1,'.(int) $limit.'}/', $text, $matches);
+
+        if (strlen($text) === strlen($matches[0])) {
+            $suffix = '';
+        }
+
+        return rtrim($matches[0]).$suffix;
     }
 
-    public static function limitText($text, $limit) {
+    public static function limitChars($text, $limit = 500, $suffix = '&#8230;') {
+        if (mb_strlen($text) < $limit){
+            return $text;
+        }
 
+        $text = preg_replace('/ {2,}/', ' ', str_replace(array("\r", "\n", "\t", "\x0B", "\x0C"), ' ', $text));
+
+        if (mb_strlen($text) <= $limit) {
+            return $text;
+        }
+
+        $chars = '';
+
+        foreach (explode(' ', trim($text)) as $val) {
+            $chars .= $val.' ';
+            if (mb_strlen($chars) >= $limit) {
+                $chars = trim($chars);
+                return (mb_strlen($chars) === mb_strlen($text)) ? $chars : $chars.$suffix;
+            }
+        }
     }
+
+    public static function rows($text, $width = 60) {
+        $text = is_null($text) ? '' : $text;
+        $rows = 0;
+        $line = explode("\n", $text);
+        foreach($line as $item) {
+            $rows += intval((strlen($item) / $width) +1);
+        }
+        return $rows;
+    }
+
 
 }

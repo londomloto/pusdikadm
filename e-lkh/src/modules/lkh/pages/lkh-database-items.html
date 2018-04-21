@@ -1,0 +1,98 @@
+<link rel="import" href="../../../../../cores/elements/kct-grid/kct-grid.html">
+<link rel="import" href="../plugins/lkh-database-items-search.html">
+
+<dom-module id="lkh-database-items">
+    <template>
+        <style include="lkh-page-style">
+            :host {
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-grid 
+            id="grid" 
+            url="/lkh/lkh-items" 
+            params="[[ params ]]" 
+            icon="description"
+            header-text="Kegiatan" 
+            header-desc="Item kegiatan harian" 
+            columns="[[ columns ]]" 
+            selection-model="row" 
+            pagination 
+            on-back-tap="__onBackTap">
+            <lkh-database-items-search slot="center-toolbar" search="{{ params }}"></lkh-database-items-search>
+            <paper-icon-button slot="right-toolbar" icon="print" on-tap="__onPrintTap"></paper-icon-button>
+        </kct-grid>
+    </template>
+    <script>
+        class LkhDatabaseItems extends Mixins(KctView).use(Mixins.LkhPageBehavior) {
+            static get is() {
+                return 'lkh-database-items';
+            }
+            static get properties() {
+                return {
+                    params: { type: Object },
+                    columns: {
+                        type: Array,
+                        value: () => ([
+
+                            { type: 'rownumber' }, 
+                            {
+                                type: 'action',
+                                width: 40,
+                                align: 'center',
+                                renderer: e => {
+                                    if (e.data) {
+                                        return '<kct-grid-action on-tap="__onItemTap" icon="search" accent="blue-grey" icon-only rounded></kct-grid-action>';
+                                    }
+                                    return '';
+                                }
+                            },
+                            { 
+                                text: 'Tanggal', 
+                                dataIndex: 'lki_date_formatted', 
+                                width: 100,
+                                align: 'center',
+                                renderer: e => {
+                                    return e.data ? e.data.lki_date_formatted : '';
+                                }
+                            },
+                            { text: 'Kegiatan', dataIndex: 'lki_desc', width: 300, sorting: false },
+                            { text: 'Volume', dataIndex: 'lki_volume', width: 80, align: 'center', sorting: false },
+                            { text: 'Satuan', dataIndex: 'lki_unit', width: 100, align: 'center', sorting: false },
+                            { text: 'Biaya', dataIndex: 'lki_cost_formatted', width: 100, align: 'right', sorting: false },
+                            { text: 'Periode', dataIndex: 'lki_period', width: 120, sorting: false },
+                            { text: 'Pegawai', dataIndex: 'lki_su_fullname', width: 150, sorting: false },
+                            { text: 'NIP. Pegawai', dataIndex: 'lki_su_no', width: 150, sorting: false }
+
+                        ])
+                    }
+                };
+            }
+            handleRouteParams(page) {
+                if (page != 'database-items') return;
+                this.$.grid.deferAutoresize();
+                this.__load();
+            }
+            handleResizing() {
+                this.$.grid && this.$.grid.resize();
+            }
+            __load() {
+                this.$.grid.load();
+            }
+            __onItemTap(e) {
+                if (e.data && e.data.lki_link) {
+                    this.set('route.data.lkd_date', e.data.lki_date);
+                    this.set('route.path', e.data.lki_link);
+                }
+            }
+            __onPrintTap() {
+                let payload = this.$.grid.params;
+                this.$.ajax.DOWNLOAD('/lkh/print/database-items/xls', payload);
+            }
+        }
+        customElements.define(LkhDatabaseItems.is, LkhDatabaseItems);
+    </script>
+</dom-module>

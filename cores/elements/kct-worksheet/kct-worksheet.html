@@ -179,11 +179,13 @@
             __screenChanged(screen) {
                 switch(screen) {
                     case 'sm':
-                    case 'md':
                         this.set('columns', 1);
                         break;
-                    case 'lg':
+                    case 'md':
                         this.set('columns', 2);
+                        break;
+                    case 'lg':
+                        this.set('columns', 3);
                         break;
                     case 'xl':
                         this.set('columns', this.__columns);

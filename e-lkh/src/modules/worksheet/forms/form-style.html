@@ -1,9 +1,6 @@
 <dom-module id="form-style">
     <template>
         <style include="theme-helper">
-            kct-column kct-combobox {
-                padding: 3px 0;
-            }
             paper-button {
                 font-size: 13px;
                 font-weight: 500;
@@ -18,15 +15,15 @@
             paper-button.btn-outline {
                 border: 1px solid #dfdfdf;
             }
+            paper-button[disabled] {
+                background-color: var(--paper-grey-500);
+            }
             .section {
                 /*padding: 20px;*/
                 /*border: 1px solid #dfdfdf;*/
                 border-radius: 0;
                 position: relative;
-
-            }
-            .section + .section {
-                margin-top: 30px;
+                margin-bottom: 30px;
             }
             .section[hidden] {
                 display: none;

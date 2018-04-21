@@ -3,7 +3,7 @@
 
 <dom-module id="kct-router">
     <template>
-        <app-location id="app-location" route="{{ address }}"></app-location>
+        <app-location id="engine" route="{{ address }}" use-hash-as-path$="[[ hash ]]"></app-location>
     </template>
     <script>
         class KctRouter extends Mixins(Polymer.Element).use(Mixins.Resolver) {
@@ -15,45 +15,32 @@
                     config: { type: Object },
                     fallback: { type: String },
                     address: { type: Object },
-                    defaults: { 
-                        type: Object, 
-                        value: () => {
-                            return {
-                                layout: 'main',
-                                layoutError: 'error',
-                                authentication: true
-                            };
-                        }
+                    hash: { type: Boolean, value: false },
+                    defaults: {
+                        type: Object,
+                        value: () => ({
+                            layout: 'main',
+                            layoutError: 'error',
+                            authentication: true
+                        })
                     },
-                    routes: { 
-                        type: Object, 
-                        value: () => {
-                            return Object.create(null);
-                        } 
+                    routes: { type: Object, value: () => ({}) },
+                    route: {
+                        type: Object,
+                        notify: true,
+                        value: () => ({
+                            path: '',
+                            addr: '',
+                            event: 'init',
+                            cancel: false,
+                            fallback: '',
+                            params: [],
+                            query: {},
+                            data: {}
+                        })
                     },
-                    route: { 
-                        type: Object, 
-                        notify: true, 
-                        value: () => {
-                            return Object.assign(Object.create(null), {
-                                path: '',
-                                addr: '',
-                                event: '',
-                                cancel: false,
-                                fallback: '',
-                                params: [],
-                                query: {},
-                                data: {}
-                            });
-                        }
-                    },
-                    state: { 
-                        type: Object, 
-                        notify: true, 
-                        value: () => {
-                            return Object.create(null);
-                        }
-                    }
+                    state: { type: Object, notify: true, value: () => ({}) },
+                    silent: { type: Boolean, value: false }
                 };
             }
 
@@ -62,7 +49,8 @@
                     '__addressChanged(address.*)',
                     '__configChanged(config.*)',
                     '__routePathChanged(route.path)',
-                    '__routeAddrChanged(route.addr)'
+                    '__routeAddrChanged(route.addr)',
+                    '__routeQueryChanged(route.query.*)'
                 ];
             }
 
@@ -81,11 +69,13 @@
             constructor() {
                 super();
 
-                this.__current = null;
-                this.__silent = false;
-                this.__maxRedirect = 1;
-                this.__numRedirect = 0;
+                // old route storage
+                this.__route = {
+                    path: ''
+                };
 
+                this.__maxRedir = 1;
+                this.__numRedir = 0;
                 
                 // dependencies resolver
                 this.__configResolver = this._defer();
@@ -100,7 +90,7 @@
                 super.ready();
 
                 this._ensureAttribute('hidden', true);
-                this.__appLocation = this.$['app-location'];
+                this._engine = this.$.engine;
             }
 
             start() {
@@ -112,20 +102,18 @@
             }
 
             go(path) {
-                this.__resolveBase().then((base) => {
-                    this.set('route.path', base + path);
-                });
+                this.set('route.path', path);
             }
 
             enable() {
                 if ( ! this.shadowRoot.querySelector('app-location')) {
-                    this.shadowRoot.appendChild(this.__appLocation);
+                    this.shadowRoot.appendChild(this._engine);
                 }
             }
 
             disable() {
                 if (this.shadowRoot.querySelector('app-location')) {
-                    this.shadowRoot.removeChild(this.__appLocation);
+                    this.shadowRoot.removeChild(this._engine);
                 }
             }
 
@@ -185,7 +173,7 @@
                                     errors: {
                                         code: 404,
                                         name: 'NOT FOUND',
-                                        message: 'It\'s look like that page no longer exists.'
+                                        message: "Sistem tidak dapat menemukan halaman yang Anda tuju"
                                     }
                                 }
                             };
@@ -200,7 +188,7 @@
                                     errors: {
                                         code: 310,
                                         name: 'NET ERROR',
-                                        message: 'It\'s look like too many redirects.'
+                                        message: "Sistem tidak dapat mengarahkan halaman yang Anda tuju"
                                     }
                                 }
                             };
@@ -215,7 +203,7 @@
                                     errors: {
                                         code: 403,
                                         name: 'FORBIDDEN',
-                                        message: 'It\'s look like you don\'t have permission to access this page'
+                                        message: 'Anda tidak diizinkan mengakses halaman ini'
                                     }
                                 }
                             };
@@ -315,48 +303,43 @@
             }
 
             __handle(path) {
-                if (this.__current == path) {
+                if (this.__route.path == path) {
                     return;
                 }
-                
-                this.__current = path;
+
+                this.set('__route.path', path);
+                this.start();
 
                 // compile
                 this.__compile().then(() => {
 
                     // check cancelation
                     this.__resolveCancel().then((cancel) => {
+
                         if (cancel) {
-                            this.set('route.cancel', false);
+                            this.finish();
+                            this.set('route.cancel', true);
                             return;
                         }
 
                         // dispatch route
                         this.__resolveBase().then((base) => {
+                            let state, addr;
 
-                            let state;
-
-                            path = base + path.replace(base, '');
-
-                            if (this.address.path != path) {
-                                this.set('route.addr', path);
-                            }
-
-                            path = path.replace(/\/$/, '') + '/';
+                            path = path.replace(/\/$/, '');
+                            addr = base + path.replace(base, '') + '/';
 
                             for (let key in this.routes) {
                                 let route = Object.assign(Object.create(null), this.routes[key]),
-                                    matches = path.match(route.compiled);
+                                    matches = addr.match(route.compiled);
 
                                 if (matches) {
                                     let params = [];
                                     
                                     route.active = true;
                                     route.params = [];
-                                    route.path = path.replace(/\/$/, '');
-                                    route.module_path = route.path.replace(base, '');
-
-
+                                    route.path = path;
+                                    
                                     for (let index in route.placeholder) {
                                         if (matches[index] !== undefined) {
                                             let name = route.placeholder[index];
@@ -407,7 +390,7 @@
                                     }
                                 }));
 
-                                this.__numRedirect = 0;
+                                this.__numRedir = 0;
 
                                 if (before) {
                                     this.set('state', state);
@@ -415,16 +398,17 @@
                                 }
 
                             } else {
+
                                 if (this.fallback) {
-                                    if (this.__numRedirect <= this.__maxRedirect) {
-                                        this.__numRedirect++;
+                                    if (this.__numRedir <= this.__maxRedir) {
+                                        this.__numRedir++;
                                         this.go(this.fallback);
                                     } else {
-                                        this.__numRedirect = 0;
+                                        this.__numRedir = 0;
                                         this.go('/net-error');
                                     }
                                 } else {
-                                    this.__numRedirect = 0;
+                                    this.__numRedir = 0;
                                     this.go('/not-found');
                                 }
                             }
@@ -442,67 +426,109 @@
             }
 
             __addressChanged(changed) {
-                let path = this.address.path;
-                
-                if (path !== undefined) {
-                    let query = Object.assign({}, this.address.__queryParams);
+                // when browser refresh
+                if (this.route.event == 'init') {
+                    this.set('route.event', 'ready');
+                    
+                    let addr = this.address.path;
+                    addr = addr || '/';
 
-                    this.set('route.path', path);
-                    this.set('route.query', query);
+                    this.__resolveBase().then(base => {
+                        let path, query;
 
-                    this.__current = path;
+                        path = addr.replace(base, '');
+                        query = this.address.__queryParams;
+
+                        this.set('route.path', path);
+                        this.set('route.query', query);
+                    });
+                }
+            }
+
+            __sync() {
+                if (this.route.event != 'init') {
+                    this.__resolveBase().then(base => {
+                        let path, addr;
+
+                        path = this.route.path;
+                        addr = this.hash ? path : (base + path);
+
+                        if (addr != this.address.path) {
+                            this.set('address.path', addr);
+                        }
+
+                        let query = this.route.query;
+                        this.set('address.__queryParams', query);
+                    });    
+                }
+            }
+
+            __routeQueryChanged() {
+                this.__sync();
+            }
+
+            __parse(path) {
+                let queryIndex = path.indexOf('?');
+
+                if (queryIndex !== -1) {
+
+                    let queryString = path.substr((queryIndex + 1)),
+                        queryData = (s) => s.replace(/\+/g, ' '),
+                        regex = /([^&=]+)=?([^&]*)/g,
+                        queryParams = {},
+                        matches;
+
+                    while(matches = regex.exec(queryString)) {
+                        queryParams[queryData(matches[1])] = queryData(matches[2]);
+                    }
+
+                    regex = null;
+                    path = path.substr(0, queryIndex);
+
+                    return {
+                        path: path,
+                        hasQuery: true,
+                        queryParams: queryParams
+                    };
+                } else {
+                    return {
+                        path: path,
+                        hasQuery: false,
+                        queryParams: null
+                    };
                 }
             }
 
             __routeAddrChanged(addr) {
                 if (addr) {
+                    this.set('silent', true);
+
+                    let parsed = this.__parse(addr);
+
+                    if (parsed.hasQuery) {
+                        this.set('route.query', parsed.queryParams);
+                    }
                     
-                    this.__resolveBase().then((base) => {
-                        this.__silent = true;
+                    this.set('route.path', parsed.path);
+                    this.set('__route.path', parsed.path);
 
-                        addr = base + addr.replace(base, '');
-                        
-                        if (addr != this.address.path) {
-                            
-                            this.set('address.__queryParams', '');
-
-                            // has query?
-                            let i = addr.indexOf('?');
-
-                            if (i !== -1) {
-                                let q = addr.substr((i + 1)),
-                                    d = (s) => s.replace(/\+/g, ' '),
-                                    r = /([^&=]+)=?([^&]*)/g,
-                                    p = {},
-                                    m;
-
-                                while(m = r.exec(q)) {
-                                    p[d(m[1])] = d(m[2]);
-                                }
-
-                                r = null;
-
-                                this.set('address.__queryParams', p);
-                                addr = addr.substr(0, i);
-                            }
-
-                            this.set('address.path', addr);
-                        }
-                        
-                        this.set('route.addr', null);
-
-                        let timer = setTimeout(() => {
-                            this.__silent = false;
-                            clearTimeout(timer);
-                            timer = null;
-                        }, 0);
-                    });
+                    this.__sync();
+                    this.set('silent', false);
                 }
             }
 
             __routePathChanged(path) {
-                if (path && ! this.__silent) {
-                    this.start();
+                if (path && ! this.silent) {
+
+                    let parsed = this.__parse(path);
+
+                    if (parsed.hasQuery) {
+                        this.set('route.query', parsed.queryParams);
+                        this.set('route.path', parsed.path);
+                        return;
+                    }
+
+                    this.__sync();
                     this.__handle(path);
                 }
             }

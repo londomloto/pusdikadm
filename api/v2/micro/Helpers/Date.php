@@ -7,7 +7,7 @@ class Date {
 
     public static function today() {
         return new Moment();
-    }
+    } 
 
     public static function create($date) {
         return new Moment($date);

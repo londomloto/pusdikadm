@@ -102,8 +102,8 @@
                     return {
                         config: { type: Object },
                         opened: { type: Boolean, value: false, reflectToAttribute: true }, 
-                        subscribed: { type: Boolean, value: false, notify: true },
                         storageKey: { type: String },
+                        subscribed: { type: Boolean, value: false, notify: true },
                         token: { type: String, notify: true }
                     }
                 }
@@ -118,13 +118,30 @@
                     super.ready();
 
                     this.__loadStorage().then(() => {
-                        this.set('token', this._getStorageItem(this.storageKey, 'token'));
+                        let subscribed = this._getStorageItem(this.storageKey, 'subscribed'),
+                            token = this._getStorageItem(this.storageKey, 'token');
+
+                        subscribed = subscribed == null ? false : subscribed;
+
+                        this.set('subscribed', subscribed);
+                        this.set('token', token);
                     });
                     
                 }
 
                 support() {
                     return !/\d\./.test(location.host) && location.protocol == 'https:';
+                }
+
+                connect() {
+                    this.__loadStorage().then(() => {
+                        let subscribed = this._getStorageItem(this.storageKey, 'subscribed');
+                        if (subscribed) {
+                            this.sync();
+                        } else if (subscribed === null || subscribed === undefined) {
+                            this.subscribe();
+                        }
+                    }); 
                 }
 
                 subscribe() {
@@ -135,44 +152,52 @@
                         });
                     } else {
                         return this.__loadStorage().then(() => {
-                            let subscribed = !!this._getStorageItem(this.storageKey, 'token');
-                            if ( ! subscribed) {
-                                return this.__loadMessanger().then(() => {
-                                    return this.__requestToken().then(token => {
-                                        if (token) {
-                                            return this.__registerToken(token).then(success => {
-                                                if (success) {
-                                                    return {
-                                                        success: true
-                                                    };
-                                                } else {
-                                                    return {
-                                                        success: false,
-                                                        message: 'Gagal mengaktifkan notifikasi, silahkan ulangi kembali'
-                                                    };
-                                                }
-                                            });
-                                        } else {
-                                            return {
-                                                success: false,
-                                                message: 'Gagal mengaktifkan notifikasi, silahkan ulangi kembali'
-                                            };
-                                        }
-                                    });
+                            return this.__loadMessanger().then(() => {
+                                return this.__requestToken().then(token => {
+                                    if (token) {
+                                        return this.__registerToken(token).then(success => {
+                                            if (success) {
+                                                this._setStorageItem(this.storageKey, 'subscribed', true);
+                                                this.set('subscribed', true);
+                                                return {
+                                                    success: true
+                                                };
+                                            } else {
+                                                return {
+                                                    success: false,
+                                                    message: 'Gagal mengaktifkan notifikasi, silahkan ulangi kembali'
+                                                };
+                                            }
+                                        });
+                                    } else {
+                                        return {
+                                            success: false,
+                                            message: 'Gagal mengaktifkan notifikasi, silahkan ulangi kembali'
+                                        };
+                                    }
                                 });
-                            } else {
-
-                                this.$.ajax.POST('/notifications/sync', {
-                                    token: this._getStorageItem(this.storageKey, 'token'),
-                                    topic: this.__defineTopic()
-                                });
-
-                                return {
-                                    success: true
-                                };    
-                            }
+                            });
                         });
                     }
+                }
+
+                sync() {
+                    return this.__loadStorage().then(() => {
+                        let subscribed = this._getStorageItem(this.storageKey, 'subscribed');
+                        let token = this._getStorageItem(this.storageKey, 'token');
+
+                        if (subscribed && token) {
+                            let topic = this.__defineTopic();
+                            this.$.ajax.POST('/notifications/sync', {
+                                token: token,
+                                topic: topic
+                            });
+                        }
+
+                        return {
+                            success: true
+                        };
+                    });
                 }
 
                 unsubscribe() {
@@ -183,45 +208,34 @@
                         });
                     } else {
                         return this.__loadStorage().then(() => {
-                            let subscribed = !!this._getStorageItem(this.storageKey, 'token');
-                            if (subscribed) {
-                                return this.__loadMessanger().then(() => {
-                                    return this.__requestToken().then(token => {
-                                        if (token) {
-                                            return this.__unregisterToken(token).then(success => {
-                                                if (success) {
-                                                    return {
-                                                        success: success
-                                                    };
-                                                } else {
-                                                    return {
-                                                        success: false,
-                                                        message: 'Gagal menonaktifkan notifikasi, silahkan ulangi kembali'
-                                                    };
-                                                }
-                                            });
-                                        } else {
-                                            return {
-                                                success: false,
-                                                message: 'Gagal mengaktifkan notifikasi, silahkan ulangi kembali'
-                                            };
-                                        }
-                                    });
+                            return this.__loadMessanger().then(() => {
+                                return this.__requestToken().then(token => {
+                                    if (token) {
+                                        return this.__unregisterToken(token).then(success => {
+                                            if (success) {
+                                                this._setStorageItem(this.storageKey, 'subscribed', false);
+                                                this.set('subscribed', false);
+                                                return {
+                                                    success: success
+                                                };
+                                            } else {
+                                                return {
+                                                    success: false,
+                                                    message: 'Gagal menonaktifkan notifikasi, silahkan ulangi kembali'
+                                                };
+                                            }
+                                        });
+                                    } else {
+                                        return {
+                                            success: false,
+                                            message: 'Gagal menonaktifkan notifikasi, silahkan ulangi kembali'
+                                        };
+                                    }
                                 });
-                            } else {
-                                return {
-                                    success: true
-                                };
-                            }
+                            });
                         });
                     }
                     
-                    
-                }
-
-                notify(payload = {}) {
-                    payload.topic = this.__defineTopic();
-                    return this.$.ajax.POST('/notifications/notify', payload);
                 }
 
                 __defineTopic() {
@@ -237,7 +251,8 @@
                         let storageKey = this._getStorageKey(this.config.app_name, this.constructor.is);
 
                         this._initStorage(storageKey, {
-                            token: null
+                            token: null,
+                            subscribed: null
                         });
 
                         this.set('storageKey', storageKey);
@@ -358,7 +373,6 @@
 
                 __tokenChanged(token) {
                     if (this.storageKey) {
-                        this.set('subscribed', !!token);
                         this._setStorageItem(this.storageKey, 'token', token);
                     }
                 }

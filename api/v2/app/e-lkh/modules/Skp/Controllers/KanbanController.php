@@ -129,8 +129,6 @@ class KanbanController extends \Micro\Controller {
 
                     $affected = array_values(array_unique($affected));
 
-                    $this->socket->broadcast('notify');
-
                     return array(
                         'success' => TRUE,
                         'data' => array(
@@ -258,8 +256,6 @@ class KanbanController extends \Micro\Controller {
             }
 
             $affected = array_values(array_unique($affected));
-            
-            $this->socket->broadcast('notify');
 
             return array(
                 'success' => TRUE,
@@ -283,10 +279,6 @@ class KanbanController extends \Micro\Controller {
 
         if ($task) {
             $done = $task->delete();
-
-            if ($done) {
-                $this->socket->broadcast('notify');
-            }
         }
 
         return array(

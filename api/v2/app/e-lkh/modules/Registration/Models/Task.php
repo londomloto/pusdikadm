@@ -68,59 +68,21 @@ class Task extends \App\Users\Models\User implements \App\Tasks\Interfaces\TaskM
         );
     }
 
-    public function getNamespace() {
-        return '/registration';
+    public function getScope() {
+        return 'registration';
     }
 
     public function afterCreate() {
         if ($this->__loggable) {
-            Activity::log('create', array(
-                'ta_task_ns' => $this->getNamespace(),
+            $log = Activity::log('create', array(
+                'ta_task_ns' => $this->getScope(),
                 'ta_task_id' => $this->su_id,
-                'ta_sp_id' => $this->su_task_project,
-                'ta_data' => $this->su_fullname
-            ));    
-        }
-    }
+                'ta_sp_id' => $this->su_task_project
+            ));
 
-    public function afterUpdate() {
-        if ($this->__loggable) {
-            $snapshot = $this->__snapshot;
-            
-            if ( ! is_null($snapshot) && ! empty($snapshot['su_id'])) {
-                $detail = TRUE;
-
-                if ($snapshot['su_task_due'] != $this->su_task_due) {
-                    
-                    $detail = FALSE;
-
-                    Activity::log('update_due', array(
-                        'ta_task_ns' => $this->getNamespace(),
-                        'ta_task_id' => $this->su_id,
-                        'ta_sp_id' => $this->su_task_project,
-                        'ta_data' => $this->su_task_due
-                    ));
-                }
-
-                if ($detail) {
-
-                    Activity::log('update', array(
-                        'ta_task_ns' => $this->getNamespace(),
-                        'ta_task_id' => $this->su_id,
-                        'ta_sp_id' => $this->su_task_project,
-                        'ta_data' => $this->su_fullname
-                    ));
-                }
+            if ($log) {
+                $log->subscribe();
             }
-        }
-    }
-
-    public function afterFetch() {
-        if (isset($this->su_id, $this->su_task_due)) {
-            $this->__snapshot = array(
-                'su_id' => $this->su_id,
-                'su_task_due' => $this->su_task_due
-            );
         }
     }
 
@@ -173,8 +135,12 @@ class Task extends \App\Users\Models\User implements \App\Tasks\Interfaces\TaskM
         $updated = array();
         $current = array();
 
-        foreach($this->getLabels() as $e) {
-            $current[$e->sl_id] = TRUE;
+        foreach($this->getLabels() as $label) {
+            $current[$label->sl_id] = array(
+                'sl_id' => $label->sl_id,
+                'sl_color' => $label->sl_color,
+                'sl_label' => $label->sl_label
+            );
         }
 
         foreach($post as $e) {
@@ -186,25 +152,31 @@ class Task extends \App\Users\Models\User implements \App\Tasks\Interfaces\TaskM
             }
         }
 
-        $current = array_values(array_keys($current));
+        $removed = array_values(array_keys($current));
 
-        if (count($current) > 0) {
+        if (count($removed) > 0) {
             TaskLabel::get()
-                ->inWhere('tul_sl_id', $current)
+                ->inWhere('tul_sl_id', $removed)
                 ->andWhere('tul_su_id = :task:', array('task' => $this->su_id))
                 ->execute()
                 ->delete();
 
-            Activity::log('remove_label', array(
-                'ta_task_ns' => $this->getNamespace(),
+            $labels = array_values($current);
+
+            $log = Activity::log('remove_label', array(
+                'ta_task_ns' => $this->getScope(),
                 'ta_sp_id' => $this->su_task_project,
                 'ta_task_id' => $this->su_id,
-                'ta_data' => json_encode($current)
+                'ta_data' => json_encode($labels)
             ));
+
+            if ($log) {
+                $log->subscribe();
+            }
         }
 
         if (count($created) > 0) {
-            $indexes = array();
+            $labels = array();
 
             foreach($created as $e) {
                 $r = new TaskLabel();
@@ -212,15 +184,23 @@ class Task extends \App\Users\Models\User implements \App\Tasks\Interfaces\TaskM
                 $r->tul_sl_id = $e['sl_id'];
                 $r->save();
 
-                $indexes[] = $e['sl_id'];
+                $labels[] = array(
+                    'sl_id' => $e['sl_id'],
+                    'sl_color' => $e['sl_color'],
+                    'sl_label' => $e['sl_label']
+                );
             }
 
-            Activity::log('add_label', array(
-                'ta_task_ns' => $this->getNamespace(),
+            $log = Activity::log('add_label', array(
+                'ta_task_ns' => $this->getScope(),
                 'ta_sp_id' => $this->su_task_project,
                 'ta_task_id' => $this->su_id,
-                'ta_data' => json_encode($indexes)
+                'ta_data' => json_encode($labels)
             ));
+
+            if ($log) {
+                $log->subscribe();
+            }
         }
     }
 

@@ -6,7 +6,11 @@ use App\Kanban\Models\KanbanPanel;
 class KanbanPanelsController extends \Micro\Controller {
 
     public function findAction() {
-        $result = KanbanPanel::get()->paginate();
+        $result = KanbanPanel::get()
+            ->join('App\Kanban\Models\KanbanSetting', 'kp_ks_id = ks_id', '')
+            ->filterable()
+            ->sortable()
+            ->paginate();
         return $result;
     }
 

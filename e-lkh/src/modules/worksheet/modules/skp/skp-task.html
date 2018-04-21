@@ -9,11 +9,12 @@
         <style include="project-task-style"></style>
         
         <kct-ajax id="ajax"></kct-ajax>
-        <kct-event-publisher id="publisher"></kct-event-publisher>
         <kct-media screen="{{ screen }}"></kct-media>
+        <kct-event-publisher id="publisher"></kct-event-publisher>
+        <kct-socket manager="global-socket" session="{{ socketSession }}" on-notify="__onSocketNotify"></kct-socket>
         
         <kct-vbox class$="layout [[ __computeClass(loading) ]]">
-            <header-block id="header" on-back-tap="__onBackTap" text="Module SKP" hide-header$="[[ __hideHeader(screen) ]]">
+            <header-block id="header" on-back-tap="__onBackTap" text="[[ formRecord.bf_name ]]" hide-header$="[[ __hideHeader(screen) ]]">
                 <h3 slot="header-value">[[ header ]]</h3>
 
                 <paper-button hidden$="[[ __hideButton('save', formButtons) ]]" disabled$="[[ formInvalid ]]" on-tap="__onSaveTap" class="btn-action primary" slot="right-toolbar" style="margin-left: 8px;">
@@ -55,7 +56,7 @@
                             record="{{ taskRecord }}" 
                             project="[[ projectRecord ]]" 
                             hidden$="[[ __phantom ]]" 
-                            metadata="[[ metadata ]]" 
+                            profile="[[ profile ]]" 
                             loading="[[ loading ]]"></skp-task-logs> 
                     </div>
                     <div class="workspace-side hidden-sm hidden-md">
@@ -68,7 +69,7 @@
                             user="[[ user ]]" 
                             route="{{ route }}"
                             loading="[[ loading ]]" 
-                            metadata="[[ metadata ]]" 
+                            profile="[[ profile ]]" 
                             on-after-update="__onPropAfterUpdate"></skp-task-prop>
                     </div>
                 </kct-hbox>
@@ -86,21 +87,30 @@
 
             static get properties() {
                 return {
-                    metadata: { 
+                    profile: { 
                         type: Object,
                         value: () => ({
-                            namespace: '/skp',
-                            service_url: '/skp/kanban',
-                            primary_val: null,
-                            primary_key: 'skp_id',
-                            project_key: 'skp_task_project',
-                            due_key: 'skp_task_due',
-                            due_formatted_key: 'skp_task_due_formatted',
-                            status_primary_key: 'sks_id',
-                            status_primary_val: null,
-                            status_status_key: 'sks_status',
-                            status_worker_key: 'sks_worker',
-                            status_target_key: 'sks_target'
+                            activity: {
+                                scope: 'skp'
+                            },
+                            service: {
+                                url: '/skp/kanban'
+                            },
+                            task: {
+                                primary_key: 'skp_id',
+                                primary_val: null,
+                                project_key: 'skp_task_project',
+                                due_key: 'skp_task_due',
+                                due_formatted_key: 'skp_task_due_formatted',
+                                creator_key: 'skp_created_by'
+                            },
+                            status: {
+                                primary_key: 'sks_id',
+                                primary_val: null,
+                                status_key: 'sks_status',
+                                worker_key: 'sks_worker',
+                                target_key: 'sks_target'
+                            }
                         })
                     }
                 };
@@ -112,14 +122,15 @@
                 ];
             }
 
-            init() {
+            initialize() {
                 this.set('taskRecord', {
                     task: {},
                     status: {},
                     labels: [],
                     items: [],
                     extra: [],
-                    users: []
+                    users: [],
+                    perms: {}
                 });
             }
 

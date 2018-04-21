@@ -54,8 +54,8 @@
                 </div>
             </div>
             <div class="footer">
-                <paper-button on-tap="__onSubmitTap">SUBMIT</paper-button>
-                <paper-button on-tap="__onCancelTap">CANCEL</paper-button>
+                <paper-button on-tap="__onSubmitTap">OK</paper-button>
+                <paper-button on-tap="__onCancelTap">BATAL</paper-button>
             </div>
         </paper-dialog>
     </template>    
@@ -68,7 +68,8 @@
                 return {
                     title: { type: String, value: 'Try Answer!' },
                     message: { type: String },
-                    value: { type: String, notify: true },
+                    value: { type: String, value: '', notify: true },
+                    button: { type: String, value: 'ok' },
                     type: { type: String, value: 'text' }
                 }
             }
@@ -81,18 +82,29 @@
             }
 
             __onSubmitTap() {
+                this.set('button', 'ok');
                 this.$.dialog.close();
             }
 
             __onCancelTap() {
-                this.set('value', null);
+                this.set('value', '');
+                this.set('button', 'cancel');
                 this.$.dialog.close();
             }
 
             __onClose() {
                 this._restore();
-                this.dispatchEvent(new CustomEvent('close'));
-                this.__d.resolve(this.value);
+                this.dispatchEvent(new CustomEvent('close', {
+                    detail: {
+                        value: this.value,
+                        button: this.button
+                    }
+                }));
+                
+                this.__d.resolve({
+                    value: this.value,
+                    button: this.button
+                });
             }
         }
         customElements.define(KctPrompt.is, KctPrompt);

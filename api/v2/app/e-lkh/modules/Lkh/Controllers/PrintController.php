@@ -2,15 +2,20 @@
 namespace App\Lkh\Controllers;
 
 use App\Lkh\Models\Lkh;
+use App\Lkh\Models\LkhItem;
+use App\Lkh\Models\Task;
+use App\Users\Models\User;
 use Micro\Office\Spreadsheet;
-use Micro\Helpers\Date as DateHelper;
+use Micro\Helpers\Text;
 
 class PrintController extends \Micro\Controller {
 
-    public function documentAction($format, $id) {
+    public function documentAction($id, $format) {
         $method = '__document'.ucfirst(strtolower($format));
-        $this->$method($id);
-    }   
+        if (method_exists($this, $method)) {
+            $this->{$method}($id);
+        }
+    }
 
     private function __documentXls($id) {
         $lkh = Lkh::get($id)->data;
@@ -19,94 +24,465 @@ class PrintController extends \Micro\Controller {
             throw new \Phalcon\Exception("Not Found", 404);
         } 
 
-        $xls = new Spreadsheet(dirname(__DIR__).'/Templates/lkh.xlsx');
-        $arr = $lkh->toArray();
+        $xls = new Spreadsheet(dirname(__DIR__).'/Templates/document.xlsx');
+        $data = $lkh->toArray();
 
         $sheet = $xls->getSheet(0);
         $sheet
-            ->setCellValue('A2', 'Bulan '.$arr['lkh_period'])
-            ->setCellValue('C5', ': '.$arr['lkh_su_fullname'])
-            ->setCellValue('C6', ': '.$arr['lkh_su_sj_name'])
-            ->setCellValue('C7', ': '.$arr['lkh_su_sdp_name']);
+            ->setCellValue('A2', 'Bulan '.$data['lkh_period'])
+            ->setCellValue('C5', ': '.$data['lkh_su_fullname'])
+            ->setCellValue('C6', ': '.$data['lkh_su_sj_name'])
+            ->setCellValue('C7', ': '.$data['lkh_su_sdp_name']);
 
-        $days = $lkh->getDays()->filter(function($item){ return $item; });
-        $items = array();
-        $index = 1;
+        $items = $lkh->fetchItems();
+        $total = count($items);
+        $insert = $total > 2 ? ($total - 2) : 0;
 
-        foreach($days as $d) {
-            $group = $d->lkd_date;
+        $line = 10;
 
-
-            $dayItems = $d->getItems()->filter(function($item) use ($group, $index){ 
-                $array = $item->toArray();
-                $array['group'] = $group;
-                $array['index'] = $index;
-
-                return $array;
-            });
-
-            if (count($dayItems) > 1) {
-                $dayItems[0]['merge'] = count($dayItems) - 1;
-            }
-
-            $items = array_merge($items, $dayItems);
-            $index++;
-        }
-
-        $count = count($items);
-        $insert = $count > 2 ? ($count - 2) : 0;
-
-        $row = 10;
-
-        if ($count > 0) {
+        if ($total > 0) {
             if ($insert > 0) {
                 $sheet->insertNewRowBefore(12, $insert);
             }
 
-            $merge = $row;
+            $group = array();
 
             foreach($items as $item) {
+                $sheet->mergeCells('C'.$line.':D'.$line);
 
-                if (isset($item['merge']) && $item['merge'] > 1) {
-                    $sheet->mergeCells('A'.$row.':A'.($row + $item['merge']));
-                    $sheet->mergeCells('B'.$row.':B'.($row + $item['merge']));
-                }
-
-                $sheet->mergeCells('C'.$row.':D'.$row);
-
-                $date = date('d', strtotime($item['group']));
+                // set row height
+                $z = Text::rows($item['lki_desc']);
+                $h = $z * 14.25 + 2.25;
+                $sheet->getRowDimension($line)->setRowHeight($h);
 
                 $sheet
-                    ->setCellValue('A'.$row, $item['index'])
-                    ->setCellValue('B'.$row, $date)
-                    ->setCellValue('C'.$row, $item['lki_desc'])
-                    ->setCellValue('E'.$row, $item['lki_volume']);
+                    ->setCellValue('A'.$line, $item['lki_index'])
+                    ->setCellValue('B'.$line, $item['lki_group'])
+                    ->setCellValue('C'.$line, $item['lki_desc'])
+                    ->setCellValue('E'.$line, $item['lki_volume'])
+                    ->setCellValue('F'.$line, $item['lki_unit']);
 
+                $token = $item['lki_lkd_date'];
 
-                $row++;
+                if ( ! isset($group[$token])) {
+                    $group[$token] = array(
+                        'start' => $line,
+                        'count' => 0
+                    );
+                }
+
+                $group[$token]['count']++;
+
+                $line++;
             }
+
+            // merging rows
+            $group = array_values($group);
+
+            foreach($group as $item) {
+                if ($item['count'] > 1) {
+                    $start = $item['start'];
+                    $end = ($item['start'] + ($item['count'] - 1));
+
+                    $sheet->mergeCells('A'.$start.':A'.$end);
+                    $sheet->mergeCells('B'.$start.':B'.$end);
+
+                }
+            }
+        } else {
+            $line = 12;
         }
 
-        if ($insert == 0) {
-            $row += 2;
-        }
+        $sheet
+            ->setCellValue('D'.($line + 2), $data['lkh_su_sj_name'])
+            ->setCellValue('D'.($line + 6), $data['lkh_su_fullname'])
+            ->setCellValue('D'.($line + 7), $data['lkh_su_no']);
 
-        $sheet->setCellValue('D'.($row + 2), $arr['lkh_su_sj_name']);
-        $sheet->setCellValue('D'.($row + 6), $arr['lkh_su_fullname']);
-        $sheet->setCellValue('D'.($row + 7), $arr['lkh_su_no']);
-
-        if ($lkh->superior) {
-            $sheet->setCellValue('A'.($row + 2), $arr['superior_su_sj_name']);    
-            $sheet->setCellValue('A'.($row + 6), $arr['superior_su_fullname']);    
-            $sheet->setCellValue('A'.($row + 7), $arr['superior_su_no']);    
+        if ($lkh->evaluator) {
+            $sheet
+                ->setCellValue('A'.($line + 2), $data['evaluator_su_sj_name'])
+                ->setCellValue('A'.($line + 6), $data['evaluator_su_fullname'])
+                ->setCellValue('A'.($line + 7), $data['evaluator_su_no']);    
         }
 
         $xls->setActiveSheetIndex(0);
 
-        $file = strtolower($lkh->getTitle());
+        $file = strtoupper($data['lkh_su_fullname'].'_LKH_'.$data['lkh_period']);
         $file = preg_replace('/[^a-z0-9]+/i', '_', $file).'.xlsx';
 
         $xls->stream($file);
     }
 
+    private function __documentPdf($id) {
+
+    }
+
+    public function reportAction($format) {
+        $method = '__report'.ucfirst(strtolower($format));
+        if (method_exists($this, $method)) {
+            $this->{$method}();
+        }
+    }
+
+    private function __reportXls() {
+        $post = $this->request->getJson();
+        $user = User::findFirst($post['user']);
+
+        if ( ! $user) {
+            throw new \Phalcon\Exception("Pembuat dokumen tidak valid");
+        }
+
+        $sheets = $post['sheets'];
+        $sheetNames = array();
+
+        $xls = new Spreadsheet(dirname(__DIR__).'/Templates/document.xlsx');
+        $loop = 0;
+
+        foreach($sheets as $id) {
+            $lkh = Lkh::findFirst($id);
+
+            if ($lkh) {
+                $sheet = clone $xls->getSheetByName('MASTER');
+                $title = $lkh->lkh_period;
+
+                if (isset($sheetNames[$title])) {
+                    $title .= ' ('.$loop.')';
+                }
+
+                $sheet->setTitle($title);
+                $sheetNames[$title] = TRUE;
+
+                $xls->addSheet($sheet);
+
+                $data = $lkh->toArray();
+
+                $sheet
+                    ->setCellValue('A2', 'Bulan '.$data['lkh_period'])
+                    ->setCellValue('C5', ': '.$data['lkh_su_fullname'])
+                    ->setCellValue('C6', ': '.$data['lkh_su_sj_name'])
+                    ->setCellValue('C7', ': '.$data['lkh_su_sdp_name']);
+
+                $items = $lkh->fetchItems();
+                $total = count($items);
+                $insert = $total > 2 ? ($total - 2) : 0;
+
+                $line = 10;
+
+                if ($total > 0) {
+                    if ($insert > 0) {
+                        $sheet->insertNewRowBefore(12, $insert);
+                    }
+
+                    $group = array();
+
+                    foreach($items as $item) {
+                        $sheet->mergeCells('C'.$line.':D'.$line);
+
+                        // set row height
+                        $z = Text::rows($item['lki_desc']);
+                        $h = $z * 14.25 + 2.25;
+                        $sheet->getRowDimension($line)->setRowHeight($h);
+
+                        $sheet
+                            ->setCellValue('A'.$line, $item['lki_index'])
+                            ->setCellValue('B'.$line, $item['lki_group'])
+                            ->setCellValue('C'.$line, $item['lki_desc'])
+                            ->setCellValue('E'.$line, $item['lki_volume'])
+                            ->setCellValue('F'.$line, $item['lki_unit']);
+
+                        $token = $item['lki_lkd_date'];
+
+                        if ( ! isset($group[$token])) {
+                            $group[$token] = array(
+                                'start' => $line,
+                                'count' => 0
+                            );
+                        }
+
+                        $group[$token]['count']++;
+
+                        $line++;
+                    }
+
+                    // merging rows
+                    $group = array_values($group);
+
+                    foreach($group as $item) {
+                        if ($item['count'] > 1) {
+                            $start = $item['start'];
+                            $end = ($item['start'] + ($item['count'] - 1));
+
+                            $sheet->mergeCells('A'.$start.':A'.$end);
+                            $sheet->mergeCells('B'.$start.':B'.$end);
+
+                        }
+                    }
+                } else {
+                    $line = 12;
+                }
+
+                $sheet
+                    ->setCellValue('D'.($line + 2), $data['lkh_su_sj_name'])
+                    ->setCellValue('D'.($line + 6), $data['lkh_su_fullname'])
+                    ->setCellValue('D'.($line + 7), $data['lkh_su_no']);
+
+                if ($lkh->evaluator) {
+                    $sheet
+                        ->setCellValue('A'.($line + 2), $data['evaluator_su_sj_name'])
+                        ->setCellValue('A'.($line + 6), $data['evaluator_su_fullname'])
+                        ->setCellValue('A'.($line + 7), $data['evaluator_su_no']);    
+                }
+            }
+
+            $loop++;
+        }
+
+        // delete master sheet
+        if ($loop > 0) {
+            $sheetIndex = $xls->getIndex($xls->getSheetByName('MASTER'));
+            $xls->removeSheetByIndex($sheetIndex);
+        }
+
+        $xls->setActiveSheetIndex(0);
+
+        $file = strtoupper($user->getName().'_LKH_'.date('Y', strtotime($post['start_date'])));
+        $file = preg_replace('/[^a-z0-9]+/i', '_', $file).'.xlsx';
+        
+        $xls->stream($file);
+    }
+
+    private function __reportPdf() {
+
+    }
+
+    public function databaseAction($format) {
+        $method = '__database'.ucfirst(strtolower($format));
+        if (method_exists($this, $method)) {
+            $this->{$method}();
+        }
+    }
+
+    private function __databaseXls() {
+        $payload = $this->request->getJson();
+
+        $query = Task::get()
+            ->alias('task')
+            ->columns(array(
+                'task.lkh_id'
+            ))
+            ->join('App\Users\Models\User', 'user.su_id = task.lkh_su_id', 'user')
+            ->filterable($payload)
+            ->sortable($payload)
+            ->groupBy('task.lkh_id');
+
+        if (isset($payload['params'])) {
+            $params = json_decode($payload['params'], TRUE);
+            if (isset($params['status']) && ! empty($params['status'])) {
+                $query->join('App\Lkh\Models\TaskStatus', 'task_status.lks_lkh_id = task.lkh_id AND task_status.lks_deleted = 0', 'task_status', 'LEFT');
+                $query->join('App\Kanban\Models\KanbanStatus', 'kst.kst_status = task_status.lks_status', 'kst', 'LEFT');
+                $query->join('App\Kanban\Models\KanbanPanel', 'kp.kp_id = kst.kst_kp_id', 'kp', 'LEFT');
+                $query->inWhere('kp.kp_id', $params['status'][1]);        
+            }
+        }
+
+        if (isset($payload['start'], $payload['limit'])) {
+            $query->limit($payload['limit'], $payload['start']);
+            $result = $query->paginate(FALSE);
+        } else {
+            $result = $query->paginate();    
+        }
+
+        $items = $result->data->filter(function($row){
+            $task = Task::findFirst($row->lkh_id);
+            $data = $task->toArray();
+            $data['lkh_link'] = $task->getLink();
+            $data['statuses'] = $task->getCurrentStatuses()->filter(function($status){
+                return $status->toArray();
+            });
+            return $data;
+        });
+
+        $xls = new Spreadsheet(dirname(__DIR__).'/Templates/database.xlsx');
+
+        $sheet = $xls->getSheet(0);
+        $index = 1;
+        $line = 4;
+
+        foreach($items as $item) {
+            $sheet
+                ->setCellValue('A'.$line, $index)
+                ->setCellValue('B'.$line, $item['lkh_period'])
+                ->setCellValue('C'.$line, $item['lkh_su_fullname'])
+                ->setCellValue('D'.$line, $item['lkh_su_no']);
+
+            if (isset($item['evaluator_su_fullname'])) {
+                $sheet->setCellValue('E'.$line, $item['evaluator_su_fullname']);
+            }
+
+            if (isset($item['evaluator_su_no'])) {
+                $sheet->setCellValue('F'.$line, $item['evaluator_su_no']);
+            }
+
+            $statuses = array_map(function($s){
+                return $s['status_text'];
+            }, $item['statuses']);
+
+            $statuses = implode(', ', $statuses);
+            $sheet->setCellValue('G'.$line, $statuses);
+
+            $sheet->getStyle('A'.$line.':G'.$line)->applyFromArray(array(
+                'borders' => array(
+                    'bottom' => array(
+                        'borderStyle' => 'thin'
+                    )
+                )
+            ));
+
+            $line++;
+            $index++;
+        }
+
+        $column = 'A';
+        $bottom = $line - 1;
+
+        for($i = 0; $i < 6; $i++) {
+            $coords = $column.'4:'.$column.$bottom;
+
+            $sheet->getStyle($coords)->applyFromArray(array(
+                'borders' => array(
+                    'right' => array(
+                        'borderStyle' => 'thin'
+                    )
+                )
+            ));
+
+            $column++;
+        }
+
+        $xls->setActiveSheetIndex(0);
+        $xls->stream('DOKUMEN_LKH.xlsx');
+    }
+
+    private function __databasePdf() {
+
+    }
+
+    public function databaseItemsAction($format) {
+        $method = '__databaseItems'.ucfirst(strtolower($format));
+        if (method_exists($this, $method)) {
+            $this->{$method}();
+        }
+    }
+
+    private function __databaseItemsXls() {
+        $payload = $this->request->getJson();
+
+        $query = LkhItem::get()
+            ->join('App\Lkh\Models\LkhDay', 'lkd_id = lki_lkd_id')
+            ->join('App\Lkh\Models\Task', 'lkh_id = lkd_lkh_id')
+            ->join('App\Users\Models\User', 'su_id = lkh_su_id')
+            ->filterable($payload)
+            ->sortable($payload);
+
+        if ( ! isset($payload['sort'])) {
+            $query->orderBy('lkd_date DESC');
+        }
+
+        $result = $query->paginate();
+
+        $xls = new Spreadsheet(dirname(__DIR__).'/Templates/database-items.xlsx');
+        $sheet = $xls->getSheet(0);
+
+        $line = 4;
+        $index = 1;
+
+        foreach($result->data as $row) {
+            $data = $row->toArray();
+
+            $date = date('d-M-Y', strtotime($data['lki_date']));
+
+            $sheet
+                ->setCellValue('A'.$line, $index)
+                ->setCellValue('B'.$line, $date)
+                ->setCellValue('C'.$line, $data['lki_desc'])
+                ->setCellValue('D'.$line, $data['lki_volume'])
+                ->setCellValue('E'.$line, $data['lki_unit'])
+                ->setCellValue('F'.$line, $data['lki_cost'])
+                ->setCellValue('G'.$line, $data['lki_period'])
+                ->setCellValue('H'.$line, $data['lki_su_fullname'])
+                ->setCellValue('I'.$line, $data['lki_su_no']);
+
+            $sheet->getStyle('F'.$line)->getNumberFormat()->setFormatCode('#,###');
+            //$sheet->getRowDimension($line)->setRowHeight(-1);
+
+
+            $sheet->getStyle('A'.$line.':I'.$line)->applyFromArray(array(
+                'borders' => array(
+                    'bottom' => array(
+                        'borderStyle' => 'thin'
+                    )
+                )
+            ));
+
+            $line++;
+            $index++;
+        }
+
+        $column = 'A';
+        $bottom = $line - 1;
+
+        for($i = 0; $i < 8; $i++) {
+            $coords = $column.'4:'.$column.$bottom;
+
+            $sheet->getStyle($coords)->applyFromArray(array(
+                'borders' => array(
+                    'right' => array(
+                        'borderStyle' => 'thin'
+                    )
+                )
+            ));
+
+            $column++;
+        }
+
+        $xls->setActiveSheetIndex(0);
+        $xls->stream('KEGIATAN_LKH.xlsx');
+    }
+
+    public function dashboardAction($format) {
+        $method = '__dashboard'.ucfirst(strtolower($format));
+        if (method_exists($this, $method)) {
+            $this->{$method}();
+        }
+    }
+
+    private function __dashboardXls() {
+        $payload = $this->request->getJson();
+        $xls = new Spreadsheet();
+
+        $xls = new Spreadsheet(dirname(__DIR__).'/Templates/dashboard.xlsx');
+        $sheet = $xls->getSheet(0);
+
+        $line = 5;
+
+        $charts = isset($payload['charts']) ? $payload['charts'] : array();
+
+        foreach($charts as $chart) {
+            if ( ! empty($chart)) {
+                $image = Spreadsheet::createImage(PUBPATH.'resources/charts/'.$chart);
+                @unlink(PUBPATH.'resources/charts/'.$chart);
+
+                if ($image) {
+                    $image->setCoordinates('A'.$line);
+                    $image->setWorksheet($sheet);
+                    //$image->getShadow()->setVisible(TRUE);
+
+                    $line += 24;
+                }
+            }
+        }
+
+        $xls->setActiveSheetIndex(0);
+        $xls->stream('DASHBOARD_LKH.xlsx');
+    }
 }

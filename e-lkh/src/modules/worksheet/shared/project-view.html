@@ -27,7 +27,6 @@
             }
 
             handleRouteParams(project, action, view) {
-
                 switch(view) {
                     case 'list':
                         this.set('view', 'list');
@@ -65,7 +64,10 @@
             }
 
             __hideHeader(screen) {
-                return screen != 'xl' ? true : false;
+                if (screen == 'lg' || screen == 'xl') {
+                    return false;
+                }
+                return true;
             }
 
             __computeSelectedDisplay(type, view) {

@@ -3,9 +3,7 @@
 <dom-module id="lkh-task-prop">
     <template>
         <style include="project-task-prop-style"></style>
-
         <kct-ajax id="ajax"></kct-ajax>
-        <kct-socket manager="global-socket" session="{{ socketSession }}"></kct-socket>
 
         <div class="scroller">
 
@@ -44,7 +42,7 @@
             <div class="form-group">
                 <div class="tools">
                     <save-indicator id="user-indicator"></save-indicator>
-                    <paper-button on-tap="__onUserEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
+                    <paper-button hidden$="[[ !record.perms.update_users ]]" on-tap="__onUserEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
                 </div>
                 <div class="label">Pengguna Dokumen</div>
                 <div class="field">
@@ -60,7 +58,7 @@
                         <template is="dom-repeat" items="[[ record.users ]]">
                             <div class="user-item">
                                 <div class="icon">
-                                    <img src$="[[ item.su_avatar_thumb ]]&w=36&h=36">
+                                    <img src$="[[ item.su_avatar_thumb ]]&w=32&h=32">
                                 </div>
                                 <div class="text">
                                     <div>[[ item.su_fullname ]]</div>
@@ -99,7 +97,7 @@
             <div class="form-group">
                 <div class="tools">
                     <save-indicator id="label-indicator"></save-indicator>
-                    <paper-button on-tap="__onLabelEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
+                    <paper-button hidden$="[[ !record.perms.update_labels ]]" on-tap="__onLabelEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
                 </div>
                 <div class="label">Label Dokumen</div>
                 <div class="field">
@@ -133,8 +131,8 @@
                 return 'lkh-task-prop';
             }
 
-            start() {
-                super.start();
+            initialize() {
+                super.initialize();
 
                 let today = moment();
 

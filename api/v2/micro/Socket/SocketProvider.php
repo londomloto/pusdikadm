@@ -15,7 +15,10 @@ class SocketProvider {
         $this->_config = $app->config->socket;
 
         if ( ! $this->_config->offsetExists('secure')) {
-            $this->_config->offsetSet('secure', FALSE);
+            $scheme = $app->url->getScheme();
+            $this->_config->offsetSet('secure', $scheme == 'https' ? TRUE : FALSE);
+        } else {
+            $scheme = $this->_config->secure ? 'https' : 'http';
         }
 
         if ( ! $this->_config->offsetExists('host')) {
@@ -31,17 +34,14 @@ class SocketProvider {
             $this->_config->offsetSet('port', $this->_config->secure ? 8443 : 8080);
         }
 
-        $scheme = $this->_config->secure ? 'https' : 'http';
-
-        if ($scheme == 'https') {
-            $this->_config->offsetSet('secure', TRUE);
-        }
-
         $url = $scheme.'://'.$this->_config->host.':'.$this->_config->port;
         $this->_url = $url;
 
         // define default room
-        $this->_room = '/'.$_SERVER['SERVER_NAME'].'/'.$app->config->app->name;
+        $room = $app->url->getClientUrl();
+        $room = '/'.preg_replace('#(https?://|/$)#', '', $room);
+
+        $this->_room = $room;
     }
 
     public function __get($prop) {
@@ -60,6 +60,8 @@ class SocketProvider {
     public function createSocket() {
         $server = $this->_url.'?room='.$this->_room;
         $options = array();
+
+        // var_dump($server);
 
         if ($this->_config->secure) {
             $options = array(
@@ -89,8 +91,10 @@ class SocketProvider {
             $socket->initialize();
             $socket->emit($event, $data);
             $socket->close();
-        } catch(\Exception $e) {}
-        
+        } catch(\Exception $ex) {
+            //var_dump($ex->getMessage());
+        }
+
         unset($socket);
     }
 

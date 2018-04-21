@@ -97,58 +97,29 @@ class Task extends Lkh implements \App\Tasks\Interfaces\TaskModel {
         return 'trx_lkh';
     }
 
-    public function getNamespace() {
-        return '/lkh';
+    public function getScope() {
+        return 'lkh';
     }
 
     public function afterCreate() {
         if ($this->__loggable) {
-            Activity::log('create', array(
-                'ta_task_ns' => $this->getNamespace(),
+            $log = Activity::log('create', array(
+                'ta_task_ns' => $this->getScope(),
                 'ta_task_id' => $this->lkh_id,
-                'ta_sp_id' => $this->lkh_task_project,
-                'ta_data' => $this->getTitle()
+                'ta_sp_id' => $this->lkh_task_project
             ));    
-        }
-    }
 
-    public function afterUpdate() {
-        if ($this->__loggable) {
-            $snapshot = $this->__snapshot;
-            
-            if ( ! is_null($snapshot) && ! empty($snapshot['lkh_id'])) {
-                $detail = TRUE;
-
-                if ($snapshot['lkh_task_due'] != $this->lkh_task_due) {
-                    
-                    $detail = FALSE;
-
-                    Activity::log('update_due', array(
-                        'ta_task_ns' => $this->getNamespace(),
-                        'ta_task_id' => $this->lkh_id,
-                        'ta_sp_id' => $this->lkh_task_project,
-                        'ta_data' => $this->lkh_task_due
-                    ));
-                }
-
-                if ($detail) {
-
-                    Activity::log('update', array(
-                        'ta_task_ns' => $this->getNamespace(),
-                        'ta_task_id' => $this->lkh_id,
-                        'ta_sp_id' => $this->lkh_task_project,
-                        'ta_data' => $this->getTitle()
-                    ));
-                }
+            if ($log) {
+                $log->subscribe();
             }
         }
     }
 
     public function afterFetch() {
-        if (isset($this->lkh_id, $this->lkh_task_due)) {
-            $this->__snapshot = array(
-                'lkh_id' => $this->lkh_id,
-                'lkh_task_due' => $this->lkh_task_due
+        $this->__snapshot = array();
+        if (isset($this->lkh_id, $this->lkh_flag)) {
+            $this->__snapshot[$this->lkh_id] = array(
+                'lkh_flag' => $this->lkh_flag
             );
         }
     }
@@ -178,14 +149,21 @@ class Task extends Lkh implements \App\Tasks\Interfaces\TaskModel {
         $this->__loggable = TRUE;
     }
 
-    public function getLink() {
+    public function getLink($absolute = FALSE) {
         $stat = $this->getCurrentStatuses()->getFirst();
+        $link = NULL;
 
         if ($stat) {
-            return '/worksheet/'.$this->project->sp_name.'/task/update/'.$stat->lks_id;
-        } else {
-            return NULL;
+            $link = 'worksheet/'.$this->project->sp_name.'/task/update/'.$stat->lks_id;
+
+            if ($absolute) {
+                $link = \Micro\App::getDefault()->url->getClientUrl().$link;
+            } else {
+                $link = '/'.$link;
+            }
         }
+        
+        return $link;
     }
 
     public function getCurrentStatuses() {
@@ -200,8 +178,12 @@ class Task extends Lkh implements \App\Tasks\Interfaces\TaskModel {
         $updated = array();
         $current = array();
 
-        foreach($this->getLabels() as $e) {
-            $current[$e->sl_id] = TRUE;
+        foreach($this->getLabels() as $label) {
+            $current[$label->sl_id] = array(
+                'sl_id' => $label->sl_id,
+                'sl_color' => $label->sl_color,
+                'sl_label' => $label->sl_label
+            );
         }
 
         foreach($post as $e) {
@@ -213,25 +195,31 @@ class Task extends Lkh implements \App\Tasks\Interfaces\TaskModel {
             }
         }
 
-        $current = array_values(array_keys($current));
+        $removed = array_values(array_keys($current));
 
-        if (count($current) > 0) {
+        if (count($removed) > 0) {
             TaskLabel::get()
-                ->inWhere('lkl_sl_id', $current)
+                ->inWhere('lkl_sl_id', $removed)
                 ->andWhere('lkl_lkh_id = :task:', array('task' => $this->lkh_id))
                 ->execute()
                 ->delete();
 
-            Activity::log('remove_label', array(
-                'ta_task_ns' => $this->getNamespace(),
+            $labels = array_values($current);
+
+            $log = Activity::log('remove_label', array(
+                'ta_task_ns' => $this->getScope(),
                 'ta_sp_id' => $this->lkh_task_project,
                 'ta_task_id' => $this->lkh_id,
-                'ta_data' => json_encode($current)
+                'ta_data' => json_encode($labels)
             ));
+
+            if ($log) {
+                $log->subscribe();
+            }
         }
 
         if (count($created) > 0) {
-            $indexes = array();
+            $labels = array();
 
             foreach($created as $e) {
                 $r = new TaskLabel();
@@ -239,15 +227,23 @@ class Task extends Lkh implements \App\Tasks\Interfaces\TaskModel {
                 $r->lkl_sl_id = $e['sl_id'];
                 $r->save();
 
-                $indexes[] = $e['sl_id'];
+                $labels[] = array(
+                    'sl_id' => $e['sl_id'],
+                    'sl_color' => $e['sl_color'],
+                    'sl_label' => $e['sl_label']
+                );
             }
 
-            Activity::log('add_label', array(
-                'ta_task_ns' => $this->getNamespace(),
+            $log = Activity::log('add_label', array(
+                'ta_task_ns' => $this->getScope(),
                 'ta_sp_id' => $this->lkh_task_project,
                 'ta_task_id' => $this->lkh_id,
-                'ta_data' => json_encode($indexes)
+                'ta_data' => json_encode($labels)
             ));
+
+            if ($log) {
+                $log->subscribe();
+            }
         }
     }
 
@@ -256,8 +252,11 @@ class Task extends Lkh implements \App\Tasks\Interfaces\TaskModel {
         $updated = array();
         $current = array();
 
-        foreach($this->getUsers() as $e) {
-            $current[$e->su_id] = TRUE;
+        foreach($this->getUsers() as $user) {
+            $current[$user->su_id] = array(
+                'su_id' => $user->su_id,
+                'su_fullname' => $user->getName()
+            );
         }
 
         foreach($post as $e) {
@@ -269,25 +268,31 @@ class Task extends Lkh implements \App\Tasks\Interfaces\TaskModel {
             }
         }
 
-        $current = array_values(array_keys($current));
+        $removed = array_values(array_keys($current));
 
-        if (count($current) > 0) {
+        if (count($removed) > 0) {
             TaskUser::get()
-                ->inWhere('lku_su_id', $current)
+                ->inWhere('lku_su_id', $removed)
                 ->andWhere('lku_lkh_id = :task:', array('task' => $this->lkh_id))
                 ->execute()
                 ->delete();
 
-            Activity::log('remove_user', array(
-                'ta_task_ns' => $this->getNamespace(),
+            $users = array_values($current);
+
+            $log = Activity::log('remove_user', array(
+                'ta_task_ns' => $this->getScope(),
                 'ta_sp_id' => $this->lkh_task_project,
                 'ta_task_id' => $this->lkh_id,
-                'ta_data' => json_encode($indexes)
+                'ta_data' => json_encode($users)
             ));
+
+            if ($log) {
+                $log->subscribe();
+            }
         }
 
         if (count($created) > 0) {
-            $indexes = array();
+            $users = array();
 
             foreach($created as $e) {
                 $r = new TaskUser();
@@ -296,15 +301,22 @@ class Task extends Lkh implements \App\Tasks\Interfaces\TaskModel {
                 $r->lku_su_id = $e['su_id'];
                 $r->save();
 
-                $indexes[] = $e['su_id'];
+                $users[] = array(
+                    'su_id' => $e['su_id'],
+                    'su_fullname' => $e['su_fullname']
+                );
             }
 
-            Activity::log('add_user', array(
-                'ta_task_ns' => $this->getNamespace(),
+            $log = Activity::log('add_user', array(
+                'ta_task_ns' => $this->getScope(),
                 'ta_sp_id' => $this->lkh_task_project,
                 'ta_task_id' => $this->lkh_id,
-                'ta_data' => json_encode($indexes)
+                'ta_data' => json_encode($users)
             ));
+
+            if ($log) {
+                $log->subscribe();
+            }
         }
     }
 

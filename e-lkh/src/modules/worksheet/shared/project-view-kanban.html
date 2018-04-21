@@ -2,14 +2,21 @@
 <link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../../../../cores/elements/kct-worksheet/kct-worksheet.html">
 <link rel="import" href="../../../../../cores/elements/kct-event/kct-event-subscriber.html">
+<link rel="import" href="../../../../../cores/elements/kct-socket/kct-socket.html">
 <link rel="import" href="../../../../../cores/mixins/mixins.html">
 <link rel="import" href="../styles/project-view-kanban-style.html">
 
 <script>
     Mixins.ProjectViewKanban = Polymer.dedupingMixin(superclass => {
 
-        return class extends superclass {
+        let storage = {
+            projects: {},
+            worksheets: {},
+            workspaces: {}
+        };
 
+        return class extends superclass {
+            
             static get properties() {
                 return {
                     project: { type: String },
@@ -19,7 +26,7 @@
                     workspaceRecord: { type: Object },
                     params: { type: Object },
                     busy: { type: Boolean, value: false, notify: true },
-                    pageSize: { type: Number, value: 5 },
+                    pageSize: { type: Number, value: 6 },
                     maxPageSize: { type: Number, value: 100 }
                 };
             }
@@ -56,14 +63,45 @@
                 }
             }
 
+            __resolveProject(project) {
+                let token = 'project_' + project;
+                let cache = storage.projects[token];
+
+                if ( ! cache) {
+                    return this.$.ajax.GET('/projects/' + project + '/load').then(res => {
+                        storage.projects[token] = res.data;
+                        return storage.projects[token];
+                    });
+                } else {
+                    return Promise.resolve(cache);
+                }
+            }
+
             __loadProject() {
                 if ( ! this.project) return;
-                
-                this.$.ajax.GET('/projects/' + this.project + '/load').then(res => {
-                    this.set('projectRecord', res.data);
+
+                this.__resolveProject(this.project).then(record => {
+                    this.set('projectRecord', record);
                     this.__loadWorksheet();
                 });
-            } 
+            }
+
+            __resolveWorksheet(worksheet, project) {
+                let token = 'worksheet_' + worksheet + '_project_' + project;
+                let cache = storage.worksheets[token];
+
+                if ( ! cache) {
+                    return this.$.ajax.GET('/kanban/kanban-settings/' + worksheet, {
+                        request: 'granted',
+                        project: project
+                    }).then(res => {
+                        storage.worksheets[token] = res.data;
+                        return storage.worksheets[token];
+                    });
+                } else {
+                    return Promise.resolve(cache);
+                }
+            }
 
             __loadWorksheet() {
                 this.set('busy', true);
@@ -82,34 +120,31 @@
                     this.$.worksheet.resize();
                 });
 
-                let sheet = this.projectRecord && this.projectRecord.sp_worksheet_id;
+                let worksheet = this.projectRecord && this.projectRecord.sp_worksheet_id;
 
-                if (sheet) {
-                    this.$.ajax.GET('/kanban/kanban-settings/' + sheet, { 
-                        request: 'granted',
-                        project: this.projectRecord.sp_id
-                    }).then(res => {
-                        let data = res.data || {};
+                if (worksheet) {
+                    this.__resolveWorksheet(worksheet, this.project.sp_id).then(record => {
+                        
+                        record = Object.assign({}, record);
 
-                        // kurangi kesan loading disini...
                         if (this.worksheetRecord) {
-                            let cached = {};
-                            
+                            let cache = {};
+                               
                             (this.worksheetRecord.ks_panels || []).forEach(p => {
-                                cached[p.kp_id] = p.kp_data;
+                                cache[p.kp_id] = p.kp_data;
                             });
 
-                            (data.ks_panels || []).forEach(p => {
-                                if (cached[p.kp_id] !== undefined) {
-                                    p.kp_data = cached[p.kp_id];
+                            (record.ks_panels || []).forEach(p => {
+                                if (cache[p.kp_id] !== undefined) {
+                                    p.kp_data = cache[p.kp_id];
                                 }
                             });
 
-                            cached = null;
+                            cache = null;
                         }
 
-                        this.set('worksheetRecord', data);
-                                
+                        this.set('worksheetRecord', record);
+                        
                         this.__loadWorkspaces();
                         this.__loadPanels();
 
@@ -121,6 +156,20 @@
                 return this.__loader.promise;
             }
 
+            __resolveWorkspaces(worksheet) {
+                let token = 'workspaces_' + worksheet;
+                let cache = storage.workspaces[token];
+
+                if ( ! cache) {
+                    return this.$.ajax.GET('/kanban/kanban-workspaces?kanban=' + worksheet).then(res => {
+                        storage.workspaces[token] = res.data;
+                        return storage.workspaces[token];
+                    });
+                } else {
+                    return Promise.resolve(cache);
+                }
+            }
+
             __loadWorkspaces() {
                 this.set('workspaces', []);
 
@@ -128,10 +177,8 @@
                     return;
                 }
 
-                let sheet = this.worksheetRecord.ks_id;
-
-                this.$.ajax.GET('/kanban/kanban-workspaces?kanban=' + sheet).then(res => {
-                    this.set('workspaces', res.data);
+                this.__resolveWorkspaces(this.worksheetRecord.ks_id).then(workspaces => {
+                    this.set('workspaces', workspaces);
                 });
             }
 
@@ -185,7 +232,7 @@
 
                 this.set('worksheetRecord.ks_panels.' + index + '.kp_busy', true);
                 
-                this.$.ajax.GET(this.metadata.service_url, payload).then((res) => {
+                this.$.ajax.GET(this.profile.service.url, payload).then((res) => {
                     let items;
 
                     if (payload.start == 0) {
@@ -248,11 +295,24 @@
                 let record = e.model.item;
                 
                 this.set('route.data.back', '/worksheet/' + this.project + '/view/kanban');
-                this.set('route.path', '/worksheet/' + this.project + '/task/update/' + record.status[this.metadata.status_primary_key]);
+                this.set('route.path', '/worksheet/' + this.project + '/task/update/' + record.status[this.profile.status.primary_key]);
             }
 
-            __onNotify() {
-                this.reload();
+            __onLocalNotify(e) {
+                if (e.detail.project == this.project) {
+                    this.reload();
+                }
+            }
+
+            __onSocketNotify(e) {
+                let payload = e.detail;
+                let project = this.projectRecord && this.projectRecord.sp_id;
+
+                if (project && project == payload.project) {
+                    if (payload.type == 'update_status') {
+                        this.reload();
+                    }
+                }
             }
 
             __onLoadMoreTap(e) {

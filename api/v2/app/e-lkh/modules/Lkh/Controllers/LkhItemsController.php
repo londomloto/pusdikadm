@@ -4,6 +4,7 @@ namespace App\Lkh\Controllers;
 use App\Items\Models\Item;
 use App\Lkh\Models\LkhItem;
 use App\Lkh\Models\LkhFile;
+use App\Activities\Models\Activity;
 use Micro\Helpers\Date as DateHelper;
 
 class LkhItemsController extends \Micro\Controller {
@@ -76,11 +77,22 @@ class LkhItemsController extends \Micro\Controller {
 
                 return $result;
             default:
-                return LkhItem::get()
-                    ->join('App\Lkh\Models\Lkh', 'lki_lkh_id = lkh_id', '', 'LEFT')
+
+                $query = LkhItem::get()
+                    ->join('App\Lkh\Models\LkhDay', 'lkd_id = lki_lkd_id')
+                    ->join('App\Lkh\Models\Task', 'lkh_id = lkd_lkh_id')
+                    ->join('App\Users\Models\User', 'su_id = lkh_su_id')
                     ->filterable()
-                    ->sortable()
-                    ->paginate();
+                    ->sortable();
+
+                $sort = $this->request->getQuery('sort');
+                
+                if (empty($sort)) {
+                    $query->orderBy('lkd_date DESC');
+                }
+
+                $result = $query->paginate();
+                return $result;
         }
         
     }
@@ -89,17 +101,28 @@ class LkhItemsController extends \Micro\Controller {
     public function createAction() {
         $user = $this->auth->user();
         $post = $this->request->getJson();
+        $post['lki_desc'] = trim($post['lki_desc']);
 
         if ( ! isset($post['lki_ti_id'])) {
-            $item = new Item();
+            $item = Item::findFirst(array(
+                'ti_desc = :desc: AND ti_user = :user:',
+                'bind' => array(
+                    'desc' => $post['lki_desc'],
+                    'user' => $user['su_id']
+                )
+            ));
 
-            $item->ti_desc = $post['lki_desc'];
-            $item->ti_user = $user['su_id'];
-            $item->ti_type = 'lkh';    
+            if ( ! $item) {
+                $item = new Item();
+                $item->ti_desc = $post['lki_desc'];
+                $item->ti_user = $user['su_id'];
+                $item->ti_type = 'lkh';
 
-
-            if ($item->save()) {
-                $item = $item->refresh();
+                if ($item->save()) {
+                    $item = $item->refresh();
+                    $post['lki_ti_id'] = $item->ti_id;
+                }
+            } else {
                 $post['lki_ti_id'] = $item->ti_id;
             }
         }
@@ -107,6 +130,41 @@ class LkhItemsController extends \Micro\Controller {
         $data = new LkhItem();
 
         if ($data->save($post)) {
+            // add logs
+            $lkd = $data->getLkhDay();
+
+            if ($lkd && $lkd->lkd_logs == 0) {
+                $lkh = $lkd->getTask();
+
+                if ($lkh) {
+                    $log = Activity::log('add_task', array(
+                        'ta_task_ns' => $lkh->getScope(),
+                        'ta_task_id' => $lkh->lkh_id,
+                        'ta_sp_id' => $lkh->lkh_task_project,
+                        'ta_data' => json_encode(array(
+                            'date' => $lkd->lkd_date,
+                            'desc' => $data->lki_desc
+                        ))
+                    ));
+
+                    if ($log) {
+                        $log->subscribe();
+                        $log->broadcast();
+
+                        $lkd->lkd_logs = 1;
+                        $lkd->save();
+                    }
+
+                    // live event broadcast
+                    $this->socket->broadcast('live', array(
+                        'type' => 'lkh_settled',
+                        'user' => $lkh->lkh_su_id,
+                        'task' => $lkh->lkh_id,
+                        'date' => $lkd->lkd_date
+                    ));
+                }
+            }
+            
             return LkhItem::get($data->lki_id);
         }
 
@@ -128,7 +186,29 @@ class LkhItemsController extends \Micro\Controller {
         $data = LkhItem::get($id)->data;
         
         if ($data) {
-            $data->delete();
+            $lkh = NULL;
+            $lkd = $data->getLkhDay();
+
+            if ($lkd) {
+                $lkh = $lkd->getTask();
+            }
+
+            if ($data->delete()) {
+                if ( ! is_null($lkh) && ! is_null($lkd)) {
+                    if ($lkd->getItems()->count() == 0) {
+                        
+                        $lkd->lkd_logs = 0;
+                        $lkd->save();
+
+                        $this->socket->broadcast('live', array(
+                            'type' => 'lkh_outstanding',
+                            'user' => $lkh->lkh_su_id,
+                            'task' => $lkh->lkh_id,
+                            'date' => $lkd->lkd_date
+                        ));    
+                    }
+                }
+            }
         }
 
         return array(

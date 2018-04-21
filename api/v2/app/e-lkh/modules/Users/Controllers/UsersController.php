@@ -320,4 +320,34 @@ class UsersController extends \Micro\Controller {
             )
         );
     }
+
+    public function superiorsAction($id) {
+        $user = User::get($id)->data;
+        $data = array();
+
+        if ($user && ($dept = $user->department)) {
+            if ($dept->sdp_evaluator) {
+                $evaluator = User::get($dept->sdp_evaluator)->data;
+                if ($evaluator) {
+                    $item = $evaluator->toSimpleArray();
+                    $item['su_position'] = 'evaluator';
+                    $data[] = $item;
+                }
+            }
+
+            if ($dept->sdp_examiner) {
+                $examiner = User::get($dept->sdp_examiner)->data;
+                if ($examiner) {
+                    $item = $examiner->toSimpleArray();
+                    $item['su_position'] = 'examiner';
+                    $data[] = $item;
+                }
+            }
+        }
+
+        return array(
+            'success' => TRUE,
+            'data' => $data
+        );
+    }
 }

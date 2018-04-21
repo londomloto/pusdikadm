@@ -68,59 +68,21 @@ class Task extends Presence implements \App\Tasks\Interfaces\TaskModel {
         );
     }
 
-    public function getNamespace() {
-        return '/presence';
+    public function getScope() {
+        return 'presence';
     }
 
     public function afterCreate() {
         if ($this->__loggable) {
-            Activity::log('create', array(
-                'ta_task_ns' => $this->getNamespace(),
+            $log = Activity::log('create', array(
+                'ta_task_ns' => $this->getScope(),
                 'ta_task_id' => $this->tpr_id,
-                'ta_sp_id' => $this->tpr_task_project,
-                'ta_data' => $this->getTitle()
+                'ta_sp_id' => $this->tpr_task_project
             ));    
-        }
-    }
 
-    public function afterUpdate() {
-        if ($this->__loggable) {
-            $snapshot = $this->__snapshot;
-            
-            if ( ! is_null($snapshot) && ! empty($snapshot['tpr_id'])) {
-                $detail = TRUE;
-
-                if ($snapshot['tpr_task_due'] != $this->tpr_task_due) {
-                    
-                    $detail = FALSE;
-
-                    Activity::log('update_due', array(
-                        'ta_task_ns' => $this->getNamespace(),
-                        'ta_task_id' => $this->tpr_id,
-                        'ta_sp_id' => $this->tpr_task_project,
-                        'ta_data' => $this->tpr_task_due
-                    ));
-                }
-
-                if ($detail) {
-
-                    Activity::log('update', array(
-                        'ta_task_ns' => $this->getNamespace(),
-                        'ta_task_id' => $this->tpr_id,
-                        'ta_sp_id' => $this->tpr_task_project,
-                        'ta_data' => $this->getTitle()
-                    ));
-                }
+            if ($log) {
+                $log->subscribe();
             }
-        }
-    }
-
-    public function afterFetch() {
-        if (isset($this->tpr_id, $this->tpr_task_due)) {
-            $this->__snapshot = array(
-                'tpr_id' => $this->tpr_id,
-                'tpr_task_due' => $this->tpr_task_due
-            );
         }
     }
 
@@ -174,8 +136,12 @@ class Task extends Presence implements \App\Tasks\Interfaces\TaskModel {
         $updated = array();
         $current = array();
 
-        foreach($this->getLabels() as $e) {
-            $current[$e->sl_id] = TRUE;
+        foreach($this->getLabels() as $label) {
+            $current[$label->sl_id] = array(
+                'sl_id' => $label->sl_id,
+                'sl_color' => $label->sl_color,
+                'sl_label' => $label->sl_label
+            );
         }
 
         foreach($post as $e) {
@@ -187,25 +153,27 @@ class Task extends Presence implements \App\Tasks\Interfaces\TaskModel {
             }
         }
 
-        $current = array_values(array_keys($current));
+        $removed = array_values(array_keys($current));
 
-        if (count($current) > 0) {
+        if (count($removed) > 0) {
             TaskLabel::get()
-                ->inWhere('tpl_sl_id', $current)
+                ->inWhere('tpl_sl_id', $removed)
                 ->andWhere('tpl_tpr_id = :task:', array('task' => $this->tpr_id))
                 ->execute()
                 ->delete();
 
+            $labels = array_values($current);
+
             Activity::log('remove_label', array(
-                'ta_task_ns' => $this->getNamespace(),
+                'ta_task_ns' => $this->getScope(),
                 'ta_sp_id' => $this->tpr_task_project,
                 'ta_task_id' => $this->tpr_id,
-                'ta_data' => json_encode($current)
+                'ta_data' => json_encode($labels)
             ));
         }
 
         if (count($created) > 0) {
-            $indexes = array();
+            $labels = array();
 
             foreach($created as $e) {
                 $r = new TaskLabel();
@@ -213,14 +181,18 @@ class Task extends Presence implements \App\Tasks\Interfaces\TaskModel {
                 $r->tpl_sl_id = $e['sl_id'];
                 $r->save();
 
-                $indexes[] = $e['sl_id'];
+                $labels[] = array(
+                    'sl_id' => $e['sl_id'],
+                    'sl_color' => $e['sl_color'],
+                    'sl_label' => $e['sl_label']
+                );
             }
 
             Activity::log('add_label', array(
-                'ta_task_ns' => $this->getNamespace(),
+                'ta_task_ns' => $this->getScope(),
                 'ta_sp_id' => $this->tpr_task_project,
                 'ta_task_id' => $this->tpr_id,
-                'ta_data' => json_encode($indexes)
+                'ta_data' => json_encode($labels)
             ));
         }
     }

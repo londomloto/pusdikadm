@@ -139,6 +139,9 @@
                         loadDependencies(),
                         loadRoutes(base)
                     ]).then((values) => {
+
+                        Polymer.setPassiveTouchGestures(true);
+                        
                         let node = document.createElement('kct-app');
                         node.name = name;
 
@@ -181,10 +184,11 @@
                     }
 
                     function loadDependencies() {
-                        window.Polymer = window.Polymer || {};
-                        window.Polymer.dom = 'shadow';
+                        // window.Polymer = window.Polymer || {};
+                        // window.Polymer.dom = 'shadow';
 
                         let deps = [
+                            '../cores/bower_components/polymer/polymer-element.html',
                             '../cores/themes/theme-default/theme-default.html',
                             // '../cores/elements/kct-app/kct-app.html'
                             'src/kct-app.html'
@@ -213,11 +217,11 @@
                             return d.promise;
                         });
 
-                        Promise.all(deps).then(() => {
+                        return Promise.all(deps).then(() => {
                             let t = setTimeout(() => {
                                 clearTimeout(t);
                                 finish();    
-                            }, 1000);
+                            }, 500);
                         });
                     }
 
@@ -236,13 +240,15 @@
 
                         ajax.onreadystatechange = () => {
                             if (ajax.readyState === XMLHttpRequest.DONE && ajax.status == 200) {
-                                let json;
+                                let data, json;
                                 
                                 try {
-                                    json = JSON.parse(ajax.responseText).data;
+                                    json = JSON.parse(ajax.responseText);
+                                    data = json.data;
+
                                 } catch(e){}
 
-                                d.resolve(json);
+                                d.resolve(data);
                             }
                         };
 

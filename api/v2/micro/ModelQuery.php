@@ -106,12 +106,17 @@ class ModelQuery {
         return $this;
     }
 
-    public function sortable() {
+    public function sortable($options = array()) {
         $request = $this->__di->getRequest();
-        $sort = $request->getQuery('sort');
+
+        if (isset($options['sort'])) {
+            $sort = $options['sort'];
+        } else {
+            $sort = $request->getQuery('sort');    
+        }
 
         if ( ! empty($sort)) {
-            $sort = json_decode($sort);
+            $sort = is_string($sort) ? json_decode($sort) : $sort;
             foreach($sort as $item) {
                 $name = $item->property;
                 $sort = $item->direction;
@@ -128,12 +133,21 @@ class ModelQuery {
     public function filterable($options = array()) {
         $request = $this->__di->getRequest();
 
-        $fields = $request->getQuery('fields');
-        $query = $request->getQuery('query');
+        if (isset($options['fields'])) {
+            $fields = $options['fields'];
+        } else {
+            $fields = $request->getQuery('fields');    
+        }
+
+        if (isset($options['query'])) {
+            $query = $options['query'];
+        } else {
+            $query = $request->getQuery('query');
+        }
 
         // query
         if ( ! empty($query) && ! empty($fields)) {
-            $fields = json_decode($fields);
+            $fields = is_string($fields) ? json_decode($fields) : $fields;
             $where = array();
 
             if ($this->__driver == 'pgsql') {
@@ -159,7 +173,11 @@ class ModelQuery {
         }
 
         // params
-        $params = $request->getQuery('params');
+        if (isset($options['params'])) {
+            $params = $options['params'];
+        } else {
+            $params = $request->getQuery('params');    
+        }
 
         if ( ! empty($params)) {
             $params = is_string($params) ? json_decode($params, TRUE) : $params;

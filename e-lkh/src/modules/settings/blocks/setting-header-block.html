@@ -8,10 +8,10 @@
         <style include="theme-helper">
             :host {
                 background-color: var(--page-background-color);
+                border-bottom: 1px solid #dfdfdf;
             }
             .container {
                 padding: 0;
-                border-bottom: 1px solid #dfdfdf;
             }
             .columns-container {
                 min-height: 53px;
@@ -39,7 +39,7 @@
                 padding-top: 5px;
             }
             .header-icon {
-                background-color: var(--paper-amber-500);
+                background-color: var(--header-accent, var(--paper-amber-500));
                 color: #fff;
                 border-radius: 50%;
                 padding: 4px;
@@ -179,8 +179,23 @@
                     text: { type: String, value: 'Page Title' },
                     desc: { type: String, value: 'Page Description' },
                     hideNav: { type: Boolean, value: false },
-                    hideHeader: { type: Boolean, value: false }
+                    hideHeader: { type: Boolean, value: false },
+                    accent: { type: String }
                 };
+            }
+
+            static get observers() {
+                return [
+                    '__accentChanged(accent)'
+                ];
+            }
+
+            __accentChanged(accent) {
+                if (accent) {
+                    this.updateStyles({
+                        '--header-accent': accent
+                    })
+                }
             }
 
             __onBackTap() {

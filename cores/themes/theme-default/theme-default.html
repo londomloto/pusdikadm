@@ -95,7 +95,7 @@
 
             --paper-input-container-label-floating: { font-size: 16px; margin-bottom: 30px; };
             --paper-input-container-label-focus: { color: #339EF3; };
-            --paper-input-container-underline: { border-color: var(--paper-grey-400); };
+            --paper-input-container-underline: { border-color: var(--paper-grey-300); };
             --paper-input-container-underline-focus: { border-color: #2196F3; };
             --paper-input-error: { font-size: var(--app-text-sm); };
 
@@ -324,7 +324,7 @@
             .btn-info { background-color: var(--app-info); color: #FFFFFF; }
             .btn-warn { background-color: var(--app-info); color: #FFFFFF; }
             .btn-danger { background-color: var(--app-danger); color: #FFFFFF; }
-            .btn-default { background-color: var(--paper-amber-300); color: #FFFFFF; }
+            .btn-default { background-color: var(--paper-grey-200); }
 
             .btn-red { background-color: var(--paper-red-500); color: #FFFFFF;  }
             .btn-pink { background-color: var(--paper-pink-500); color: #FFFFFF;  }
@@ -382,7 +382,20 @@
             }
 
             /** vaadin-combo-box */
-            vaadin-combo-box { padding: 4px 0; }
+            vaadin-combo-box { 
+                padding: 4px 0; 
+                --paper-input-container-label: {
+                    top: 4px;
+                };
+            }
+
+            kct-combobox {
+                padding: 4px 0 8px 0;
+                --paper-input-container-label: {
+                    top: 4px;
+                };
+            }
+
             page-header-block vaadin-combo-box,
             kct-grid vaadin-combo-box { padding: 0;  }
 
@@ -394,7 +407,7 @@
                 --material-font-family: var(--app-font-family);
                 --material-subhead-font-size: 14px;
                 --material-icon-font-size: 20px;
-                ---material-text-field-input-line-background-color: var(--paper-grey-400);
+                ---material-text-field-input-line-background-color: var(--paper-grey-300);
                 ---material-text-field-input-line-opacity: 1;
 
             }

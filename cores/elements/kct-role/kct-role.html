@@ -46,6 +46,22 @@
                     });
                 }
 
+                authorize(perms) {
+                    return this.__loadPermissions().then(() => {
+                        let expr = perms.replace(/([^|&() ]+)/g, e => {
+                            return cachedPermissions[e] ? 'true' : 'false';
+                        });
+                        
+                        expr = expr.replace(/\|/g, '||').replace(/&/g, '&&');
+
+                        let func = this.__compile(expr);
+                        let auth = func();
+
+                        func = null;
+                        return auth;
+                    });
+                }
+
                 validate(context = null) {
                     if ( ! context) {
                         context = this.__findContext();
@@ -66,14 +82,27 @@
                         context.shadowRoot.querySelectorAll('[data-perm]').forEach(elem => {
                             let perm = elem.dataset.perm,
                                 mode = elem.getAttribute('data-perm-mode') || this.mode;
-
+                            
                             if (elem.dataset.display === undefined) {
                                 elem.dataset.display = elem.style.display;
-                            }    
+                            } 
 
-                            let authorized = cachedPermissions[perm];
+                            // complex rule
+                            // ex: create|read|(update&delete)
 
-                            if (authorized) {
+                            let expr = perm.replace(/([^|&() ]+)/g, e => {
+                                return cachedPermissions[e] ? 'true' : 'false';
+                            });
+
+                            expr = expr.replace(/\|/g, '||').replace(/&/g, '&&');
+
+                            // don't use `eval`
+                            let func = this.__compile(expr);
+                            let auth = func();
+
+                            func = null;
+
+                            if (auth) {
                                 elem.style.display = elem.dataset.display;
                             } else {
                                 if (mode == 'remove') {
@@ -91,6 +120,10 @@
                         });
 
                     });
+                }
+
+                __compile(expr) {
+                    return Function(`"use strict"; return (${expr});`);
                 }
 
                 __loadAccesses() {

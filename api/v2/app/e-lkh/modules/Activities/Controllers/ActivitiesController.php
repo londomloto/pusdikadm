@@ -12,7 +12,32 @@ class ActivitiesController extends \Micro\Controller {
     public function createAction() {
         $post = $this->request->getJson();
         $type = isset($post['ta_type']) ? $post['ta_type'] : 'comment';
-        return Activity::log($type, $post);
+        
+        // validate message
+        $message = strip_tags($post['ta_data']);
+
+        if (empty($message)) {
+            return array(
+                'success' => FALSE
+            );
+        }
+        
+        $log = Activity::log($type, $post);
+
+        if ($log) {
+            
+            $log->subscribe();
+            $log->broadcast();
+
+            return array(
+                'success' => TRUE,
+                'data' => $log->toArray()
+            );
+        }
+
+        return array(
+            'success' => FALSE
+        );
     }
 
     public function updateAction($id) {
@@ -57,6 +82,7 @@ class ActivitiesController extends \Micro\Controller {
     
     public function deleteAction($id) {
         $data = Activity::get($id)->data;
+
         if ($data) {
             $data->delete();
         }

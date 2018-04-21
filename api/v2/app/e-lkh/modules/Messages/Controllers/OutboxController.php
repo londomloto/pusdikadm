@@ -85,8 +85,8 @@ class OutboxController extends \Micro\Controller {
                     ->toArray();
 
                 $subscribers = array_map(function($e){ return $e['sut_token']; }, $subscribers);
-
-                $this->notify($subscribers, array(
+                
+                $this->notifyDevice($subscribers, array(
                     'title' => 'Pesan dari '.$user['su_fullname'],
                     'body' => $outbox->getSubject()
                 ));
@@ -98,12 +98,12 @@ class OutboxController extends \Micro\Controller {
         return Outbox::none();
     }
 
-    public function notify(&$subscribers, $data) {
+    public function notifyDevice(&$subscribers, $data) {
         if (count($subscribers) > 0) {
             $token = array_shift($subscribers);
             $response = $this->gcm->send($token, $data);
             sleep(1);
-            $this->notify($subscribers, $data);
+            $this->notifyDevice($subscribers, $data);
         }
     }
 

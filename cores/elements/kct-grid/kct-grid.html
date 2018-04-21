@@ -165,7 +165,7 @@
                 /*border-right: 1px solid #dfdfdf;*/
             }
             .grid-header .col-header-icon {
-                width: 40px;
+                width: 45px;
             }
             .grid-header .col-header-info {
                 padding-top: 5px;
@@ -419,8 +419,9 @@
                     </div>
                     <div class="col-toolbar">
                         <div class="right-toolbar">
-                            <slot name="right-toolbar"></slot>
-                            <paper-icon-button on-tap="__onSearchTap" icon="search"></paper-icon-button>
+                            <slot name="right-toolbar">
+                                <paper-icon-button on-tap="__onSearchTap" icon="search"></paper-icon-button>    
+                            </slot>
                         </div>
                     </div>
                 </kct-hbox>
@@ -836,7 +837,10 @@
                                             }
                                         }
 
+                                        // updating params
+                                        this.__silent = true;
                                         this.set('params', options);
+                                        this.__silent = false;
 
                                         this.dispatchEvent(new CustomEvent('beforeload', { detail: { options: options }}));
 
@@ -888,9 +892,8 @@
                 }
 
                 __paramsChanged(changed) {
-                    if (changed.path != 'params') {
-                        this.load();
-                    }
+                    if (this.__silent) return;
+                    this.load();
                 }
 
                 __pageSizeChanged(size) {
@@ -1059,8 +1062,8 @@
                 }
 
                 __onGridViewportChanged(e) {
-
-                    if (this.selection.length) {
+                    
+                    /*if (this.selection.length) {
                         this.set('selection', []);
                         this.set('selected', null);
 
@@ -1072,7 +1075,7 @@
                         });
 
                         this.__updateBulkSelection();
-                    }
+                    }*/
 
                     this.__updatePageNavigation();
                 }

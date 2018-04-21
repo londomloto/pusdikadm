@@ -5,6 +5,7 @@
 <link rel="import" href="../kct-toast/kct-toast.html">
 <link rel="import" href="../kct-message/kct-confirm.html">
 <link rel="import" href="../kct-message/kct-alert.html">
+<link rel="import" href="../kct-message/kct-prompt.html">
 <link rel="import" href="../kct-layouts/kct-hbox.html">
 
 <dom-module id="kct-view">
@@ -151,6 +152,23 @@
                 dialog.message = message;
                 dialog.addEventListener('close', () => {
                     def.resolve();
+                    document.body.removeChild(dialog);
+                });
+
+                document.body.appendChild(dialog);
+                dialog.open();
+
+                return def.promise;
+            }
+
+            prompt(title, message) {
+                let def = this._defer(),
+                    dialog = document.createElement('kct-prompt');
+
+                dialog.title = title;
+                dialog.message = message;
+                dialog.addEventListener('close', e => {
+                    def.resolve(e.detail);
                     document.body.removeChild(dialog);
                 });
 

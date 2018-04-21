@@ -97,6 +97,16 @@
 
                     <paper-card class="block">
                         <div class="card-content">
+                            <h3 class="block-title">Incognito</h3>
+                            <div>Pengguna (user) yang berada dalam mode <strong>incognito</strong> akan diabaikan dari data statistik dan laporan.</div>
+                            <div>
+                                <kct-checkbox value="{{ record.su_incognito }}">Aktifkan mode incognito</kct-checkbox>
+                            </div>
+                        </div>
+                    </paper-card>
+
+                    <paper-card class="block">
+                        <div class="card-content">
                             <h3 class="block-title">Data Akun</h3>
                             <div>
                                 <paper-input id="email" label="Alamat email" type="email" value="{{ record.su_email }}" required auto-validate error-message="Alamat email wajib diisi"></paper-input>

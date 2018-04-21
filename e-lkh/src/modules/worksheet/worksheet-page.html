@@ -24,14 +24,16 @@
     </template>
     <script>
         class WorksheetPage extends KctView {
+                
             static get is() {
                 return 'worksheet-page';
             }
 
             static get properties() {
                 return {
-                    title: { type: String, value: 'Administrasi', notify: true },
-                    page: { type: String }
+                    title: { type: String, value: 'Administrasi', notify: true }, 
+                    page: { type: String },
+                    storage: { type: Object }
                 };
             }
 
@@ -62,6 +64,6 @@
             }
         }
 
-        customElements.define(WorksheetPage.is, WorksheetPage);
+        customElements.define(WorksheetPage.is, WorksheetPage); 
     </script>
 </dom-module>

@@ -11,13 +11,26 @@ class UnitsController extends \Micro\Controller {
 
     public function createAction() {
         $post = $this->request->getJson();
-        $data = new Unit();
+        $post['sun_name'] = trim($post['sun_name']);
 
-        if ($data->save($post)) {
+        $data = Unit::findFirst(array(
+            'sun_name = :name:',
+            'bind' => array(
+                'name' => $post['sun_name']
+            )
+        ));
+
+        if ( ! $data) {
+            $data = new Unit();
+
+            if ($data->save($post)) {
+                return Unit::get($data->sun_id);
+            }
+
+            return Unit::none();
+        } else {
             return Unit::get($data->sun_id);
         }
-
-        return Unit::none();
     }
 
     public function updateAction($id) {

@@ -113,7 +113,7 @@
 
         <div class="noresult" hidden$="[[ hasResult ]]">
             <paper-item on-tap="__onNoResultTap">
-                <paper-item-body>Data tidak ditemukan...</paper-item-body>
+                <paper-item-body>[[ __computeBusy(busy) ]]</paper-item-body>
             </paper-item>
         </div>
 
@@ -144,7 +144,7 @@
             </iron-list>
         </div>
         
-        <div class="pagination" hidden$="[[ ! pagingEnabled ]]">
+        <div class="pagination" hidden$="[[ hidePaging ]]">
             <paper-icon-button on-tap="__onPaginationTap" data-action="first" icon="first-page" disabled$="[[ __firstDisabled ]]"></paper-icon-button>
             <paper-icon-button on-tap="__onPaginationTap" data-action="prev"  icon="chevron-left" disabled$="[[ __prevDisabled ]]"></paper-icon-button>
             <label>Page [[ paging.page ]] of [[ paging.pages ]]</label>
@@ -165,12 +165,13 @@
 
                 static get properties() {
                     return {
+                        busy: { type: Boolean, value: false },
                         width: { type: Number },
                         paging: { type: Object, value: () => ({}), readonly: true },
                         noresult: { type: Boolean, value: false },
                         hasToolbar: { type: Boolean, value: false },
-                        hasResult: { type: Boolean, value: false },
-                        pagingEnabled: { type: Boolean, value: false }
+                        hasResult: { type: Boolean, value: false }, 
+                        hidePaging: { type: Boolean, value: false }
                     };
                 }
 
@@ -234,7 +235,7 @@
                     let selectorMaxHeight = this._maxHeight(targetRect);
                     let deltaHeight = 0;
 
-                    if (this.pagingEnabled) {
+                    if ( ! this.hidePaging) {
                         deltaHeight = 36;
                         if (this.hasToolbar) {
                             deltaHeight = 72;
@@ -262,6 +263,10 @@
                     }
                     
                     this.updateViewportBoundaries();
+                }
+
+                __computeBusy(busy) {
+                    return busy ? 'Loading...' : 'Tidak ada data...';
                 }
 
                 __pagingChanged(changed) {

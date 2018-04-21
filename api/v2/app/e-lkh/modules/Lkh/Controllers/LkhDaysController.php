@@ -31,9 +31,22 @@ class LkhDaysController extends \Micro\Controller {
 
     public function deleteAction($id) {
         $data = LkhDay::get($id)->data;
+
         if ($data) {
-            $data->delete();
+            $lkh = $data->getTask();
+
+            if ($data->delete()) {
+                if ( ! is_null($lkh)) {
+                    $this->socket->broadcast('live', array(
+                        'type' => 'lkh_outstanding',
+                        'user' => $lkh->lkh_su_id,
+                        'task' => $lkh->lkh_id,
+                        'date' => $data->lkd_date
+                    ));
+                }
+            }
         }
+
         return array(
             'success' => TRUE
         );

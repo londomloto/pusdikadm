@@ -15,6 +15,11 @@
             .item .box-body > * {
                 pointer-events: none;
             }
+            .item .box-title,
+            .item .box-content {
+                color: var(--paper-blue-grey-500);
+                margin-bottom: 5px;
+            }
             .item .box-foot {
                 padding: 5px 5px;
                 font-size: 11px;
@@ -30,6 +35,14 @@
                 right: 10px;
                 bottom: 6px;
             }
+            .item-logo {
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                position: relative;
+                overflow: hidden;
+                margin-right: 10px;
+            }
             .item-user {
                 position: relative;
                 overflow: hidden;
@@ -39,10 +52,7 @@
                 float: left;
                 margin-left: 2px;
             }
-            .item .box-content {
-                color: var(--paper-blue-grey-500);
-                margin-bottom: 5px;
-            }
+            
             .item-prop {
                 font-size: 12px;
                 font-weight: 500;
@@ -65,6 +75,11 @@
                 font-weight: 500;
                 color: var(--paper-blue-grey-500);
                 font-size: 15px;
+            }
+            .item-subtitle {
+                font-size: 12px;
+                color: var(--paper-blue-grey-500);
+                font-weight: 500;
             }
             .item-content {
                 color: var(--paper-blue-grey-500);
@@ -130,38 +145,34 @@
         
         <div class="box box-shadow-z2 item" style$="border-left: 2px solid [[ accent ]]">
             <div class="box-body" on-tap="__onCardTap">
-                <h3 class="item-title">[[ record.task.skp_su_fullname ]]</h3>
-                <!-- <p class="item-meta">
-                    Dibuat oleh <b>[[ record.task.creator_su_fullname ]]</b> [[ record.task.skp_created_dt_relative ]]
-                </p> -->
-                <div class="box-label">
-                    <template is="dom-repeat" items="[[ record.labels ]]">
-                        <span class="item-label" style$="background-color: [[ item.sl_color ]]">[[ item.sl_label ]]</span>
-                    </template>
-                    <span class="item-clear"></span>
-                </div>
-                <div class="box-content">
-                    <div class="item-prop">
-                        <iron-icon icon="today"></iron-icon>&nbsp;Periode [[ record.task.skp_period ]]    
+                <kct-hbox>
+                    <div>
+                        <div class="item-logo">
+                            <img src$="[[ record.task.skp_su_avatar_thumb ]]&w=30&h=30" alt=" ">
+                        </div>
                     </div>
-                </div>
-                <div class="box-items">
-                    <template is="dom-repeat" items="[[ items ]]">
-                        <div class="item-desc"><iron-icon icon="done"></iron-icon>&nbsp;[[ item.text ]]</div>
-                    </template>
-                </div>
+                    <div class="flex">
+                        <div class="box-title">
+                            <h3 class="item-title">[[ record.task.skp_su_fullname ]]</h3>   
+                        </div>
+                        <div class="box-content">
+                            <div class="item-prop">
+                                <iron-icon icon="perm-identity"></iron-icon>&nbsp;NIP. [[ record.task.skp_su_no ]]    
+                            </div>
+                            <div class="item-prop">
+                                <iron-icon icon="today"></iron-icon>&nbsp;SKP [[ record.task.skp_period ]]    
+                            </div>
+                        </div>
+                        <div class="box-label">
+                            <template is="dom-repeat" items="[[ record.labels ]]">
+                                <span class="item-label" style$="background-color: [[ item.sl_color ]]">[[ item.sl_label ]]</span>
+                            </template>
+                            <span class="item-clear"></span>
+                        </div>
+                    </div>
+                </kct-hbox>
             </div>
-            <div class="box-user">
-                <div class="item-user" title$="Sasaran kerja [[ record.task.skp_su_fullname ]]">
-                    <img src$="[[ record.task.skp_su_avatar_thumb ]]&w=30&h=30" alt=".">
-                </div>
-            </div>
-            <div class="box-foot">
-                <!-- <paper-button class="item-badge">
-                    <iron-icon icon="today"></iron-icon>&nbsp;[[ record.task.skp_date_formatted ]]    
-                </paper-button>
-                <div class="clearfix"></div> -->
-            </div>
+            <div class="box-foot"></div>
         </div>
 
     </template>

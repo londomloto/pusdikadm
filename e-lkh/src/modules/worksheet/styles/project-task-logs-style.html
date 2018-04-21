@@ -11,10 +11,14 @@
             }
 
             .timeline-title {
-                font-weight: 500;
                 font-size: 13px;
-                text-transform: uppercase;
                 margin-bottom: 15px;
+                --paper-checkbox-margin: 0;
+            }
+
+            .timeline-title h3 {
+                text-transform: uppercase;
+                font-weight: 500;
             }
 
             .timeline-item {
@@ -51,11 +55,28 @@
                 background-color: #fff;
             }
 
+            .timeline-item.warning .timeline-icon {
+                background-color: var(--paper-red-500);
+                border-color: var(--paper-red-500);
+                color: #fff;
+            }
+
+            .timeline-item.alert .timeline-icon {
+                background-color: var(--paper-amber-500);
+                border-color: var(--paper-amber-500);
+                color: #fff;
+            }
+
             .timeline-icon iron-icon {
                 position: relative;
                 width: 100%;
                 height: 100%;
                 top: -2px;
+            }
+
+            .timeline-item.warning .timeline-icon iron-icon,
+            .timeline-item.alert .timeline-icon iron-icon {
+                top: -3px;
             }
 
             .timeline-body {
@@ -73,6 +94,7 @@
             .msgbox-body {
                 padding: 10px;
             }
+
             .msgbox-footer {
                 padding: 0 10px 10px 10px;
             }
@@ -81,8 +103,21 @@
                 --iron-icon-height: 20px;
             }
             .msgbox-footer paper-button {
-                margin: 0;
+                margin: 0 0 0 5px;
                 text-transform: none;
+                display: block;
+                float: right;
+                text-align: center;
+                padding: 5px 7px;
+            }
+            .msgbox-footer paper-button iron-icon {
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;   
+                position: relative;
+                top: -2px;
+            }
+            .msgbox-footer kct-checkbox {
+                --paper-checkbox-margin: 7px 0;
             }
 
             #msgbox {

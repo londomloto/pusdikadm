@@ -1,5 +1,4 @@
 <link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
-<link rel="import" href="../../../../../cores/elements/kct-socket/kct-socket.html">
 <link rel="import" href="../../../../../cores/bower_components/paper-spinner/paper-spinner-lite.html">
 <link rel="import" href="../../../../../cores/mixins/mixins.html">
 <link rel="import" href="../../../../../cores/vendors/moment/moment.html">
@@ -19,9 +18,10 @@
                 return {
                     project: { type: Object },
                     workspace: { type: Object }, 
-                    metadata: { type: Object },
+                    profile: { type: Object },
                     record: { type: Object, notify: true },
-                    loading: { type: Boolean, value: false, reflectToAttribute: true } 
+                    loading: { type: Boolean, value: false, reflectToAttribute: true }, 
+                    socketSession: { type: String }
                 };
             }
 
@@ -39,13 +39,11 @@
 
             }
 
-            start() {
+            initialize() {
                 this.stopEditing();
                 this.assignAuthor();
-
-                // set creator
                 
-                this.set('record.task.' + this.metadata.creator_primary_key , this.user.su_id);
+                this.set('record.task.' + this.profile.task.creator_key , this.user.su_id);
                 this.set('record.task.creator_su_avatar_thumb', this.user.su_avatar_thumb);
                 this.set('record.task.creator_su_fullname', this.user.su_fullname);
                 this.set('record.task.creator_su_grade', this.user.su_grade);
@@ -53,8 +51,8 @@
 
 
                 if (this.project) {
-                    this.set('record.task.' + this.metadata.due_key, this.project.sp_end_date);
-                    this.set('record.task.' + this.metadata.due_formatted_key, this.project.sp_end_date_formatted);
+                    this.set('record.task.' + this.profile.task.due_key, this.project.sp_end_date);
+                    this.set('record.task.' + this.profile.task.due_formatted_key, this.project.sp_end_date_formatted);
                 }
             }
             
@@ -164,7 +162,8 @@
             
 
             __computeCreatorMeta(no, grade) {
-                return no + (grade ? ' (' + grade + ')' : '');
+                return grade || no || '';
+                // return no + (grade ? ' (' + grade + ')' : '');
             }
 
             __computeCreatorAvatar(avatar) {
@@ -172,11 +171,11 @@
             }
 
             __computeUserMeta(no, grade) {
-                return no + (grade ? ' (' + grade + ')' : '');
+                return grade || no || '';
             }
 
             __save(prop, send = false, back = false) {
-                let update = this.record && this.record.task && this.record.task[this.metadata.primary_key] && this.workspace;
+                let update = this.record && this.record.task && this.record.task[this.profile.task.primary_key] && this.workspace;
                 let promise, resolve, reject;
                 
                 promise = new Promise((a, b) => {
@@ -192,21 +191,23 @@
                         logs: ['due'].indexOf(prop) !== -1 ? true :false
                     };
 
-                    let options = {
-                        headers: {
+                    let options = {};
+
+                    if (this.socketSession) {
+                        options.headers = {
                             'X-Socket-Session': this.socketSession
-                        }
-                    };
+                        };
+                    }
 
                     let indicator = prop + '-indicator';
                     this.$[indicator].busy = true;
 
-                    this.$.ajax.PUT(this.metadata.service_url + '/' + this.record.task[this.metadata.primary_key], payload, options).then(res => {
+                    this.$.ajax.PUT(this.profile.service.url + '/' + this.record.task[this.profile.task.primary_key], payload, options).then(res => {
                         this.$[indicator].busy = false;
 
                         if (res.success) {
                             if (prop == 'due') {
-                                this.set('record.task.' + this.metadata.due_formatted_key, res.data.task[this.metadata.due_formatted_key]);
+                                this.set('record.task.' + this.profile.task.due_formatted_key, res.data.task[this.profile.task.due_formatted_key]);
                             }
                         }
 
@@ -277,7 +278,7 @@
 
             __onDueRemoveTap(e) {
                 e.preventDefault();
-                this.set('record.task.' + this.metadata.due_key, '');
+                this.set('record.task.' + this.profile.task.due_key, '');
                 this.__save('due');
             }
 
@@ -368,7 +369,7 @@
                 this.stopEditingDue();
 
                 if (value) {
-                    this.set('record.task.' + this.metadata.due_key, value);
+                    this.set('record.task.' + this.profile.task.due_key, value);
                     this.__save('due');
 
                 }

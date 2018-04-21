@@ -109,25 +109,25 @@
                             <paper-input value="{{ record.ks_name }}" label="Nama Template" required auto-validate error-message="Name is required"></paper-input>
                             <paper-input value="{{ record.ks_description }}" label="Keterangan"></paper-input>
                             <paper-input value="{{ record.ks_module }}" label="Nama Module"></paper-input>
-                            <div class="form-group">
+                            <!-- <div class="form-group">
                                 <label>Fungsi Template</label>
                                 <paper-radio-group selected="{{ record.ks_purpose }}" attr-for-selected="name">
                                     <paper-radio-button name="1">Pemeriksaan LKH</paper-radio-button>
                                     <paper-radio-button name="2">Pemeriksaan SKP</paper-radio-button>
                                     <paper-radio-button name="0">Umum</paper-radio-button>
                                 </paper-radio-group>
-                            </div>
+                            </div> -->
                         </div>
                     </div>
                     <div class="flex center">
-                        <kct-kanban id="kanban" columns="3" hide-header>
+                        <kct-kanban id="kanban" columns="4" hide-header>
                             <template is="dom-repeat" items="[[ record.ks_panels ]]" as="panel">
                                 <kct-kanban-panel title="[[ panel.kp_title ]]" accent="[[ panel.kp_accent ]]" hide-secondary hide-condensed>
                                     <paper-input slot="panel-title" no-label-float value="{{ panel.kp_title }}"></paper-input>
                                     <kct-dropdown slot="primary-toolbar" halign="right">
                                         <paper-item on-tap="__onColorPanelTap">Warna header</paper-item>
-                                        <paper-item on-tap="__onShiftLeftPanelTap">Geser kanan</paper-item>
-                                        <paper-item on-tap="__onShiftRightPanelTap">Geser kiri</paper-item>
+                                        <paper-item on-tap="__onShiftLeftPanelTap">Geser kiri</paper-item>
+                                        <paper-item on-tap="__onShiftRightPanelTap">Geser kanan</paper-item>
                                         <paper-item on-tap="__onDeletePanelTap">Hapus panel</paper-item>
                                     </kct-dropdown>
                                     <div class="panel-content">

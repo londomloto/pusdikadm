@@ -16,7 +16,6 @@
 <link rel="import" href="../../../cores/elements/kct-media/kct-media.html">
 <link rel="import" href="../../../cores/elements/kct-auth/kct-auth.html">
 <link rel="import" href="../../../cores/elements/kct-socket/kct-socket-manager.html">
-<link rel="import" href="../../../cores/elements/kct-socket/kct-socket.html">
 <link rel="import" href="../../../cores/elements/kct-feed/kct-feed.html">
 <link rel="import" href="../blocks/navigation-block.html">
 <link rel="import" href="../blocks/notification-block.html">
@@ -227,7 +226,6 @@
         <kct-auth id="auth" config="[[ config ]]" user="{{ user }}" on-load="__onAuthLoad"></kct-auth>
         <kct-media screen="{{ screen }}"></kct-media>
         <kct-socket-manager id="socket" name="global-socket"></kct-socket-manager>
-        <kct-socket manager="global-socket" on-notify="__onSocketNotify"></kct-socket>
         <kct-feed id="feed" config="[[ config ]]"></kct-feed>
 
         <app-drawer-layout id="viewport" class="unresolved" fullbleed force-narrow>
@@ -353,7 +351,7 @@
                         this.__doLayout();
                         this.$.navigation.loadMenus();
                         this.$.socket.connect();
-                        this.$.feed.subscribe();
+                        this.$.feed.connect();
                     },
                     1000
                 );
@@ -537,10 +535,6 @@
                 if (this.$.viewport.narrow) {
                     this.$.drawer1.toggle();    
                 }
-            }
-
-            __onSocketNotify() {
-                this.$.notification.load();
             }
 
         }

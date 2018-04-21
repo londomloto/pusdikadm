@@ -16,6 +16,12 @@
                 return {
                     record: { type: Object, notify: true },
                     message: { type: String }, 
+                    comment: { 
+                        type: Object,
+                        value: () => ({
+                            ta_type: 'comment'
+                        })
+                    },
                     project: { type: Object },
                     activities: { 
                         type: Array, 
@@ -29,8 +35,10 @@
                             limit: 20
                         })
                     }, 
-                    metadata: { type: Object },
-                    loading: { type: Boolean, value: false, reflectToAttribute: true }
+                    profile: { type: Object },
+                    loading: { type: Boolean, value: false, reflectToAttribute: true },
+                    display: { type: String, value: '0' },
+                    socketSession: { type: String }
                 };
             }
 
@@ -39,7 +47,11 @@
                 this.__hidePaginator = true;
             }
 
-            start() {
+            initialize() {
+                this.load({ start: 0 });
+            }
+
+            reload() {
                 this.load({ start: 0 });
             }
             
@@ -56,25 +68,31 @@
 
                 limit = this.paginator.limit;
 
-                let taskId = this.record && this.record.task && this.record.task[this.metadata.primary_key];
+                let taskId = this.record && this.record.task && this.record.task[this.profile.task.primary_key];
 
                 if ( ! taskId) {
                     this.set('activities', []);
                     return;
                 }
 
+                let params = {};
+
+                params.ta_task_ns = this.profile.activity.scope;
+                params.ta_task_id = taskId;
+
+                if (this.display == '0') {
+                    params.ta_type = ['IN', ['comment', 'warning']];
+                }
+
                 let payload = {
-                    params: {
-                        ta_task_ns: this.metadata.namespace,
-                        ta_task_id: taskId
-                    },
+                    params: params,
                     sort: [
                         { property: 'ta_created', direction: 'desc' }
                     ],
                     start: start,
                     limit: limit
                 };
-                
+                    
                 this.$.ajax.GET('/activities', payload).then(res => {
                     if (start == 0) {
                         this.set('activities', []);
@@ -105,20 +123,37 @@
                     }
                 }
 
-                let data = {
-                    ta_type: 'comment',
-                    ta_data: message,
-                    ta_task_id: this.record.task[this.metadata.primary_key],
-                    ta_task_ns: this.metadata.namespace,
-                    ta_sp_id: this.project.sp_id
-                };
+                let payload = Object.assign({}, this.comment);
 
-                this.$.ajax.POST('/activities', data).then(res => {
+                payload.ta_type = payload.ta_type || 'comment';
+                
+                payload.ta_data = JSON.stringify({
+                    comment: message
+                });
+
+                payload.ta_task_id = this.record.task[this.profile.task.primary_key];
+                payload.ta_task_ns = this.profile.activity.scope;
+                payload.ta_sp_id = this.project.sp_id;
+
+                let options = {};
+                
+                if (this.socketSession) {
+                    options.headers = {
+                        'X-Socket-Session': this.socketSession
+                    };
+                }
+
+                this.$.ajax.POST('/activities', payload, options).then(res => {
                     if (res.success) {
                         let activity = res.data;
-                        // this.unshift('activities', activity);
-                        this.load({start: 0});
+                        
+                        this.load({ start: 0 });
                         this.$.msgbox.value = '';
+
+                        // notify users
+                        this.$.ajax.POST('/notifications/' + activity.ta_id + '/notify', {
+                            target: 'users'
+                        });
                     }
                 });
                 
@@ -138,15 +173,9 @@
                         ]
                     };
 
-                    this.$.ajax.UPLOAD('/tasks/tasks-activities/upload', payload).then(res => {
+                    this.$.ajax.UPLOAD('/activities/upload', payload).then(res => {
                         if (res.success) {
-                            let code = res.data.code;
-                            let html = this.$['msgbox'].value;
-                            
-                            html += code;
-                            html += '<p></p>';
-
-                            this.$['msgbox'].value = html;
+                            this.$.msgbox.insert(res.data.code);
                         }
                         this.$.file.reset();
                     });
@@ -160,10 +189,15 @@
 
             __onSaveCommentTap(e) {
                 let data = e.model.item;
+
+                data.ta_data = JSON.parse(data.ta_data || '{}');
+                data.ta_data.comment = data.ta_comment;
+                data.ta_data = JSON.stringify(data.ta_data);
+
                 this.$.ajax.PUT('/activities/' + data.ta_id, data).then(res => {
                     if (res.success) {
-                        this.set('activities.' + e.model.index + '.ta_data', res.data.ta_data);    
-                        this.set('activities.' + e.model.index + '.ta_text', res.data.ta_text);
+                        this.set('activities.' + e.model.index + '.ta_comment', res.data.ta_comment);    
+                        this.set('activities.' + e.model.index + '.ta_comment_formatted', res.data.ta_comment_formatted);
                     }
                     this.set('activities.' + e.model.index + '.ta_editing', false);
                 });
@@ -188,6 +222,10 @@
 
             __onPaginatorTap() {
                 this.load();
+            }
+
+            __onDisplayToggle() {
+                this.reload();
             }
 
         };

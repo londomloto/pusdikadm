@@ -1,0 +1,523 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../../cores/bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../../cores/elements/kct-socket/kct-socket.html">
+<link rel="import" href="../../../../../cores/mixins/fullscreen.html">
+
+<dom-module id="lkh-live">
+    <template>
+        <style include="lkh-page-style">
+            :host {
+                background-color: var(--page-background-color);
+            }
+            :host([fullscreen]) {
+                background-image: url(../../../images/blury-background.jpg);
+                background-repeat: no-repeat;
+                background-size: cover;
+                position: absolute;
+                width: 100vw;
+                height: 100vh;
+                top: 0;
+                left: 0;
+                box-sizing: border-box;
+            }
+            setting-header-block {
+                /*border-bottom: none;*/
+            }
+            
+            :host([fullscreen]) setting-header-block {
+                background-color: rgba(0,0,0,.1);
+                color: #fff;
+                border-bottom: none;
+            }
+            :host([fullscreen]) .live-title {
+                font-weight: 500;
+                text-transform: uppercase;
+            }
+            .main {
+                background-color: transparent;
+                padding: 20px;
+                box-sizing: border-box;
+                position: relative;
+            }
+            .item {
+                color: var(--paper-blue-grey-500);
+            }
+            .item paper-card {
+                display: block;
+                border-radius: 0;
+            }
+            .item.hide paper-card {
+                opacity: 0;
+            }
+            .item .item-icon {
+                width: 80px;
+                height: 80px;
+            }
+            .item .item-body {
+                padding: 6px 10px;
+            }
+            .item .item-name {
+                font-size: 13px;
+                font-weight: bold;
+                text-transform: uppercase;
+            }
+            .item a {
+                text-decoration: none;
+                cursor: default;
+                color: var(--paper-blue-grey-500);
+            }
+            .item.link a {
+                color: var(--paper-blue-500);
+                cursor: pointer;
+            }
+            .item.link:hover a {
+                text-decoration: underline;
+            }
+            .item .item-meta {
+                font-size: 13px;
+            }
+            .item .btn-alert {
+                color: var(--paper-red-600);
+                width: 32px;
+                height: 32px;
+                padding: 6px;
+            }
+
+            :host([fullscreen]) .page {
+                position: absolute;
+                left: 20px;
+                right: 20px;
+                top: 20px;
+                opacity: 0;
+            }
+
+            :host([fullscreen]) .page.close {
+                -webkit-animation: fade-out 1s ease-out both;
+                        animation: fade-out 1s ease-out both;
+            }
+
+            :host([fullscreen]) .page.iron-selected {
+                -webkit-animation: fade-in 1s cubic-bezier(0.390, 0.575, 0.565, 1.000) both;
+                        animation: fade-in 1s cubic-bezier(0.390, 0.575, 0.565, 1.000) both;
+            }
+
+            /** animations */
+            .item.anim {
+                -webkit-perspective: 300px;
+                        perspective: 300px;
+                -webkit-perspective-origin: 50% 50%;
+                        perspective-origin: 50% 50%;
+            }
+            .item.anim.hide paper-card {
+                -webkit-animation: slide-out-bck-center 0.3s cubic-bezier(0.550, 0.085, 0.680, 0.530) both;
+                        animation: slide-out-bck-center 0.3s cubic-bezier(0.550, 0.085, 0.680, 0.530) both;
+            }
+
+            .item.anim paper-card {
+                -webkit-animation: slide-in-fwd-center 0.3s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
+                        animation: slide-in-fwd-center 0.3s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
+            }
+
+            @-webkit-keyframes slide-out-bck-center {
+              0% {
+                -webkit-transform: translateZ(0);
+                        transform: translateZ(0);
+                opacity: 1;
+              }
+              100% {
+                -webkit-transform: translateZ(-1100px);
+                        transform: translateZ(-1100px);
+                opacity: 0;
+              }
+            }
+            @keyframes slide-out-bck-center {
+              0% {
+                -webkit-transform: translateZ(0);
+                        transform: translateZ(0);
+                opacity: 1;
+              }
+              100% {
+                -webkit-transform: translateZ(-1100px);
+                        transform: translateZ(-1100px);
+                opacity: 0;
+              }
+            }
+
+            @-webkit-keyframes slide-in-fwd-center {
+              0% {
+                -webkit-transform: translateZ(-1400px);
+                        transform: translateZ(-1400px);
+                opacity: 0;
+              }
+              100% {
+                -webkit-transform: translateZ(0);
+                        transform: translateZ(0);
+                opacity: 1;
+              }
+            }
+            @keyframes slide-in-fwd-center {
+              0% {
+                -webkit-transform: translateZ(-1400px);
+                        transform: translateZ(-1400px);
+                opacity: 0;
+              }
+              100% {
+                -webkit-transform: translateZ(0);
+                        transform: translateZ(0);
+                opacity: 1;
+              }
+            }
+
+            @-webkit-keyframes fade-in {
+              0% {
+                opacity: 0;
+              }
+              100% {
+                opacity: 1;
+              }
+            }
+            @keyframes fade-in {
+              0% {
+                opacity: 0;
+              }
+              100% {
+                opacity: 1;
+              }
+            }
+
+            @-webkit-keyframes fade-out {
+              0% {
+                opacity: 1;
+              }
+              100% {
+                opacity: 0;
+              }
+            }
+            @keyframes fade-out {
+              0% {
+                opacity: 1;
+              }
+              100% {
+                opacity: 0;
+              }
+            }
+
+
+        </style>
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-socket manager="global-socket" on-live="__onSocketLive"></kct-socket>
+
+        <kct-vbox class="container">
+            <setting-header-block 
+                icon="device:dvr" 
+                text="Monitoring" 
+                hide-nav$="[[ __hideNav(fullscreen) ]]" 
+                accent="var(--paper-pink-600)" 
+                on-back-tap="__onBackTap">
+
+                <h3 class="live-title" slot="header-value">Outstanding LKH [[ __computePeriod(params.start_date, params.end_date) ]]</h3>
+                
+                <paper-icon-button disabled$="[[ loading ]]" slot="right-toolbar" icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
+                <paper-icon-button slot="right-toolbar" icon$="[[ __computeFullScreenIcon(fullscreen) ]]" on-tap="__onScreenTap"></paper-icon-button>
+                <paper-icon-button slot="right-toolbar" icon="search" on-tap="__onOpenDrawerTap"></paper-icon-button>
+            </setting-header-block>
+            <div class="flex scroll-y">
+                <app-drawer-layout id="drawer-layout" force-narrow>
+                    <app-drawer id="drawer" slot="drawer" align="end">
+                        <app-toolbar>
+                            <paper-icon-button icon="close" on-tap="__onCloseDrawerTap"></paper-icon-button>
+                        </app-toolbar>
+                        <div class="side">
+                            <h3>Parameter</h3>
+                            <div>
+                                <kct-date-picker 
+                                    label="Dari Tanggal" 
+                                    value="{{ params.start_date }}"></kct-date-picker>
+
+                                <kct-date-picker 
+                                    label="Sampai Tanggal" 
+                                    value="{{ params.end_date }}"></kct-date-picker>
+                            </div>
+                            <div class="m-t">
+                                <paper-button disabled$="[[ loading ]]" on-tap="__onQueryTap" class="btn-primary">Query Data</paper-button>
+                            </div>
+                        </div>
+                    </app-drawer>
+                    <div class="main">
+
+                        <iron-selector selected="[[ page ]]">
+                            <template is="dom-repeat" items="[[ pages ]]" as="page">
+                                <div class$="page [[ __computePageClass(page.close) ]]">
+                                    
+                                    <kct-column columns="4" spacer="15px" gutter="15px">
+                                        <template is="dom-repeat" items="[[ page.items ]]">
+                                            <div class$="item [[ __computeItemClass(item.lkd_anim, item.lkd_hide, item.lkd_link) ]]">
+                                                <paper-card>
+                                                    <kct-hbox>
+                                                        <div class="item-icon">
+                                                            <img src$="[[ item.lkd_su_avatar_thumb ]]&w=80&h=80">
+                                                        </div>
+                                                        <div class="item-body flex">
+                                                            <div class="item-name"><a href="javascript:;" on-click="__onItemTap">[[ item.lkd_su_fullname ]]</a></div>
+                                                            <div class="item-meta">[[ item.lkd_su_no ]]</div>
+                                                            <div class="item-meta">[[ item.lkd_su_grade ]]</div>
+                                                            <div class="item-meta">[[ item.lkd_su_sdp_name ]]</div>
+                                                        </div>
+                                                        <div>
+                                                            <paper-icon-button on-tap="__onAlertTap" class="btn-alert" icon="warning"></paper-icon-button>
+                                                        </div>
+                                                    </kct-hbox>
+                                                </paper-card>
+                                            </div>
+                                        </template>    
+                                    </kct-column>
+
+                                </div>
+                            </template>
+                        </iron-selector>
+                    </div>
+                </app-drawer-layout>
+            </div>
+        </kct-vbox>
+    </template>
+    <script>
+        class LkhLive extends Mixins(KctView).use(Mixins.LkhPageBehavior, Mixins.FullScreen) {
+            static get is() {
+                return 'lkh-live';
+            }
+            static get properties() {
+                return {
+                    params: { type: Object, value: () => ({}) },
+                    pages: { type: Array, value: () => ([]) }, 
+                    page: { type: Number, value: 0 },
+                    loading: { type: Boolean, value: false }, 
+                    delay: { type: Number, value: 30000 },
+                    paging: {
+                        type: Object,
+                        value: () => ({
+                            start: 0,
+                            limit: 20,
+                            total: 0
+                        })
+                    }
+                };
+            }
+            static get observers() {
+                return [
+                    '__fullscreenChanged(fullscreen)'
+                ];
+            }
+            constructor() {
+                super();
+                this.__context = null;
+                this.__indexes = {};
+                this.__counter = 0;
+            }
+            handleRouteParams(page) {
+                if (page != 'live') return;
+
+                let today = moment().format('YYYY-MM-DD');
+
+                this.set('params', {
+                    start_date: today,
+                    end_date: today
+                });
+                this.__load({ start: 0 });
+            }
+            
+            __fullscreenChanged(fs) {
+                if (fs) {
+                    this.__startRotator();
+                } else {
+                    this.__stopRotator();
+                }
+            }
+            __startRotator() {
+                if (this.__rotator) {
+                    clearInterval(this.__rotator);
+                    this.__rotator = null;
+                }
+
+                let max = (this.pages || []).length - 1;
+
+                if (max > 0) {
+                    let delay = this.delay + 2000;
+
+                    this.__rotator = setInterval(() => {
+                        let prev = this.page || 0;
+                        let next = (prev + 1);
+                        
+                        if (next > max) {
+                            next = 0;
+                        }
+
+                        this.set('pages.' + prev + '.close', true);
+                        this.set('pages.' + next + '.close', false);
+
+                        this.set('page', next);
+                    }, delay);
+                }
+            }
+            __stopRotator() {
+                if (this.__rotator) {
+                    clearInterval(this.__rotator);
+                    this.__rotator = null;
+                }
+                (this.pages || []).forEach((p, index) => {
+                    this.set('pages.' + index + '.close', false);
+                });
+            }
+            __hideNav(fullscreen) {
+                return fullscreen ? true : false;
+            }
+            __computePageClass(close) {
+                return close ? 'close' : '';
+            }
+            __computeItemClass(anim, hide, link) {
+                let classes = [];
+
+                if (anim) {
+                    classes.push('anim');
+                }
+
+                if (hide) {
+                    classes.push('hide');
+                }
+
+                if (link) {
+                    classes.push('link');
+                }
+
+                return classes.join(' ');
+            }
+            __computeFullScreenIcon(fullscreen) {
+                return fullscreen ? 'fullscreen-exit' : 'fullscreen';
+            }
+            __load(options = {}) {
+
+                if (options.start !== undefined) {
+                    this.set('paging.start', options.start);
+                }
+
+                let payload = {
+                    start_date: this.params.start_date,
+                    end_date: this.params.end_date,
+                    start: this.paging.start,
+                    limit: this.paging.limit
+                };
+
+                if (payload.start == 0) {
+                    this.set('pages', []);
+                    this.set('loading', true);
+
+                    this.__indexes = {};
+                    this.__counter = 0;
+                }
+
+                this.$.ajax.GET('/lkh/live', payload).then(res => {
+                    if (res.success) {
+                        let items = res.data || [];
+
+                        let page = {
+                            close: false,
+                            items: items
+                        };
+
+                        this.push('pages', page);
+
+                        let pageIndex = this.pages.indexOf(page);
+                        
+                        items.forEach(item => {
+                            let key = 'user_' + item.lkd_su_id;
+                            this.__indexes[key] = pageIndex;
+                        });
+
+                        this.__counter += (items.length);
+
+                        let total = +res.total;
+                        total = isNaN(total) ? 0 : total;
+
+                        if (this.__counter < total) {
+                            let start = (this.paging.start + this.paging.limit);
+                            this.__load({ start: start });
+                            this.set('page', 0);
+                        } else {
+                            this.set('loading', false);
+                        }
+                    }
+                });
+            }
+            __onItemTap(e) {
+                let item = e.model.item;
+                if (item.lkd_link) {
+                    this.set('route.path', item.lkd_link);
+                }
+            }
+            __onReloadTap() {
+                this.__load({ start: 0 });
+            }
+            __onQueryTap() {
+                this.__load({ start: 0 });
+            }
+            __onScreenTap() {
+                this._toggleFullScreen();
+            }
+            __onSocketLive(e) {
+                let payload = e.detail;
+
+                if (payload.type == 'lkh_outstanding' || payload.type == 'lkh_settled') {
+                    let key = 'user_' + payload.user;
+                    let pageIndex = this.__indexes[key];
+                    let itemIndex = -1;
+                    let hide = payload.type != 'lkh_outstanding';
+
+                    pageIndex = pageIndex === undefined ? -1 : pageIndex;
+
+                    if (pageIndex !== -1) {
+                        let pageItems = this.get('pages.' + pageIndex + '.items');
+
+                        itemIndex = (pageItems || []).findIndex(elem => {
+                            let found = true;
+                            if (elem.lkd_lkh_id) {
+                                found = found && (elem.lkd_lkh_id == payload.task);
+                            }
+                            found = found && (elem.lkd_su_id == payload.user);
+                            found = found && (elem.lkd_date == payload.date);
+                            return found;
+                        });
+
+                        if (itemIndex !== -1) {
+                            this.set('pages.' + pageIndex + '.items.' + itemIndex + '.lkd_hide', hide);
+                            this.set('pages.' + pageIndex + '.items.' + itemIndex + '.lkd_anim', true);
+                        }
+                    }
+                }
+            }
+            __onBackTap() {
+                this.set('route.path', '/lkh');
+            }
+            __onAlertTap(e) {
+                let item = e.model.item;
+
+                this.prompt('Pemberitahuan', 'Tulis catatan atau pemberitahuan tambahan (opsional)').then(p => {
+                    if (p.button == 'ok') {
+                        let payload = {
+                            message: p.value,
+                            start_date: this.params.start_date,
+                            end_date: this.params.end_date,
+                            data: item
+                        };
+
+                        this.$.ajax.POST('/lkh/live/alert', payload).then(res => {
+                            if (res.success) {
+                                this.toast('Informasi', 'Pemberitahuan sudah dikirimkan', 'info');
+                            }
+                        });    
+                    }
+                });
+            }
+        }
+        customElements.define(LkhLive.is, LkhLive);
+    </script>
+</dom-module>

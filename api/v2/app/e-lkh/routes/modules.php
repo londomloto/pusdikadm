@@ -1,13 +1,22 @@
 <?php
 
 Router::group(array(
+    'prefix' => '/activities',
+    'handler' => 'App\Activities\Controllers\ActivitiesController',
+    'middleware' => 'auth'
+))
+->post('/upload', 'upload');
+
+Router::group(array(
     'prefix' => '/notifications',
     'handler' => 'App\Notifications\Controllers\NotificationsController'
 ))
+->get('/{user}/summary', 'summary')
 ->post('/subscribe', 'subscribe')
 ->post('/unsubscribe', 'unsubscribe')
-->post('/notify', 'notify')
-->post('/sync', 'sync');
+->post('/sync', 'sync')
+->post('/{id}/notify', 'notify')
+->post('/{id}/read', 'read');
 
 Router::group(array(
     'prefix' => '/company',
@@ -24,6 +33,13 @@ Router::group(array(
 ))
 ->get('/{name}/load', 'load')
 ->get('/{name}/days', 'days');
+
+Router::group(array(
+    'prefix' => '/users',
+    'handler' => 'App\Users\Controllers\UsersController',
+    'middleware' => 'auth'
+))
+->get('/{id}/superiors', 'superiors');
 
 Router::group(array(
     'prefix' => '/users/users-panels',
@@ -48,12 +64,9 @@ Router::group(array(
 ->post('/{id}/upload', 'upload')
 ->post('/{id}/download', 'download');
 
-Router::group(array(
-    'prefix' => '/lkh/lkh-items',
-    'handler' => 'App\Lkh\Controllers\LkhItemsController',
-    'middleware' => 'auth'
-))
-->post('/{id}/upload', 'upload');
+Router::get('/lkh/alert', 'App\Lkh\Controllers\LkhController@alert');
+
+
 
 Router::group(array(
     'prefix' => '/messages/inbox',
@@ -91,10 +104,59 @@ Router::group(array(
 ->post('/document/{format}/{id}', 'document')
 ->post('/report/{format}', 'report');
 
+// MODULE: LKH
+
+Router::group(array(
+    'prefix' => '/lkh',
+    'handler' => 'App\Lkh\Controllers\LkhController',
+    'middleware' => 'auth'
+))
+->get('/observable-users', 'observableUsers')
+->get('/grouped-statuses', 'groupedStatuses');
+
+Router::group(array(
+    'prefix' => '/lkh/lkh-items',
+    'handler' => 'App\Lkh\Controllers\LkhItemsController',
+    'middleware' => 'auth'
+))
+->post('/{id}/upload', 'upload');
+
+Router::group(array(
+    'prefix' => '/lkh/lkh-items',
+    'handler' => 'App\Lkh\Controllers\LkhItemsController',
+    'middleware' => 'auth'
+))
+->post('/{id}/upload', 'upload');
+
+Router::group(array(
+    'prefix' => '/lkh/live',
+    'handler' => 'App\Lkh\Controllers\LiveController',
+    'middleware' => 'auth'
+))
+->post('/alert', 'alert');
+
+Router::group(array(
+    'prefix' => '/lkh/report',
+    'handler' => 'App\Lkh\Controllers\ReportController',
+    'middleware' => 'auth'
+))
+->get('/sheets', 'sheets')
+->post('/alert', 'alert');
+
 Router::group(array(
     'prefix' => '/lkh/print',
     'handler' => 'App\Lkh\Controllers\PrintController',
     'middleware' => 'auth'
 ))
-->post('/document/{format}/{id}', 'document')
-->post('/report/{format}', 'report');
+->post('/document/{id}/{format}', 'document')
+->post('/report/{format}', 'report')
+->post('/database/{format}', 'database')
+->post('/database-items/{format}', 'databaseItems')
+->post('/dashboard/{format}', 'dashboard');
+
+Router::group(array(
+    'prefix' => '/lkh/dashboard',
+    'handler' => 'App\Lkh\Controllers\DashboardController',
+    'middleware' => 'auth'
+))
+->post('/save', 'save');

@@ -211,42 +211,55 @@ class App extends \Phalcon\Mvc\Micro {
     }
 
     private function _initModule() {
-        $folders = new \DirectoryIterator($this->config->app->path . 'modules/');
         $namespaces = array();
         $modules = array();
 
-        foreach($folders as $item) {
-            $name = $item->getFilename();
-            $path = $item->getPath();
+        $cache = $this->config->app->path.'caches/modules_'.PHP_OS.'.php';
 
-            if ($name[0] == '.' || $name[0] == '..') continue;
+        if (file_exists($cache)) {
+            $cached = include($cache);
 
-            if ($item->isDir()) {
-                $controllers = 'App\\' . $name . '\\Controllers';
-                $interfaces = 'App\\' . $name . '\\Interfaces';
-                $models = 'App\\' . $name . '\\Models';
+            $namespaces = $cached['namespaces'];
+            $modules = $cached['modules'];
+        } else {
 
-                $namespaces[$controllers] = array($path . '/' . $name . '/Controllers/');
-                $namespaces[$interfaces] = array($path . '/' . $name . '/Interfaces/');
-                $namespaces[$models] = array($path . '/' . $name . '/Models/');
+            $folders = new \DirectoryIterator($this->config->app->path . 'modules/');
 
-                $prefix = '/' . \Phalcon\Text::uncamelize($name, '-');
-                
-                foreach(scandir($namespaces[$controllers][0]) as $file) {
-                    if ($file[0] == '.' || $file[0] == '..') {
-                        continue;
+            foreach($folders as $item) {
+                $name = $item->getFilename();
+                $path = $item->getPath();
+
+                if ($name[0] == '.' || $name[0] == '..') continue;
+
+                if ($item->isDir()) {
+                    $controllers = 'App\\' . $name . '\\Controllers';
+                    $interfaces = 'App\\' . $name . '\\Interfaces';
+                    $models = 'App\\' . $name . '\\Models';
+
+                    $namespaces[$controllers] = array($path . '/' . $name . '/Controllers/');
+                    $namespaces[$interfaces] = array($path . '/' . $name . '/Interfaces/');
+                    $namespaces[$models] = array($path . '/' . $name . '/Models/');
+
+                    $prefix = '/' . \Phalcon\Text::uncamelize($name, '-');
+                    
+                    foreach(scandir($namespaces[$controllers][0]) as $file) {
+                        if ($file[0] == '.' || $file[0] == '..') {
+                            continue;
+                        }
+
+                        $handler = basename($file, '.php');
+                        $route = '/'.\Phalcon\Text::uncamelize(str_replace('Controller', '', $handler), '-');
+
+                        if ($route != $prefix) {
+                            $route = $prefix.$route;
+                        }
+
+                        $modules[$route] = $controllers . '\\' . $handler;
                     }
-
-                    $handler = basename($file, '.php');
-                    $route = '/'.\Phalcon\Text::uncamelize(str_replace('Controller', '', $handler), '-');
-
-                    if ($route != $prefix) {
-                        $route = $prefix.$route;
-                    }
-
-                    $modules[$route] = $controllers . '\\' . $handler;
                 }
             }
+
+            $this->_cache($modules, $namespaces);
         }
 
         $this->loader->registerNamespaces($namespaces, TRUE);
@@ -264,6 +277,73 @@ class App extends \Phalcon\Mvc\Micro {
 
         $this->registry->modules = $modules;
         
+    }
+
+    private function _cache($modules, $namespaces) {
+        $base = $this->config->app->path;
+        $base = str_replace('\\', '/', $base);
+
+        $file = $base.'caches/modules_'.PHP_OS.'.php';
+
+        if ( ! file_exists($file)) {
+            $handler = fopen($file, 'w');
+
+            if ($handler) {
+                fwrite($handler, '<?php'.PHP_EOL);
+                fwrite($handler, 'return array('.PHP_EOL);
+
+                // cache modules
+                fwrite($handler, "\t'modules' => array(".PHP_EOL);
+
+                foreach($modules as $route => $class) {
+                    fwrite($handler, "\t\t'{$route}' => '{$class}',".PHP_EOL);
+                }
+
+                fwrite($handler, "\t),".PHP_EOL);
+
+                // cache namespaces
+                fwrite($handler, "\t'namespaces' => array(".PHP_EOL);
+
+                foreach($namespaces as $namespace => $names) {
+                    $path = $names[0];
+                    fwrite($handler, "\t\t'{$namespace}' => '{$path}',".PHP_EOL);
+                }
+
+                fwrite($handler, "\t),".PHP_EOL);
+
+                fwrite($handler, ');'.PHP_EOL);
+                fwrite($handler, '?>'.PHP_EOL);
+                fclose($handler);    
+            }
+        }
+    }
+
+    private function _cacheNamespaces($namespaces) {
+        $base = $this->config->app->path;
+        $base = str_replace('\\', '/', $base);
+
+        $file = $base.'caches/namespaces.php';
+
+        if ( ! file_exists($file)) {
+            $handler = fopen($file, 'w');
+
+            if ($handler) {
+                fwrite($handler, '<?php'.PHP_EOL);
+                fwrite($handler, 'return array('.PHP_EOL);
+
+                foreach($namespaces as $namespace => $names) {
+                    $path = $names[0];
+                    $path = str_replace('\\', '/', $path);
+                    $path = str_replace($base, '', $path);
+
+                    fwrite($handler, "\t'{$namespace}' => '{$path}',".PHP_EOL);
+                }
+
+                fwrite($handler, ');'.PHP_EOL);
+                fwrite($handler, '?>'.PHP_EOL);
+                fclose($handler);
+            }
+        }
     }
 
     private function _initRouter() {
@@ -288,8 +368,9 @@ class App extends \Phalcon\Mvc\Micro {
             
             print(json_encode(array(
                 'success' => FALSE,
+                'status' => 404,
                 'message' => 'The page you requested was not found'
-            )));
+            ), JSON_PRETTY_PRINT));
         });
         
     }

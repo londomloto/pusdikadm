@@ -25,6 +25,22 @@
                 --iron-icon-height: 16px;
                 position: relative;
             }
+            .item .box-title,
+            .item .box-content {
+                color: var(--paper-blue-grey-500);
+            }
+            .item .separator {
+                margin: 5px 0;
+                border-top: 1px solid #f2f2f2;
+            }
+            .item-logo {
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                position: relative;
+                overflow: hidden;
+                margin-right: 10px;
+            }
             .item .box-user {
                 position: absolute;
                 right: 10px;
@@ -39,32 +55,27 @@
                 float: left;
                 margin-left: 2px;
             }
-            .item .box-content {
-                color: var(--paper-blue-grey-500);
-                margin-bottom: 5px;
-            }
             .item-prop {
                 font-size: 12px;
-                font-weight: 500;
             }
             .item-prop iron-icon {
-                --iron-icon-width: 16px;
-                --iron-icon-height: 16px;
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
                 position: relative;
                 top: -2px;
             }
             .item-badge {
                 font-size: 11px;
-                font-weight: 500;
                 text-transform: none;
                 padding: 3px 5px;
                 margin: 0;
                 float: left;
             }
             .item-title {
-                font-weight: 500;
-                color: var(--paper-blue-grey-500);
-                font-size: 15px;
+                font-weight: 600;
+                color: var(--paper-blue-500);
+                font-size: 14px;
+                margin-bottom: 5px;
             }
             .item-content {
                 color: var(--paper-blue-grey-500);
@@ -73,8 +84,8 @@
                 font-size: 12px;
             }
             .item-content iron-icon {
-                --iron-icon-width: 16px;
-                --iron-icon-height: 16px;
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
                 position: relative;
                 top: -1px;
             }
@@ -89,14 +100,13 @@
             }
             .item-meta {
                 font-size: 11px;
-                font-weight: 300;
-                color: #999;
+                color: #888;
             }
-            .item-meta b {
-                font-weight: 500;
-            }
-            .box-label {
-                margin: 5px 0;
+            .item-meta iron-icon {
+                --iron-icon-width: 14px;
+                --iron-icon-height: 14px;
+                position: relative;
+                top: -1px;
             }
             .item-label {
                 font-size: 11px;
@@ -131,31 +141,32 @@
         
         <div class="box box-shadow-z2 item" style$="border-left: 2px solid [[ accent ]]">
             <div class="box-body" on-tap="__onCardTap">
-                <h3 class="item-title">[[ record.task.lkh_su_fullname ]]</h3>
-                <!-- <p class="item-meta">
-                    Dibuat oleh <b>[[ record.task.creator_su_fullname ]]</b> [[ record.task.lkh_created_dt_relative ]]
-                </p> -->
-                <div class="box-label">
-                    <template is="dom-repeat" items="[[ record.labels ]]">
-                        <span class="item-label" style$="background-color: [[ item.sl_color ]]">[[ item.sl_label ]]</span>
-                    </template>
-                    <span class="item-clear"></span>
-                </div>
-                <div class="box-content">
-                    <div class="item-prop">
-                        <iron-icon icon="today"></iron-icon>&nbsp;Periode [[ record.task.lkh_period ]]    
+                <kct-hbox>
+                    <div>
+                        <div class="item-logo">
+                            <img src$="[[ record.task.lkh_su_avatar_thumb ]]&w=36&h=36" alt=" ">
+                        </div>
                     </div>
-                </div>
-                <div class="box-items">
-                    <template is="dom-repeat" items="[[ items ]]">
-                        <div class="item-desc"><iron-icon icon="done"></iron-icon>&nbsp;[[ item.text ]]</div>
-                    </template>
-                </div>
-            </div>
-            <div class="box-user">
-                <div class="item-user" title$="Kegiatan harian [[ record.task.lkh_su_fullname ]]">
-                    <img src$="[[ record.task.lkh_su_avatar_thumb ]]&w=30&h=30" alt=".">
-                </div>
+                    <div class="flex">
+                        <div class="box-title">
+                            <h3 class="item-title" style$="color: [[ accent ]]">&nbsp;[[ record.task.lkh_su_fullname ]]</h3> 
+                        </div>
+                        <div class="box-content">
+                            <!-- <div class="item-prop">
+                                <iron-icon icon="perm-identity"></iron-icon>&nbsp;[[ record.task.lkh_su_no ]]    
+                            </div> -->
+                            <div class="item-prop">
+                                <iron-icon icon="today"></iron-icon>&nbsp;Periode <strong>[[ record.task.lkh_period ]]</strong>
+                            </div>
+                        </div>
+                        <div class="box-label">
+                            <template is="dom-repeat" items="[[ record.labels ]]">
+                                <span class="item-label" style$="background-color: [[ item.sl_color ]]">[[ item.sl_label ]]</span>
+                            </template>
+                            <span class="item-clear"></span>
+                        </div>
+                    </div>
+                </kct-hbox>
             </div>
             <div class="box-foot">
                 <!-- <paper-button class="item-badge">

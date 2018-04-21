@@ -20,11 +20,25 @@ class Theme {
         'var(--paper-deep-orange-500)' => '#ff5722',
         'var(--paper-brown-500)' => '#795548',
         'var(--paper-grey-500)' => '#9e9e9e',
-        'var(--paper-blue-grey-500)' => '#607d8'
+        'var(--paper-blue-grey-500)' => '#607d8b'
     );
 
-    public static function colors() {
-        return array_values(self::$_colors);
+    public static function colors($excludes = array()) {
+        $colors = array_values(self::$_colors);
+
+        if (count($excludes) > 0) {
+            for ($i = count($colors) - 1; $i >= 0; $i--) {
+                if (in_array($colors[$i], $excludes)) {
+                    array_splice($colors, $i, 1);
+                }
+            }
+        }
+
+        return $colors;
+    }
+
+    public static function pick() {
+        
     }
 
     public static function val($prop) {

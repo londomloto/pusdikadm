@@ -15,28 +15,86 @@ class MessagingProvider extends \Micro\Component {
         $this->_config = $this->getApp()->config->firebase;
     }
 
-    public function subscribe($topic, $token) {
-        $client = new Client(array(
-            'base_uri' => 'https://iid.googleapis.com/iid/v1/'
-        ));
-
-        $response = $client->post(
-            rawurlencode($token).'/rel/topics/'.$topic,
-            array(
-                'headers' => array(
-                    'Content-Type' =>  'application/json',
-                    'Authorization' => 'key='.$this->_config->server_key
-                )
-            )
-        );
+    public function subscribe($topic, $token, $batch = FALSE) {
+        if ($batch) {
+            $client = new Client(array(
+                'base_uri' => 'https://iid.googleapis.com'
+            )); 
+        } else {
+            $client = new Client(array(
+                'base_uri' => 'https://iid.googleapis.com'
+            ));
+        }
 
         $result = new \stdClass();
-        $result->success = $response->getStatusCode() == 200;
+        $result->success = FALSE;
+        $result->message = NULL;
 
         try {
+
+            if ($batch) {
+                $response = $client->post(
+                    '/iid/v1:batchAdd',
+                    array(
+                        RequestOptions::JSON => array(
+                            'to' => '/topics/'.$topic,
+                            'registration_tokens' => $token
+                        ),
+                        'headers' => array(
+                            'Content-Type' =>  'application/json',
+                            'Authorization' => 'key='.$this->_config->server_key
+                        )
+                    )
+                );
+            } else {
+                $response = $client->post(
+                    '/iid/v1/'.rawurlencode($token).'/rel/topics/'.$topic,
+                    array(
+                        'headers' => array(
+                            'Content-Type' =>  'application/json',
+                            'Authorization' => 'key='.$this->_config->server_key
+                        )
+                    )
+                );
+            }
+
+            $result->success = $response->getStatusCode() == 200;
             $result->data = json_decode((string) $response->getBody());
-        } catch(\Exception $ex) {
-            $result->data = NULL;
+        } catch(\Exception $ex){
+            $result->message = $ex->getMessage();
+        }
+
+        return $result;
+    }
+
+    public function unsubscribe($topic, $token) {
+        $client = new Client(array(
+            'base_uri' => 'https://iid.googleapis.com'
+        )); 
+
+        $result = new \stdClass();
+        $result->success = FALSE;
+        $result->message = NULL;
+
+        try {
+            $response = $client->post(
+                '/iid/v1:batchRemove',
+                array(
+                    RequestOptions::JSON => array(
+                        'to' => '/topics/'.$topic,
+                        'registration_tokens' => $token
+                    ),
+                    'headers' => array(
+                        'Content-Type' =>  'application/json',
+                        'Authorization' => 'key='.$this->_config->server_key
+                    )
+                )
+            );
+
+            $result->success = $response->getStatusCode() == 200;
+            $result->data = json_decode((string) $response->getBody());
+        } catch(\Exception $e) {
+            $result->message = $e->getMessage();
         }
 
         return $result;
@@ -60,25 +118,29 @@ class MessagingProvider extends \Micro\Component {
             'auth' => 'google_auth'
         ));
 
-        $response = $client->post(
-            $this->_config->project_id.'/messages:send',
-            array(
-                RequestOptions::JSON => array(
-                    'message' => array(
-                        'token' => $token,
-                        'data' => $data
-                    )
-                )
-            )
-        );
-
         $result = new \stdClass();
-        $result->success = $response->getStatusCode() == 200;
+        $result->success = FALSE;
+        $result->message = NULL;
 
         try {
+
+            $response = $client->post(
+                $this->_config->project_id.'/messages:send',
+                array(
+                    RequestOptions::JSON => array(
+                        'message' => array(
+                            'token' => $token,
+                            'data' => $data
+                        )
+                    )
+                )
+            );
+
+            $result->success = $response->getStatusCode() == 200;
             $result->data = json_decode((string) $response->getBody());
-        } catch(\Exception $ex) {
-            $result->data = NULL;
+
+        } catch(\Exception $ex){
+            $result->message = $ex->getMessage();
         }
 
         return $result;
@@ -103,25 +165,28 @@ class MessagingProvider extends \Micro\Component {
             'auth' => 'google_auth'
         ));
 
-        $response = $client->post(
-            $this->_config->project_id.'/messages:send',
-            array(
-                RequestOptions::JSON => array(
-                    'message' => array(
-                        'topic' => $topic,
-                        'data' => $data
-                    )
-                )
-            )
-        );
-
         $result = new \stdClass();
-        $result->success = $response->getStatusCode() == 200;
+        $result->success = FALSE;
+        $result->message = NULL;
 
         try {
+
+            $response = $client->post(
+                $this->_config->project_id.'/messages:send',
+                array(
+                    RequestOptions::JSON => array(
+                        'message' => array(
+                            'topic' => $topic,
+                            'data' => $data
+                        )
+                    )
+                )
+            );
+
+            $result->success = $response->getStatusCode() == 200;
             $result->data = json_decode((string) $response->getBody());
-        } catch(\Exception $ex) {
-            $result->data = NULL;
+        } catch(\Exception $ex){
+            $result->message = $ex->getMessage();
         }
 
         return $result;

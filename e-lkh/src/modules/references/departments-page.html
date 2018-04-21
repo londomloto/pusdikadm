@@ -4,6 +4,7 @@
 <link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../../../cores/elements/kct-grid/kct-grid.html">
 <link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../worksheet/plugins/combo-user.html">
 
 <dom-module id="departments-page">
     <template>
@@ -31,10 +32,12 @@
             <paper-button slot="left-toolbar" on-tap="__onRemoveTap"><iron-icon icon="close"></iron-icon>&nbsp;Hapus</paper-button>
         </kct-grid>
 
-        <kct-dialog id="editor" title="Editor Unit Kerja" width="400">
+        <kct-dialog id="editor" title="Editor Unit Kerja" width="400" height="100%">
             <template preserve-content>
                 <div slot="dialog-body">
                     <paper-input label="Nama Unit Kerja" value="{{ editingRecord.sdp_name }}"></paper-input>
+                    <combo-user label="Pemeriksa I" value="{{ editingRecord.sdp_evaluator }}" autoload></combo-user>
+                    <combo-user label="Pemeriksa II" value="{{ editingRecord.sdp_examiner }}" autoload></combo-user>
                 </div>
                 <div slot="dialog-footer">
                     <paper-button on-tap="__onEditorSaveTap">Simpan</paper-button>
@@ -58,7 +61,23 @@
                         type: Array,
                         value: () => ([
                             { type: 'rownumber' },
-                            { text: 'Nama Unit Kerja', dataIndex: 'sdp_name', width: 400 }
+                            { text: 'Unit Kerja', dataIndex: 'sdp_name', width: 400 },
+                            { 
+                                text: 'Pemeriksa I', 
+                                dataIndex: 'sdp_evaluator', 
+                                width: 200,
+                                renderer: e => {
+                                    return e.data ? e.data.evaluator_su_fullname : '';
+                                }
+                            },
+                            { 
+                                text: 'Pemeriksa II', 
+                                dataIndex: 'sdp_examiner', 
+                                width: 200,
+                                renderer: e => {
+                                    return e.data ? e.data.examiner_su_fullname : '';
+                                }
+                            }
                         ])
                     }
                 };

@@ -55,7 +55,7 @@
                     }
                 </style>
                 <div class="main" slot="dialog-body">
-                    <iframe id="browser"></iframe>    
+                    <iframe id="browser"></iframe>
                     <paper-card id="masker" hidden$="[[ !busy ]]">
                         <div class="card-content">
                             <paper-spinner active></paper-spinner>
@@ -86,13 +86,14 @@
                 this.__loadHandler = this.__onLoad.bind(this);
             }
             disconnectedCallback() {
-                this.$.browser.removeEventListener('load', this.__loadHandler);
-                this.$.browser.removeEventListener('error', this.__loadHandler);
+                if (this.$.browser) {
+                    this.$.browser.removeEventListener('load', this.__loadHandler);
+                    this.$.browser.removeEventListener('error', this.__loadHandler);    
+                }
                 super.disconnectedCallback();
             }
             open(file, mime = null) {
                 this.$.dialog.open();
-                
                 let gv = true;
 
                 if (mime) {

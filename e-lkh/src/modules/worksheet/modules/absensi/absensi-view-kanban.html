@@ -7,7 +7,8 @@
         <style include="project-view-kanban-style"></style>
         
         <kct-ajax id="ajax"></kct-ajax>
-        <kct-event-subscriber on-notify="__onNotify"></kct-event-subscriber>
+        <kct-event-subscriber on-notify="__onLocalNotify"></kct-event-subscriber>
+        <kct-socket manager="global-socket" on-notify="__onSocketNotify"></kct-socket>
 
         <kct-worksheet id="worksheet" columns="4">
             <template is="dom-repeat" items="[[ worksheetRecord.ks_panels ]]" as="panel">
@@ -37,11 +38,15 @@
 
             static get properties() {
                 return {
-                    metadata: {
+                    profile: {
                         type: Object,
                         value: () => ({
-                            service_url: '/presence/kanban',
-                            status_primary_key: 'tps_id'
+                            service: {
+                                url: '/presence/kanban'
+                            },  
+                            status: {
+                                primary_key: 'tps_id'
+                            }
                         })
                     }
                 };

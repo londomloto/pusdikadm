@@ -7,7 +7,8 @@
                 display: block;
 
                 --kct-column-columns: 1;
-                --kct-column-gutter: 0.8rem;
+                --kct-column-gutter: 20px;
+                --kct-column-spacer: 0;
 
                 margin-left: calc(var(--kct-column-gutter) * -1);
                 margin-right: calc(var(--kct-column-gutter) * -1);
@@ -69,7 +70,7 @@
                 static get properties() {
                     return {
                         columns: { type: Number, value: 1 },
-                        gutter: { type: String, value: '0.8rem' },
+                        gutter: { type: String, value: '20px' },
                         spacer: { type: String, value: '0px' }
                     };
                 }

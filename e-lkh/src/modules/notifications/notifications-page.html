@@ -7,6 +7,8 @@
 <link rel="import" href="../../../../cores/elements/kct-checkbox/kct-checkbox.html">
 <link rel="import" href="../../../../cores/elements/kct-socket/kct-socket.html">
 <link rel="import" href="../../../../cores/elements/kct-media/kct-media.html">
+<link rel="import" href="../../../../cores/elements/kct-event/kct-event-publisher.html">
+<link rel="import" href="../../../../cores/elements/kct-checkbox/kct-checkbox.html">
 <link rel="import" href="../settings/blocks/setting-header-block.html">
 
 <dom-module id="notifications-page">
@@ -17,14 +19,33 @@
                 background-color: var(--page-background-color);
             };
             .item {
-                padding: 10px;
+                padding: 5px 10px;
                 color: #666;
-                font-size: 13px;
                 cursor: pointer;
                 @apply --layout-horizontal;
             }
-            .item:hover {
-                background-color: var(--paper-grey-200);
+            .item + .item {
+                border-top: 1px solid var(--paper-grey-100);
+            }
+            .item + .item.unread,
+            .item.unread + .item, 
+            .item.unread + .item.unread {
+                border-top-color: #dddfe2;
+            }
+            .item.unread {
+                background-color: #edf2fa;
+            }
+            .item.warning .icon {
+                color: var(--paper-red-500);
+            }
+            .item.alert .icon {
+                color: var(--paper-red-500);
+            }
+            .item:hover:not(.unread) {
+                background-color: var(--paper-grey-100);
+            }
+            .item.unread:hover {
+                background-color: #E5EAF2;
             }
             .item > .text {
                 @apply --layout-flex;
@@ -37,16 +58,19 @@
                 --iron-icon-width: 18px;
                 --iron-icon-height: 18px;
             }
-            .item + .item {
-                border-top: 1px solid #dfdfdf;
+            .item paper-icon-button {
+                width: 32px;
+                height: 32px;
+                padding: 8px;
             }
+            
             .time {
-                font-size: 12px;
+                font-size: 11px;
                 color: #999;
             }
             kct-html {
                 --strong: { font-weight: 500; color: var(--paper-indigo-500);  }; 
-                --paragraph: { font-size: 13px;  }
+                --paragraph: { font-size: 12px;  }
             }
             .paginator {
                 text-align: center;
@@ -61,6 +85,7 @@
             .main {
                 background-color: #fff;
                 min-height: calc(100vh - 72px - 55px);
+                padding-bottom: 20px;
                 @apply --shadow-elevation-2dp;
             }
             .side {
@@ -75,6 +100,19 @@
             #layout.sm .main,
             #layout.md .main {
                 min-height: auto;
+                box-shadow: none;
+            }
+            h3 {
+                font-weight: 500;
+                margin: 0 0 5px;
+                font-size: 16px;
+            }
+            kct-checkbox {
+                --paper-checkbox-margin: 0;
+            }
+            .item kct-checkbox {
+                --paper-checkbox-size: 14px;
+                --paper-checkbox-unchecked-color: #888;
             }
         </style>
 
@@ -83,34 +121,46 @@
 
         <kct-media screen="{{ screen }}"></kct-media>
         <kct-socket manager="global-socket" on-notify="__onSocketNotify"></kct-socket>
+        <kct-event-publisher id="publisher"></kct-event-publisher>
 
         <kct-vbox>
-            <setting-header-block icon="social:notifications" text="Module" desc="Notifications" hide-nav>
-                <paper-button on-tap="__onReloadTap" slot="right-toolbar"><iron-icon icon="refresh"></iron-icon>&nbsp;Reload</paper-button>
+            <setting-header-block icon="social:notifications" text="Module" desc="Notifikasi" hide-nav>
+                <div class="separator"></div>
+                <paper-icon-button icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
             </setting-header-block>
             <div class="flex scroll-y">
                 <kct-hbox id="layout" class$="[[ screen ]]">
                     <div class="main flex">
                         <template is="dom-repeat" items="[[ items ]]">
-                            <div class="item" on-tap="__onItemTap">
+                            <div class$="item [[ __computeItemClass(item.ta_type, item.ta_unread) ]]">
                                 <div class="icon">
                                     <iron-icon icon="[[ item.ta_icon ]]"></iron-icon>
                                 </div>
-                                <div class="text">
+                                <div class="text" on-tap="__onItemTap">
                                     <div class="time">[[ item.ta_time ]]</div>
                                     <kct-html html="[[ item.ta_verb ]]"></kct-html>    
+                                </div>
+                                <div>
+                                    <paper-icon-button on-tap="__onRemoveItemTap" icon="close"></paper-icon-button>
                                 </div>
                             </div>
                         </template>
                         <div class="paginator">
-                            <paper-button hidden$="[[ !__more ]]" on-tap="__onLoadMoreTap" class="btn-more">Load more items&nbsp;<iron-icon icon="arrow-drop-down"></iron-icon></paper-button>    
+                            <paper-button hidden$="[[ !__more ]]" on-tap="__onLoadMoreTap" class="btn-more">Tampilkan data lainnya...&nbsp;<iron-icon icon="arrow-drop-down"></iron-icon></paper-button>    
                         </div>
                     </div>
                     <div class="side padding">
-                        <p>Anda dapat menerima pesan notifikasi dari perangkat yang Anda gunakan pada saat aplikasi tidak aktif.</p>
-                        <div class="m-t">
-                            <paper-button on-tap="__onSubscribeTap" class$="[[ __computeButtonClass(subscribed) ]]" raised>[[ __computeButtonLabel(subscribed) ]]</paper-button>
+                        <div class="m-b">
+                            <h3>Notifikasi</h3>
+                            <div>Anda dapat menerima pesan notifikasi dari perangkat yang Anda gunakan pada saat aplikasi tidak aktif.</div>
+                            <div class="m-t">
+                                <kct-hbox>
+                                    <div><kct-checkbox checked="[[ subscribed ]]"></kct-checkbox></div>
+                                    <div class="flex"><a href="javascript:;" on-tap="__onSubToggle">Aktifkan notifikasi</a></div>
+                                </kct-hbox>
+                            </div>    
                         </div>
+                        
                     </div>
                 </kct-hbox>
                                 
@@ -127,7 +177,7 @@
 
             static get properties() {
                 return {
-                    title: { type: String, value: 'Notifications', notify: true },
+                    title: { type: String, value: 'Notifikasi', notify: true },
                     items: { type: Array, value: () => ([]) },
                     setup: { type: Object, value: () => ({}) }
                 };
@@ -149,11 +199,15 @@
                 this.__load();
             }
 
-            __computeButtonClass(subscribed) {
+            __computeItemClass(type, unread) {
+                return type + (unread ? ' unread' : '');
+            }
+
+            __computeSubClass(subscribed) {
                 return subscribed ? 'btn-danger' : 'btn-blue';
             }
 
-            __computeButtonLabel(subscribed) {
+            __computeSubLabel(subscribed) {
                 return subscribed ? 'Non-aktifkan Notifikasi' : 'Aktifkan Notifikasi';
             }
 
@@ -198,7 +252,7 @@
                 this.__load({ start: 0 });
             }
 
-            __onSubscribeTap() {
+            __onSubToggle(e) {
                 let action = this.subscribed ? 'unsubscribe' : 'subscribe';
                 let caption = this.subscribed ? 'menonaktifkan' : 'mengaktifkan';
                 
@@ -233,6 +287,29 @@
                 if (item.ta_link) {
                     this.set('route.path', item.ta_link);
                 }
+                if (item.ta_unread) {
+                    this.$.ajax.POST('/notifications/' + item.ta_id + '/read').then(res => {
+                        if (res.success) {
+                            this.set('items.' + e.model.index + '.ta_unread', false);
+                            this.$.publisher.publish('notification-change', {
+                                item: item.ta_id
+                            });
+                        }
+                    });
+                }
+            }
+
+            __onRemoveItemTap(e) {
+                let item = e.model.item;
+
+                this.$.ajax.DELETE('/activities/' + item.ta_id).then(res => {
+                    if (res.success) {
+                        this.splice('items', e.model.index, 1);
+                        this.$.publisher.publish('notification-change', {
+                            item: item.ta_id
+                        });
+                    }
+                });
             }
 
             __onSocketNotify() {

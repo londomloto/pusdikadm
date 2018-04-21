@@ -21,9 +21,6 @@
 <link rel="import" href="../../../../../cores/elements/kct-media/kct-media.html">
 <link rel="import" href="../../../../../cores/mixins/resolver.html">
 <link rel="import" href="../../../../../cores/mixins/types.html">
-<link rel="import" href="../plugins/button-date.html">
-<link rel="import" href="../plugins/combo-user.html">
-<link rel="import" href="../plugins/file-viewer.html">
 
 <dom-module id="form-base">
     <script>
@@ -38,7 +35,8 @@
                     action: { type: String, value: 'create'},
                     invalid: { type: Boolean, notify: true },
                     buttons: { type: String, notify: true },
-                    phantom: { type: Boolean, value: true }
+                    phantom: { type: Boolean, value: true },
+                    socketSession: { type: String }
                 };
             }
 
@@ -126,12 +124,12 @@
                 return def.promise;
             }
 
-            initialize() {
+            setup() {
                 return this.resolve();
             }
 
-            start() {
-                
+            initialize() {
+                return this.resolve();
             }
 
             __actionChanged(action) {

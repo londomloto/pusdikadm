@@ -9,11 +9,13 @@
         <style include="project-task-style"></style>
         
         <kct-ajax id="ajax"></kct-ajax>
-        <kct-event-publisher id="publisher"></kct-event-publisher>
         <kct-media screen="{{ screen }}"></kct-media>
+        <kct-event-publisher id="publisher"></kct-event-publisher>
+        <kct-socket manager="global-socket" session="{{ socketSession }}" on-notify="__onSocketNotify"></kct-socket>
+        <kct-role id="role"></kct-role>
         
         <kct-vbox class$="layout [[ __computeClass(loading) ]]">
-            <header-block id="header" on-back-tap="__onBackTap" text="Module LKH" hide-header$="[[ __hideHeader(screen) ]]">
+            <header-block id="header" on-back-tap="__onBackTap" text="[[ formRecord.bf_name ]]" hide-header$="[[ __hideHeader(screen) ]]">
                 <h3 slot="header-value">[[ header ]]</h3>
 
                 <paper-button hidden$="[[ __hideButton('save', formButtons) ]]" disabled$="[[ formInvalid ]]" on-tap="__onSaveTap" class="btn-action primary" slot="right-toolbar" style="margin-left: 8px;">
@@ -24,14 +26,13 @@
                     <iron-icon icon="arrow-forward"></iron-icon>&nbsp;Proses
                 </paper-button>
 
-                <paper-button hidden$="[[ __hideButton('remove', formButtons) ]]" on-tap="__onRemoveTap" class="btn-action danger" slot="right-toolbar">
-                    <iron-icon icon="close"></iron-icon>&nbsp;Hapus
-                </paper-button>
-
                 <paper-button hidden$="[[ __hideButton('print', formButtons) ]]" on-tap="__onPrintTap" class="btn-action default" slot="right-toolbar">
                     <iron-icon icon="print"></iron-icon>&nbsp;Print
                 </paper-button>
 
+                <paper-button hidden$="[[ __hideButton('remove', formButtons) ]]" on-tap="__onRemoveTap" class="btn-action danger" slot="right-toolbar">
+                    <iron-icon icon="close"></iron-icon>&nbsp;Hapus
+                </paper-button>
             </header-block>
             <div id="workspace" class$="workspace flex [[ screen ]]">
                 
@@ -47,16 +48,20 @@
                             user="[[ user ]]" 
                             route="{{ route }}" 
                             invalid="{{ formInvalid }}" 
-                            buttons="{{ formButtons }}"
-                            loading="[[ loading ]]"></lkh-task-form>
+                            storage="{{ storage }}" 
+                            buttons="{{ formButtons }}" 
+                            loading="[[ loading ]]" 
+                            socket-session="[[ socketSession ]]" 
+                            on-after-update="__onFormAfterUpdate"></lkh-task-form>
 
                         <lkh-task-logs 
                             id="tasklogs" 
                             record="{{ taskRecord }}" 
                             project="[[ projectRecord ]]" 
                             hidden$="[[ __phantom ]]" 
-                            metadata="[[ metadata ]]" 
-                            loading="[[ loading ]]"></lkh-task-logs> 
+                            profile="[[ profile ]]" 
+                            loading="[[ loading ]]" 
+                            socket-session="[[ socketSession ]]"></lkh-task-logs> 
                     </div>
                     <div class="workspace-side hidden-sm hidden-md">
                         <lkh-task-prop 
@@ -68,7 +73,8 @@
                             user="[[ user ]]" 
                             route="{{ route }}"
                             loading="[[ loading ]]" 
-                            metadata="[[ metadata ]]" 
+                            profile="[[ profile ]]" 
+                            socket-session="[[ socketSession ]]" 
                             on-after-update="__onPropAfterUpdate"></lkh-task-prop>
                     </div>
                 </kct-hbox>
@@ -86,21 +92,30 @@
 
             static get properties() {
                 return {
-                    metadata: { 
+                    profile: { 
                         type: Object,
                         value: () => ({
-                            namespace: '/lkh',
-                            service_url: '/lkh/kanban',
-                            primary_val: null,
-                            primary_key: 'lkh_id',
-                            project_key: 'lkh_task_project',
-                            due_key: 'lkh_task_due',
-                            due_formatted_key: 'lkh_task_due_formatted',
-                            status_primary_key: 'lks_id',
-                            status_primary_val: null,
-                            status_status_key: 'lks_status',
-                            status_worker_key: 'lks_worker',
-                            status_target_key: 'lks_target'
+                            activity: {
+                                scope: 'lkh'
+                            },
+                            service: {
+                                url: '/lkh/kanban'
+                            },
+                            task: {
+                                primary_key: 'lkh_id',
+                                primary_val: null,
+                                project_key: 'lkh_task_project',
+                                due_key: 'lkh_task_due',
+                                due_formatted_key: 'lkh_task_due_formatted',
+                                creator_key: 'lkh_created_by'
+                            },
+                            status: {
+                                primary_key: 'lks_id',
+                                primary_val: null,
+                                status_key: 'lks_status',
+                                worker_key: 'lks_worker',
+                                target_key: 'lks_target'
+                            }
                         })
                     }
                 };
@@ -112,13 +127,14 @@
                 ];
             }
 
-            init() {
+            initialize() {
                 this.set('taskRecord', {
                     task: {},
                     status: {},
                     labels: [],
                     items: [],
-                    users: []
+                    users: [],
+                    perms: {}
                 });
             }
 
@@ -143,8 +159,12 @@
                 }   
             }
 
+            __onFormAfterUpdate(e) {
+                this.$.tasklogs.reload();
+            }
+
             __onPrintTap() {
-                this.$.ajax.DOWNLOAD('/lkh/print/document/xls/' + this.taskRecord.task.lkh_id);
+                this.$.ajax.DOWNLOAD('/lkh/print/document/' + this.taskRecord.task.lkh_id + '/xls');
             }
         }
         

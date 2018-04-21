@@ -27,9 +27,12 @@
             :host::slotted(paper-icon-button[slot="toggle-button"]),
             :host::slotted(paper-icon-button[slot="clear-button"]) {
                 line-height:18px !important;
-                width:32px;
+                /*width:32px;
                 height:32px;
-                padding:4px;
+                padding:4px;*/
+                width: 28px;
+                height: 28px;
+                padding: 2px;
                 text-align:center;
                 color:rgba(0,0,0,.38);
                 cursor:pointer;
@@ -39,9 +42,12 @@
             :host::slotted(paper-input-container) paper-icon-button[slot="toggle-button"],
             :host::slotted(paper-input-container) paper-icon-button[slot="clear-button"] {
                 line-height:18px !important;
-                width:32px;
+                /*width:32px;
                 height:32px;
-                padding:4px;
+                padding:4px;*/
+                width: 28px;
+                height: 28px;
+                padding: 2px;
                 text-align:center;
                 color:rgba(0,0,0,.38);
                 cursor:pointer;
@@ -185,7 +191,8 @@
             position-target="[[_getPositionTarget()]]"
             _focused-index="[[_focusedIndex]]"
             _item-label-path="[[itemLabelPath]]"
-            on-down="_onOverlayDown"
+            on-down="_onOverlayDown" 
+            busy="[[ busy ]]" 
             loading="[[loading]]" 
             has-toolbar="[[ __hasToolbar ]]" 
             has-result="[[ __hasResult ]]" 
@@ -194,7 +201,7 @@
             on-noresult-tap="__onNoResultTap" 
             paging="[[ paging ]]"
             vertical-offset="[[ overlayVerticalOffset ]]" 
-            paging-enabled$="[[ __pagingEnabled ]]">
+            hide-paging$="[[ __hidePaging ]]">
 
             <!-- <template is="dom-repeat" items="[[ toolbar ]]">
                 <paper-button slot="toolbar" on-tap="__onToolbarItemTap">
@@ -220,7 +227,8 @@
 
                 static get properties() {
                     return {
-                        url: { type: String },
+                        url: { type: String }, 
+                        busy: { type: Boolean, value: false },
                         payload: { type: Object, value: () => ({}) },
                         params: { type: Object },
                         paging: {
@@ -234,12 +242,12 @@
                                 page: 0
                             })
                         },
-                        pageSize: { type: Number },
+                        pageSize: { type: Number }, 
                         autoload: { type: Boolean, value: false },
                         delay: { type: Number, value: 300  },
                         hideTrigger: { type: Boolean, value: false },
                         hideClear: { type: Boolean, value: false },
-                        hideArrow: { type: Boolean, value: false },
+                        hideArrow: { type: Boolean, value: false }, 
                         overlayVerticalOffset: { type: Number, value: 2 },
                         toolbar: { type: Array },
                         itemQueryPath: { type: String },
@@ -257,9 +265,11 @@
 
                 constructor() {
                     super();
-                    this.__pagingEnabled = false;
+                    this.__hasLoaded = false;
                     this.__hasToolbar = false;
                     this.__hasResult = false;
+                    this.__remoteQuery = false;
+                    this.__hidePaging = false;
                 }
 
                 ready() {
@@ -279,10 +289,12 @@
 
                 load(config = {}) {
                     
-                    if ( ! this.__pagingEnabled) {
-                        // console.warn('Pagination feature disabled');
+                    if ( ! this.__remoteQuery) {
                         return Promise.resolve();
                     }
+
+                    this.__hasLoaded = true;
+                    this.set('busy', true);
                     
                     // make config immutable
                     let options = Object.assign({}, config);
@@ -352,6 +364,7 @@
                         });
 
                         this.dispatchEvent(new CustomEvent('load'));
+                        this.set('busy', false);
                     });
                 }
 
@@ -383,7 +396,7 @@
                         return;
                     }
                     
-                    if ( ! this.__pagingEnabled) {
+                    if ( ! this.__remoteQuery) {
                         if (this.items) {
                             this.filteredItems = this._filterItems(this.items, filter);
                         }
@@ -433,6 +446,10 @@
                             query: '',
                             fields: [ this.getQueryField() ]
                         }, true);
+                    } else if (path.indexOf(this.inputElement) !== -1) {
+                        if (this.__remoteQuery && ! this.autoload && ! this.__hasLoaded) {
+                            this.load();
+                        }
                     }
                 }
 
@@ -465,7 +482,7 @@
                             } else {
                                 this.selectedItem = null;
 
-                                if (this.__pagingEnabled) {
+                                if (this.__remoteQuery) {
                                     let params = {};
 
                                     params[this.itemValuePath] = value;
@@ -481,7 +498,6 @@
                                             limit: this.pageSize,
                                             params: {}
                                         });
-
                                         
                                         let valueIndex = this._indexOfValue(value, this.filteredItems);
 
@@ -549,7 +565,7 @@
                 }
 
                 __request() {
-                    if ( ! this.__pagingEnabled) {
+                    if ( ! this.__remoteQuery) {
                         return;
                     }
 
@@ -576,15 +592,15 @@
                 }
 
                 __proxyChanged(url, pageSize) {
-                    let enabled = pageSize !== undefined,
-                        limit = pageSize || 0;
+                    let limit = pageSize || 0;
 
-                    this.set('__pagingEnabled', enabled);
+                    this.set('__remoteQuery', url !== undefined);
+                    this.set('__hidePaging', pageSize === undefined);
 
                     this.__setPaging({ limit: limit });
                     this.__setPayload({ limit: limit });
 
-                    if (enabled && this.autoload) {
+                    if (this.__remoteQuery && this.autoload) {
                         this.__request();
                     }
                 }

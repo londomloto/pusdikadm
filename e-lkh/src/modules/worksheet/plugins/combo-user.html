@@ -2,9 +2,14 @@
 
 <dom-module id="combo-user">
     <template>
+        <style>
+            #combo {
+                padding: 4px 0 8px 0;
+            }   
+        </style>
         <kct-combobox 
             id="combo" 
-            url="/users" 
+            url="[[ url ]]" 
             label="[[ label ]]" 
             value="{{ value }}" 
             page-size="[[ pageSize ]]" 
@@ -68,6 +73,7 @@
             }
             static get properties() {
                 return {
+                    url: { type: String, value: '/users' },
                     label: { type: String },
                     value: { type: String, value: '', notify: true },
                     pageSize: { type: Number, value: 10 },

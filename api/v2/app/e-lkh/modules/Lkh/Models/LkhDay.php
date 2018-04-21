@@ -6,6 +6,15 @@ use Micro\Helpers\Date as DateHelper;
 class LkhDay extends \Micro\Model {
 
     public function initialize() {
+        $this->belongsTo(
+            'lkd_lkh_id',
+            'App\Lkh\Models\Task',
+            'lkh_id',
+            array(
+                'alias' => 'Task'
+            )
+        );
+
         $this->hasMany(
             'lkd_id',
             'App\Lkh\Models\LkhItem',

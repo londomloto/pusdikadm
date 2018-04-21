@@ -15,6 +15,7 @@
             :host {
                 display: block;
                 height: 100%;
+                background: #fff;
             }
             .body-container {
                 overflow-y: scroll;
@@ -129,7 +130,7 @@
             <setting-header-block icon="lock-outline" text="Settings" desc="Roles Permissions" on-back-tap="__onBackTap">
                 <div class="separator"></div>
                 <paper-icon-button on-tap="__onReloadTap" style="margin-right: 5px;" icon="refresh"></paper-icon-button>
-                <paper-button class="btn-blue" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
+                <paper-button class="btn-primary" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Simpan</paper-button>
             </setting-header-block>
             <!-- <page-header-block icon="lock-outline" title="Settings - RBAC" description="Roles Permissions">
                 <paper-icon-button on-tap="__onReloadTap" icon="refresh"></paper-icon-button>
@@ -145,7 +146,7 @@
                                     <th class="column-label"><span>&nbsp;</span></th>
                                     <th class="column-input">
                                         <vaadin-combo-box
-                                            label="Select Role" 
+                                            label="Pilih Role" 
                                             items="[[ __roles1 ]]" 
                                             value="{{ selectedRole1 }}"
                                             item-value-path="sr_id" 
@@ -190,7 +191,7 @@
                                     </tr>    
                                     <template is="dom-if" if="[[ item.capabilities.length ]]">
                                         <tr class="level-2">
-                                            <td>Permissions:</td>
+                                            <td>Hak Akses:</td>
                                             <td></td>
                                             <!-- <td></td> -->
                                         </tr>

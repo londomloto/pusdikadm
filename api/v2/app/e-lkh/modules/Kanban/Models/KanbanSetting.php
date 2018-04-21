@@ -211,22 +211,8 @@ class KanbanSetting extends \Micro\Model {
                         $data['bf_init'] = $act['init'];
                         $data['bf_roles'] = array();
                         $data['bf_users'] = array();
+                        $data['bf_html'] = '<div></div>';
                         
-                        // grab path
-                        $path = APPPATH.'public/resources/forms/'.$form->bf_tpl_file;
-
-                        if (file_exists($path) && ! is_dir($path)) {
-                            /*ob_start();
-                            include($path);
-                            $html = ob_get_contents();
-                            ob_end_clean();
-
-                            $data['bf_html'] = $html;*/
-                            $data['bf_html'] = '<div></div>';
-                        } else {
-                            $data['bf_html'] = '<div></div>';
-                        }
-
                         foreach($form->FormsRoles as $prof) {
                             $data['bf_roles'][] = $prof->toArray();
                         }

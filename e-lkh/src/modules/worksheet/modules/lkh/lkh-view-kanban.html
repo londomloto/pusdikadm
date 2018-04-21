@@ -7,7 +7,8 @@
         <style include="project-view-kanban-style"></style>
         
         <kct-ajax id="ajax"></kct-ajax>
-        <kct-event-subscriber on-notify="__onNotify"></kct-event-subscriber>
+        <kct-event-subscriber on-notify="__onLocalNotify"></kct-event-subscriber>
+        <kct-socket manager="global-socket" on-notify="__onSocketNotify"></kct-socket>
 
         <kct-worksheet id="worksheet" columns="4">
             <template is="dom-repeat" items="[[ worksheetRecord.ks_panels ]]" as="panel">
@@ -21,7 +22,7 @@
                                 on-card-tap="__onCardItemTap"></lkh-card>
                         </template>
                         <div class="panel-paging" hidden$="[[ !panel.kp_more ]]">
-                            <paper-button on-tap="__onLoadMoreTap">Load more items&nbsp;<iron-icon icon="arrow-drop-down"></iron-icon></paper-button>
+                            <paper-button on-tap="__onLoadMoreTap">Tampilkan lainnya&nbsp;<iron-icon icon="arrow-drop-down"></iron-icon></paper-button>
                         </div>
                     </div>
                 </kct-worksheet-panel>
@@ -37,11 +38,15 @@
 
             static get properties() {
                 return {
-                    metadata: {
+                    profile: {
                         type: Object,
                         value: () => ({
-                            service_url: '/lkh/kanban',
-                            status_primary_key: 'lks_id'
+                            service: {
+                                url: '/lkh/kanban'
+                            },  
+                            status: {
+                                primary_key: 'lks_id'
+                            }
                         })
                     }
                 };

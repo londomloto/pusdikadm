@@ -1,0 +1,387 @@
+<link rel="import" href="../../../../../cores/mixins/fullscreen.html">
+
+<dom-module id="lkh-statistic">
+    <template>
+        <style include="lkh-page-style">
+            :host {
+                height: 100%;
+            }
+            .main {
+                padding: 10px;
+                box-sizing: border-box;
+            }
+            .section {
+                margin: 10px 10px 20px 10px;
+                position: relative;
+            }
+            .section-toolbar {
+                position: absolute;
+                right: 0;
+                top: 0;
+            }
+            .section-toolbar paper-icon-button {
+                width: 28px;
+                height: 28px;
+                padding: 4px;
+            }
+            .section h3 {
+                font-size: 14px;
+                font-weight: 500;
+                text-transform: uppercase;
+                display: block;
+                padding: 3px 5px;
+                border-bottom: 1px solid #d0d0d0;
+            }
+            .table tbody tr + tr { 
+                border-top: 1px solid #f0f0f0;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-socket manager="global-socket" 
+            on-live="__onSocketLive" 
+            on-notify="__onSocketNotify"></kct-socket>
+
+        <kct-vbox class="container">
+            <setting-header-block 
+                icon="editor:bubble-chart" 
+                text="Statistik" 
+                desc="Data Statistik Periode [[ __computePeriod(params.start_date, params.end_date) ]]" 
+                on-back-tap="__onBackTap">
+
+                <paper-icon-button slot="right-toolbar" icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
+                <paper-icon-button slot="right-toolbar" icon="search" on-tap="__onOpenDrawerTap"></paper-icon-button>
+
+            </setting-header-block>
+            <div class="flex scroll-y">
+                <app-drawer-layout id="drawer-layout" force-narrow>
+                    <app-drawer id="drawer" slot="drawer" align="end">
+                        <app-toolbar>
+                            <paper-icon-button icon="close" on-tap="__onCloseDrawerTap"></paper-icon-button>
+                        </app-toolbar>
+                        <div class="side">
+                            <h3>Parameter</h3>
+                            <div>
+                                <combo-user 
+                                    url="/lkh/observable-users"
+                                    label="Pegawai" 
+                                    value="{{ params.user }}"></combo-user>
+
+                                <kct-date-picker 
+                                    label="Dari Tanggal" 
+                                    value="{{ params.start_date }}"></kct-date-picker>
+
+                                <kct-date-picker 
+                                    label="Sampai Tanggal" 
+                                    value="{{ params.end_date }}"></kct-date-picker>
+                            </div>
+                            <div class="m-t">
+                                <paper-button disabled$="[[ loading ]]" on-tap="__onQueryTap" class="btn-primary">Query Data</paper-button>
+                            </div>
+                        </div>
+                    </app-drawer>
+                    <div class="main">
+
+                        <kct-column columns="3">
+                            <div>
+                                <div class="section">
+                                    
+                                    <h3>MONITORING</h3>
+                                    <div class="text-center p-a" hidden$="[[ !record.monitoring.loading ]]">
+                                        <paper-spinner-lite active$="[[ record.monitoring.loading ]]"></paper-spinner-lite>
+                                    </div>
+                                    <table class="table" hidden$="[[ record.monitoring.loading ]]">
+                                        <tbody>
+                                            <template is="dom-repeat" items="[[ record.monitoring.items ]]">
+                                                <tr>
+                                                    <td>[[ item.description ]]</td>
+                                                    <td class="text-right">[[ item.value ]]</td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+
+                                </div>
+
+                                <div class="section">
+                                    
+                                    <h3>PERFORMA</h3>
+                                    <div class="text-center p-a" hidden$="[[ !record.performance.loading ]]">
+                                        <paper-spinner-lite active$="[[ record.performance.loading ]]"></paper-spinner-lite>
+                                    </div>
+                                    <table class="table" hidden$="[[ record.performance.loading ]]">
+                                        <tbody>
+                                            <template is="dom-repeat" items="[[ record.performance.items ]]">
+                                                <tr>
+                                                    <td>[[ item.description ]]</td>
+                                                    <td class="text-right">[[ item.value ]]</td>
+                                                </tr>    
+                                            </template>
+                                        </tbody>
+                                    </table>
+
+                                </div>
+
+                            </div>
+                            <div>
+                                
+                                <div class="section">
+                                    
+                                    <h3>STATUS</h3>
+                                    <div class="text-center p-a" hidden$="[[ !record.status.loading ]]">
+                                        <paper-spinner-lite active$="[[ record.status.loading ]]"></paper-spinner-lite>
+                                    </div>
+                                    <table class="table" hidden$="[[ record.status.loading ]]">
+                                        <tbody>
+                                            <template is="dom-repeat" items="[[ record.status.items ]]">
+                                                <tr>
+                                                    <td>[[ item.description ]]</td>
+                                                    <td class="text-right">[[ item.value ]]</td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+
+                                </div>
+
+                                <div class="section">
+                                    
+                                    <h3>PRODUKTIVITAS</h3>
+                                    <div class="text-center p-a" hidden$="[[ !record.productivity.loading ]]">
+                                        <paper-spinner-lite active$="[[ record.productivity.loading ]]"></paper-spinner-lite>
+                                    </div>
+                                    <table class="table" hidden$="[[ record.productivity.loading ]]">
+                                        <tbody>
+                                            <template is="dom-repeat" items="[[ record.productivity.items ]]">
+                                                <tr>
+                                                    <td>[[ item.description ]]</td>
+                                                    <td class="text-right">[[ item.value ]]</td>
+                                                </tr>    
+                                            </template>
+                                        </tbody>
+                                    </table>
+
+                                </div>
+
+                            </div>
+                            <div>
+
+                                <div class="section">
+                                    
+                                    <h3>BIAYA</h3>
+                                    <div class="text-center p-a" hidden$="[[ !record.cost.loading ]]">
+                                        <paper-spinner-lite active$="[[ record.cost.loading ]]"></paper-spinner-lite>
+                                    </div>
+                                    <table class="table" hidden$="[[ record.cost.loading ]]">
+                                        <tbody>
+                                            <template is="dom-repeat" items="[[ record.cost.items ]]">
+                                                <tr>
+                                                    <td>[[ item.description ]]</td>
+                                                    <td class="text-right">[[ item.value_formatted ]]</td>
+                                                </tr>    
+                                            </template>
+                                        </tbody>
+                                    </table>
+
+                                </div>
+
+                                <div class="section">
+                                    
+                                    <h3>VOLUME</h3>
+                                    <div class="text-center p-a" hidden$="[[ !record.volume.loading ]]">
+                                        <paper-spinner-lite active$="[[ record.volume.loading ]]"></paper-spinner-lite>
+                                    </div>
+                                    <table class="table" hidden$="[[ record.volume.loading ]]">
+                                        <tbody>
+                                            <template is="dom-repeat" items="[[ record.volume.items ]]">
+                                                <tr>
+                                                    <td>Satuan [[ item.label ]]</td>
+                                                    <td class="text-right">[[ item.value ]]</td>
+                                                </tr>    
+                                            </template>
+                                        </tbody>
+                                    </table>
+
+                                </div>
+                            </div>
+                        </kct-column>
+
+                    </div>
+                </app-drawer-layout>
+            </div>
+        </kct-vbox>
+
+    </template>
+    <script>
+        class LkhStatistic extends Mixins(KctView).use(Mixins.LkhPageBehavior) {
+            static get is() {
+                return 'lkh-statistic';
+            }
+
+            static get properties() {
+                return {
+                    params: { type: Object },
+                    record: {
+                        type: Object,
+                        value: () => ({
+                            monitoring: { loading: false, items: [] },
+                            status: { loading: false, items: [] },
+                            volume: { loading: false, items: [] },
+                            cost: { loading: false, items: [] },
+                            performance: { loading: false, items: [] },
+                            productivity: { loading: false, items: [] }
+                        })
+                    }
+                };
+            }
+
+            handleRouteParams(page) {
+                if (page != 'statistic') return;
+
+                let today = moment();
+                let startDate = today.clone().startOf('month').format('YYYY-MM-DD');
+                let endDate = today.clone().endOf('month').format('YYYY-MM-DD');
+
+                // init params
+                this.set('params', {
+                    user: '',
+                    start_date: startDate,
+                    end_date: endDate
+                });
+
+                this.__load();
+            }
+
+            __load() {
+
+                this.__loadMonitoringStat();
+                this.__loadStatusesStat();
+                this.__loadVolumeStat();
+                this.__loadCostStat();
+                this.__loadPerformanceStat();
+                this.__loadProductivityStat();
+
+            }
+
+            __loadMonitoringStat() {
+                let payload = Object.assign({}, this.params);
+                payload.display = 'monitoring';
+
+                this.set('record.monitoring.loading', true);
+
+                this.$.ajax.GET('/lkh/statistic', payload).then(res => {
+                    this.set('record.monitoring.loading', false);
+                    if (res.success) {
+                        this.set('record.monitoring.items', res.data);
+                    }
+                });
+            }
+
+            __loadStatusesStat() {
+                let payload = Object.assign({}, this.params);
+                payload.display = 'status';
+
+                this.set('record.status.loading', true);
+
+                this.$.ajax.GET('/lkh/statistic', payload).then(res => {
+                    this.set('record.status.loading', false);
+                    if (res.success) {
+                        this.set('record.status.items', res.data);
+                    }
+                });
+            }
+
+            __loadVolumeStat() {
+                let payload = Object.assign({}, this.params);
+                payload.display = 'volume';
+
+                this.set('record.volume.loading', true);
+
+                this.$.ajax.GET('/lkh/statistic', payload).then(res => {
+                    this.set('record.volume.loading', false);
+                    if (res.success) {
+                        this.set('record.volume.items', res.data);
+                    }
+                });
+            }
+
+            __loadCostStat() {
+                let payload = Object.assign({}, this.params);
+                payload.display = 'cost';
+
+                this.set('record.cost.loading', true);
+
+                this.$.ajax.GET('/lkh/statistic', payload).then(res => {
+                    this.set('record.cost.loading', false);
+                    if (res.success) {
+                        this.set('record.cost.items', res.data);
+                    }
+                });
+            }
+
+            __loadPerformanceStat() {
+                let payload = Object.assign({}, this.params);
+                payload.display = 'performance';
+
+                this.set('record.performance.loading', true);
+
+                this.$.ajax.GET('/lkh/statistic', payload).then(res => {
+                    this.set('record.performance.loading', false);
+                    if (res.success) {
+                        this.set('record.performance.items', res.data);
+                    }
+                });
+            }
+
+            __loadProductivityStat() {
+                let payload = Object.assign({}, this.params);
+                payload.display = 'productivity';
+
+                this.set('record.productivity.loading', true);
+
+                this.$.ajax.GET('/lkh/statistic', payload).then(res => {
+                    this.set('record.productivity.loading', false);
+                    if (res.success) {
+                        this.set('record.productivity.items', res.data);
+                    }
+                });
+            }
+
+            __onQueryTap() {
+                this.__load();
+            }
+
+            __onReloadTap() {
+                this.__load();
+            }
+
+            __onSocketLive(e) {
+                let payload = e.detail;
+
+                if (payload.type == 'lkh_outstanding' || payload.type == 'lkh_settled') {
+                    let valid = false;
+
+                    if (payload.date && this.params.start_date && this.params.end_date) {
+                        valid = moment(payload.date).isBetween(this.params.start_date, this.params.end_date, null, '[]');
+                    }
+
+                    if (valid) {
+                        this.__loadMonitoringStat();
+                        this.__loadProductivityStat();
+                        this.__loadPerformanceStat();
+                        this.__loadVolumeStat();
+                    }
+                    
+                }
+            }
+
+            __onSocketNotify(e) {
+                let payload = e.detail;
+                if (payload.type == 'update_status') {
+                    this.__loadStatusesStat();
+                }
+            }
+        }
+        customElements.define(LkhStatistic.is, LkhStatistic);
+    </script>
+</dom-module>

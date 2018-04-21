@@ -5,6 +5,7 @@ use App\Lkh\Models\Task;
 use App\Lkh\Models\TaskStatus;
 use App\Lkh\Models\TaskLabel;
 use App\Projects\Models\Project;
+use App\Activities\Models\Activity;
 
 class KanbanController extends \Micro\Controller {
 
@@ -63,13 +64,12 @@ class KanbanController extends \Micro\Controller {
                 $item['labels'] = array();
                 $item['items'] = array();
                 $item['users'] = array();
+                $item['perms'] = array();
 
                 if ($task) {
                     $item['task'] = $task->toArray();
                     $item['labels'] = $task->labels->filter(function($label){ return $label->toArray(); });
-                    $item['items'] = $task->getSampleItems();
                     $item['users'] = $task->getAssignee();
-                    
                 }
 
                 return $item;
@@ -135,15 +135,11 @@ class KanbanController extends \Micro\Controller {
 
                     $affected = array_values(array_unique($affected));
 
-                    $this->socket->broadcast('notify');
-
                     return array(
                         'success' => TRUE,
                         'data' => array(
                             'affected' => $affected,
-                            'task' => $task->toArray(),
-                            'items' => $task->getSampleItems(),
-                            'users' => $task->getAssignee()
+                            'task' => $task->toArray()
                         )
                     );
                 }
@@ -198,6 +194,7 @@ class KanbanController extends \Micro\Controller {
                     $curr = $task->getCurrentStatuses();
 
                     $worker = $this->bpmn->worker($post['worker']);
+                    $change = array();
 
                     foreach($curr as $c) {
                         $next = $worker->next($c->lks_status, $form['task']);
@@ -239,6 +236,9 @@ class KanbanController extends \Micro\Controller {
                                     );
                                     
                                     if ($status->save($create)) {
+                                        $status   = $status->refresh();
+                                        $change[] = $status->getLabel();
+
                                         $move[] = $c;
                                     }
                                 } else {
@@ -247,6 +247,20 @@ class KanbanController extends \Micro\Controller {
                             }
                         }
 
+                    }
+
+                    if (count($change) > 0) {
+                        $log = Activity::log('update_status', array(
+                            'ta_task_ns' => $task->getScope(),
+                            'ta_task_id' => $task->lkh_id,
+                            'ta_sp_id' => $task->lkh_task_project,
+                            'ta_data' => json_encode($change)
+                        ));
+
+                        if ($log) {
+                            $log->subscribe();
+                            $log->broadcast();
+                        }
                     }
 
                     // nothing changed
@@ -265,16 +279,12 @@ class KanbanController extends \Micro\Controller {
             }
 
             $affected = array_values(array_unique($affected));
-            
-            $this->socket->broadcast('notify');
 
             return array(
                 'success' => TRUE,
                 'data' => array(
                     'affected' => $affected,
-                    'task' => $task->toArray(),
-                    'items' => $task->getSampleItems(),
-                    'users' => $task->getAssignee()
+                    'task' => $task->toArray()
                 )
             ); 
         }
@@ -291,10 +301,6 @@ class KanbanController extends \Micro\Controller {
 
         if ($task) {
             $done = $task->delete();
-
-            if ($done) {
-                $this->socket->broadcast('notify');
-            }
         }
 
         return array(
@@ -369,9 +375,9 @@ class KanbanController extends \Micro\Controller {
 
     public static function applySorter($query, $params, $cols) {
         if ( ! isset($params['sort'])) {
-            $cols[] = 'MAX(task.lkh_created_dt) AS lkh_created_dt';
+            $cols[] = 'MAX(task.lkh_start_date) AS lkh_start_date';
             $query->columns($cols);
-            $query->orderBy('lkh_created_dt DESC');
+            $query->orderBy('lkh_start_date DESC');
         } else {
             $ps = json_decode($params['sort']);
 
@@ -387,8 +393,8 @@ class KanbanController extends \Micro\Controller {
                     $sort[] = $name.' '.$dirs;
                     $cols[] = $aggr.'(task.'.$name.') AS '.$name;
                 } else if ($e->property == 'date') {
-                    $sort[] = 'lkh_created_dt '.$dirs;
-                    $cols[] = $aggr.'(task.lkh_created_dt) AS lkh_created_dt';
+                    $sort[] = 'lkh_start_date '.$dirs;
+                    $cols[] = $aggr.'(task.lkh_start_date) AS lkh_start_date';
                 } else if ($e->property == 'user') {
                     $sort[] = 'su_fullname '.$dirs;
                     $cols[] = $aggr.'(user.su_fullname) AS su_fullname';

@@ -1,8 +1,8 @@
 <?php
 namespace App\Activities\Models;
 
-use App\Users\Models\User,
-    App\Labels\Models\Label;
+use App\Users\Models\User;
+use App\Labels\Models\Label;
 
 class Activity extends \Micro\Model {
 
@@ -28,7 +28,7 @@ class Activity extends \Micro\Model {
     }
 
     public function getSource() {
-        return 'trx_activities';
+        return 'sys_activities';
     }
 
     public function getTask() {
@@ -44,63 +44,78 @@ class Activity extends \Micro\Model {
 
     public function getReference() {
         switch($this->ta_task_ns) {
-            case '/registration':
+            case 'registration':
                 return array(
-                    'model' => 'App\Registration\Models\Task',
-                    'reference_key' => 'su_id',
-                    'project_key' => 'su_task_project'
+                    'model' => 'App\Registration\Models\Task'
                 );
-            case '/presence':
+            case 'presence':
                 return array(
-                    'model' => 'App\Presence\Models\Task',
-                    'reference_key' => 'tpr_id',
-                    'project_key' => 'tpr_task_project'
+                    'model' => 'App\Presence\Models\Task'
                 );
-            case '/lkh':
+            case 'lkh':
                 return array(
-                    'model' => 'App\Lkh\Models\Task',
-                    'reference_key' => 'lkh_id',
-                    'project_key' => 'lkh_task_project'
+                    'model' => 'App\Lkh\Models\Task'
                 );
-            case '/skp':
+            case 'skp':
                 return array(
-                    'model' => 'App\Skp\Models\Task',
-                    'reference_key' => 'skp_id',
-                    'project_key' => 'skp_task_project'
+                    'model' => 'App\Skp\Models\Task'
                 );
         }
         return FALSE;
+    }
+
+    public function getSenderName() {
+        $sender = '';
+
+        if (is_null($this->ta_sender)) {
+            $sender = 'System';
+        } else if (($sender = $this->sender)) {
+            $sender = $sender->getName();
+        }
+        
+        return $sender;
     }
 
     public function toArray($columns = NULL) {
         $data = parent::toArray($columns);
         $user = \Micro\App::getDefault()->auth->user();
         
-        $data['ta_is_comment'] = $this->ta_type == 'comment';
+        $data['ta_is_comment'] = $this->isComment();
         $data['ta_is_history'] = ! $data['ta_is_comment'];
         $data['ta_is_editable'] = $user['su_id'] == $this->ta_sender;
-
-        $data['sender_su_fullname'] = NULL;
-
-        if ($this->sender) {
-            $data['sender_su_fullname'] = $this->sender->su_fullname;
-        }
 
         $data['ta_verb'] = $this->getVerb();
         $data['ta_icon'] = $this->getIcon();
         
         // parse attachment
-        $data['ta_text'] = '';
+        $data['ta_comment'] = '';
+        $data['ta_comment_formatted'] = '';
 
-        if ($this->ta_type == 'comment') {
-            $data['ta_text'] = $this->getComment();
+        if ($data['ta_is_comment'] == 'comment') {
+            $json = json_decode($this->ta_data, TRUE);
+
+            $data['ta_comment'] = $json['comment'];
+            $data['ta_comment_formatted'] = $this->getComment();
         }
+
+        $data['sender_su_fullname'] = $this->getSenderName();
 
         return $data;
     }
 
+    public function isUnread($user) {
+        $unreads = json_decode($this->ta_unreads, TRUE);
+        $unreads = is_null($unreads) ? array() : $unreads;
+        return in_array($user, $unreads);
+    }
+
+    public function isComment() {
+        return in_array($this->ta_type, array('comment', 'warning'));
+    }
+
     public function getComment() {
-        $text = $this->ta_data;
+        $json = json_decode($this->ta_data, TRUE);
+        $text = $json['comment'];
         $URL = \Micro\App::getDefault()->url;
 
         $text = preg_replace_callback('/\[image:([^\]]+)\]/', function($m) use ($URL){
@@ -118,7 +133,7 @@ class Activity extends \Micro\Model {
         $text = preg_replace_callback('/\[attachment:([^\]]+)\]/', function($m) use ($URL){
             $name = $m[1];
             $code = sprintf(
-                '<iron-icon icon="attachment"></iron-icon>&nbsp;[%s](%s)',
+                '[%s](%s)',
                 $name,
                 $URL->getBaseUrl().'public/resources/attachments/'.$name
             );
@@ -165,6 +180,12 @@ class Activity extends \Micro\Model {
             case 'add_label':
             case 'remove_label':
                 return 'label-outline';
+            case 'warning':
+                return 'warning';
+            case 'add_task':
+                return 'description';
+            case 'alert':
+                return 'warning';
         }
     }
 
@@ -173,36 +194,38 @@ class Activity extends \Micro\Model {
         $type = $this->ta_type;
         $time = $this->getRelativeTime();
 
-        $sender = $this->ta_sender;
-        $sender_name = '';
-
-        if ($this->sender) {
-            $sender_name = $this->sender->su_fullname;
-        }
+        $senderName = $this->getSenderName();
 
         switch($type) {
             case 'create':
                 $verb = sprintf(
                     '**%s** membuat dokumen ini %s',
-                    $sender_name,
+                    $senderName,
                     $time
                 );
                 break;
             case 'update_status':
-                $steps = json_decode($this->ta_data);
-                $steps = implode(', ', $steps);
+                $statuses = json_decode($this->ta_data);
+                $statuses = implode(', ', $statuses);
 
                 $verb = sprintf(
                     '**%s** merubah status ke **%s** %s',
-                    $sender_name,
-                    $steps,
+                    $senderName,
+                    $statuses,
                     $time
                 );
                 break;
             case 'comment':
                 $verb = sprintf(
                     '**%s** berkomentar %s',
-                    $sender_name,
+                    $senderName,
+                    $time
+                );
+                break;
+            case 'warning':
+                $verb = sprintf(
+                    '**%s** mengirimkan pemberitahuan %s',
+                    $senderName,
                     $time
                 );
                 break;
@@ -211,14 +234,14 @@ class Activity extends \Micro\Model {
             case 'update_description':
                 $verb = sprintf(
                     '**%s** menyunting dokumen %s',
-                    $sender_name,
+                    $senderName,
                     $time
                 );
                 break;
             case 'update_flag':
                 $verb = sprintf(
                     '**%s** mengubah status dokumen ke **%s** %s',
-                    $sender_name,
+                    $senderName,
                     $this->ta_data,
                     $time
                 );
@@ -226,7 +249,7 @@ class Activity extends \Micro\Model {
             case 'update_due':
                 $verb = sprintf(
                     '**%s** mengubah deadline ke **%s** %s',
-                    $sender_name,
+                    $senderName,
                     self::_formatDate($this->ta_data, 'd M Y'),
                     $time
                 );
@@ -237,24 +260,20 @@ class Activity extends \Micro\Model {
                 $assignee = array();
 
                 if ( ! empty($this->ta_data)) {
-                    $data = User::get()
-                        ->columns('su_id, su_fullname, su_email')
-                        ->inWhere('su_id', json_decode($this->ta_data))
-                        ->execute();
+                    $json = json_decode($this->ta_data, TRUE);
 
-                    foreach($data as $e) {
-                        $name = empty($e->su_fullname) ? $e->su_email : $e->su_fullname;
-                        $assignee[] = "**$name**";
+                    foreach($json as $item) {
+                        $assignee[] = sprintf('**%s**', $item['su_fullname']);
                     }
 
                     $assignee = implode(', ', $assignee);
                 }
 
-                $action = $type == 'add_user' ? 'assigned' : 'removed';
+                $action = $type == 'add_user' ? 'menambahkan' : 'menghapus';
 
                 $verb = sprintf(
                     '**%s** %s %s %s',
-                    $sender_name,
+                    $senderName,
                     $action,
                     $assignee,
                     $time
@@ -267,13 +286,10 @@ class Activity extends \Micro\Model {
                 $plural = 'label';
 
                 if ( ! empty($this->ta_data)) {
-                    $data = Label::get()
-                        ->columns('sl_id, sl_label, sl_color')
-                        ->inWhere('sl_id', json_decode($this->ta_data))
-                        ->execute();
+                    $json = json_decode($this->ta_data, TRUE);
 
-                    foreach($data as $e) {
-                        $labels[] = '<span style="padding: 2px 8px; color: #fff; border-radius: 2px; background-color:'.$e->sl_color.'">'.$e->sl_label.'</span>';
+                    foreach($json as $item) {
+                        $labels[] = '<span style="padding: 2px 8px; color: #fff; border-radius: 2px; background-color:'.$item['sl_color'].'">'.$item['sl_label'].'</span>';
                     }
 
                     $plural = count($labels) > 1 ? 'label' : 'label';
@@ -284,7 +300,7 @@ class Activity extends \Micro\Model {
 
                 $verb = sprintf(
                     '**%s** %s %s %s %s',
-                    $sender_name,
+                    $senderName,
                     $action,
                     $plural,
                     $labels,
@@ -292,30 +308,93 @@ class Activity extends \Micro\Model {
                 );
 
                 break;
+            case 'add_task':
+                $json = json_decode($this->ta_data, TRUE);
+                $date = date('d M', strtotime($json['date']));
+
+                $verb = sprintf(
+                    '**%s** menambahkan item kegiatan untuk tanggal **%s** %s',
+                    $senderName,
+                    $date,
+                    $time
+                );
+                break;
+            case 'alert':
+                $json = json_decode($this->ta_data, TRUE);
+                $verb = sprintf(
+                    '**%s** memberitahukan %s %s',
+                    $senderName,
+                    $json['message'],
+                    $time
+                );
+                break;
         }
 
         return $verb;
     }
 
     public static function log($type, $data) {
-        $auth = \Micro\App::getDefault()->auth->user();
-
-        if ( ! $auth) {
-            return;
-        }
 
         $data['ta_type'] = $type;
         $data['ta_created'] = date('Y-m-d H:i:s');
-        $data['ta_sender'] = $auth['su_id'];
+
+        if ( ! isset($data['ta_sender'])) {
+            $auth = \Micro\App::getDefault()->auth->user();
+            $data['ta_sender'] = $auth['su_id'];
+        }
 
         $activity = new Activity();
 
         if ($activity->save($data)) {
-            $activity->save();
-            return $activity->get($activity->ta_id);
+            if (($task = $activity->getTask())) {
+                $activity->ta_title = $task->getTitle();
+                $activity->save();
+            }
+
+            $activity = $activity->refresh();
+            return $activity;
         }
 
-        return Activity::none();
+        return NULL;
+    }
+
+    public function broadcast() {
+        $socket = \Micro\App::getDefault()->socket;
+
+        $payload = array(
+            'type' => $this->ta_type,
+            'project' => $this->ta_sp_id,
+            'scope' => $this->ta_task_ns,
+            'task' => $this->ta_task_id,
+            'data' => $this->ta_data
+        );
+
+        $socket->broadcast('notify', $payload);
+    }
+
+    public function subscribe($subs = NULL) {
+        $auth = \Micro\App::getDefault()->auth->user();
+        $unreads = array();
+
+        if (is_null($subs)) {
+            $subs = array();
+            $task = $this->getTask();
+            if ($task) {
+                foreach($task->getUsers() as $user) {
+                    $subs[] = $user->su_id;
+                }    
+            }
+        }
+
+        foreach($subs as $sub) {
+            if ($sub != $auth['su_id']) {
+                $unreads[] = $sub;
+            }
+        }
+
+        $this->ta_subs = json_encode($subs);
+        $this->ta_unreads = json_encode($unreads);
+        $this->save();
     }
 
     public function getLink() {

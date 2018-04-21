@@ -36,14 +36,16 @@ class TaskStatus extends \Micro\Model {
         return 'trx_lkh_statuses';
     }
 
+    public function getLabel() {
+        if (($status = $this->status)) {
+            return $status->label;
+        }
+        return '';
+    }
+
     public function toArray($columns = NULL) {
         $data = parent::toArray($columns);
-        $data['status_text'] = NULL;
-
-        if ($this->status) {
-            $data['status_text'] = $this->status->label;
-        }
-
+        $data['status_text'] = $this->getLabel();
 
         return $data;
     }

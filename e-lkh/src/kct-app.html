@@ -1,4 +1,4 @@
-<link rel="import" href="../../cores/bower_components/polymer/polymer-element.html">
+<!-- <link rel="import" href="../../cores/bower_components/polymer/polymer-element.html"> -->
 <link rel="import" href="../../cores/mixins/resolver.html">
 <link rel="import" href="../../cores/elements/kct-config/kct-config.html">
 <link rel="import" href="../../cores/elements/kct-router/kct-router.html">
@@ -176,7 +176,6 @@
 
             __onBeforeRoute(e) {
                 let state = e.detail.state;
-
                 if (state.authentication) {
                     e.preventDefault();
 
@@ -205,7 +204,7 @@
                                         } else {
                                             this.__numRedir = 0;
                                             this.set('route.path', '/net-error');
-                                        }   
+                                        }
                                     } else {
                                         this.__numRedir = 0;
                                         this.set('state', state);

@@ -9,8 +9,9 @@
         <style include="project-task-style"></style>
         
         <kct-ajax id="ajax"></kct-ajax>
-        <kct-event-publisher id="publisher"></kct-event-publisher>
         <kct-media screen="{{ screen }}"></kct-media>
+        <kct-event-publisher id="publisher"></kct-event-publisher>
+        <kct-socket manager="global-socket" session="{{ socketSession }}" on-notify="__onSocketNotify"></kct-socket>
         
         <kct-vbox class$="layout [[ __computeClass(loading) ]]">
             <header-block id="header" on-back-tap="__onBackTap" text="Module Absensi" hide-header$="[[ __hideHeader(screen) ]]">
@@ -50,7 +51,7 @@
                             id="tasklogs" 
                             record="{{ taskRecord }}" 
                             hidden$="[[ __phantom ]]" 
-                            metadata="[[ metadata ]]" 
+                            profile="[[ profile ]]" 
                             loading="[[ loading ]]"></absensi-task-logs> 
                     </div>
                     <div class="workspace-side hidden-sm hidden-md">
@@ -63,7 +64,7 @@
                             user="[[ user ]]" 
                             route="{{ route }}"
                             loading="[[ loading ]]" 
-                            metadata="[[ metadata ]]" 
+                            profile="[[ profile ]]" 
                             on-after-update="__onPropAfterUpdate"></absensi-task-prop>
                     </div>
                 </kct-hbox>
@@ -81,22 +82,30 @@
 
             static get properties() {
                 return {
-                    metadata: { 
+                    profile: { 
                         type: Object,
                         value: () => ({
-                            namespace: '/presence',
-                            service_url: '/presence/kanban',
-                            primary_val: null,
-                            primary_key: 'tpr_id',
-                            project_key: 'tpr_task_project',
-                            due_key: 'tpr_task_due',
-                            due_formatted_key: 'tpr_task_due_formatted',
-                            creator_primary_key: 'tpr_created_by',
-                            status_primary_key: 'tps_id',
-                            status_primary_val: null,
-                            status_status_key: 'tps_status',
-                            status_worker_key: 'tps_worker',
-                            status_target_key: 'tps_target'
+                            activity: {
+                                scope: 'presence'
+                            },
+                            service: {
+                                url: '/presence/kanban'
+                            },
+                            task: {
+                                primary_key: 'tpr_id',
+                                primary_val: null,
+                                project_key: 'tpr_task_project',
+                                due_key: 'tpr_task_due',
+                                due_formatted_key: 'tpr_task_due_formatted',
+                                creator_key: 'tpr_created_by'
+                            },
+                            status: {
+                                primary_key: 'tps_id',
+                                primary_val: null,
+                                status_key: 'tps_status',
+                                worker_key: 'tps_worker',
+                                target_key: 'tps_target'
+                            }
                         })
                     }
                 };

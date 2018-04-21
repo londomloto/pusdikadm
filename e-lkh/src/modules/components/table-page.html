@@ -1,0 +1,124 @@
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+
+<dom-module id="freeze-table">
+    <template>
+        <style>
+            :host {
+                display: block;
+                border: 1px solid #d0d0d0;
+            }
+            #container {
+                @apply --layout-horizontal;
+            }
+            #side {
+                border-right: 1px solid #d0d0d0;
+            }
+            #main ::slotted(table) {
+                table-layout: fixed;
+            }
+            #main {
+                overflow-x: scroll;
+                @apply --layout-flex;
+            }
+        </style>
+
+        <div id="container">
+            <div id="side">
+                <slot name="side"></slot>
+            </div>
+            <div id="main">
+                <slot name="main"></slot>
+            </div>
+        </div>
+
+    </template>
+    <script>
+        class FreezeTable extends Polymer.Element {
+            static get is() {
+                return 'freeze-table';
+            }
+        }
+        customElements.define(FreezeTable.is, FreezeTable);
+    </script>
+</dom-module>
+
+<dom-module id="table-page">
+    <template>
+
+        <style include="theme-helper">
+            #ft {
+                width: 800px;
+            }
+        </style>
+
+        <freeze-table id="ft">
+            <table class="table" slot="side">
+                <thead>
+                    <tr>
+                        <th rowspan="2" style="width: 30px;">NO</th>
+                        <th rowspan="2" style="width: 300px;">KETERANGAN</th>
+                        <th>&nbsp;</th>
+                    </tr>
+                    <tr>
+                        <th>&nbsp;</th>
+                    </tr>   
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>Lorem ipsum sir dolor amet</td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+            <table class="table" slot="main">
+                <thead>
+                    <tr>
+                        <th colspan="5" style="width: 1000px;">REALISASI</th>
+                    </tr>
+                    <tr>
+                        <th style="width: 200px;">AK</th>
+                        <th style="width: 200px;">VOLUME</th>
+                        <th style="width: 200px;">UNIT</th>
+                        <th style="width: 200px;">KUALITAS</th>
+                        <th style="width: 200px;">BIAYA</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>1</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>2</td>
+                        <td>2</td>
+                        <td>2</td>
+                        <td>2</td>
+                    </tr>
+                </tbody>
+            </table>
+        </freeze-table>
+    </template>
+    <script>
+        class TablePage extends KctView {
+            static get is() {
+                return 'table-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Table' }
+                };
+            }
+        }
+        customElements.define(TablePage.is, TablePage);
+    </script>
+</dom-module>

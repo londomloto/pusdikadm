@@ -5,7 +5,6 @@
         <style include="project-task-prop-style"></style>
 
         <kct-ajax id="ajax"></kct-ajax>
-        <kct-socket manager="global-socket" session="{{ socketSession }}"></kct-socket>
 
         <div class="scroller">
 
@@ -59,7 +58,7 @@
                         <template is="dom-repeat" items="[[ record.users ]]">
                             <div class="user-item">
                                 <div class="icon">
-                                    <img src$="[[ item.su_avatar_thumb ]]&w=36&h=36">
+                                    <img src$="[[ item.su_avatar_thumb ]]&w=32&h=32">
                                 </div>
                                 <div class="text">
                                     <div>[[ item.su_fullname ]]</div>
@@ -145,8 +144,8 @@
                 return 'skp-task-prop';
             }
 
-            start() {
-                super.start();
+            initialize() {
+                super.initialize();
 
                 let today = moment(),
                     formattedToday = today.format('DD MM YYYY');

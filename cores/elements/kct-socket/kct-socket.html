@@ -20,6 +20,10 @@
                 ready() {
                     super.ready();
                     this._ensureAttribute('hidden', true);
+                }
+
+                connectedCallback() {
+                    super.connectedCallback();
                     let managerInstance = Manager.get(this.manager);
 
                     if (managerInstance) {

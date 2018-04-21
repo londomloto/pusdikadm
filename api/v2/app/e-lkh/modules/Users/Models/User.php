@@ -232,6 +232,21 @@ class User extends \Micro\Model {
         return $array;
     }
 
+    public function toSimpleArray() {
+        $array = array(
+            'su_id' => $this->su_id,
+            'su_fullname' => $this->getName(),
+            'su_no' => $this->su_no,
+            'su_grade' => $this->su_grade,
+            'su_sdp_name' => $this->department ? $this->department->sdp_name : NULL,
+            'su_scp_name' => $this->company ? $this->company->scp_name : NULL,
+            'su_sj_name' => $this->job ? $this->job->sj_name : NULL,
+            'su_avatar_thumb' => $this->getAvatarThumb()
+        );
+
+        return $array;
+    }
+
     public function getName() {
         return empty($this->su_fullname) ? $this->su_email : $this->su_fullname;
     }

@@ -5,14 +5,12 @@
 <dom-module id="kct-chart-pie">
     <template>
         <style include="chart-styles"></style>
-        <div class="panel vbox">
-            <div class="toolbar">
+        <div class="panel">
+            <div class="toolbar" hidden$="[[ !showToolbar ]]">
                 <slot name="toolbar"></slot>
-                <paper-icon-button on-tap="__onPrintTap" icon="print"></paper-icon-button>    
+                <paper-icon-button on-tap="__onPrintTap" icon="print"></paper-icon-button>        
             </div>
-            <div class="content flex">
-                <div id="chart"></div>
-            </div>
+            <div id="chart"></div>
         </div>
     </template>
     <script>
@@ -22,8 +20,6 @@
             }
             static get properties() {
                 return {
-                    title: { type: String },
-                    subtitle: { type: String },
                     series: { type: Array },
                     donut: { type: Boolean, value: false, reflectToAttribute: true }
                 };
@@ -38,7 +34,10 @@
                 this.__setup();
             }
             __setup() {
-                let options = Object.assign(this.defaults(), {
+
+                let legend = this.legend;
+
+                let options = Highcharts.merge(this.styles, {
                     chart: {
                         type: 'pie',
                         renderTo: this.$.chart,
@@ -54,9 +53,9 @@
                             dataLabels: {
                                 distance: 10,
                                 enabled: true,
-                                format: '<b>{point.name}</b><br> {point.percentage:.1f} %'
+                                format: legend ? '{point.percentage:.1f} %' : '<b>{point.name}</b><br> {point.percentage:.1f} %'
                             },
-                            showInLegend: false
+                            showInLegend: legend
                         }
                     },
                     exporting: {
@@ -64,7 +63,7 @@
                     },
                     series: [
                         {
-                            name: 'main',
+                            name: 'serie',
                             colorByPoint: true,
                             data: []
                         }
@@ -88,12 +87,13 @@
                 let serie = ((this.series || []).slice().shift() || {});
 
                 serie.data = serie.data || [];
+                serie.colorByPoint = true;
                 serie.innerSize = '60%';
 
                 (this.chart.series || []).forEach(s => {
                     s.remove();
                 });
-
+                
                 this.chart.addSeries(serie);
             }
 

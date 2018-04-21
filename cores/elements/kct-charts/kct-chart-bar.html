@@ -6,13 +6,11 @@
     <template>
         <style include="chart-styles"></style>
         <div class="panel vbox">
-            <div class="toolbar">
+            <div class="toolbar" hidden$="[[ !showToolbar ]]">
                 <slot name="toolbar"></slot>
-                <paper-icon-button on-tap="__onPrintTap" icon="print"></paper-icon-button>    
+                <paper-icon-button on-tap="__onPrintTap" icon="print"></paper-icon-button>        
             </div>
-            <div class="content flex">
-                <div id="chart"></div>
-            </div>
+            <div id="chart"></div>
         </div>
     </template>
     <script>
@@ -22,8 +20,6 @@
             }
             static get properties() {
                 return {
-                    title: { type: String },
-                    subtitle: { type: String },
                     labelY: { type: String },
                     labelX: { type: String },
                     categories: { type: Array },
@@ -41,7 +37,7 @@
                 this.__setup();
             }
             __setup() {
-                let options = Object.assign(this.defaults(), {
+                let options = Highcharts.merge(this.styles, {
                     chart: {
                         type: 'column',
                         renderTo: this.$.chart,

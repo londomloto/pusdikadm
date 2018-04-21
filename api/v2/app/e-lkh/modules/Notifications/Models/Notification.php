@@ -1,26 +1,76 @@
 <?php
 namespace App\Notifications\Models;
 
-use App\Users\Models\User,
-    App\Labels\Models\Label;
+use App\Users\Models\User;
+use App\Labels\Models\Label;
 
 class Notification extends \App\Activities\Models\Activity {
 
-    public static function items($start = NULL, $limit = NULL) {
+    public static function items($start = NULL, $limit = NULL, $summary = FALSE) {
         $auth = \Micro\App::getDefault()->auth->user();
         $query = self::get()
-            ->alias('a')
-            ->join('App\Projects\Models\Project', 'b.sp_id = a.ta_sp_id', 'b', 'left')
-            ->join('App\Projects\Models\ProjectUser', 'c.spu_sp_id = b.sp_id', 'c', 'left')
-            ->where('c.spu_su_id = :user:', array('user' => $auth['su_id']))
-            ->orderBy('a.ta_created DESC');
+            ->andWhere('ta_subs LIKE :user:', array(
+                'user' => '%"'.$auth['su_id'].'"%'
+            ))
+            ->orderBy('ta_created DESC');
 
         if ( ! is_null($start) && ! is_null($limit)) {
             $query->limit($limit, $start);
-            return $query->paginate(FALSE);
+            $result = $query->paginate(FALSE);
         } else {
-            return $query->paginate();
+            $result = $query->paginate();
         }
+
+        $result->map(function($row) use ($auth) {
+            $model = self::findFirst($row->ta_id);
+            $array = $model->toArray();
+            $array['ta_unread'] = $model->isUnread($auth['su_id']);
+
+            return $array;
+        });
+
+        $extra = array(
+            'unreads' => 0
+        );
+
+        if ($summary) {
+            $query = self::get()
+                ->columns('ta_id')
+                ->where('ta_unreads LIKE :user:', array(
+                    'user' => '%"'.$auth['su_id'].'"%'
+                ))
+                ->execute();
+
+            $extra['unreads'] = $query->count();
+        }
+
+        $result->summary = $extra;
+
+        return $result;
+    }
+
+    public static function summary($user = NULL) {
+        if (is_null($user)) {
+            $auth = \Micro\App::getDefault()->auth->user();
+            $user = $auth['su_id'];
+        }
+
+        // summary unreads
+        $query = self::get()
+            ->columns('ta_id')
+            ->where('ta_unreads LIKE :user:', array(
+                'user' => '%"'.$user.'"%'
+            ))
+            ->execute();
+
+        $unreads = $query->count();
+
+        return array(
+            'success' => TRUE,
+            'data' => array(
+                'unreads' => $unreads
+            )
+        );
     }
 
     public function toArray($columns = NULL) {
@@ -31,6 +81,7 @@ class Notification extends \App\Activities\Models\Activity {
 
         $data['ta_id'] = $this->ta_id;
         $data['ta_verb'] = $this->getVerb();
+        $data['ta_type'] = $this->ta_type;
         $data['ta_time'] = ucfirst($time);
         $data['ta_icon'] = $icon;
         $data['ta_task_id'] = $this->ta_task_id;
@@ -42,23 +93,12 @@ class Notification extends \App\Activities\Models\Activity {
 
     // @Override
     public function getVerb() {
-        $task = $this->getTask();
-
-        if ( ! $task) {
-            return '(dokumen sudah dihapus)';
-        }
-
         $verb = '';
         $type = $this->ta_type;
         $time = $this->getRelativeTime();
 
-        $sender = $this->ta_sender;
-        $senderName = '';
-        $taskTitle = $task->getTitle();
-
-        if ($this->sender) {
-            $senderName = $this->sender->getName();
-        }
+        $senderName = $this->getSenderName();
+        $taskTitle = $this->ta_title;
 
         $projectTitle = '';
 
@@ -76,20 +116,28 @@ class Notification extends \App\Activities\Models\Activity {
                 );
                 break;
             case 'update_status':
-                $flags = json_decode($this->ta_data);
-                $flags = implode(', ', $flags);
+                $statuses = json_decode($this->ta_data);
+                $statuses = implode(', ', $statuses);
 
                 $verb = sprintf(
-                    '**%s** merubah status dokumen %s: %s" ke **%s**',
+                    '**%s** merubah status dokumen %s: "%s" ke **%s**',
                     $senderName,
                     $projectTitle,
                     $taskTitle,
-                    $flags
+                    $statuses
                 );
                 break;
             case 'comment':
                 $verb = sprintf(
                     '**%s** mengomentari dokumen %s: "%s"',
+                    $senderName, 
+                    $projectTitle,
+                    $taskTitle
+                );
+                break;
+            case 'warning':
+                $verb = sprintf(
+                    '**%s** mengirimkan pemberitahuan pada dokumen %s: "%s"',
                     $senderName, 
                     $projectTitle,
                     $taskTitle
@@ -129,26 +177,23 @@ class Notification extends \App\Activities\Models\Activity {
                 $assignee = array();
 
                 if ( ! empty($this->ta_data)) {
-                    $data = User::get()
-                        ->columns('su_id, su_fullname, su_email')
-                        ->inWhere('su_id', json_decode($this->ta_data))
-                        ->execute();
-
-                    foreach($data as $e) {
-                        $name = empty($e->su_fullname) ? $e->su_email : $e->su_fullname;
-                        $assignee[] = "**$name**";
+                    $json = json_decode($this->ta_data, TRUE);
+                    foreach($json as $item) {
+                        $assignee[] = sprintf('**%s**', $item['su_fullname']);
                     }
 
                     $assignee = implode(', ', $assignee);
                 }
 
                 $action = $type == 'add_user' ? 'menambahkan' : 'menghapus';
+                $dir = $type == 'add_user' ? 'ke' : 'dari';
 
                 $verb = sprintf(
-                    '**%s** %s %s pada dokumen %s: "%s"',
+                    '**%s** %s %s %s dokumen %s: "%s"',
                     $senderName,
                     $action,
                     $assignee,
+                    $dir,
                     $projectTitle,
                     $taskTitle
                 );
@@ -160,13 +205,9 @@ class Notification extends \App\Activities\Models\Activity {
                 $plural = 'label';
 
                 if ( ! empty($this->ta_data)) {
-                    $data = Label::get()
-                        ->columns('sl_id, sl_label, sl_color')
-                        ->inWhere('sl_id', json_decode($this->ta_data))
-                        ->execute();
-
-                    foreach($data as $e) {
-                        $labels[] = '<span style="font-weight: 500; color: '.$e->sl_color.'">'.$e->sl_label.'</span>';
+                    $json = json_decode($this->ta_data, TRUE);
+                    foreach($json as $item) {
+                        $labels[] = '<span style="font-weight: 500; color: '.$item['sl_color'].'">'.$item['sl_label'].'</span>';
                     }
 
                     $plural = count($labels) > 1 ? 'label' : 'label';
@@ -185,6 +226,26 @@ class Notification extends \App\Activities\Models\Activity {
                     $taskTitle
                 );
                 
+                break;
+            case 'add_task':
+                $json = json_decode($this->ta_data, TRUE);
+                $date = date('d M Y', strtotime($json['date']));
+
+                $verb = sprintf(
+                    '**%s** menambahkan kegiatan untuk tanggal **%s** pada dokumen %s: "%s"',
+                    $senderName,
+                    $date,
+                    $projectTitle,
+                    $taskTitle
+                );
+                break;
+            case 'alert':
+                $json = json_decode($this->ta_data, TRUE);
+                $verb = sprintf(
+                    '**%s** mengirimkan pemberitahuan perihal: "%s"',
+                    $senderName,
+                    $json['message']
+                );
                 break;
         }
 
