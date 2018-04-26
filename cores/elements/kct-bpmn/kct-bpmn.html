@@ -762,10 +762,14 @@
 
                 // upload cover
                 this.paper.diagram().saveAsFile((file) => {
-                    var upload = {
-                        files: [{ name: 'cover', file: file }]
-                    };
-                    this.$.ajax.UPLOAD('/bpmn/diagrams/' + data.props.id + '/upload' , upload).then(done);
+                    if (file) {
+                        var upload = {
+                            files: [{ name: 'cover', file: file }]
+                        };
+                        this.$.ajax.UPLOAD('/bpmn/diagrams/' + data.props.id + '/upload' , upload).then(done);    
+                    } else {
+                        done.bind(this, res)();
+                    }
                 });
 
                 function done(res) {

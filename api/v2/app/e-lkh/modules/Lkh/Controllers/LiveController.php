@@ -63,7 +63,7 @@ class LiveController extends \Micro\Controller {
                 'lkd_su_id' => $row->lkd_su_id,
                 'lkd_su_no' => $user->su_no,
                 'lkd_su_fullname' => $user->getName(), 
-                'lkd_su_grade' => $user->su_grade,
+                'lkd_su_sg_name' => $user->getGradeName(),
                 'lkd_su_avatar_thumb' => $user->getAvatarThumb(),
                 'lkd_date' => $date,
                 'lkd_anim' => FALSE,

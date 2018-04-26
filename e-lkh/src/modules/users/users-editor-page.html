@@ -54,43 +54,51 @@
                         <div class="card-content">
                             <h3 class="block-title">Data Pegawai</h3>
                             <div>
-                                <paper-input label="Nama Lengkap" value="{{ record.su_fullname }}" required auto-validate error-message="Nama lengkap wajib diisi"></paper-input>
-                                <paper-input label="Jenis Kelamin" value="{{ record.su_sex }}"></paper-input>
-                                <kct-column columns="2" gutter="15px" space="0">
+                                <kct-column columns="2">
                                     <div>
+                                        <paper-input label="Nama Lengkap" value="{{ record.su_fullname }}" required auto-validate error-message="Nama lengkap wajib diisi"></paper-input>
+                                        <paper-input label="Jenis Kelamin" value="{{ record.su_sex }}"></paper-input>
                                         <paper-input label="Tempat Lahir" value="{{ record.su_pob }}"></paper-input>
+                                        <kct-date-picker label="Tanggal Lahir" value="{{ record.su_dob }}"></kct-date-picker>
+                                        <paper-input label="No. Telepon" value="{{ record.su_phone }}"></paper-input>
+                                        <kct-input-file id="avatar" label="Foto Profile" value="{{ record.su_avatar }}"></kct-input-file>
                                     </div>
                                     <div>
-                                        <kct-date-picker label="Tanggal Lahir" value="{{ record.su_dob }}"></kct-date-picker>
+                                        <paper-input label="Nomor Induk Pegawai" value="{{ record.su_no }}"></paper-input>
+                                        <kct-combobox 
+                                            url="/grades" 
+                                            label="Pangkat/Gol. Ruang" 
+                                            value="{{ record.su_sg_id }}" 
+                                            page-size="10" 
+                                            item-label-path="sg_name" 
+                                            item-value-path="sg_id" 
+                                            autoload></kct-combobox>
+                                        <kct-combobox 
+                                            url="/jobs" 
+                                            label="Jabatan (Pekerjaan)" 
+                                            value="{{ record.su_sj_id }}" 
+                                            page-size="10" 
+                                            item-label-path="sj_name" 
+                                            item-value-path="sj_id" 
+                                            autoload></kct-combobox>
+                                        <kct-combobox 
+                                            url="/departments" 
+                                            label="Unit Kerja" 
+                                            value="{{ record.su_sdp_id }}" 
+                                            page-size="10" 
+                                            item-label-path="sdp_name" 
+                                            item-value-path="sdp_id" 
+                                            autoload></kct-combobox>
+                                        <kct-combobox 
+                                            url="/company" 
+                                            label="Organisasi" 
+                                            value="{{ record.su_scp_id }}" 
+                                            page-size="10" 
+                                            item-label-path="scp_name" 
+                                            item-value-path="scp_id" 
+                                            autoload></kct-combobox>
                                     </div>
                                 </kct-column>
-                                <paper-input label="Nomor Induk Pegawai" value="{{ record.su_no }}"></paper-input>
-                                <paper-input label="Pangkat / Gol. Ruang" value="{{ record.su_grade }}"></paper-input>
-                                <kct-combobox 
-                                    url="/jobs" 
-                                    label="Jabatan (Pekerjaan)" 
-                                    value="{{ record.su_sj_id }}" 
-                                    page-size="10" 
-                                    item-label-path="sj_name" 
-                                    item-value-path="sj_id" 
-                                    autoload></kct-combobox>
-                                <kct-combobox 
-                                    url="/departments" 
-                                    label="Unit Kerja" 
-                                    value="{{ record.su_sdp_id }}" 
-                                    page-size="10" 
-                                    item-label-path="sdp_name" 
-                                    item-value-path="sdp_id" 
-                                    autoload></kct-combobox>
-                                <kct-combobox 
-                                    url="/company" 
-                                    label="Organisasi" 
-                                    value="{{ record.su_scp_id }}" 
-                                    page-size="10" 
-                                    item-label-path="scp_name" 
-                                    item-value-path="scp_id" 
-                                    autoload></kct-combobox>
-                                <kct-input-file id="avatar" label="Foto Profile" value="{{ record.su_avatar }}"></kct-input-file>
                             </div>
                         </div>
                     </paper-card>
@@ -109,17 +117,27 @@
                         <div class="card-content">
                             <h3 class="block-title">Data Akun</h3>
                             <div>
-                                <paper-input id="email" label="Alamat email" type="email" value="{{ record.su_email }}" required auto-validate error-message="Alamat email wajib diisi"></paper-input>
-                                <vaadin-combo-box 
-                                    label="Group Akses (Role)" 
-                                    value="{{ record.su_sr_id }}" 
-                                    items="[[ roles ]]" 
-                                    item-label-path="sr_name" 
-                                    item-value-path="sr_id" 
-                                    required auto-validate error-message="Group akses wajib diisi"></vaadin-combo-box>
-                                <paper-input label="Password" type="password" value="{{ password1 }}"></paper-input>
-                                <paper-input label="Konfirmasi password" type="password" value="{{ password2 }}"></paper-input>
-                                <kct-checkbox value="{{ record.su_active }}">Aktifkan akun pengguna</kct-checkbox>
+                                <kct-column columns="2">
+                                    <div>
+                                        <paper-input id="email" label="Alamat email" type="email" value="{{ record.su_email }}" required auto-validate error-message="Alamat email wajib diisi"></paper-input>
+                                        <vaadin-combo-box 
+                                            label="Group Akses (Role)" 
+                                            value="{{ record.su_sr_id }}" 
+                                            items="[[ roles ]]" 
+                                            item-label-path="sr_name" 
+                                            item-value-path="sr_id" 
+                                            required auto-validate error-message="Group akses wajib diisi"></vaadin-combo-box>
+                                        <kct-checkbox value="{{ record.su_active }}">Aktifkan akun pengguna</kct-checkbox>
+                                    </div>
+                                    <div>
+                                        <paper-input label="Password" type="password" value="{{ password1 }}"></paper-input>
+                                        <paper-input label="Konfirmasi password" type="password" value="{{ password2 }}"></paper-input>
+                                        
+                                    </div>
+                                </kct-column>
+                                
+                                
+                                
                             </div>
                         </div>
                     </paper-card>

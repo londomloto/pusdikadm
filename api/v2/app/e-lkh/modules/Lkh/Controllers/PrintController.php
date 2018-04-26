@@ -285,6 +285,13 @@ class PrintController extends \Micro\Controller {
             }
         }
 
+        if ( ! $this->role->can('manage@lkh')) {
+            $auth = $this->auth->user();
+            $query
+                ->join('App\Lkh\Models\TaskUser', 'task_user.lku_lkh_id = task.lkh_id', 'task_user', 'LEFT')
+                ->andWhere('task_user.lku_su_id = :user:', array('user' => $auth['su_id']));
+        }
+
         if (isset($payload['start'], $payload['limit'])) {
             $query->limit($payload['limit'], $payload['start']);
             $result = $query->paginate(FALSE);
@@ -378,17 +385,30 @@ class PrintController extends \Micro\Controller {
         $payload = $this->request->getJson();
 
         $query = LkhItem::get()
+            ->columns(array('lki_id'))
             ->join('App\Lkh\Models\LkhDay', 'lkd_id = lki_lkd_id')
             ->join('App\Lkh\Models\Task', 'lkh_id = lkd_lkh_id')
             ->join('App\Users\Models\User', 'su_id = lkh_su_id')
             ->filterable($payload)
             ->sortable($payload);
 
+        if ( ! $this->role->can('manage@lkh')) {
+            $auth = $this->auth->user();
+            $query
+                ->columns(array('lki_id'))
+                ->join('App\Lkh\Models\TaskUser', 'task_user.lku_lkh_id = lkh_id', 'task_user', 'LEFT')
+                ->andWhere('task_user.lku_su_id = :user:', array('user' => $auth['su_id']))
+                ->groupBy('lki_id');
+        }
+
         if ( ! isset($payload['sort'])) {
             $query->orderBy('lkd_date DESC');
         }
 
-        $result = $query->paginate();
+        if (isset($payload['start'], $payload['limit'])) {
+            $query->limit($payload['limit'], $payload['start']);
+        }
+        $result = $query->paginate(FALSE);
 
         $xls = new Spreadsheet(dirname(__DIR__).'/Templates/database-items.xlsx');
         $sheet = $xls->getSheet(0);
@@ -397,7 +417,8 @@ class PrintController extends \Micro\Controller {
         $index = 1;
 
         foreach($result->data as $row) {
-            $data = $row->toArray();
+            $item = LkhItem::findFirst($row->lki_id);
+            $data = $item->toArray();
 
             $date = date('d-M-Y', strtotime($data['lki_date']));
 
@@ -483,6 +504,6 @@ class PrintController extends \Micro\Controller {
         }
 
         $xls->setActiveSheetIndex(0);
-        $xls->stream('DASHBOARD_LKH.xlsx');
+        $xls->stream('DASHBOARD_SKP.xlsx');
     }
 }

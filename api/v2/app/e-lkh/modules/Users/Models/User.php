@@ -1,11 +1,12 @@
 <?php
 namespace App\Users\Models;
 
-use App\Users\Models\UserMenu,
-    App\Users\Models\UserPermission,
-    Phalcon\Mvc\Model\Relation,
-    Phalcon\Validation,
-    Phalcon\Validation\Validator\Uniqueness;
+use App\Users\Models\UserMenu;
+use App\Users\Models\UserPermission;
+use Phalcon\Mvc\Model\Relation;
+use Phalcon\Validation;
+use Phalcon\Validation\Validator\Uniqueness;
+use Micro\Helpers\Date;
 
 class User extends \Micro\Model {
     
@@ -154,6 +155,14 @@ class User extends \Micro\Model {
             )
         );
 
+        $this->hasOne(
+            'su_sg_id',
+            'App\Grades\Models\Grade',
+            'sg_id',
+            array(
+                'alias' => 'Grade'
+            )
+        );
     }
 
     public function getSource() {
@@ -192,6 +201,10 @@ class User extends \Micro\Model {
         if (isset($this->su_scp_id) && $this->su_scp_id == '') {
             $this->su_scp_id = NULL;
         }
+
+        if (isset($this->su_sg_id) && $this->su_sg_id == '') {
+            $this->su_sg_id = NULL;
+        }
     }
 
     // @Override
@@ -202,7 +215,8 @@ class User extends \Micro\Model {
         $array['su_avatar'] = $this->getAvatar();
         $array['su_avatar_url'] = $this->getAvatarUrl();
         $array['su_avatar_thumb'] = $this->getAvatarThumb();
-
+        $array['su_dob_formatted'] = ! empty($this->su_dob) ? Date::format($this->su_dob, 'd M Y') : '';
+        $array['su_sex_initial'] = ! empty($this->su_sex) ? strtoupper(substr($this->su_sex, 0, 1)) : '';
         // handle password
         unset($array['su_passwd']);    
 
@@ -229,6 +243,10 @@ class User extends \Micro\Model {
             $array['su_scp_name'] = $this->company->scp_name;
         }
 
+        if ($this->grade) {
+            $array['su_sg_name'] = $this->grade->sg_name;
+        }
+
         return $array;
     }
 
@@ -237,7 +255,7 @@ class User extends \Micro\Model {
             'su_id' => $this->su_id,
             'su_fullname' => $this->getName(),
             'su_no' => $this->su_no,
-            'su_grade' => $this->su_grade,
+            'su_sg_name' => $this->getGradeName(),
             'su_sdp_name' => $this->department ? $this->department->sdp_name : NULL,
             'su_scp_name' => $this->company ? $this->company->scp_name : NULL,
             'su_sj_name' => $this->job ? $this->job->sj_name : NULL,
@@ -249,6 +267,13 @@ class User extends \Micro\Model {
 
     public function getName() {
         return empty($this->su_fullname) ? $this->su_email : $this->su_fullname;
+    }
+
+    public function getGradeName() {
+        if (($grade = $this->grade)) {
+            return $grade->sg_name;
+        }
+        return NULL;
     }
 
     public function getAvatar() {

@@ -17,12 +17,12 @@ class Date {
         if (empty($date)) {
             return '';
         }
-        $date = new Moment(strtotime($date));
+        $date = new Moment($date);
         return $date->format($format);
     }
 
     public static function formatRelative($date, $format = 'd M Y H:i') {
-        $date = new Moment(strtotime($date));
+        $date = new Moment($date);
         $diff = $date->fromNow();
 
         if ($diff->getDirection() == 'past') {

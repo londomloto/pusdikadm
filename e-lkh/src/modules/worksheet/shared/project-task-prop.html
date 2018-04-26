@@ -46,7 +46,7 @@
                 this.set('record.task.' + this.profile.task.creator_key , this.user.su_id);
                 this.set('record.task.creator_su_avatar_thumb', this.user.su_avatar_thumb);
                 this.set('record.task.creator_su_fullname', this.user.su_fullname);
-                this.set('record.task.creator_su_grade', this.user.su_grade);
+                this.set('record.task.creator_su_sg_name', this.user.su_sg_name);
                 this.set('record.task.creator_su_no', this.user.su_no);
 
 
@@ -114,26 +114,53 @@
                         su_fullname: user.su_fullname,
                         su_avatar_thumb: user.su_avatar_thumb,
                         su_no: user.su_no,
-                        su_grade: user.su_grade
+                        su_sg_name: user.su_sg_name
                         
                     });
                 }
 
-                if (this.project) {
-                    let found = (this.record.users || []).find(e => e.su_id == this.project.sp_creator_id);
-                    if ( ! found) {
-                        this.push('record.users', {
-                            su_id: this.project.sp_creator_id,
-                            su_fullname: this.project.creator_su_fullname,
-                            su_avatar_thumb: this.project.creator_su_avatar_thumb,
-                            su_no: this.project.creator_su_no,
-                            su_grade: this.project.creator_su_grade    
-                        });    
-                    }
-                }
+                let exists = (this.record.users || []).map(e => e.su_id);
 
-                if ((this.record.users || []).length) {
-                    this.__save('user');
+                this.__resolveProjectUsers().then(users => {
+                    users.forEach(e => {
+                        if (exists.indexOf(e.su_id) === -1) {
+                            this.push('record.users', Object.assign({}, e));
+                        }
+                    });
+
+                    if ((this.record.users || []).length) {
+                        this.__save('user');
+                    }
+                });
+            }
+
+            __resolveProjectUsers() {
+                if (this.project) {
+                    if (this.project.sp_type == 'private') {
+                        return this.$.ajax.GET('/projects/projects-users', {
+                            params: {
+                                spu_sp_id: this.project.sp_id
+                            }
+                        }).then(res => {
+                            if (res.success) {
+                                return res.data;
+                            }
+                        });
+                    } else {
+                        let users = [
+                            {
+                                su_id: this.project.sp_creator_id,
+                                su_fullname: this.project.creator_su_fullname,
+                                su_avatar_thumb: this.project.creator_su_avatar_thumb,
+                                su_no: this.project.creator_su_no,
+                                su_sg_name: this.project.creator_su_sg_name
+                            }
+                        ];
+
+                        return Promise.resolve(users);
+                    }
+                } else {
+                    return Promise.resolve([]);
                 }
             }
 

@@ -77,7 +77,7 @@ class Project extends \Micro\Model {
         if (($creator = $this->creator)) {
             $data['creator_su_fullname'] = $creator->getName();
             $data['creator_su_avatar_thumb'] = $creator->getAvatarThumb();
-            $data['creator_su_grade'] = $creator->su_grade;
+            $data['creator_su_sg_name'] = $creator->getGradeName();
             $data['creator_su_no'] = $creator->su_no;
         }
         

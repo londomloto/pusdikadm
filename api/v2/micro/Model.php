@@ -37,4 +37,18 @@ abstract class Model extends \Phalcon\Mvc\Model {
         $result->data = NULL;
         return $result;
     }
+
+    public function nulled($prop) {
+        if (is_array($prop)) {
+            foreach($prop as $name) {
+                $this->nulled($name);
+            }
+
+            return;
+        }
+
+        if (isset($this->{$prop}) && $this->{$prop} == '') {   
+            $this->{$prop} = NULL; 
+        }
+    }
 }

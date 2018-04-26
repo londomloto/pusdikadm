@@ -38,21 +38,33 @@ class Spreadsheet {
 
     public function stream($filename = NULL) {
         if (empty($filename)) {
-            if ($this->__2007) {
-                $filename = 'download.xlsx';
-                $format = 'Xlsx';
+            if ($format == 'Pdf') {
+                $filename = 'download.pdf';
             } else {
-                $filename = 'download.xls';
-                $format = 'Xls';
+                if ($this->__2007) {
+                    $filename = 'download.xlsx';
+                    $format = 'Xlsx';
+                } else {
+                    $filename = 'download.xls';
+                    $format = 'Xls';
+                }    
             }
         } else {
-            $format = preg_match('/\.xlsx$/', $filename) ? 'Xlsx' : 'Xls';
+            if (preg_match('/\.(xlsx?|pdf)$/i', $filename, $matches)) {
+                $format = ucfirst(strtolower($matches[1]));
+            } else {
+                $format = $this->__2007 ? 'Xlsx' : 'Xls';
+            }
         }
 
         if ($format == 'Xlsx') {
             header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        } else {
+        } else if ($format == 'Xls') {
             header('Content-Type: application/vnd.ms-excel');
+        } else if ($format == 'Pdf') {
+            header('Content-Type: application/pdf');
+        } else {
+            header('Content-Type: application/octet-stream');
         }
 
         header('Content-Disposition: attachment;filename="'.$filename.'"');
@@ -63,10 +75,23 @@ class Spreadsheet {
         header('Cache-Control: cache, must-revalidate');
         header('Pragma: public');
 
-        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($this->__book, $format);
-        $writer->save('php://output');
+        if ($format == 'Xlsx' || $format == 'Xls') {
+            $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($this->__book, $format);
+            $writer->save('php://output');
+        } else {
+            $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($this->__book, 'Dompdf');
+            $writer->writeAllSheets();
+            $writer->stream($filename);
+        }
 
         exit();
+    }
+
+    public static function createImageFromResource($resource, $options = array()) {
+        $image = new \PhpOffice\PhpSpreadsheet\Worksheet\MemoryDrawing();
+        $image->setImageResource($resource);
+
+        return $image;
     }
 
     public static function createImage($file, $options = array()) {

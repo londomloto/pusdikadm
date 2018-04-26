@@ -1,0 +1,86 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../../cores/bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../../../../cores/elements/kct-combobox/kct-combobox.html">
+<link rel="import" href="../../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+
+<dom-module id="combo-department">
+    <template>
+        <style>
+            #combo {
+                padding: 4px 0;
+                --paper-input-container-label: {
+                    top: 3px;
+                };
+            }
+        </style>
+        <kct-ajax id="ajax"></kct-ajax>
+        
+        <kct-combobox 
+            id="combo" 
+            url="/departments" 
+            page-size="10"
+            label="[[ label ]]" 
+            value="{{ value }}" 
+            item-label-path="sdp_name" 
+            item-value-path="sdp_id" 
+            required$="[[ required ]]" 
+            auto-validate$="[[ autoValidate ]]" 
+            error-message="Unit kerja wajib diisi">
+            <paper-button on-tap="__onAddTap" slot="toolbar"><iron-icon icon="add"></iron-icon>&nbsp;Tambah</paper-button>        
+        </kct-combobox>        
+
+        <kct-dialog id="editor" title="Editor Unit Kerja" width="400">
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <paper-input label="Unit Kerja" value="{{ editingRecord.sdp_name }}"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onSaveTap">Simpan</paper-button>
+                    <paper-button on-tap="__onCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+    </template>
+    <script>
+        class ComboDepartment extends Polymer.Element {
+            static get is() {
+                return 'combo-department';
+            }
+            static get properties() {
+                return {
+                    label: { type: String },
+                    value: { type: String, value: '', notify: true },
+                    required: { type: Boolean, value: false, reflectToAttribute: true },
+                    autoValidate: { type: Boolean, value: false },
+                    editingRecord: { type: Object }
+                }
+            }
+            load() {
+                return this.$.combo.load();
+            }
+            getSelectedUnit() {
+                return this.$.combo.getModelForValue(this.$.combo.value);
+            }
+            __onAddTap() {
+                this.set('editingRecord', {});
+                this.$.editor.open();
+            }
+            __onCloseTap() {
+                this.$.editor.close();
+            }
+            __onSaveTap() {
+                this.$.editor.close();
+                let payload = this.editingRecord;
+
+                this.$.ajax.POST('/departments', payload).then(res => {
+                    if (res.success) {
+                        this.set('value', res.data.sdp_id);
+                    }
+                });
+            }
+        }
+        customElements.define(ComboDepartment.is, ComboDepartment);
+    </script>
+</dom-module>

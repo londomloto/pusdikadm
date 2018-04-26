@@ -123,6 +123,9 @@
                 }
 
                 __compile(expr) {
+                    if (expr == '') {
+                        expr = 'true';
+                    }
                     return Function(`"use strict"; return (${expr});`);
                 }
 

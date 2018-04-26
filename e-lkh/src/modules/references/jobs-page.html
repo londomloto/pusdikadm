@@ -94,9 +94,11 @@
                     return;
                 }
 
+                let payload = this.selectedRecord;
+
                 this.confirm('Konfirmasi', 'Apakah Anda yakin akan menghapus data ini?').then(y => {
                     if (y) {
-                        this.$.ajax.DELETE('/jobs/' + e.data.sj_id).then(() => {
+                        this.$.ajax.DELETE('/jobs/' + payload.sj_id).then(() => {
                             this.$.grid.load();
                         });
                     }

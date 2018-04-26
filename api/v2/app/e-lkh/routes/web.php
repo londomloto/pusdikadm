@@ -62,16 +62,16 @@ Router::get('/test/ldap', function(){
 });
 
 Router::get('/test/mail', function(){
-    
     $mailer = \Micro\App::getDefault()->mailer;
+
     $send = $mailer->send(array(
-        'from' => array('no-reply@worksaurus.com' => 'Worksaurus Admin'),
-        'to' => 'roso.sasongko@gmail.com',
+        'from' => array('support@192.168.0.100' => 'Pusdikadm Support'),
+        'to' => 'budi@192.168.0.100',
         'subject' => 'Test kirim email',
-        'body' => 'Hello roso'
+        'body' => 'Hello budi'
     ));
 
-    print_r($send);
+    var_dump("SENT: $send");
 
 });
 

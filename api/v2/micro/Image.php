@@ -33,7 +33,7 @@ class Image {
         return $this->_image->getWidth()/$this->_image->getHeight();
     }
 
-    public function thumb($width = 100, $height = 100) {
+    public function thumb($width = 100, $height = 100, $return = FALSE) {
         ini_set('memory_limit', '500M');
 
         $mime = $this->_image->getMime();
@@ -45,7 +45,9 @@ class Image {
             apache_setenv('no-gzip', 1);
         }
 
-        $this->cache();
+        if ( ! $return) {
+            $this->cache();    
+        }
 
         $exp = gmdate('D, d M Y H:i:s', time()) . ' GMT';
 
@@ -117,21 +119,26 @@ class Image {
 
         ImageCopyResampled($dst, $src, 0, 0, $x, $y, $tw, $th, $w, $h);
 
-        ob_start();
-        $output($dst, NULL, $q);
-        $data = ob_get_contents();
-        ob_clean();
+        if ( ! $return) {
+            ob_start();
+            $output($dst, NULL, $q);
+            $data = ob_get_contents();
+            ob_clean();
 
-        ImageDestroy($src);
-        ImageDestroy($dst);
+            ImageDestroy($src);
+            ImageDestroy($dst);
 
-        header("Cache-Control: cache");
-        header("Pragma: cache");
-        header("Expires: ".$exp);
-        header("Content-type: ".$mime);
-        header("Content-Length: ".strlen($data));
+            header("Cache-Control: cache");
+            header("Pragma: cache");
+            header("Expires: ".$exp);
+            header("Content-type: ".$mime);
+            header("Content-Length: ".strlen($data));
 
-        echo $data;
+            echo $data;
+        } else {
+            ImageDestroy($src);
+            return $dst;
+        }
     }
 
     public function cache() {

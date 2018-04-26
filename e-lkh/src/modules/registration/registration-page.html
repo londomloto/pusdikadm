@@ -1,5 +1,20 @@
+<link rel="import" href="../../../../cores/bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
+<link rel="import" href="../../../../cores/bower_components/app-layout/app-drawer/app-drawer.html">
+<link rel="import" href="../../../../cores/bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-spinner/paper-spinner-lite.html">
 <link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
 <link rel="import" href="../../../../cores/elements/kct-pages/kct-pages.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-date/kct-date-picker.html">
+<link rel="import" href="../../../../cores/vendors/moment/moment.html">
+<link rel="import" href="../settings/blocks/setting-header-block.html">
+<link rel="import" href="../worksheet/plugins/combo-user.html">
+<link rel="import" href="styles/registration-page-style.html">
+<link rel="import" href="shared/registration-page-behavior.html">
 
 <dom-module id="registration-page">
     <template>
@@ -15,7 +30,7 @@
         </style>        
         <kct-pages id="switcher" attr-for-selected="name" selected="[[ page ]]" lazy-load>
             <registration-index name="index" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" import="pages/registration-index.html"></registration-index>
-            <registration-sheet name="sheet" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" import="pages/registration-sheet.html"></registration-sheet>
+            <registration-database name="database" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" import="pages/registration-database.html"></registration-database>
         </kct-pages>
     </template>
     <script>
@@ -30,7 +45,13 @@
             }
             handleRouteParams(page) {
                 page = page || 'index';
-                this.set('page', page)
+                this.set('page', page);
+            }
+            handleResizing() {
+                let pageItem = this.$.switcher.selectedItem;
+                if (pageItem && pageItem.handleResizing) {
+                    pageItem.handleResizing();
+                }
             }
         }
         customElements.define(RegistrationPage.is, RegistrationPage);

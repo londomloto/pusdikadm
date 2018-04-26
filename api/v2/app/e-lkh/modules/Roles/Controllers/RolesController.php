@@ -6,10 +6,17 @@ use App\Roles\Models\Role;
 class RolesController extends \Micro\Controller {
 
     public function findAction() {
-        return Role::get()
+        $query = Role::get()
             ->filterable()
-            ->orderBy('sr_id ASC') 
-            ->paginate();
+            ->sortable();
+
+        $sort = $this->request->getQuery('sort');
+
+        if ( empty($sort)) {
+            $query->orderBy('sr_name ASC');
+        }
+
+        return $query->paginate();
     }
 
     public function findByIdAction($id) {

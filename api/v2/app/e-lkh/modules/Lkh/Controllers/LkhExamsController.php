@@ -2,6 +2,7 @@
 namespace App\Lkh\Controllers;
 
 use App\Lkh\Models\LkhExam;
+use App\Activities\Models\Activity;
 
 class LkhExamsController extends \Micro\Controller {
 
@@ -14,6 +15,23 @@ class LkhExamsController extends \Micro\Controller {
         $exam = new LkhExam();
 
         if ($exam->save($post)) {
+            $task = $exam->getTask();
+            if ($task && $exam->hasNotes()) {
+                $log = Activity::log('examine', array(
+                    'ta_task_ns' => $task->getScope(),
+                    'ta_task_id' => $task->lkh_id,
+                    'ta_sp_id' => $task->lkh_task_project,
+                    'ta_data' => json_encode(array(
+                        'comment' => '<p>**'.$exam->getLabel().'** ('.$exam->lke_notes.')'
+                    ))
+                ));
+
+                if ($log) {
+                    $log->subscribe();
+                    $log->broadcast();
+                }
+            }
+            
             return LkhExam::get($exam->lke_id);
         }
 

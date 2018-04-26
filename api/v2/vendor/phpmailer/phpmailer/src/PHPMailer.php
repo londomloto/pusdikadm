@@ -987,7 +987,6 @@ class PHPMailer
 
             return false;
         }
-
         // Immediately add standard addresses without IDN.
         return call_user_func_array([$this, 'addAnAddress'], $params);
     }

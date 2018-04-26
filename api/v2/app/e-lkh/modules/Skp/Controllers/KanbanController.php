@@ -5,6 +5,7 @@ use App\Skp\Models\Task;
 use App\Skp\Models\TaskStatus;
 use App\Skp\Models\TaskLabel;
 use App\Projects\Models\Project;
+use App\Activities\Models\Activity;
 
 class KanbanController extends \Micro\Controller {
 
@@ -47,9 +48,11 @@ class KanbanController extends \Micro\Controller {
 
         $query->andWhere('task_status.sks_deleted = 0');
 
-        //self::applySearch($query, $params);
+        self::applySearch($query, $params);
         self::applyFilter($query, $params);
         self::applySorter($query, $params, $columns);
+
+        //print_r($query->getBuilder()->getQuery()->getSql());
 
         $result = $query->paginate()
             ->filter(function($stat) {
@@ -64,6 +67,7 @@ class KanbanController extends \Micro\Controller {
                 $item['items'] = array();
                 $item['extra'] = array();
                 $item['users'] = array();
+                $item['perms'] = array();
 
                 if ($task) {
                     $item['task'] = $task->toArray();
@@ -189,6 +193,7 @@ class KanbanController extends \Micro\Controller {
                     $curr = $task->getCurrentStatuses();
 
                     $worker = $this->bpmn->worker($post['worker']);
+                    $change = array();
 
                     foreach($curr as $c) {
                         $next = $worker->next($c->sks_status, $form['task']);
@@ -230,6 +235,9 @@ class KanbanController extends \Micro\Controller {
                                     );
                                     
                                     if ($status->save($create)) {
+                                        $status   = $status->refresh();
+                                        $change[] = $status->getLabel();
+
                                         $move[] = $c;
                                     }
                                 } else {
@@ -238,6 +246,20 @@ class KanbanController extends \Micro\Controller {
                             }
                         }
 
+                    }
+
+                    if (count($change) > 0) {
+                        $log = Activity::log('update_status', array(
+                            'ta_task_ns' => $task->getScope(),
+                            'ta_task_id' => $task->skp_id,
+                            'ta_sp_id' => $task->skp_task_project,
+                            'ta_data' => json_encode($change)
+                        ));
+
+                        if ($log) {
+                            $log->subscribe();
+                            $log->broadcast();
+                        }
                     }
 
                     // nothing changed
@@ -301,9 +323,11 @@ class KanbanController extends \Micro\Controller {
             $fields = json_decode($params['fields'], TRUE);
             
             $maps = array(
-                'user' => 'task.su_fullname',
-                'date' => 'task.su_created_dt',
-                'label' => 'label.sl_label'
+                'user' => 'user.su_fullname',
+                'date' => 'task.skp_start_date',
+                'label' => 'label.sl_label',
+                'identity' => 'user.su_no',
+                'period' => 'task.skp_period'
             );
 
             $where = array();
@@ -339,7 +363,15 @@ class KanbanController extends \Micro\Controller {
                 }
 
                 if (isset($json->date) && count($json->date) > 0) {
-                    $query->inWhere('task.skp_created_dt', $json->date[1]);
+                    $dates = isset($json->date[1]) ? $json->date[1] : array();
+                    if (count($dates) > 0) {
+                        $query->andWhere(
+                            'task.skp_start_date <= :date: AND task.skp_end_date >= :date:',
+                            array(
+                                'date' => $dates[0]
+                            )
+                        );
+                    }
                 }
             }
         }
@@ -354,7 +386,10 @@ class KanbanController extends \Micro\Controller {
             $ps = json_decode($params['sort']);
 
             $sort = array();
-            $maps = array();
+            $maps = array(
+                'user' => 'user.su_fullname',
+                'date' => 'task.skp_start_date'
+            );
 
             foreach($ps as $e) {
                 $dirs = $e->direction;
@@ -362,17 +397,12 @@ class KanbanController extends \Micro\Controller {
 
                 if (isset($maps[$e->property])) {
                     $name = $maps[$e->property];
-                    $sort[] = $name.' '.$dirs;
-                    $cols[] = $aggr.'(task.'.$name.') AS '.$name;
-                } else if ($e->property == 'date') {
-                    $sort[] = 'skp_created_dt '.$dirs;
-                    $cols[] = $aggr.'(task.skp_created_dt) AS skp_created_dt';
-                } else if ($e->property == 'user') {
-                    $sort[] = 'su_fullname '.$dirs;
-                    $cols[] = $aggr.'(user.su_fullname) AS su_fullname';
+                    $prop = str_replace('.', '_', $name);
+                    $sort[] = $prop.' '.$dirs;
+                    $cols[] = $aggr.'('.$name.') AS '.$prop;
                 }
             }
-
+            
             if (count($sort) > 0) {
                 $sort = implode(', ', $sort);
 

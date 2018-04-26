@@ -10,7 +10,8 @@ class ProjectsUsersController extends \Micro\Controller {
         $params = $this->request->getParams();
 
         $query = ProjectUser::get()
-            ->join('App\Users\Models\User', 'spu_su_id = b.su_id', 'b');
+            ->join('App\Users\Models\User', 'spu_su_id = b.su_id', 'b')
+            ->filterable();
 
         if (isset($params['project'])) {
             $query->andWhere('spu_sp_id = :project:', array('project' => $params['project']));

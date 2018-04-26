@@ -294,6 +294,13 @@
         // Highcharts.setOptions(THEMES.dark);
         // Highcharts.setOptions(THEMES.phantom);
 
+        Highcharts.setOptions({
+            lang: {
+                // numericSymbols: null //otherwise by default ['k', 'M', 'G', 'T', 'P', 'E']
+                numericSymbols: null
+            }
+        });
+
         return class extends superclass {
             static get properties() {
                 return {

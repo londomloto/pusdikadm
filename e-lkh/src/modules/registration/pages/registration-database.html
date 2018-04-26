@@ -1,0 +1,152 @@
+<link rel="import" href="../../../../../cores/elements/kct-grid/kct-grid.html">
+<link rel="import" href="../plugins/registration-database-search.html">
+
+<dom-module id="registration-database">
+    <template>
+        <style include="registration-page-style">
+            :host {
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-grid 
+            id="grid" 
+            url="/registration" 
+            params="[[ params ]]" 
+            icon="description"
+            header-text="Database" 
+            header-desc="Pendaftaran" 
+            columns="[[ columns ]]" 
+            selection-model="row" 
+            row-height="50" 
+            pagination 
+            on-back-tap="__onBackTap">
+            <registration-database-search slot="center-toolbar" search="{{ params }}"></registration-database-search>
+            <paper-icon-button slot="right-toolbar" icon="print" on-tap="__onPrintTap"></paper-icon-button>
+        </kct-grid>
+    </template>
+    <script>
+        class RegistrationDatabase extends Mixins(KctView).use(Mixins.RegistrationPageBehavior) {
+            static get is() {
+                return 'registration-database';
+            }
+            static get properties() {
+                return {
+                    params: { type: Object },
+                    columns: {
+                        type: Array,
+                        value: () => ([
+
+                            { type: 'rownumber' }, 
+                            {
+                                type: 'action',
+                                width: 40,
+                                align: 'center',
+                                renderer: e => {
+                                    if (e.data) {
+                                        return '<kct-grid-action on-tap="__onItemTap" icon="search" accent="blue-grey" icon-only rounded></kct-grid-action>';
+                                    }
+                                    return '';
+                                }
+                            },
+                            { 
+                                text: 'Nama Pegawai', 
+                                dataIndex: 'su_fullname', 
+                                sorting: false,
+                                renderer: e => {
+                                    if (e.data) {
+                                        let grade = e.data.su_sg_name || '';
+                                        return `
+                                            <div><strong>${e.data.su_fullname}</strong></div>
+                                            <div>${e.data.su_no}</div>
+                                        `;
+                                    }
+                                    return '';
+                                }
+                            },
+                            {
+                                text: 'Pangkat/Gol.Ruang',
+                                dataIndex: 'su_sg_name',
+                                width: 140,
+                                renderer: e => {
+                                    return e.data ? e.data.su_sg_name : '';
+                                }
+                            },
+                            { 
+                                text: 'JK', 
+                                dataIndex: 'su_sex', 
+                                width: 50, 
+                                align: 'center',
+                                sorting: false,
+                                renderer: e => {
+                                    return e.data ? e.data.su_sex_initial : '';
+                                }
+                            },
+                            { 
+                                text: 'Tempat / Tgl. Lahir', 
+                                dataIndex: 'su_dob', 
+                                sorting: false ,
+                                renderer: e => {
+                                    if (e.data) {
+                                        let pob = e.data.su_pob || '';
+                                        let dob = e.data.su_dob_formatted || '';
+                                        return pob + (dob ? ', ' + dob : '');
+                                    }
+                                    return '';
+                                }
+                            },
+                            
+                            {
+                                text: 'Email',
+                                dataIndex: 'su_email'
+                            },
+                            {
+                                text: 'Telepon',
+                                dataIndex: 'su_phone',
+                                width: 140
+                            },
+                            {
+                                text: 'Status',
+                                dataIndex: 'su_task_flag', 
+                                sorting: false,
+                                renderer: e => {
+                                    if (e.data) {
+                                        let statuses = e.data.statuses.map(s => {
+                                            return s.status_text;
+                                        });
+                                        return statuses.join(', ');
+                                    }
+                                    return '';
+                                }
+                            }
+
+                        ])
+                    }
+                };
+            }
+            handleRouteParams(page) {
+                if (page != 'database') return;
+                this.$.grid.deferAutoresize();
+                this.__load();
+            }
+            handleResizing() {
+                this.$.grid && this.$.grid.resize();
+            }
+            __load() {
+                this.$.grid.load();
+            }
+            __onItemTap(e) {
+                if (e.data && e.data.su_task_link) {
+                    this.set('route.path', e.data.su_task_link);
+                }
+            }
+            __onPrintTap() {
+                let payload = this.$.grid.params;
+                this.$.ajax.DOWNLOAD('/registration/print/database/xls', payload);
+            }
+        }
+        customElements.define(RegistrationDatabase.is, RegistrationDatabase);
+    </script>
+</dom-module>

@@ -78,8 +78,8 @@
 
             /** mixins: paper-input; */
             --paper-input-container: { 
-                padding: 8px 0; 
-                line-height: 25px;
+                padding: 6px 0; 
+                line-height: 26px;
             };
 
             --paper-input-container-invalid-color: var(--app-danger);
@@ -97,7 +97,7 @@
             --paper-input-container-label-focus: { color: #339EF3; };
             --paper-input-container-underline: { border-color: var(--paper-grey-300); };
             --paper-input-container-underline-focus: { border-color: #2196F3; };
-            --paper-input-error: { font-size: var(--app-text-sm); };
+            --paper-input-error: { font-size: 12px; };
 
             /** mixins: paper-checkbox; */
             --paper-checkbox-label-color: var(--secondary-text-color);
@@ -667,6 +667,11 @@
             .table tr.group-row td iron-icon {
                 position: relative;
                 top: -1px;
+            }
+
+            .table th[hidden],
+            .table td[hidden] {
+                display: none;
             }
 
         </style>

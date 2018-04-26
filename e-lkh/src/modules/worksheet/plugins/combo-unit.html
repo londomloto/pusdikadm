@@ -23,11 +23,13 @@
             page-size="10"
             label="[[ label ]]" 
             value="{{ value }}" 
+            list-width="300" 
             item-label-path="sun_name" 
             item-value-path="sun_name" 
             required$="[[ required ]]" 
             auto-validate$="[[ autoValidate ]]" 
-            error-message="Satuan wajib diisi">
+            error-message="Satuan wajib diisi" 
+            always-float-label$="[[ alwaysFloatLabel ]]">
             <paper-button on-tap="__onAddTap" slot="toolbar"><iron-icon icon="add"></iron-icon>&nbsp;Tambah</paper-button>        
         </kct-combobox>        
 
@@ -54,7 +56,8 @@
                     value: { type: String, value: '', notify: true },
                     required: { type: Boolean, value: false, reflectToAttribute: true },
                     autoValidate: { type: Boolean, value: false },
-                    editingRecord: { type: Object }
+                    editingRecord: { type: Object },
+                    alwaysFloatLabel: { type: Boolean, value: false }
                 }
             }
             load() {

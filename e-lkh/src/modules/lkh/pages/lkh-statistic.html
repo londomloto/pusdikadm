@@ -46,7 +46,7 @@
             <setting-header-block 
                 icon="editor:bubble-chart" 
                 text="Statistik" 
-                desc="Data Statistik Periode [[ __computePeriod(params.start_date, params.end_date) ]]" 
+                desc="[[ __computeHeader(params.user) ]] [[ __computePeriod(params.start_date, params.end_date) ]]" 
                 on-back-tap="__onBackTap">
 
                 <paper-icon-button slot="right-toolbar" icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
@@ -63,6 +63,7 @@
                             <h3>Parameter</h3>
                             <div>
                                 <combo-user 
+                                    id="combo-user" 
                                     url="/lkh/observable-users"
                                     label="Pegawai" 
                                     value="{{ params.user }}"></combo-user>
@@ -250,6 +251,19 @@
                 });
 
                 this.__load();
+            }
+
+            __computeHeader(id) {
+                let combo = this.$['combo-user'];
+                
+                if (id && combo) {
+                    let model = combo.getModelForValue(id);
+                    if (model) {
+                        return model.su_fullname + ' - ';
+                    }
+                }
+
+                return 'Data Statistik';
             }
 
             __load() {

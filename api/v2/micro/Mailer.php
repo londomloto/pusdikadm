@@ -1,6 +1,13 @@
 <?php
 namespace Micro;
 
+use \PHPMailer\PHPMailer\PHPMailer;
+
+// custom email validator
+PHPMailer::$validator = function($email) {
+    return Mailer::validateEmail($email);
+};
+
 class Mailer {
     
     private $_mail;
@@ -9,9 +16,8 @@ class Mailer {
     public function __construct($config = array()) {
         $this->_config = $config;
         
-        if(strtoupper($this->_config->protocol) != 'RELAY')
-        {
-            $this->_mail   = new \PHPMailer\PHPMailer\PHPMailer();
+        if (strtoupper($this->_config->protocol) != 'RELAY') {
+            $this->_mail   = new PHPMailer();
             
             switch ($this->_config->protocol) {
                 case 'mail':
@@ -53,14 +59,16 @@ class Mailer {
         }
     }
 
+    
+
     public function send($params = false){
         if(is_array($params)){
             foreach ($params as $func => $param) {
-                if(method_exists($this, '_'.$func)) $this->{'_'.$func}($param);
+                if (method_exists($this, '_'.$func)) $this->{'_'.$func}($param);
             }
         }
 
-        if(!$this->_mail->Send()) {
+        if ( ! $this->_mail->Send()) {
             return $this->_mail->ErrorInfo;
         }
 
@@ -68,42 +76,43 @@ class Mailer {
         $this->_mail->clearAddresses();
         $this->_mail->clearCCs();
         $this->_mail->clearBCCs();
-        return true;
+
+        return TRUE;
     }
 
-    public function from($from = false, $fromName = false){
-        $this->_from($from,$fromName);
+    public function from($email, $name = ''){
+        $this->_from($email, $name);
     }
 
-    public function to($to = false, $toName = false){
-        $this->_to($to, $toName);
-        // $args = func_get_args();
-        // call_user_func_array(array($this,'_to'), $args);
+    public function to($email, $name = ''){
+        $this->_to($email, $name);
     }
 
-    public function subject($subj= false){
-        $this->_subject($subj);
+    public function subject($subject = FALSE){
+        $this->_subject($subject);
     }
 
-    public function body($body = false){
+    public function body($body = FALSE){
         $this->_body($body);
     }
 
-    private function _from($from = false, $fromName = false){
-        if(is_array($from)){
-            foreach($from as $email => $name){
-                if(!filter_var($email, FILTER_VALIDATE_EMAIL) && filter_var($name, FILTER_VALIDATE_EMAIL)){
-                    $this->_mail->setFrom($name);
-                }else{
-                    $this->_mail->setFrom($email);
-                    $this->_mail->FromName = $name;
+    
+
+    private function _from($email, $name = ''){
+        if (is_array($email)) {
+            foreach($email as $key => $val) {
+                if (is_numeric($key)) {
+                    $addr = $val;
+                    $name = '';
+                } else {
+                    $addr = $key;
+                    $name = $val;
                 }
+                $this->_mail->setFrom($addr, $name);
             }
-        }else{
-            $this->_mail->setFrom($from);
+        } else {
+            $this->_mail->setFrom($email, $name);
         }
-        // if($from) 
-        // if($fromName) $this->_mail->FromName = $fromName;
     }
     
     public function account($alias, $email = FALSE) {
@@ -122,38 +131,54 @@ class Mailer {
         }
     }
 
-    private function _to($to = false, $toName = false){
-        if(is_array($to)){
-            foreach ($to as $email => $name) {
-                if( ! filter_var($email, FILTER_VALIDATE_EMAIL) && filter_var($name, FILTER_VALIDATE_EMAIL)){
-                    $this->_mail->addAddress($name);
+    private function _to($email, $name = ''){
+        if (is_array($email)) {
+            foreach($email as $key => $val) {
+                if (is_numeric($key)) {
+                    $addr = $val;
+                    $name = '';
                 } else {
-                    $this->_mail->addAddress($email, $name);
+                    $addr = $key;
+                    $name = $val;
                 }
+
+                $this->_mail->addAddress($addr, $name);
             }
-        }else{
-            if(filter_var($to, FILTER_VALIDATE_EMAIL) && !$toName){
-                $this->_mail->addAddress($to);
-            }else if(filter_var($to, FILTER_VALIDATE_EMAIL) && $toName){
-                $this->_mail->addAddress($to,$toName);
-            }
+        } else {
+            $this->_mail->addAddress($email, $name);
         }
     }
 
-    private function _cc($cc = false){
-        if($cc && filter_var($cc, FILTER_VALIDATE_EMAIL)) $this->_mail->addCC($cc);     
+    private function _cc($cc){
+        $this->_mail->addCC($cc);
     }
 
-    private function _bcc($bcc = false){
-        if($bcc && filter_var($bcc, FILTER_VALIDATE_EMAIL)) $this->_mail->addBCC($bcc);     
+    private function _bcc($bcc){
+        $this->_mail->addBCC($bcc);
     }
 
-    private function _subject($subj = false){
-        if($subj) $this->_mail->Subject = $subj;
+    private function _subject($subject = FALSE){
+        if ($subject) $this->_mail->Subject = $subject;
     }
 
-    private function _body($body = false){
-        if($body) $this->_mail->Body = $body;
+    private function _body($body = FALSE){
+        if ($body) $this->_mail->Body = $body;
     }
 
+    public static function validateEmail($email) {
+
+        $parts = explode('@', $email);
+        $domain = array_pop($parts);
+
+        if ( ! empty($domain)) {
+            $valid = filter_var($domain, FILTER_VALIDATE_IP);
+            if ($valid) {
+                $account = implode('', $parts);
+                $email = $account.'@example.com';
+            }
+        }
+
+        $valid = filter_var($email, FILTER_VALIDATE_EMAIL);
+        return $valid !== FALSE;
+    }
 }

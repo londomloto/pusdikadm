@@ -1,0 +1,65 @@
+<dom-module id="skp-page-style">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                overflow: hidden;
+            }
+            
+            paper-button[disabled] {
+                background-color: var(--paper-grey-500);
+            }
+
+            app-drawer {
+                top: -48px;
+                --app-drawer-width: 300px;
+                @apply --shadow-elevation-2dp;
+            }
+
+            app-toolbar {
+                height: 53px;
+                border-bottom: 1px solid #dfdfdf;
+                background-color: #fff;
+            }
+
+            app-toolbar paper-icon-button {
+                width: 36px;
+                height: 36px;
+            }
+
+            .main, 
+            .side {
+                height: calc(100vh - 128px);
+            }
+
+            .main {
+                background-color: #fff;
+            }
+
+            .side {
+                background-color: #fff;
+                box-sizing: border-box;
+                padding: 15px 20px;
+                overflow-x: hidden;
+                overflow-y: auto;
+                text-align: left;
+            }
+
+            .side h3 {
+                font-size: 14px;
+                font-weight: 500;
+                display: block;
+                margin-bottom: 8px;
+            }
+
+            setting-header-block paper-icon-button {
+                padding: 4px;
+                margin-left: 10px;
+            }
+
+            .table[hidden] {
+                display: none;
+            }
+        </style>
+    </template>
+</dom-module>

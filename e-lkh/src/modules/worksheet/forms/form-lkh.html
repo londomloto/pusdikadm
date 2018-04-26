@@ -294,13 +294,20 @@
                 border-left: 1px solid #d0d0d0;
             }
 
+            .table td.editable {
+                position: relative;
+                padding: 1px;
+                /*background-color: #edf2fa;*/
+            }
+
             .table paper-input,
             .table kct-input-number {
                 --paper-input-container: {
-                    padding: 2px 0;
+                    padding: 0;
                 };
                 --paper-input-container-input: {
                     text-align: center;
+                    padding: 5px 0;
                 };
                 --paper-input-container-underline: {
                     display: none;
@@ -327,6 +334,9 @@
             .form-section h3 {
                 font-weight: 500;
             }
+            .table tbody tr:hover {
+                background: none;
+            }
 
         </style>
 
@@ -340,7 +350,6 @@
             <paper-tabs id="tabs" attr-for-selected="name" selected="{{ page }}" scrollable no-slide no-bar noink>
                 <paper-tab name="dokumen">Data LKH</paper-tab>
                 <paper-tab name="kegiatan">Form LKH</paper-tab>
-                <paper-tab name="pemeriksaan">Pemeriksaan</paper-tab>
             </paper-tabs>
         </div>
 
@@ -382,7 +391,7 @@
                                     <paper-input label="No. Induk" value="[[ record.task.lkh_su_no ]]"></paper-input>
                                 </div>
                                 <div>
-                                    <paper-input label="Pangkat/Gol. Ruang" value="[[ record.task.lkh_su_grade ]]"></paper-input>
+                                    <paper-input label="Pangkat/Gol. Ruang" value="[[ record.task.lkh_su_sg_name ]]"></paper-input>
                                 </div>
                             </kct-column>
 
@@ -395,7 +404,7 @@
                     <kct-column columns="2">
                         <div>
                             <div class="section">
-                                <h3 class="section-title">Pemeriksa I</h3>
+                                <h3 class="section-title">Pemeriksa</h3>
                                 <div>
                                     <combo-user 
                                         id="combo-evaluator" 
@@ -408,7 +417,7 @@
                                             <paper-input label="No. Induk" value="[[ record.task.evaluator_su_no ]]"></paper-input>
                                         </div>
                                         <div>
-                                            <paper-input label="Pangkat/Gol. Ruang" value="[[ record.task.evaluator_su_grade ]]"></paper-input>
+                                            <paper-input label="Pangkat/Gol. Ruang" value="[[ record.task.evaluator_su_sg_name ]]"></paper-input>
                                         </div>
                                     </kct-column>
                                     
@@ -419,7 +428,7 @@
                         </div>
                         <div>
                             <div class="section">
-                                <h3 class="section-title"><span>Pemeriksa II</span></h3>
+                                <h3 class="section-title"><span>Atasan Pemeriksa</span></h3>
                                 <div>
                                     <combo-user 
                                         id="combo-examiner" 
@@ -432,7 +441,7 @@
                                             <paper-input label="No. Induk" value="[[ record.task.examiner_su_no ]]"></paper-input>
                                         </div>
                                         <div>
-                                            <paper-input label="Pangkat/Gol. Ruang" value="[[ record.task.examiner_su_grade ]]"></paper-input>
+                                            <paper-input label="Pangkat/Gol. Ruang" value="[[ record.task.examiner_su_sg_name ]]"></paper-input>
                                         </div>
                                     </kct-column>
                                     
@@ -482,17 +491,17 @@
                                         <div class="form-section" hidden$="[[ !record.perms.update ]]">
                                             <h3>Form Kegiatan</h3>
                                             <div>
-                                                <paper-input value="{{ day.input.lki_desc }}" label="Uraian tugas (kegiatan)"></paper-input>    
+                                                <paper-input value="{{ day.input.lki_desc }}" label="Uraian tugas (kegiatan)" always-float-label></paper-input>    
                                             </div>
                                             <kct-column columns="3">
                                                 <div>
-                                                    <kct-input-number value="{{ day.input.lki_volume }}" label="Volume"></kct-input-number>
+                                                    <kct-input-number value="{{ day.input.lki_volume }}" label="Volume"  always-float-label></kct-input-number>
                                                 </div>
                                                 <div>
-                                                    <combo-unit value="{{ day.input.lki_unit }}" label="Satuan"></combo-unit>
+                                                    <combo-unit value="{{ day.input.lki_unit }}" label="Satuan"  always-float-label></combo-unit>
                                                 </div>
                                                 <div>
-                                                    <kct-input-number mask="#.###" value="{{ day.input.lki_cost }}" label="Biaya"></kct-input-number>
+                                                    <kct-input-number mask="#.###" value="{{ day.input.lki_cost }}" label="Biaya"  always-float-label></kct-input-number>
                                                 </div>
                                             </kct-column>
                                             <div class="m-t">
@@ -514,7 +523,7 @@
                                             <tbody>
                                                 <template is="dom-repeat" items="[[ day.items ]]">
                                                     <tr>
-                                                        <td class="text-center">[[ __computeNo(index) ]]</td>
+                                                        <td class="text-center">[[ __computeSequence(index) ]]</td>
                                                         <td class="text-center">
                                                             <paper-icon-button hidden$="[[ !record.perms.update ]]" icon="close" on-tap="__onRemoveItemTap" title="Hapus item"></paper-icon-button>
                                                         </td>
@@ -535,12 +544,12 @@
                                                                 </template>    
                                                             </div>
                                                         </td>
-                                                        <td>
-                                                            <kct-input-number mask="#.###,00" value="{{ item.lki_volume }}" on-change="__onItemValueChange" no-label-float></kct-input-number>
+                                                        <td class="editable">
+                                                            <kct-input-number mask="#.###" value="{{ item.lki_volume }}" placeholder="..." on-change="__onItemValueChange" no-label-float></kct-input-number>
                                                         </td>
                                                         <td class="text-center">[[ item.lki_unit ]]</td>
-                                                        <td>
-                                                            <kct-input-number mask="#.###" value="{{ item.lki_cost }}" on-change="__onItemValueChange" no-label-float></kct-input-number>
+                                                        <td class="editable">
+                                                            <kct-input-number mask="#.###" value="{{ item.lki_cost }}" placeholder="..." on-change="__onItemValueChange" no-label-float></kct-input-number>
                                                         </td>
                                                     </tr>
                                                 </template>
@@ -554,84 +563,29 @@
                     </kct-hbox>
 
                 </div>
-                <div class="page" name="pemeriksaan">
-                    
-                    <div class="form-section" style="margin-bottom: 30px;" hidden$="[[ !record.perms.exam ]]">
-                        <h3>Form Pemeriksaan</h3>
-                        <div>
-                            <kct-column columns="2">
-                                <div>
-                                    <kct-date-picker value="{{ exam.lke_date }}" label="Tanggal Pemeriksaan"></kct-date-picker>
-                                </div>
-                                <div>
-                                    <vaadin-combo-box 
-                                        label="Pejabat Pemeriksa" 
-                                        value="{{ exam.lke_examiner }}"
-                                        items="[[ examiners ]]" 
-                                        item-label-path="su_fullname" 
-                                        item-value-path="su_id">
-                                        <template>
-                                            <style>
-                                                .item-meta {
-                                                    font-size: 12px;
-                                                    color: #888;
-                                                }
-                                            </style>
-                                            <div class="item">
-                                                <div>[[ item.su_fullname ]]</div>
-                                                <div class="item-meta">[[ item.su_no ]] - [[ item.su_grade ]]</div>
-                                            </div>
-                                        </template>
-                                    </vaadin-combo-box>
-                                </div>
-                            </kct-column>
-
-                            <kct-combobox 
-                                url="/lkh/lkh-flags" 
-                                label="Tindakan" 
-                                value="{{ exam.lke_flag }}" 
-                                item-label-path="text" 
-                                item-value-path="name"></kct-combobox>
-
-                            <paper-input value="{{ exam.lke_notes }}" label="Catatan Pemeriksaan"></paper-input>
-
-                            <div class="m-t">
-                                <paper-button on-tap="__onAddExamTap" disabled$="[[ __computeExamValidation(exam.lke_date, exam.lke_examiner, exam.lke_flag) ]]" class="btn-blue">Tambahkan</paper-button>    
-                            </div>
-                        </div>
-                    </div>
-
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th style="width: 40px;">NO</th>
-                                <th style="width: 40px;">&nbsp;</th>
-                                <th style="width: 150px;">TANGGAL</th>
-                                <th style="width: 200px;">PEMERIKSA</th>
-                                <th>TINDAKAN</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <template is="dom-repeat" items="[[ exams ]]">
-                                <tr>
-                                    <td class="text-center">[[ __computeNo(index) ]]</td>
-                                    <td class="text-center">
-                                        <paper-icon-button hidden$="[[ !record.perms.exam ]]" on-tap="__onRemoveExamTap" title="Hapus jurnal pemeriksaan" icon="close"></paper-icon-button>
-                                    </td>
-                                    <td class="text-center">[[ item.lke_date_formatted ]]</td>
-                                    <td>[[ item.examiner_su_fullname ]]</td>
-                                    <td>
-                                        <span>[[ item.lke_flag_label ]]</span>&nbsp;
-                                        <span hidden$="[[ !item.lke_has_notes ]]">( [[ item.lke_notes ]] )</span>
-                                    </td>
-                                </tr>
-                            </template>
-                        </tbody>
-                    </table>
-
-                </div>
             </kct-pages>
         </div>
+
+        <kct-dialog id="exam-dialog" title="Pemeriksaan" width="400" height="100%" scrollable>
+            <template preserve-content>
+                <style include="theme-helper"></style>
+
+                <div slot="dialog-body">
+                    <kct-date-picker value="{{ examRecord.lke_date }}" label="Tanggal Pemeriksaan"></kct-date-picker>
+                    <kct-combobox 
+                        url="/lkh/lkh-flags" 
+                        label="Tindakan" 
+                        value="{{ examRecord.lke_flag }}" 
+                        item-label-path="text" 
+                        item-value-path="name"></kct-combobox>
+                    <paper-input value="{{ examRecord.lke_notes }}" label="Catatan Pemeriksaan"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onExamDialogSave">OK</paper-button>
+                    <paper-button on-tap="__onExamDialogCancel">BATAL</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
 
     </template>
     <script>
@@ -646,35 +600,25 @@
                     folders: { type: Array, value: () => ([]) },
                     folder: { type: String, value: '' },
                     days: { type: Array, value: () => ([]) },
-                    exams: { type: Array, value: () => ([]) },
-                    exam: { type: Object },
-                    examiners: { type: Array, value: () => ([]) }
+                    examRecord: { type: Object }
                 }
             }
 
             static get observers() {
                 return [
                     '__computeValidation(record.task.lkh_su_id, record.task.lkh_start_date, record.task.lkh_end_date)',
-                    '__computeSuperiors(record.task.lkh_su_id)',
-                    '__computeExaminers(record.task.lkh_evaluator, record.task.lkh_examiner)'
+                    '__computeSuperiors(record.task.lkh_su_id)'
                 ];
             }
 
             setup() {
 
-                if ( ! this.$['combo-examiner']) {
-                    this.$['combo-examiner'] = this.shadowRoot.querySelector('#combo-examiner');
-                }
-
-                if ( ! this.$['combo-evaluator']) {
-                    this.$['combo-evaluator'] = this.shadowRoot.querySelector('#combo-evaluator');
-                }
+                this.__registerComponent('combo-examiner');
+                this.__registerComponent('combo-evaluator');
 
                 if (this.action == 'create') {
 
-                    if ( ! this.$['combo-user']) {
-                        this.$['combo-user'] = this.shadowRoot.querySelector('#combo-user');
-                    }
+                    this.__registerComponent('combo-user');
 
                     this.set('page', 'dokumen');
                     this.$.tabs.notifyResize();
@@ -700,12 +644,13 @@
                     this.set('record.task.lkh_su_id', this.user.su_id);
                     this.set('record.task.lkh_su_fullname', this.user.su_fullname);
                     this.set('record.task.lkh_su_no', this.user.su_no);
-                    this.set('record.task.lkh_su_grade', this.user.su_grade);
+                    this.set('record.task.lkh_su_sg_name', this.user.su_sg_name);
                     this.set('record.task.lkh_su_sj_name', this.user.su_sj_name);
                     this.set('record.task.lkh_su_sdp_name', this.user.su_sdp_name);
 
                     this.set('days', []);
                     this.set('buttons', 'save');
+
                 } else {
                     let buttons = [];
 
@@ -715,7 +660,7 @@
                             this.set('record.perms.update_users', true);
                             this.set('record.perms.update_labels', true);
                             this.set('record.perms.remove', this.record.perms.update);
-                            this.set('record.perms.exam', false);
+                            this.set('record.perms.exam', [this.record.task.lkh_evaluator, this.record.task.lkh_examiner].indexOf(this.user.su_id) !== -1);
                             buttons = ['save', 'send', 'print'];
                             break;
                         case 'EXAM':
@@ -755,101 +700,31 @@
                     this.$['button-date'].max = this.record.task.lkh_end_date;
 
                     this.__loadDays();
-                    this.__loadExams();
-
-                    // initialize form exam
-                    this.__initExam();
                 }
 
                 this.__doLayout();
             }
 
             beforeSave(options) {
+                let promise = this.resolve({ success: true });
+
                 if (this.action == 'create') {
                     this.set('record.task.lkh_flag', 'TODO');
                 } else {
                     if (options.send) {
-                        if (this.record.task.lkh_flag == 'TODO') {
+
+                        let flag = this.record.task.lkh_flag;
+
+                        if (flag == 'TODO') {
                             this.set('record.task.lkh_flag', 'EXAM');
-                        } else if (this.record.task.lkh_flag == 'EXAM') {
-                            let flag = this.__computeFlag();
-                            if (flag) {
-                                this.set('record.task.lkh_flag', flag);
-                            }
+                        } else if (flag == 'EXAM' && this.record.perms.exam) {
+                            promise = this.__examine().then(exam => {
+                                return { success: exam };
+                            });
                         }
                     }
                 }
-                return this.resolve({ success: true });
-            }
-
-            __initExam() {
-                let today = moment();
-
-                this.set('exam', {
-                    lke_lkh_id: this.record.task.lkh_id,
-                    lke_date: today.format('YYYY-MM-DD'),
-                    lke_examiner: this.user.su_id,
-                    lke_flag: '',
-                    lke_notes: ''
-                });
-            }
-
-            __computeSuperiors(user) {
-                if (this.action == 'create' && user) {
-                    this.$.ajax.GET('/users/' + user + '/superiors').then(res => {
-                        if (res.success) {
-                            let data = (res.data || []);
-
-                            let evaluator = data.find(e => e.su_position == 'evaluator');
-                            let examiner = data.find(e => e.su_position == 'examiner');
-
-                            if (evaluator) {
-
-                                Object.keys(evaluator).forEach(k => {
-                                    this.set('record.task.evaluator_' + k, evaluator[k]);
-                                });
-
-                                this.set('record.task.lkh_evaluator', evaluator.su_id);
-                                this.__addAssignee(evaluator);
-                            }
-
-                            if (examiner) {
-                                
-                                Object.keys(examiner).forEach(k => {
-                                    this.set('record.task.examiner_' + k, examiner[k]);
-                                });
-
-                                this.set('record.task.lkh_examiner', examiner.su_id);
-                                this.__addAssignee(examiner);
-                            }
-                        }
-                    });
-                }
-            }
-
-            __computeExaminers(evaluator, examiner) {
-                let items = [], item;
-
-                if (evaluator) {
-                    items.push({
-                        su_id: this.record.task.lkh_evaluator,
-                        su_no: this.record.task.evaluator_su_no,
-                        su_fullname: this.record.task.evaluator_su_fullname,
-                        su_grade: this.record.task.evaluator_su_grade
-                    });
-                }
-
-                if (examiner) {
-                    items.push({
-                        su_id: this.record.task.lkh_examiner,
-                        su_no: this.record.task.examiner_su_no,
-                        su_fullname: this.record.task.examiner_su_fullname,
-                        su_grade: this.record.task.examiner_su_grade
-                    })
-                }
-
-                this.set('examiners', items);
-                this.set('record.perms.exam', [evaluator, examiner].indexOf(this.user.su_id) != -1 && this.record.task.lkh_flag == 'EXAM');
+                return promise;
             }
 
             __doLayout() {
@@ -873,173 +748,13 @@
                 }, 100);
             }
 
-            __computeNo(index) {
-                return index + 1;
-            }
-            
-            __loadDays() {
-                let payload = {
-                    params: {
-                        lkd_lkh_id: this.record.task.lkh_id    
-                    }
-                };
+            __examine() {
+                this.__examResolver = this.defer();
 
-                this.$.ajax.GET('/lkh/lkh-days', payload).then(res => {
-                    let days = res.data || [];
-                    this.set('days', days);
+                this.__initExamRecord();
+                this.$['exam-dialog'].open();
 
-                    // populate folders
-                    let folders = days.map(d => d.folder);
-                    this.set('folders', folders);
-
-                    // focus to folder
-                    if (folders.length) {
-
-                        folders.sort((a, b) => {
-                            return a.time - b.time;
-                        });
-
-                        let today;
-
-                        if (this.route.data.lkd_date) {
-                            today = this.route.data.lkd_date;
-                            this.set('route.data.lkd_date', null);
-                        } else {
-                            today = moment().format('YYYY-MM-DD');
-                        }
-                        
-                        let focus = folders.find(e => e.name == today);
-
-                        if ( ! focus) {
-                            focus = folders[folders.length - 1];
-                        }
-
-                        this.set('folder', focus.name);
-                    }
-
-                });
-            }
-
-            __loadExams() {
-                let payload = {
-                    params: {
-                        lke_lkh_id: this.record.task.lkh_id
-                    }
-                };
-
-                return this.$.ajax.GET('/lkh/lkh-exams', payload).then(res => {
-                    let exams = res.data || [];
-                    this.set('exams', exams);
-                });
-            }
-
-            __computeValidation(user, start, end) {
-                let valid = true;
-                
-                valid = valid && !!user;
-                valid = valid && !!start;
-                valid = valid && !!end;
-
-                this.set('invalid', !valid);
-            }
-
-            __computeItemValidation(desc) {
-                let valid = true;
-                valid = valid && !!desc;
-                return !valid;
-            }
-
-            __computeExamValidation(date, examiner, flag) {
-                let valid = true;
-
-                valid = valid && !!date;
-                valid = valid && !!examiner;
-                valid = valid && !!flag;
-
-                return !valid;
-            }
-
-            __addDay(date) {
-                let data = {
-                    lkd_lkh_id: this.record.task.lkh_id,
-                    lkd_date: date
-                };
-
-                this.$.ajax.POST('/lkh/lkh-days', data).then(res => {
-                    if (res.success) {
-                        let data = res.data;
-                        this.push('days', data);
-
-                        // create folder
-                        let folders = (this.folders || []).slice();
-                        
-                        folders.push(data.folder);
-                        
-                        folders.sort((a, b) => {
-                            return a.time - b.time;
-                        });
-
-                        this.set('folders', folders);
-                        this.set('folder', data.lkd_date);
-                    }
-                });
-            }
-
-            __addDayItem(input, dayIndex) {
-                
-                this.set('days.' + dayIndex + '.input', {});
-                this.set('days.' + dayIndex + '.lkd_busy', true);
-
-                if (input.lki_desc) {
-                    
-                    let dayRecord = this.get('days.' + dayIndex);
-
-                    if (/lorem/.test(input.lki_desc)) {
-                        input.lki_desc = 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua';
-                    }
-
-                    input.lki_lkd_id = dayRecord.lkd_id;
-
-                    let options = {};
-
-                    if (this.socketSession) {
-                        options.headers = {
-                            'X-Socket-Session': this.socketSession
-                        };
-                    }
-
-                    this.$.ajax.POST('/lkh/lkh-items', input, options).then(res => {
-                        if (res.success) {
-                            let data = res.data;
-                            this.push('days.' + dayIndex + '.items', data);
-                            this.trigger('after-update');
-                        }
-
-                        this.set('days.' + dayIndex + '.lkd_busy', false);
-
-                    });
-                }
-            }
-
-            __saveItem(item) {
-                if ( ! this.record.perms.update) {
-                    return;
-                }
-                this.$.ajax.PUT('/lkh/lkh-items/' + item.lki_id, item);
-            }
-
-            __computeFlag() {
-                let exams = (this.exams || []).slice();
-
-                exams.sort((a, b) => {
-                    let va = +a.lke_id;
-                    let vb = +b.lke_id;
-
-                    return vb - va;
-                });
-
-                let flag = exams.shift();
-                return flag ? flag.lke_flag : null;
+                return this.__examResolver.promise;
             }
 
             __onButtonDateChange(e) {
@@ -1152,13 +867,13 @@
 
                 if (user) {
                     this.set('record.task.lkh_su_no', user.su_no);
-                    this.set('record.task.lkh_su_grade', user.su_grade);
+                    this.set('record.task.lkh_su_sg_name', user.su_sg_name);
                     this.set('record.task.lkh_su_sdp_name', user.su_sdp_name);
                     this.set('record.task.lkh_su_sj_name', user.su_sj_name);
 
                 } else {
                     this.set('record.task.lkh_su_no', '');
-                    this.set('record.task.lkh_su_grade', '');
+                    this.set('record.task.lkh_su_sg_name', '');
                     this.set('record.task.lkh_su_sdp_name', '');
                     this.set('record.task.lkh_su_sj_name', '');
                 }
@@ -1169,7 +884,7 @@
 
                 if (user) {
                     this.set('record.task.examiner_su_no', user.su_no);
-                    this.set('record.task.examiner_su_grade', user.su_grade);
+                    this.set('record.task.examiner_su_sg_name', user.su_sg_name);
                     this.set('record.task.examiner_su_sdp_name', user.su_sdp_name);
                     this.set('record.task.examiner_su_sj_name', user.su_sj_name);
 
@@ -1177,7 +892,7 @@
 
                 } else {
                     this.set('record.task.examiner_su_no', '');
-                    this.set('record.task.examiner_su_grade', '');
+                    this.set('record.task.examiner_su_sg_name', '');
                     this.set('record.task.examiner_su_sdp_name', '');
                     this.set('record.task.examiner_su_sj_name', '');
                 }
@@ -1188,7 +903,7 @@
                 
                 if (user) {
                     this.set('record.task.evaluator_su_no', user.su_no);
-                    this.set('record.task.evaluator_su_grade', user.su_grade);
+                    this.set('record.task.evaluator_su_sg_name', user.su_sg_name);
                     this.set('record.task.evaluator_su_sdp_name', user.su_sdp_name);
                     this.set('record.task.evaluator_su_sj_name', user.su_sj_name);
 
@@ -1196,21 +911,9 @@
 
                 } else {
                     this.set('record.task.evaluator_su_no', '');
-                    this.set('record.task.evaluator_su_grade', '');
+                    this.set('record.task.evaluator_su_sg_name', '');
                     this.set('record.task.evaluator_su_sdp_name', '');
                     this.set('record.task.evaluator_su_sj_name', '');
-                }
-            }
-
-            __onComboPresenceChange(e) {
-                let presence = e.target.getModelForValue(e.target.value);
-
-                if (presence) {
-                    this.set('record.task.lkh_date', presence.tpr_date);
-                    this.set('record.task.lkh_date_formatted', presence.tpr_date_formatted);
-                } else {
-                    this.set('record.task.lkh_date', null);
-                    this.set('record.task.lkh_date_formatted', null);
                 }
             }
 
@@ -1235,6 +938,7 @@
                                 let data = {
                                     lki_lkd_id: dayRecord.lkd_id,
                                     lki_desc: item.lki_desc,
+                                    lki_date: dayRecord.lkd_date,
                                     lki_volume: 1,
                                     lki_unit: 'dokumen',
                                     lki_cost: null,
@@ -1280,10 +984,37 @@
                 this.__saveItem(e.model.item);
             }
 
-            __onAddExamTap() {
-                let payload = Object.assign({}, this.exam);
+            __onSocketNotify(e) {
+                let payload = e.detail;
+                let project = this.project && this.project.sp_id;
+                let task = this.record && this.record.task && this.record.task.lkh_id;
 
-                this.__initExam();
+                if (project == payload.project && task == payload.task) {
+                    switch(payload.type) {
+                        case 'create_lkh_item':
+                            let json = JSON.parse(payload.data || '{}');
+                            let dayIndex = (this.days || []).findIndex(elem => elem.lkd_date == json.lki_date);
+                            
+                            if (dayIndex !== -1) {
+                                this.$.ajax.GET('/lkh/lkh-items', {
+                                    params: {
+                                        lki_lkd_id: this.get('days.' + dayIndex + '.lkd_id')
+                                    }
+                                }).then(res => {
+                                    let items = res.data || [];
+                                    this.set('days.' + dayIndex + '.items', items);
+                                });
+                            }
+
+                            break;
+                    }
+                }
+            }
+
+            __onExamDialogSave() {
+                this.$['exam-dialog'].close();
+
+                let payload = Object.assign({}, this.examRecord);
 
                 if (payload.lke_id) {
                     this.$.ajax.PUT('/lkh/lkh-exams/' + payload.lke_id, payload).then(done.bind(this));
@@ -1293,47 +1024,15 @@
 
                 function done(res) {
                     if (res.success) {
-                        this.__loadExams();
+                        this.set('record.task.lkh_flag', res.data.lke_flag);
+                        this.__examResolver.resolve(true);
                     }
                 }
             }
 
-            __onRemoveExamTap(e) {
-                this.confirm('Konfirmasi', 'Hapus jurnal pemeriksaan?').then(y => {
-                    if (y) {
-                        this.$.ajax.DELETE('/lkh/lkh-exams/' + e.model.item.lke_id).then(res => {
-                            this.__loadExams();
-                        });
-                    }
-                });
-            }
-
-            __onSocketNotify(e) {
-                let payload = e.detail;
-
-                if (payload.type == 'add_task') {
-                    let project = this.project && this.project.sp_id;
-                    let task = this.record && this.record.task && this.record.task.lkh_id;
-
-                    if (project == payload.project && task == payload.task) {
-                        let json = JSON.parse(payload.data || '{}');
-
-                        let dayIndex = (this.days || []).findIndex(elem => {
-                            return elem.lkd_date == json.date;
-                        });
-
-                        if (dayIndex !== -1) {
-                            this.$.ajax.GET('/lkh/lkh-items', {
-                                params: {
-                                    lki_lkd_id: this.get('days.' + dayIndex + '.lkd_id')
-                                }
-                            }).then(res => {
-                                let items = res.data || [];
-                                this.set('days.' + dayIndex + '.items', items);
-                            });
-                        }
-                    }
-                }
+            __onExamDialogCancel() {
+                this.$['exam-dialog'].close();
+                this.__examResolver.resolve(false);
             }
         }
         customElements.define(FormLkh.is, FormLkh);

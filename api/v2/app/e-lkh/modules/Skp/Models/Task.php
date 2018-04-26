@@ -14,7 +14,6 @@ class Task extends Skp implements \App\Tasks\Interfaces\TaskModel {
         
         parent::initialize();
 
-
         $this->hasMany(
             'skp_id',
             'App\Skp\Models\TaskStatus',
@@ -116,6 +115,44 @@ class Task extends Skp implements \App\Tasks\Interfaces\TaskModel {
         }
     }
 
+    public function afterUpdate() {
+        $snapshot = $this->__snapshot;
+
+        if (is_array($snapshot) && ! is_null($snapshot['skp_id'])) {
+            $changes = array(
+                'objection',
+                'response',
+                'resolution'
+            );
+
+            foreach($changes as $name) {
+                $prop = 'skp_'.$name;
+                if (isset($this->{$prop}) && ! empty($this->{$prop}) && $snapshot[$prop] != $this->{$prop}) {
+                    $log = Activity::log($name, array(
+                        'ta_task_ns' => $this->getScope(),
+                        'ta_task_id' => $this->skp_id,
+                        'ta_sp_id' => $this->skp_task_project
+                    ));
+                    if ($log) {
+                        $log->subscribe();
+                        $log->broadcast();
+                    }    
+                }
+            }
+        }
+    }
+
+    public function afterFetch() {
+        $snapshot = array(
+            'skp_id' => isset($this->skp_id) ? $this->skp_id : NULL,
+            'skp_objection' => isset($this->skp_objection) && ! empty($this->skp_objection) ? trim($this->skp_objection) : NULL,
+            'skp_response' => isset($this->skp_response) && ! empty($this->skp_response) ? trim($this->skp_response) : NULL,
+            'skp_resolution' => isset($this->skp_resolution) && ! empty($this->skp_resolution) ? trim($this->skp_resolution) : NULL
+        );
+
+        $this->__snapshot = $snapshot;
+    }
+
     public function toArray($columns = NULL) {
         $data = parent::toArray($columns);
         
@@ -141,14 +178,21 @@ class Task extends Skp implements \App\Tasks\Interfaces\TaskModel {
         $this->__loggable = TRUE;
     }
 
-    public function getLink() {
+    public function getLink($absolute = FALSE) {
         $stat = $this->getCurrentStatuses()->getFirst();
+        $link = NULL;
 
         if ($stat) {
-            return '/worksheet/'.$this->project->sp_name.'/task/update/'.$stat->sks_id;
-        } else {
-            return NULL;
+            $link = 'worksheet/'.$this->project->sp_name.'/task/update/'.$stat->sks_id;
+
+            if ($absolute) {
+                $link = \Micro\App::getDefault()->url->getClientUrl().$link;
+            } else {
+                $link = '/'.$link;
+            }
         }
+        
+        return $link;
     }
 
     public function getCurrentStatuses() {
@@ -204,12 +248,12 @@ class Task extends Skp implements \App\Tasks\Interfaces\TaskModel {
 
         if (count($created) > 0) {
             $users = array();
-
+            
             foreach($created as $e) {
                 $r = new TaskUser();
 
                 $r->sku_skp_id = $this->skp_id;
-                $r->skp_su_id = $e['su_id'];
+                $r->sku_su_id = $e['su_id'];
                 $r->save();
 
                 $users[] = array(
@@ -312,7 +356,7 @@ class Task extends Skp implements \App\Tasks\Interfaces\TaskModel {
             $data['su_id'] = $user->su_id;
             $data['su_avatar_thumb'] = $user->getAvatarThumb();
             $data['su_fullname'] = $user->su_fullname;
-            $data['su_grade'] = $user->su_grade;
+            $data['su_sg_name'] = $user->getGradeName();
             $data['su_no'] = $user->su_no;
 
             return $data;

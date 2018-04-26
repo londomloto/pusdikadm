@@ -125,8 +125,8 @@
                 return this.$.form ? this.$.form.beforeSave(options) : this.resolve({ success: true });
             }
 
-            afterSave(response) {
-                return this.$.form ? this.$.form.afterSave(response) : this.resolve({ success: true });
+            afterSave(response, options) {
+                return this.$.form ? this.$.form.afterSave(response, options) : this.resolve({ success: true });
             }
 
             beforeRemove() {

@@ -123,7 +123,7 @@
                 let worksheet = this.projectRecord && this.projectRecord.sp_worksheet_id;
 
                 if (worksheet) {
-                    this.__resolveWorksheet(worksheet, this.project.sp_id).then(record => {
+                    this.__resolveWorksheet(worksheet, this.projectRecord.sp_id).then(record => {
                         
                         record = Object.assign({}, record);
 
@@ -309,8 +309,11 @@
                 let project = this.projectRecord && this.projectRecord.sp_id;
 
                 if (project && project == payload.project) {
-                    if (payload.type == 'update_status') {
-                        this.reload();
+                    switch(payload.type) {
+                        case 'update_status':
+                        case 'activation':
+                            this.reload();
+                            break;
                     }
                 }
             }

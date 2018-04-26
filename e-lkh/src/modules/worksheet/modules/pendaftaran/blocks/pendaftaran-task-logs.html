@@ -70,10 +70,10 @@
                                 </div>
                                 <div class="comment-body">
                                     <div class="comment-view" hidden$="[[ item.ta_editing ]]">
-                                        <kct-html html="[[ item.ta_text ]]"></kct-html>    
+                                        <kct-html html="[[ item.ta_comment_formatted ]]"></kct-html>    
                                     </div>
                                     <div class="comment-edit" hidden$="[[ !item.ta_editing ]]">
-                                        <kct-html-editor value="{{ item.ta_data }}"></kct-html-editor>
+                                        <kct-html-editor value="{{ item.ta_comment }}"></kct-html-editor>
                                     </div>
                                 </div>
                                 <div class="comment-footer" hidden$="[[ item.ta_editing ]]">
@@ -83,8 +83,8 @@
                                     <div class="clearfix"></div>
                                 </div>
                                 <div class="comment-footer" hidden$="[[ !item.ta_editing ]]">
-                                    <paper-button on-tap="__onSaveCommentTap"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
-                                    <label>&nbsp;&nbsp;or&nbsp;&nbsp;<a href="javascript:void(0)" on-tap="__onCancelEditCommentTap">cancel editing</a></label>
+                                    <paper-button on-tap="__onSaveCommentTap"><iron-icon icon="done"></iron-icon>&nbsp;Simpan</paper-button>
+                                    <label>&nbsp;&nbsp;or&nbsp;&nbsp;<a href="javascript:void(0)" on-tap="__onCancelEditCommentTap">batal</a></label>
                                     <div class="clearfix"></div>
                                 </div>
                             </div>

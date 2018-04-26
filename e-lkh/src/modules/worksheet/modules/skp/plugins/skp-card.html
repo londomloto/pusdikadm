@@ -15,11 +15,6 @@
             .item .box-body > * {
                 pointer-events: none;
             }
-            .item .box-title,
-            .item .box-content {
-                color: var(--paper-blue-grey-500);
-                margin-bottom: 5px;
-            }
             .item .box-foot {
                 padding: 5px 5px;
                 font-size: 11px;
@@ -30,18 +25,26 @@
                 --iron-icon-height: 16px;
                 position: relative;
             }
+            .item .box-title,
+            .item .box-content {
+                color: var(--paper-blue-grey-500);
+            }
+            .item .separator {
+                margin: 5px 0;
+                border-top: 1px solid #f2f2f2;
+            }
+            .item-logo {
+                width: 36px;
+                height: 36px;
+                border-radius: 3px;
+                position: relative;
+                overflow: hidden;
+                margin-right: 10px;
+            }
             .item .box-user {
                 position: absolute;
                 right: 10px;
                 bottom: 6px;
-            }
-            .item-logo {
-                width: 30px;
-                height: 30px;
-                border-radius: 50%;
-                position: relative;
-                overflow: hidden;
-                margin-right: 10px;
             }
             .item-user {
                 position: relative;
@@ -52,34 +55,27 @@
                 float: left;
                 margin-left: 2px;
             }
-            
             .item-prop {
                 font-size: 12px;
-                font-weight: 500;
             }
             .item-prop iron-icon {
-                --iron-icon-width: 16px;
-                --iron-icon-height: 16px;
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
                 position: relative;
                 top: -2px;
             }
             .item-badge {
                 font-size: 11px;
-                font-weight: 500;
                 text-transform: none;
                 padding: 3px 5px;
                 margin: 0;
                 float: left;
             }
             .item-title {
-                font-weight: 500;
-                color: var(--paper-blue-grey-500);
-                font-size: 15px;
-            }
-            .item-subtitle {
-                font-size: 12px;
-                color: var(--paper-blue-grey-500);
-                font-weight: 500;
+                font-weight: 600;
+                color: var(--paper-blue-500);
+                font-size: 14px;
+                margin-bottom: 5px;
             }
             .item-content {
                 color: var(--paper-blue-grey-500);
@@ -88,8 +84,8 @@
                 font-size: 12px;
             }
             .item-content iron-icon {
-                --iron-icon-width: 16px;
-                --iron-icon-height: 16px;
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
                 position: relative;
                 top: -1px;
             }
@@ -104,14 +100,13 @@
             }
             .item-meta {
                 font-size: 11px;
-                font-weight: 300;
-                color: #999;
+                color: #888;
             }
-            .item-meta b {
-                font-weight: 500;
-            }
-            .box-label {
-                margin: 5px 0;
+            .item-meta iron-icon {
+                --iron-icon-width: 14px;
+                --iron-icon-height: 14px;
+                position: relative;
+                top: -1px;
             }
             .item-label {
                 font-size: 11px;
@@ -148,19 +143,19 @@
                 <kct-hbox>
                     <div>
                         <div class="item-logo">
-                            <img src$="[[ record.task.skp_su_avatar_thumb ]]&w=30&h=30" alt=" ">
+                            <img src$="[[ record.task.skp_su_avatar_thumb ]]&w=36&h=36" alt=" ">
                         </div>
                     </div>
                     <div class="flex">
                         <div class="box-title">
-                            <h3 class="item-title">[[ record.task.skp_su_fullname ]]</h3>   
+                            <h3 class="item-title" style$="color: [[ accent ]]">[[ record.task.skp_su_fullname ]]</h3>   
                         </div>
                         <div class="box-content">
-                            <div class="item-prop">
+                            <!-- <div class="item-prop">
                                 <iron-icon icon="perm-identity"></iron-icon>&nbsp;NIP. [[ record.task.skp_su_no ]]    
-                            </div>
+                            </div> -->
                             <div class="item-prop">
-                                <iron-icon icon="today"></iron-icon>&nbsp;SKP [[ record.task.skp_period ]]    
+                                <iron-icon icon="today"></iron-icon>&nbsp;[[ record.task.skp_period ]]    
                             </div>
                         </div>
                         <div class="box-label">

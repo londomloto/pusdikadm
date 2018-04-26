@@ -66,6 +66,30 @@ class Task extends \App\Users\Models\User implements \App\Tasks\Interfaces\TaskM
                 'alias' => 'Project'
             )
         );
+
+        $this->hasMany(
+            'su_id',
+            'App\Registration\Models\TaskUser',
+            'tru_task',
+            array(
+                'alias' => 'TaskUsers',
+                'foreignKey' => array(
+                    'action' => Relation::ACTION_CASCADE
+                )
+            )
+        );
+
+        $this->hasManyToMany(
+            'su_id',
+            'App\Registration\Models\TaskUser',
+            'tru_task',
+            'tru_user',
+            'App\Users\Models\User',
+            'su_id',
+            array(
+                'alias' => 'Users'
+            )
+        );
     }
 
     public function getScope() {
@@ -75,6 +99,20 @@ class Task extends \App\Users\Models\User implements \App\Tasks\Interfaces\TaskM
     public function afterCreate() {
         if ($this->__loggable) {
             $log = Activity::log('create', array(
+                'ta_task_ns' => $this->getScope(),
+                'ta_task_id' => $this->su_id,
+                'ta_sp_id' => $this->su_task_project
+            ));
+
+            if ($log) {
+                $log->subscribe();
+            }
+        }
+    }
+    
+    public function beforeDelete() {
+        if ($this->__loggable) {
+            $log = Activity::log('delete', array(
                 'ta_task_ns' => $this->getScope(),
                 'ta_task_id' => $this->su_id,
                 'ta_sp_id' => $this->su_task_project
@@ -98,6 +136,8 @@ class Task extends \App\Users\Models\User implements \App\Tasks\Interfaces\TaskM
             $data['creator_su_avatar_thumb'] = $this->creator->getAvatarThumb();
         }
 
+        $data['su_task_link'] = $this->getLink();
+
         return $data;
     }
 
@@ -112,15 +152,22 @@ class Task extends \App\Users\Models\User implements \App\Tasks\Interfaces\TaskM
     public function getTitle() {
         return $this->getName();
     }
-
-    public function getLink() {
+    
+    public function getLink($absolute = FALSE) {
         $stat = $this->getCurrentStatuses()->getFirst();
+        $link = NULL;
 
         if ($stat) {
-            return '/worksheet/'.$this->project->sp_name.'/task/update/'.$stat->tus_id;
-        } else {
-            return NULL;
+            $link = 'worksheet/'.$this->project->sp_name.'/task/update/'.$stat->tus_id;
+
+            if ($absolute) {
+                $link = \Micro\App::getDefault()->url->getClientUrl().$link;
+            } else {
+                $link = '/'.$link;
+            }
         }
+        
+        return $link;
     }
 
     public function getCurrentStatuses() {
@@ -202,6 +249,93 @@ class Task extends \App\Users\Models\User implements \App\Tasks\Interfaces\TaskM
                 $log->subscribe();
             }
         }
+    }
+
+    public function saveUsers($post) {
+        $created = array();
+        $updated = array();
+        $current = array();
+
+        foreach($this->getUsers() as $user) {
+            $current[$user->su_id] = array(
+                'su_id' => $user->su_id,
+                'su_fullname' => $user->getName()
+            );
+        }
+
+        foreach($post as $e) {
+            if (isset($current[$e['su_id']])) {
+                $updated[] = $e;
+                unset($current[$e['su_id']]);
+            } else {
+                $created[] = $e;
+            }
+        }
+
+        $removed = array_values(array_keys($current));
+
+        if (count($removed) > 0) {
+            TaskUser::get()
+                ->inWhere('tru_user', $removed)
+                ->andWhere('tru_task = :task:', array('task' => $this->su_id))
+                ->execute()
+                ->delete();
+
+            $users = array_values($current);
+
+            $log = Activity::log('remove_user', array(
+                'ta_task_ns' => $this->getScope(),
+                'ta_sp_id' => $this->su_task_project,
+                'ta_task_id' => $this->su_id,
+                'ta_data' => json_encode($users)
+            ));
+
+            if ($log) {
+                $log->subscribe();
+            }
+        }
+
+        if (count($created) > 0) {
+            $users = array();
+
+            foreach($created as $e) {
+                $r = new TaskUser();
+
+                $r->tru_task = $this->su_id;
+                $r->tru_user = $e['su_id'];
+                $r->save();
+
+                $users[] = array(
+                    'su_id' => $e['su_id'],
+                    'su_fullname' => $e['su_fullname']
+                );
+            }
+
+            $log = Activity::log('add_user', array(
+                'ta_task_ns' => $this->getScope(),
+                'ta_sp_id' => $this->su_task_project,
+                'ta_task_id' => $this->su_id,
+                'ta_data' => json_encode($users)
+            ));
+
+            if ($log) {
+                $log->subscribe();
+            }
+        }
+    }
+
+    public function getAssignee() {
+        return $this->getUsers()->filter(function($user){
+            $data = array();
+            
+            $data['su_id'] = $user->su_id;
+            $data['su_avatar_thumb'] = $user->getAvatarThumb();
+            $data['su_fullname'] = $user->su_fullname;
+            $data['su_sg_name'] = $user->getGradeName();
+            $data['su_no'] = $user->su_no;
+            
+            return $data;
+        });
     }
 
     public function forward() {

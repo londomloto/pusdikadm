@@ -89,12 +89,23 @@ Router::group(array(
 ->post('/send', 'send')
 ->post('/trash', 'trash');
 
+// SKP
+
 Router::group(array(
     'prefix' => '/skp',
     'handler' => 'App\Skp\Controllers\SkpController',
     'middleware' => 'auth'
 ))
+->get('/observable-users', 'observableUsers')
+->get('/grouped-statuses', 'groupedStatuses')
 ->post('/{id}/save-behaviors', 'saveBehaviors');
+
+Router::group(array(
+    'prefix' => '/skp/skp-items',
+    'handler' => 'App\Skp\Controllers\SkpItemsController',
+    'middleware' => 'auth'
+))
+->post('/save-batch', 'saveBatch');
 
 Router::group(array(
     'prefix' => '/skp/print',
@@ -102,7 +113,24 @@ Router::group(array(
     'middleware' => 'auth'
 ))
 ->post('/document/{format}/{id}', 'document')
-->post('/report/{format}', 'report');
+->post('/report/{format}', 'report')
+->post('/database/{format}', 'database')
+->post('/database-items/{format}', 'databaseItems')
+->post('/dashboard/{format}', 'dashboard');
+
+Router::group(array(
+    'prefix' => '/skp/dashboard',
+    'handler' => 'App\Skp\Controllers\DashboardController',
+    'middleware' => 'auth'
+))
+->post('/save', 'save');
+
+Router::group(array(
+    'prefix' => '/skp/live',
+    'handler' => 'App\Skp\Controllers\LiveController',
+    'middleware' => 'auth'
+))
+->post('/alert', 'alert');
 
 // MODULE: LKH
 
@@ -160,3 +188,23 @@ Router::group(array(
     'middleware' => 'auth'
 ))
 ->post('/save', 'save');
+
+// REGIS
+Router::group(array(
+    'prefix' => '/registration',
+    'handler' => 'App\Registration\Controllers\RegistrationController',
+    'middleware' => 'auth'
+))
+->get('/observable-users', 'observableUsers')
+->get('/grouped-statuses', 'groupedStatuses');
+
+Router::group(array(
+    'prefix' => '/registration/print',
+    'handler' => 'App\Registration\Controllers\PrintController',
+    'middleware' => 'auth'
+))
+->post('/document/{id}/{format}', 'document')
+->post('/report/{format}', 'report')
+->post('/database/{format}', 'database')
+->post('/database-items/{format}', 'databaseItems')
+->post('/dashboard/{format}', 'dashboard');

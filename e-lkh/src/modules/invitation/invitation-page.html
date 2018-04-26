@@ -59,7 +59,7 @@
             .form-action paper-button {
                 margin: 0;
                 display: block;
-                background-color: var(--paper-blue-500);
+                background-color: var(--paper-green-500);
                 color: #fff;
                 font-size: 18px;
                 text-transform: none;
@@ -95,6 +95,7 @@
                 
                 <paper-input value="{{ record.su_email }}" type="email" label="Alamt email Anda" readonly required auto-validate error-message="Valid email address is required"></paper-input>
                 <paper-input value="{{ record.su_fullname }}" label="Nama lengkap Anda" required auto-validate error-message="Nama lengkap wajib diisi"></paper-input>
+                <paper-input value="{{ record.su_no }}" label="No. Induk Pegawai" required auto-validate error-message="Nama lengkap wajib diisi"></paper-input>
                 <paper-input value="{{ password1 }}" type="password" label="Password" minlength="8" required auto-validate error-message="Password wajib diisi (min. 8 huruf)"></paper-input>
                 <paper-input id="password2" value="{{ password2 }}" type="password" label="Konfirmasi password"></paper-input>
 
@@ -230,21 +231,14 @@
 
                 this.$.ajax.POST('/users/activate', data).then(res => {
                     if (res.success) {
+                        this.$.auth.logout();
 
-                        this.$.feed.notify({
-                            title: 'Pendaftaran',
-                            body: data.su_fullname + ' baru saja melakukan aktivasi pendaftaran'
-                        }).then(() => {
-                            // logout any active user
-                            this.$.auth.logout();
-
-                            this.$.auth.login(data.su_email, data.password, false, false).then((user) => {
-                                this.unmask();
-                                if (user) {
-                                    this.set('__activated', true);
-                                    this.__redirecting(res.data.redir);
-                                }
-                            });
+                        this.$.auth.login(data.su_email, data.password, false, false).then((user) => {
+                            this.unmask();
+                            if (user) {
+                                this.set('__activated', true);
+                                this.__redirecting(res.data.redir);
+                            }
                         });
                         
                     } else {

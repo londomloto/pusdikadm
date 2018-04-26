@@ -35,12 +35,16 @@
             .item.unread {
                 background-color: #edf2fa;
             }
-            .item.warning .icon {
-                color: var(--paper-red-500);
-            }
+            .item.warning .icon,
             .item.alert .icon {
                 color: var(--paper-red-500);
             }
+            .item.objection .icon,
+            .item.response .icon,
+            .item.resolution .icon {
+                color: var(--paper-amber-700);
+            }
+
             .item:hover:not(.unread) {
                 background-color: var(--paper-grey-100);
             }
@@ -285,6 +289,14 @@
             __onItemTap(e) {
                 let item = e.model.item;
                 if (item.ta_link) {
+                    
+                    if (item.ta_type == 'create_lkh_item') {
+                        let payload = JSON.parse(item.ta_data || '{}');
+                        if (payload.lki_date) {
+                            this.set('route.data.lkd_date', payload.lki_date);
+                        }
+                    }
+
                     this.set('route.path', item.ta_link);
                 }
                 if (item.ta_unread) {
@@ -312,8 +324,23 @@
                 });
             }
 
-            __onSocketNotify() {
-                this.__load({ start: 0 });
+            __onSocketNotify(e) {
+                let payload = e.detail;
+                
+                if (payload.type) {
+                    
+                    let excludes = [
+                        'update_skp_item',
+                        'remove_skp_item',
+                        'update_skp_behavior'
+                    ];
+
+                    if (excludes.indexOf(payload.type) === -1) {
+                        this.__load({ start: 0 });
+                    }
+                } else {
+                    this.__load({ start: 0 });    
+                }
             }
 
             __onLoadMoreTap() {

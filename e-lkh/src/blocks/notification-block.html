@@ -80,11 +80,14 @@
                 --iron-icon-width: 24px;
                 --iron-icon-height: 24px;
             }
-            .item.item-warning .icon {
-                color: var(--paper-red-500);
-            }
+            .item.item-warning .icon,
             .item.item-alert .icon {
                 color: var(--paper-red-500);
+            }
+            .item.item-objection .icon,
+            .item.item-response .icon,
+            .item.item-resolution .icon {
+                color: var(--paper-amber-700);
             }
             .time {
                 font-size: 11px;
@@ -313,6 +316,14 @@
 
                 if (item.ta_link) {
                     this.set('route.data.task', null);
+
+                    if (item.ta_type == 'create_lkh_item') {
+                        let payload = JSON.parse(item.ta_data || '{}');
+                        if (payload.lki_date) {
+                            this.set('route.data.lkd_date', payload.lki_date);
+                        }
+                    }
+                    
                     this.set('route.path', item.ta_link);
                 }
             }
@@ -326,7 +337,21 @@
             }
 
             __onSocketNotify(e) {
-                this.validate();
+                let payload = e.detail;
+                if (payload.type) {
+                    
+                    let excludes = [
+                        'update_skp_item',
+                        'remove_skp_item',
+                        'update_skp_behavior'
+                    ];
+
+                    if (excludes.indexOf(payload.type) === -1) {
+                        this.validate();
+                    }
+                } else {
+                    this.validate();    
+                }
             }
         }
         customElements.define(NotificationBlock.is, NotificationBlock);

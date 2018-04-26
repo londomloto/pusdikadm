@@ -24,6 +24,38 @@ class StatisticController extends \Micro\Controller {
         }
     }
 
+    private function __fetchUsers() {
+        static $observables;
+
+        $user = $this->request->getQuery('user');
+        $users = array();
+
+        if ($user) {
+            $users = array($user);
+        } else {
+            if ($this->role->can('manage@lkh')) {
+                $users = array();
+            } else {
+                if (is_null($observables)) {
+                    $observables = array();
+
+                    $module = $this->getDI()->get('App\Lkh\Controllers\LkhController', TRUE);
+                    $result = $module->observableUsersAction();
+
+                    if ($result->success) {
+                        foreach($result->data as $user) {
+                            $observables[] = $user['su_id'];
+                        }
+                    }    
+                }
+                
+                $users = $observables;
+            }    
+        }
+
+        return $users;
+    }
+
     private function __fetchDateRanges() {
         $start = $this->request->getQuery('start_date');
         $end = $this->request->getQuery('end_date');
@@ -43,7 +75,7 @@ class StatisticController extends \Micro\Controller {
     }
 
     private function __monitoringStat() {
-        $user = $this->request->getQuery('user');
+        $users = $this->__fetchUsers();
         $range = $this->__fetchDateRanges();
         $startDate = $range['start_date'];
         $endDate = $range['end_date'];
@@ -59,8 +91,8 @@ class StatisticController extends \Micro\Controller {
             ->andWhere('user.su_active = 1 AND user.su_incognito = 0')
             ->groupBy('user.su_id');
 
-        if ( ! empty($user)) {
-            $query->andWhere('user.su_id = :user:', array('user' => $user));
+        if (count($users) > 0) {
+            $query->inWhere('user.su_id', $users);
         }
 
         //print_r($query->getBuilder()->getQuery()->getSql());
@@ -87,13 +119,13 @@ class StatisticController extends \Micro\Controller {
                     'label' => 'Belum Isi',
                     'value' => $outstanding,
                     'total' => $total,
-                    'description' => 'Belum melakukan pengisian LKH'
+                    'description' => 'Pegawai yang belum isi LKH'
                 ),
                 array(
                     'label' => 'Sudah Isi',
                     'value' => $settled,
                     'total' => $total,
-                    'description' => 'Sudah melakukan pengisian LKH'
+                    'description' => 'Pegawai yang sudah isi LKH'
                 )
             );
         }
@@ -106,7 +138,7 @@ class StatisticController extends \Micro\Controller {
     }
 
     private function __statusStat() {
-        $user = $this->request->getQuery('user');
+        $users = $this->__fetchUsers();
         $range = $this->__fetchDateRanges();
 
         $startDate = $range['start_date'];
@@ -116,7 +148,7 @@ class StatisticController extends \Micro\Controller {
             ->alias('kanban_panel')
             ->columns(array(
                 "MAX(kanban_panel.kp_title) AS label",
-                "COUNT(task_status.lks_id) AS value",
+                "COUNT(task.lkh_id) AS value",
                 "CONCAT('Dokumen dalam', ' ', MAX(kanban_panel.kp_title)) AS description"
             ))
             ->join('App\Kanban\Models\KanbanSetting', 'kanban_setting.ks_id = kanban_panel.kp_ks_id', 'kanban_setting', 'LEFT')
@@ -130,8 +162,9 @@ class StatisticController extends \Micro\Controller {
 
         $conds = "task.lkh_id = task_status.lks_lkh_id";
 
-        if ( ! empty($user)) {
-            $conds = "task.lkh_id = task_status.lks_lkh_id AND task.lkh_su_id = $user";
+        if (count($users) > 0) {
+            $users = implode(',', $users);
+            $conds = "task.lkh_id = task_status.lks_lkh_id AND task.lkh_su_id IN ($users)";
         }
 
         $query
@@ -150,8 +183,9 @@ class StatisticController extends \Micro\Controller {
     }
 
     private function __volumeStat() {
-        $user = $this->request->getQuery('user');
+        $users = $this->__fetchUsers();
         $range = $this->__fetchDateRanges();
+
         $startDate = $range['start_date'];
         $endDate = $range['end_date'];
 
@@ -171,8 +205,9 @@ class StatisticController extends \Micro\Controller {
 
         $conds = "task.lkh_id = lkh_day.lkd_lkh_id";
 
-        if ( ! empty($user)) {
-            $conds = "task.lkh_id = lkh_day.lkd_lkh_id AND task.lkh_su_id = $user";
+        if (count($users) > 0) {
+            $users = implode(',', $users);
+            $conds = "task.lkh_id = lkh_day.lkd_lkh_id AND task.lkh_su_id IN ($users)";
         }
 
         $query
@@ -190,9 +225,9 @@ class StatisticController extends \Micro\Controller {
     }
 
     private function __costStat() {
-        $user = $this->request->getQuery('user');
-
+        $users = $this->__fetchUsers();
         $range = $this->__fetchDateRanges();
+
         $startDate = $range['start_date'];
         $endDate = $range['end_date'];
 
@@ -205,8 +240,8 @@ class StatisticController extends \Micro\Controller {
             ->join('App\Lkh\Models\Task', 'task.lkh_id = lkh_day.lkd_lkh_id', 'task', 'LEFT')
             ->andWhere("lkh_day.lkd_date BETWEEN '$startDate' AND '$endDate'");
 
-        if ( ! empty($user)) {
-            $query->andWhere('task.lkh_su_id = :user:', array('user' => $user));
+        if (count($users) > 0) {
+            $query->inWhere('task.lkh_su_id', $users);
         }
         
         $data = $query->execute()->filter(function($row){
@@ -225,7 +260,7 @@ class StatisticController extends \Micro\Controller {
     }
 
     private function __performanceStat() {
-        $user = $this->request->getQuery('user');
+        $users = $this->__fetchUsers();
         $range = $this->__fetchDateRanges();
 
         $startDate = $range['start_date'];
@@ -244,8 +279,8 @@ class StatisticController extends \Micro\Controller {
             )
             ->andWhere("lkh_day.lkd_date BETWEEN '$startDate' AND '$endDate'");
 
-        if ( ! empty($user)) {
-            $query->andWhere('task.lkh_su_id = :user:', array('user' => $user));
+        if (count($users) > 0) {
+            $query->inWhere('task.lkh_su_id', $users);
         }
 
         $result = $query->execute();
@@ -301,7 +336,7 @@ class StatisticController extends \Micro\Controller {
     }
 
     private function __productivityStat() {
-        $user = $this->request->getQuery('user');
+        $users = $this->__fetchUsers();
         $range = $this->__fetchDateRanges();
 
         $startDate = $range['start_date'];
@@ -317,8 +352,8 @@ class StatisticController extends \Micro\Controller {
             ->join('App\Lkh\Models\Task', 'task.lkh_id = lkh_day.lkd_lkh_id', 'task', 'LEFT')
             ->andWhere("lkh_day.lkd_date BETWEEN '$startDate' AND '$endDate'");
 
-        if ( ! empty($user)) {
-            $query->andWhere('task.lkh_su_id = :user:', array('user' => $user));
+        if (count($users) > 0) {
+            $query->inWhere('task.lkh_su_id', $users);
         }
 
         $groups = array(

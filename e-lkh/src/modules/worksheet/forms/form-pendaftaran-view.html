@@ -1,99 +1,96 @@
+<link rel="import" href="mixins/pendaftaran-behavior.html">
+
 <dom-module id="form-pendaftaran-view">
     <template>
         <style include="form-style"></style>
 
         <kct-ajax id="ajax"></kct-ajax>
-
+        
         <div class="section">
-            <h3 class="section-title">Data Peserta</h3>
+            <h3 class="section-title">Data Pegawai</h3>
             <div>
-                <paper-input label="Nama Lengkap *" value="{{ record.task.su_fullname }}" required auto-validate error-message="Nama lengkap wajib diisi"></paper-input>
-                <paper-input label="Jenis Kelamin" value="{{ record.task.su_sex }}"></paper-input>
-
                 <kct-column columns="2">
                     <div>
-                        <paper-input label="Tempat Lahir" value="{{ record.task.su_pob }}"></paper-input>
+                        <div class="form-display">
+                            <div class="label">Nama Lengkap</div>
+                            <div class="value">[[ record.task.su_fullname ]]&nbsp;</div>
+                        </div>
+                        <div class="form-display">
+                            <div class="label">Jenis Kelamin</div>
+                            <div class="value">[[ record.task.su_sex ]]&nbsp;</div>
+                        </div>
+                        <div class="form-display">
+                            <div class="label">Tempat Lahir</div>
+                            <div class="value">[[ record.task.su_pob ]]&nbsp;</div>
+                        </div>
+                        <div class="form-display">
+                            <div class="label">Tgl. Lahir</div>
+                            <div class="value">[[ record.task.su_dob_formatted ]]&nbsp;</div>
+                        </div>
+                        <div class="form-display">
+                            <div class="label">No. Telepon</div>
+                            <div class="value">[[ record.task.su_phone ]]&nbsp;</div>
+                        </div>
+                        
                     </div>
                     <div>
-                        <kct-date-picker label="Tanggal Lahir" value="{{ record.task.su_dob }}"></kct-date-picker>
+                        <div class="form-display">
+                            <div class="label">No. Induk Pegawai</div>
+                            <div class="value">[[ record.task.su_no ]]&nbsp;</div>
+                        </div>
+                        <div class="form-display">
+                            <div class="label">Pangkat / Gol. Ruang</div>
+                            <div class="value">[[ record.task.su_sg_name ]]&nbsp;</div>
+                        </div>
+                        <div class="form-display">
+                            <div class="label">Jabatan (Pekerjaan)</div>
+                            <div class="value">[[ record.task.su_sj_name ]]&nbsp;</div>
+                        </div>
+                        <div class="form-display">
+                            <div class="label">Unit Kerja</div>
+                            <div class="value">[[ record.task.su_sdp_name ]]&nbsp;</div>
+                        </div>
+                        <div class="form-display">
+                            <div class="label">Organisasi</div>
+                            <div class="value">[[ record.task.su_scp_name ]]&nbsp;</div>
+                        </div>
                     </div>
                 </kct-column>
-
-                <paper-input label="No. Induk Pagawai" value="{{ record.task.su_no }}"></paper-input>
-                <paper-input label="Pangkat / Gol. Ruang" value="{{ record.task.su_grade }}"></paper-input>
                 
-                <kct-combobox 
-                    url="/jobs" 
-                    label="Jabatan (Pekerjaan)" 
-                    value="{{ record.task.su_sj_id }}" 
-                    page-size="10" 
-                    item-label-path="sj_name" 
-                    item-value-path="sj_id"></kct-combobox>
-
-                <kct-combobox 
-                    url="/departments" 
-                    label="Unit Kerja" 
-                    value="{{ record.task.su_sdp_id }}" 
-                    page-size="10" 
-                    item-label-path="sdp_name" 
-                    item-value-path="sdp_id"></kct-combobox>
-                <kct-combobox 
-                    url="/company" 
-                    label="Organisasi" 
-                    value="{{ record.task.su_scp_id }}" 
-                    page-size="10" 
-                    item-label-path="scp_name" 
-                    item-value-path="scp_id"></kct-combobox>
-
+                
             </div>
         </div>
 
         <div class="section">
             <h3 class="section-title">Data Akun</h3>
             <div>
-                <paper-input type="email" label="Alamat Email *" value="{{ record.task.su_email }}" required auto-validate error-message="Alamat email harus valid"></paper-input>
-                <kct-combobox 
-                    url="/roles" 
-                    label="Group Akses (Role) *" 
-                    value="{{ record.task.su_sr_id }}" 
-                    page-size="10" 
-                    item-label-path="sr_name" 
-                    item-value-path="sr_id" 
-                    required 
-                    auto-validate 
-                    error-message="Group akses wajib diisi" 
-                    autoload></kct-combobox>
+                <div class="form-display">
+                    <div class="label">Alamat Email</div>
+                    <div class="value">[[ record.task.su_email ]]</div>
+                </div>
+                <div class="form-display">
+                    <div class="label">Group Akses (Role)</div>
+                    <div class="value">[[ record.task.sr_name ]]</div>
+                </div>
             </div>
         </div>
 
     </template>
     <script>
-        class FormPendaftaranView extends FormBase {
+        class FormPendaftaranView extends Mixins(FormBase).use(Mixins.PendaftaranBehavior) {
             static get is() {
                 return 'form-pendaftaran-view';
             }
 
-            static get observers() {
-                return [
-                    '__validationChanged(record.task.su_fullname, record.task.su_email, record.task.su_sr_id)'
-                ];
-            }
-
             initialize() {
-                this.set('buttons', 'save');
+                super.initialize();
+
+                this.set('invalid', false);
+                this.set('buttons', 'print');
                 
-                this.shadowRoot.querySelectorAll('kct-combobox[page-size]').forEach(c => c.load());
-                return this.resolve();
-            }
-
-            __validationChanged(fullname, email, role) {
-                let valid = true;
-
-                valid = valid && fullname;
-                valid = valid && email;
-                valid = valid && role;
-
-                this.set('invalid', !valid);
+                this.set('record.perms.update', false);
+                this.set('record.perms.update_labels', false);
+                this.set('record.perms.update_users', false);
             }
         }
         customElements.define(FormPendaftaranView.is, FormPendaftaranView);

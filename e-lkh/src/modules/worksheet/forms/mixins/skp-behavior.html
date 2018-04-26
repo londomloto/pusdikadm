@@ -6,28 +6,93 @@
 
         return class extends superclass {
 
-            __addAssignee(user) {
+            static get properties() {
+                return {
+                    behaviors: { type: Array, value: () => ([]) },
+                    criteria: { type: Array, value: () => ([]) }, 
+                    formats: {
+                        type: Object,
+                        value: () => ({
+                            FACTOR: '#.###,00',
+                            AK: '#.###,00',
+                            VOLUME: '#.###',
+                            QUALITY: '#.###,00',
+                            DURATION: '#.###',
+                            COST: '#.###',
+                            TOTAL: '#.###',
+                            PERFORMANCE: '#.###,00',
+                            BEHAVIOR: '#.###,00'
+                        })
+                    },
+                    examRecord: { type: Object, value: () => ({}) },
+                    detailRecord: { type: Object, value: () => ({}) },
+                    inputRecord: { 
+                        type: Object, 
+                        value: () => ({
+                            ski_extra: 0
+                        }) 
+                    }
+                };
+            }
 
-                if ( ! this.record.users) {
-                    this.set('record.users', []);
-                }
+            static get observers() {
+                return [
+                    '__computeValidation(record.task.skp_su_id, record.task.skp_start_date, record.task.skp_end_date)',
+                    '__computeSuperiors(record.task.skp_su_id)'
+                ];
+            }
 
-                let index = this.record.users.findIndex(e => {
-                    return e.su_id == user.su_id;
-                });
+            __computeValidation(user, startDate, endDate) {
+                let valid = true;
+                
+                valid = valid && !!user;
+                valid = valid && !!startDate;
+                valid = valid && !!endDate;
 
-                if (index === -1) {
-                    this.push('record.users', {
-                        su_id: user.su_id,
-                        su_fullname: user.su_fullname,
-                        su_avatar_thumb: user.su_avatar_thumb,
-                        su_grade: user.su_grade,
-                        su_no: user.su_no
+                this.set('invalid', !valid);
+            }
+
+            __computeSuperiors(user) {
+                if (this.action == 'create' && user) {
+                    this.$.ajax.GET('/users/' + user + '/superiors').then(res => {
+                        if (res.success) {
+                            let data = (res.data || []);
+
+                            let evaluator = data.find(e => e.su_position == 'evaluator');
+                            let examiner = data.find(e => e.su_position == 'examiner');
+
+                            if (evaluator) {
+
+                                Object.keys(evaluator).forEach(k => {
+                                    this.set('record.task.evaluator_' + k, evaluator[k]);
+                                });
+
+                                this.set('record.task.skp_evaluator', evaluator.su_id);
+                                this.__addAssignee(evaluator);
+                            }
+
+                            if (examiner) {
+                                
+                                Object.keys(examiner).forEach(k => {
+                                    this.set('record.task.examiner_' + k, examiner[k]);
+                                });
+
+                                this.set('record.task.skp_examiner', examiner.su_id);
+                                this.__addAssignee(examiner);
+                            }
+                        }
                     });
                 }
-
             }
-            
+
+            __computeSequence(index) {
+                return index + 1;
+            }
+
+            __computeInvaliditem(description) {
+                return !(!!description);
+            }
+
             __computeCriteria(value, mandatory = 1) {
                 if (mandatory == 0 && (value == '' || value === null)) {
                     return '';
@@ -45,7 +110,7 @@
                     }
                 }
 
-                return '';
+                return '?';
             }
 
             __computeItem(item, index) {
@@ -153,7 +218,9 @@
 
                 // summary item
                 let total = 0;
+                let totalFixed = 0;
                 let performance = 0;
+                let performanceFixed = 0;
 
                 if (item.ski_cost_real === null) {
                     total = (volumeTotal + qualityTotal + durationTotal);
@@ -163,12 +230,19 @@
                     performance = (total / 4);
                 }
 
+                totalFixed = Math.round(total);
+                performanceFixed = performance.toFixed(2);
+
+                if (volumeCounter === 0) {
+                    totalFixed = null;
+                    performanceFixed = null;
+                }
+
                 this.set('record.items.' + index + '.calculation.total', total);
                 this.set('record.items.' + index + '.calculation.performance', performance);
 
-                this.set('record.items.' + index + '.ski_total', Math.round(total));
-                this.set('record.items.' + index + '.ski_performance', performance.toFixed(2));
-
+                this.set('record.items.' + index + '.ski_total', totalFixed);
+                this.set('record.items.' + index + '.ski_performance', performanceFixed);
             }
 
             __computeSummary() {
@@ -227,8 +301,6 @@
                 this.set('record.task.skp_value', reportValue);
                 this.set('record.task.skp_criteria', reportCriteria);
                 this.set('record.task.skp_criteria_text', reportCriteria != '' ? '(' + reportCriteria + ')' : '');
-
-                this.__saveSummary();
             }
 
             __computeBehavior(item, index) {
@@ -270,7 +342,187 @@
                 this.set('record.task.skp_behavior_criteria_text', criteria ? '(' + criteria + ')' : '');
             }
 
+            __registerComponent(id) {
+                if ( ! this.$[id]) {
+                    this.$[id] = this.shadowRoot.querySelector('#' + id);
+                }
+            }
+
+            __initExamRecord() {
+                let today = moment();
+
+                this.set('examRecord', {
+                    ske_skp_id: this.record.task.skp_id,
+                    ske_examiner: this.user.su_id,
+                    ske_date: today.format('YYYY-MM-DD'),
+                    ske_flag: '',
+                    ske_notes: ''
+                });
+            }
+
+            __loadItems() {
+
+                let payload = {
+                    params: {
+                        ski_skp_id: this.record.task.skp_id
+                    }
+                };
+
+                this.set('record.items', []);
+                this.set('record.extra', []);
+
+                return this.$.ajax.GET('/skp/skp-items', payload).then(res => {
+                    
+                    if (res.success) {
+                        let items = res.data.filter(e => e.ski_extra == 0);
+                        let extra = res.data.filter(e => e.ski_extra == 1);
+
+                        this.set('record.items', items);
+                        this.set('record.extra', extra);
+                    }
+                });
+            }
+
+            __loadCriteria() {
+                return this.$.ajax.GET('/criteria').then(res => {
+                    this.set('criteria', res.data);
+                });
+            }
+
+            __loadBehaviors() {
+                let payload = {
+                    display: 'setup',
+                    skp: this.record.task.skp_id || ''
+                };
+
+                return this.$.ajax.GET('/skp/skp-behaviors', payload).then(res => {
+                    this.set('behaviors', res.data);
+                    return res;
+                });
+            }
+
+            __addAssignee(user) {
+
+                if ( ! this.record.users) {
+                    this.set('record.users', []);
+                }
+
+                let index = this.record.users.findIndex(e => {
+                    return e.su_id == user.su_id;
+                });
+
+                if (index === -1) {
+                    this.push('record.users', {
+                        su_id: user.su_id,
+                        su_fullname: user.su_fullname,
+                        su_avatar_thumb: user.su_avatar_thumb,
+                        su_sg_name: user.su_sg_name,
+                        su_no: user.su_no
+                    });
+                }
+
+            }
+
+            __addItem(payload) {
+                if (payload.ski_desc) {
+
+                    payload.ski_extra = payload.ski_extra === undefined ? 0 : payload.ski_extra;
+
+                    if (/lorem/.test(payload.ski_desc)) {
+                        payload.ski_desc = 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua';
+                    }
+
+                    payload = Object.assign({
+                        ski_skp_id: this.record.task.skp_id,
+                        ski_volume: null,
+                        ski_volume_real: null,
+                        ski_unit: null,
+                        ski_cost: null,
+                        ski_cost_real: null,
+                        ski_quality: null,
+                        ski_quality_real: null,
+                        ski_ak: null,
+                        ski_ak_real: null,
+                        ski_ak_factor: null,
+                        ski_total: null,
+                        ski_performance: null,
+                        ski_duration: null,
+                        ski_duration_real: null,
+                        ski_duration_unit: null
+                    }, payload);
+
+                    if (payload.ski_ak_factor && payload.ski_volume) {
+                        let factor = +payload.ski_ak_factor;
+                        let volume = +payload.ski_volume;
+
+                        if ( ! isNaN(factor) && ! isNaN(volume)) {
+                            payload.ski_ak = factor * volume;
+                        }
+                    }
+
+                    this.__saveItem(payload).then(res => {
+                        if (res.success) {
+                            let item = res.data;
+                            if (payload.ski_extra == 0) {
+                                this.push('record.items', item);
+                            } else {
+                                this.push('record.extra', item);
+                            }
+                            this.__computeSummary();
+                            this.__saveSummary();
+                        }
+                    });
+                }
+            }
+
+            __saveItem(item, index) {
+                let options = {};
+                
+                if (this.socketSession) {
+                    options.headers = {
+                        'X-Socket-Session': this.socketSession
+                    };
+                }
+
+                if (item.ski_id) {
+                    return this.$.ajax.PUT('/skp/skp-items/' + item.ski_id, item, options);
+                } else {
+                    return this.$.ajax.POST('/skp/skp-items', item, options);
+                }
+            }
+
+            __saveBehaviors(dirty) {
+                let items = [];
+
+                (this.behaviors || []).forEach(b => {
+                    b.tsb_skp_id = this.record.task.skp_id;
+                    b.tsb_dirty = dirty.tsb_id == b.tsb_id;
+                    
+                    items.push(b);
+                });
+
+                let options = {};
+                
+                if (this.socketSession) {
+                    options.headers = {
+                        'X-Socket-Session': this.socketSession
+                    };
+                }
+
+                return this.$.ajax.POST('/skp/' + this.record.task.skp_id + '/save-behaviors', {
+                    behaviors: items
+                }, options);
+            }
+
             __saveSummary() {
+                let options = {};
+                
+                if (this.socketSession) {
+                    options.headers = {
+                        'X-Socket-Session': this.socketSession
+                    };
+                }
+
                 this.$.ajax.PUT('/skp/' + this.record.task.skp_id, {
                     skp_performance: this.record.task.skp_performance,
                     skp_performance_criteria: this.record.task.skp_performance_criteria,
@@ -281,24 +533,7 @@
                     skp_behavior_criteria: this.record.task.skp_behavior_criteria,
                     skp_value: this.record.task.skp_value,
                     skp_criteria: this.record.task.skp_criteria
-                });
-            }
-
-            __onBehaviorValueChange(e) {
-                this.__computeBehavior(e.model.item, e.model.index);
-                this.__computeSummary();
-                this.__saveBehaviors();
-            }
-
-            __onItemValueChange(e) {
-                this.__computeItem(e.model.item, e.model.index);
-                this.__computeSummary();
-                this.__saveItem(e.model.item, e.model.index);
-            }
-
-            __onExtraValueChange(e) {
-                this.__computeSummary();
-                this.__saveItem(e.model.item, e.model.index);
+                }, options);
             }
 
         };

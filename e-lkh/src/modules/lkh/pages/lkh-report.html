@@ -156,7 +156,7 @@
                                                 <tr>
                                                     <td>Pangkat / Gol.Ruang</td>
                                                     <td>:</td>
-                                                    <td>[[ reportRecord.lkh_su_grade ]]</td>
+                                                    <td>[[ reportRecord.lkh_su_sg_name ]]</td>
                                                 </tr>
                                                 <tr>
                                                     <td>Unit Kerja</td>
@@ -369,6 +369,8 @@
             }
 
             __onDialogPrintTap() {
+                this.$['report-dialog'].close();
+                
                 let sheets = (this.sheets || [])
                     .filter(e => {
                         return e.sheet_print == 1;

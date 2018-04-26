@@ -54,10 +54,6 @@ return array(
             'module' =>  'worksheet',
             'page' =>  'worksheet-page'
         ),
-        '/registration/:id' => array(
-            'module' => 'registration',
-            'page' => 'registration-page'
-        ),
         '/messages/:section/:id' => array(
             'module' => 'messages',
             'page' => 'messages-page'

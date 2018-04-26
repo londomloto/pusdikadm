@@ -3,6 +3,7 @@
 <link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
 <link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
 <link rel="import" href="../../../../cores/elements/kct-app/blocks/page-header-block.html">
+<link rel="import" href="../../../../cores/elements/kct-role/kct-role.html">
 <link rel="import" href="../../../../cores/mixins/theme.html">
 <link rel="import" href="blocks/setting-header-block.html">
 
@@ -39,9 +40,17 @@
                 font-size: 15px;
                 font-weight: 500;
             }
+            paper-card {
+                box-shadow: none;
+            }
+            paper-card.block .card-content {
+                padding: 16px;
+            }
         </style>
         
-        <kct-vbox  data-authorized>
+        <kct-role id="role"></kct-role>
+
+        <kct-vbox>
             
             <!-- <page-header-block icon="settings" title="Settings" description="Control Panel"></page-header-block> -->
 
@@ -49,23 +58,26 @@
 
             <div class="flex scroll-y">
                 <div class="padding">
-                    <template is="dom-repeat" items="[[ links ]]" as="group">
-                        <div class="m-b">
-                            <h3>[[ group.text ]]</h3>
-                        </div>
-                        <paper-card class="block">
-                            <div class="card-content">
-                                <template is="dom-repeat" items="[[ group.children ]]" as="menu">
-                                    <div class="item" >
-                                        <div class="item-icon">
-                                            <paper-fab on-tap="__onMenuTap" data-path$="[[ menu.path ]]" icon="[[ menu.icon ]]" class="fab-raised"></paper-fab>
-                                        </div>
-                                        <div class="item-text">[[ menu.text ]]</div>
-                                    </div>
-                                </template>
-                                <div class="clearfix"></div>
+                    <template is="dom-repeat" items="[[ links ]]" as="group" on-dom-change="__onMenuRender">
+                        <div data-perm$="[[ group.perm ]]">
+                            <div class="m-b">
+                                <h3>[[ group.text ]]</h3>
                             </div>
-                        </paper-card>
+                            <paper-card class="block">
+                                <div class="card-content">
+                                    <template is="dom-repeat" items="[[ group.children ]]" as="menu">
+                                        <div class="item" data-perm$="[[ menu.perm ]]">
+                                            <div class="item-icon">
+                                                <paper-fab on-tap="__onMenuTap" data-path$="[[ menu.path ]]" icon="[[ menu.icon ]]" class="fab-raised"></paper-fab>
+                                            </div>
+                                            <div class="item-text">[[ menu.text ]]</div>
+                                        </div>
+                                    </template>
+                                    <div class="clearfix"></div>
+                                </div>
+                            </paper-card>    
+                        </div>
+                        
                     </template>
                 </div>
             </div> 
@@ -86,27 +98,31 @@
                             return [
                                 {
                                     text: 'Role & Pengguna',
+                                    perm: '',
                                     children: [
-                                        { text: 'Role', path: '/settings/roles', icon: 'verified-user' },
-                                        { text: 'Pengguna', path: '/settings/users', icon: 'social:person-outline' },
-                                        { text: 'Akses', path: '/settings/roles-permissions', icon: 'lock-outline' }
+                                        { text: 'Role', path: '/settings/roles', perm: 'manage_role@settings', icon: 'verified-user' },
+                                        { text: 'Pengguna', path: '/settings/users', perm: 'manage_user@settings', icon: 'social:person-outline' },
+                                        { text: 'Akses', path: '/settings/roles-permissions', perm: 'manage_perm@settings', icon: 'lock-outline' }
                                         // { text: 'User Permission', path: '/settings/users-permissions', icon: 'lock-outline' }
                                     ]
                                 },
                                 {
                                     text: 'Bisnis Proses (flowchart)',
+                                    perm: 'manage_bpmn@settings',
                                     children: [
-                                        { text: 'Template', path: '/settings/kanban-settings', icon: 'view-carousel' },
-                                        { text: 'Flowchart', path: '/settings/bpmn', icon: 'donut-large' },
-                                        { text: 'Formulir', path: '/settings/kanban-forms', icon: 'av:web' }
+                                        { text: 'Template', path: '/settings/kanban-settings', perm: '', icon: 'view-carousel' },
+                                        { text: 'Flowchart', path: '/settings/bpmn', perm: '', icon: 'donut-large' },
+                                        { text: 'Formulir', path: '/settings/kanban-forms', perm: '', icon: 'av:web' }
                                     ]
                                 },
                                 {
                                     text: 'Organisasi',
+                                    perm: 'manage_company@settings',
                                     children: [
-                                        { text: 'Organisasi', path: '/settings/company', icon: 'home' },
-                                        { text: 'Unit Kerja', path: '/settings/departments', icon: 'work' },
-                                        { text: 'Jabatan', path: '/settings/jobs', icon: 'av:web' }
+                                        { text: 'Organisasi', path: '/settings/company', perm: '', icon: 'home' },
+                                        { text: 'Unit Kerja', path: '/settings/departments', perm: '', icon: 'work' },
+                                        { text: 'Jabatan', path: '/settings/jobs', perm: '', icon: 'av:web' },
+                                        { text: 'Golongan', path: '/settings/grades', perm: '', icon: 'class' }
 
                                     ]
                                 },
@@ -120,14 +136,15 @@
                                 // },
                                 {
                                     text: 'Aplikasi',
+                                    perm: 'manage_app@settings',
                                     children: [
-                                        { text: 'Umum', path: '/settings/general', icon: 'settings', permission: 'general@settings' }, 
-                                        { text: 'Konstanta', path: '/settings/constants', icon: 'image:exposure', permission: 'general@settings' },
+                                        { text: 'Umum', path: '/settings/general', perm: '', icon: 'settings', permission: 'general@settings' }, 
+                                        { text: 'Konstanta', path: '/settings/constants', perm: '',  icon: 'image:exposure', permission: 'general@settings' },
                                         // { text: 'Timezone', path: '/settings/timezone', icon: 'social:public', permission: 'timezone@settings' },
                                         // { text: 'Numbering', path: '/settings/autonumber', icon: 'image:filter-5' },
-                                        { text: 'Menu', path: '/settings/menus', icon: 'menu', permission: 'menus@settings' },
-                                        { text: 'Module', path: '/settings/modules', icon: 'code', permission: 'modules@settings' },
-                                        { text: 'Backup', path: '/settings/backup', icon: 'backup' }
+                                        { text: 'Menu', path: '/settings/menus', icon: 'menu', perm: '',  permission: 'menus@settings' },
+                                        { text: 'Module', path: '/settings/modules', icon: 'code', perm: '',  permission: 'modules@settings' }
+                                        //{ text: 'Backup', path: '/settings/backup', perm: '',  icon: 'backup' }
                                     ]
                                 }
                             ];
@@ -141,6 +158,10 @@
                 if (path) {
                     this.set('route.path', path);
                 }
+            }
+
+            __onMenuRender() {
+                this.$.role.validate();
             }
         }
         customElements.define(SettingsIndexPage.is, SettingsIndexPage);

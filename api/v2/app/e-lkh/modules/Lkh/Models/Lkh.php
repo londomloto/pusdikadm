@@ -88,7 +88,7 @@ class Lkh extends \Micro\Model {
         if (($user = $this->user)) {
             $data['lkh_su_fullname'] = $user->getName();
             $data['lkh_su_no'] = $user->su_no;
-            $data['lkh_su_grade'] = $user->su_grade;
+            $data['lkh_su_sg_name'] = $user->getGradeName();
             $data['lkh_su_sj_name'] = $user->job ? $user->job->sj_name : '';
             $data['lkh_su_sdp_name'] = $user->department ? $user->department->sdp_name : '';
             $data['lkh_su_avatar_thumb'] = $user->getAvatarThumb();
@@ -97,7 +97,7 @@ class Lkh extends \Micro\Model {
         if (($examiner = $this->examiner)) {
             $data['examiner_su_fullname'] = $examiner->getName();
             $data['examiner_su_no'] = $examiner->su_no;
-            $data['examiner_su_grade'] = $examiner->su_grade;
+            $data['examiner_su_sg_name'] = $examiner->getGradeName();
             $data['examiner_su_sj_name'] = $examiner->job ? $examiner->job->sj_name : '';
             $data['examiner_su_sdp_name'] = $examiner->department ? $examiner->department->sdp_name : '';
             $data['examiner_su_avatar_thumb'] = $examiner->getAvatarThumb();
@@ -106,7 +106,7 @@ class Lkh extends \Micro\Model {
         if (($evaluator = $this->evaluator)) {
             $data['evaluator_su_fullname'] = $evaluator->getName();
             $data['evaluator_su_no'] = $evaluator->su_no;
-            $data['evaluator_su_grade'] = $evaluator->su_grade;
+            $data['evaluator_su_sg_name'] = $evaluator->getGradeName();
             $data['evaluator_su_sj_name'] = $evaluator->job ? $evaluator->job->sj_name : '';
             $data['evaluator_su_sdp_name'] = $evaluator->department ? $evaluator->department->sdp_name : '';
             $data['evaluator_su_avatar_thumb'] = $evaluator->getAvatarThumb();
@@ -177,13 +177,13 @@ class Lkh extends \Micro\Model {
     public static function flags() {
 
         return array(
+            'EXAM' => array(
+                'name' => 'EXAM',
+                'text' => 'Tidak ada tindakan'
+            ),
             'TODO' => array(
                 'name' => 'TODO',
                 'text' => 'Dikembalikan ke tahap pembuatan'
-            ),
-            'EXAM' => array(
-                'name' => 'EXAM',
-                'text' => 'Dokumen dalam pemeriksaan'
             ),
             'DONE' => array(
                 'name' => 'DONE',

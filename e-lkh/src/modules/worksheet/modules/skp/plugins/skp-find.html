@@ -61,9 +61,12 @@
                                                     --iron-icon-height: 16px;
                                                     margin-right: 5px;
                                                 }
+                                                paper-item[hidden] {
+                                                    display: none;
+                                                }
                                             </style>
 
-                                            <paper-item>
+                                            <paper-item hidden$="[[ item.hide ]]">
                                                 <iron-icon icon="[[ item.icon ]]"></iron-icon>
                                                 <paper-item-body>
                                                     <span class="hint" inner-h-t-m-l="[[ item.hint ]]"></span>
@@ -197,10 +200,12 @@
                     features: {
                         type: Array,
                         value: () => ([
-                            { field: 'search', label: 'Search', icon: 'search', hint: 'Tekan enter untuk pencarian' },
-                            { field: 'user', label: 'Pegawai', icon: 'social:person-outline', hint: 'Filter pegawai: <b>@pegawai</b>' },
-                            { field: 'date', label: 'Tanggal', icon: 'today', hint: 'Filter tanggal: <b>!tanggal</b>' },
-                            { field: 'label', label: 'Label', icon: 'label-outline', hint: 'Filter data label: <b>~label</b>' }
+                            { field: 'search', label: 'Search', icon: 'search', hide: false, hint: 'Tekan enter untuk pencarian' },
+                            { field: 'user', label: 'Pegawai', icon: 'social:person-outline', hide: false, hint: 'Filter pegawai: <b>@pegawai</b>' },
+                            { field: 'date', label: 'Tanggal', icon: 'today', hide: false, hint: 'Filter periode: <b>#periode</b>'  },
+                            { field: 'label', label: 'Label', icon: 'label-outline', hide: false, hint: 'Filter data label: <b>~label</b>' },
+                            { field: 'period', label: 'Periode', icon: '', hide: true, hint: '' },
+                            { field: 'identity', label: 'No. Induk', icon: '', hide: true, hint: '' }
                         ])
                     },
 
@@ -209,7 +214,7 @@
                     sorters: {
                         type: Array,
                         value: () => ([
-                            { field: 'name', sort: 'ASC', label: 'Nama' },
+                            { field: 'user', sort: 'ASC', label: 'Pegawai' },
                             { field: 'date', sort: 'ASC', label: 'Lama' },
                             { field: 'date', sort: 'DESC', label: 'Baru' }
                         ])

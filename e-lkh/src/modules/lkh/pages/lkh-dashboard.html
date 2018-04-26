@@ -63,7 +63,7 @@
             <setting-header-block 
                 icon="editor:insert-chart" 
                 text="Dashboard" 
-                desc="Dashboard periode [[ __computePeriod(params.start_date, params.end_date) ]]" 
+                desc="[[ __computeHeader(params.user) ]] [[ __computePeriod(params.start_date, params.end_date) ]]" 
                 hide-nav$="[[ __hideNav(fullscreen) ]]" 
                 on-back-tap="__onBackTap">
 
@@ -82,6 +82,7 @@
                             <h3>Parameter</h3>
                             <div>
                                 <combo-user 
+                                    id="combo-user" 
                                     url="/lkh/observable-users"
                                     label="Pegawai" 
                                     value="{{ params.user }}"></combo-user>
@@ -426,6 +427,19 @@
 
             __computeFullScreenIcon(fullscreen) {
                 return fullscreen ? 'fullscreen-exit' : 'fullscreen';
+            }
+
+            __computeHeader(id) {
+                let combo = this.$['combo-user'];
+                
+                if (id && combo) {
+                    let model = combo.getModelForValue(id);
+                    if (model) {
+                        return model.su_fullname + ' - ';
+                    }
+                }
+
+                return 'Data Statistik';
             }
 
             __onScreenTap() {

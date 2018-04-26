@@ -61,9 +61,12 @@
                                                     --iron-icon-height: 16px;
                                                     margin-right: 5px;
                                                 }
+                                                paper-item[hidden] {
+                                                    display: none;
+                                                }
                                             </style>
 
-                                            <paper-item>
+                                            <paper-item hidden$="[[ item.hide ]]">
                                                 <iron-icon icon="[[ item.icon ]]"></iron-icon>
                                                 <paper-item-body>
                                                     <span class="hint" inner-h-t-m-l="[[ item.hint ]]"></span>
@@ -198,9 +201,10 @@
                         type: Array,
                         value: () => ([
                             { field: 'search', label: 'Search', icon: 'search', hint: 'Tekan enter untuk pencarian' },
-                            { field: 'user', label: 'Peserta', icon: 'social:person-outline', hint: 'Filter peserta: <b>@peserta</b>' },
-                            { field: 'date', label: 'Tanggal', icon: 'today', hint: 'Filter tanggal: <b>!tanggal</b>' },
-                            { field: 'label', label: 'Label', icon: 'label-outline', hint: 'Filter label: <b>~label</b>' }
+                            { field: 'user', label: 'Pegawai', icon: 'social:person-outline', hint: 'Filter pegawai: <b>@pegawai</b>' },
+                            { field: 'label', label: 'Label', icon: 'label-outline', hint: 'Filter label: <b>~label</b>' },
+                            { field: 'sex', label: 'Sex', icon: 'notification:wc', hint: '', hide: true },
+                            { field: 'email', label: 'Email', icon: 'mail', hint: '', hide: true }
                         ])
                     },
 
@@ -210,8 +214,10 @@
                         type: Array,
                         value: () => ([
                             { field: 'name', sort: 'ASC', label: 'Nama' },
-                            { field: 'created', sort: 'ASC', label: 'Lama' },
-                            { field: 'created', sort: 'DESC', label: 'Baru' }
+                            { field: 'card', sort: 'ASC', label: 'No. Induk' },
+                            { field: 'email', sort: 'ASC', label: 'Email' },
+                            { field: 'created', sort: 'DESC', label: 'Baru' },
+                            { field: 'created', sort: 'ASC', label: 'Lama' }
                         ])
                     },
 
@@ -223,8 +229,8 @@
             ready() {
                 super.ready();
                 
-                this.set('selectedSorter', this.sorters[0]);
-                this.set('sorters.0.checked', true);
+                this.set('selectedSorter', this.sorters[3]);
+                this.set('sorters.3.checked', true);
             }
 
         }

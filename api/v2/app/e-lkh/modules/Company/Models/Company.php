@@ -9,18 +9,32 @@ class Company extends \Micro\Model {
 
     public function toArray($columns = NULL) {
         $data = parent::toArray();
-        $logo = $data['scp_logo'];
+        $data['scp_logo_thumb'] = $this->getLogoThumb();
+        return $data;
+    }
 
-        if (empty($logo)) {
-            $logo = 'logo-empty.jpg';
+    public function getLogo() {
+        static $logos = array();
+
+        if ( ! isset($logos[$this->scp_id])) {
+            $logo = empty($this->scp_logo) ? 'logo-empty.jpg' : $this->scp_logo;
+            $path = PUBPATH.'resources/company/'.$logo;
+
+            if ( ! file_exists($path)) {
+                $logo = 'logo-empty.jpg';
+            }
+
+            $logos[$this->scp_id] = $logo;
         }
 
+        return $logos[$this->scp_id];
+    }
+
+    public function getLogoThumb() {
+        $logo = $this->getLogo();
         $app = \Micro\App::getDefault();
 
-        $data['scp_logo_url'] = $app->url->getBaseUrl().'public/resources/company/'.$logo;
-        $data['scp_logo_thumb'] = $app->url->getSiteUrl('assets/thumb').'?s=public/resources/company/'.$logo;
-        
-        return $data;
+        return $app->url->getSiteUrl('assets/thumb').'?s=public/resources/company/'.$logo;
     }
 
     public static function getDefault() {

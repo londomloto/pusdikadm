@@ -29,15 +29,14 @@
     "graph-interactjs": "1.0.0",
     "graph-fonts": "1.0.2"
   },
-  "version": "1.0.9",
-  "_release": "1.0.9",
+  "version": "1.0.11",
+  "_release": "1.0.11",
   "_resolution": {
     "type": "version",
-    "tag": "1.0.9",
-    "commit": "821ca9f102be80ed9c6bdf5eaa4e6498e5c88905"
+    "tag": "1.0.11",
+    "commit": "54d2c191397c82c471587342e272cb93c800642d"
   },
   "_source": "https://github.com/londomloto/graph-svg.git",
   "_target": "^1.0.9",
-  "_originalSource": "graph-svg",
-  "_direct": true
+  "_originalSource": "graph-svg"
 }

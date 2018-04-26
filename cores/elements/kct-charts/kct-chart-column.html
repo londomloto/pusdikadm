@@ -114,10 +114,9 @@
                 if ( ! this.chart) return;
                 let series = (this.series || []).slice();
 
-                // remove series
-                (this.chart.series || []).forEach(s => {
-                    s.remove();
-                });
+                while(this.chart.series.length > 0) {
+                    this.chart.series[0].remove(true);
+                }
 
                 series.forEach((s, i) => {
                     this.chart.addSeries(s);

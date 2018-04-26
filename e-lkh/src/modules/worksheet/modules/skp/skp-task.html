@@ -12,6 +12,7 @@
         <kct-media screen="{{ screen }}"></kct-media>
         <kct-event-publisher id="publisher"></kct-event-publisher>
         <kct-socket manager="global-socket" session="{{ socketSession }}" on-notify="__onSocketNotify"></kct-socket>
+        <kct-role id="role"></kct-role>
         
         <kct-vbox class$="layout [[ __computeClass(loading) ]]">
             <header-block id="header" on-back-tap="__onBackTap" text="[[ formRecord.bf_name ]]" hide-header$="[[ __hideHeader(screen) ]]">
@@ -48,7 +49,8 @@
                             user="[[ user ]]" 
                             route="{{ route }}" 
                             invalid="{{ formInvalid }}" 
-                            buttons="{{ formButtons }}"
+                            buttons="{{ formButtons }}" 
+                            socket-session="[[ socketSession ]]"
                             loading="[[ loading ]]"></skp-task-form>
 
                         <skp-task-logs 
@@ -57,6 +59,7 @@
                             project="[[ projectRecord ]]" 
                             hidden$="[[ __phantom ]]" 
                             profile="[[ profile ]]" 
+                            socket-session="[[ socketSession ]]"
                             loading="[[ loading ]]"></skp-task-logs> 
                     </div>
                     <div class="workspace-side hidden-sm hidden-md">
@@ -70,6 +73,7 @@
                             route="{{ route }}"
                             loading="[[ loading ]]" 
                             profile="[[ profile ]]" 
+                            socket-session="[[ socketSession ]]"
                             on-after-update="__onPropAfterUpdate"></skp-task-prop>
                     </div>
                 </kct-hbox>

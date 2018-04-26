@@ -81,7 +81,7 @@
                 params.ta_task_id = taskId;
 
                 if (this.display == '0') {
-                    params.ta_type = ['IN', ['comment', 'warning']];
+                    params.ta_type = ['IN', ['comment', 'warning', 'examine']];
                 }
 
                 let payload = {
@@ -134,7 +134,7 @@
                 payload.ta_task_id = this.record.task[this.profile.task.primary_key];
                 payload.ta_task_ns = this.profile.activity.scope;
                 payload.ta_sp_id = this.project.sp_id;
-
+                
                 let options = {};
                 
                 if (this.socketSession) {

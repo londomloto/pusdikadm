@@ -20,6 +20,14 @@ class LkhController extends \Micro\Controller {
             ->sortable()
             ->groupBy('task.lkh_id');
 
+        if ( ! $this->role->can('manage@lkh')) {
+            $auth = $this->auth->user();
+            $query
+                ->join('App\Lkh\Models\TaskUser', 'task_user.lku_lkh_id = task.lkh_id', 'task_user', 'LEFT')
+                ->andWhere('task_user.lku_su_id = :user:', array('user' => $auth['su_id']));
+
+        }
+
         $params = $this->request->getQuery('params');
 
         if ( ! empty($params)) {
@@ -207,7 +215,7 @@ class LkhController extends \Micro\Controller {
     public function observableUsersAction() {
         $auth = $this->auth->user();
 
-        if ($this->role->can('manage@application')) {
+        if ($this->role->can('manage@lkh')) {
             return User::get()->filterable()->sortable()->paginate();
         } else {
             $query = Task::get()
@@ -230,7 +238,7 @@ class LkhController extends \Micro\Controller {
                     'su_fullname' => $user->getName(),
                     'su_email' => $user->su_email,
                     'su_no' => $user->su_no,
-                    'su_grade' => $user->su_grade,
+                    'su_sg_name' => $user->getGradeName(),
                     'su_avatar_thumb' => $user->getAvatarThumb()
                 );
                 return $data;

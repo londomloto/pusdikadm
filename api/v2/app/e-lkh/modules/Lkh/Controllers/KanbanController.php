@@ -52,6 +52,8 @@ class KanbanController extends \Micro\Controller {
         self::applyFilter($query, $params);
         self::applySorter($query, $params, $columns);
 
+        //print_r($query->getBuilder()->getQuery()->getSql());
+
         $result = $query->paginate()
             ->filter(function($stat) {
                 
@@ -323,9 +325,11 @@ class KanbanController extends \Micro\Controller {
             $fields = json_decode($params['fields'], TRUE);
             
             $maps = array(
-                'user' => 'task.su_fullname',
-                'date' => 'task.su_created_dt',
-                'label' => 'label.sl_label'
+                'user' => 'user.su_fullname',
+                'date' => 'task.lkh_start_date',
+                'label' => 'label.sl_label',
+                'period' => 'task.lkh_period',
+                'identity' => 'user.su_no'
             );
 
             $where = array();
@@ -361,13 +365,15 @@ class KanbanController extends \Micro\Controller {
                 }
 
                 if (isset($json->date) && count($json->date) > 0) {
-                    $query->andWhere(
-                        'task.lkh_start_date >= :start_date: AND task.lkh_end_date <= :end_date:', 
-                        array(
-                            'start_date' => $json->date[1],
-                            'end_date' => $json->date[1]
-                        )
-                    );
+                    $dates = isset($json->date[1]) ? $json->date[1] : array();
+                    if (count($dates) > 0) {
+                        $query->andWhere(
+                            'task.lkh_start_date <= :date: AND task.lkh_end_date >= :date:', 
+                            array(
+                                'date' => $dates[0]
+                            )
+                        );    
+                    }
                 }
             }
         }
@@ -382,7 +388,11 @@ class KanbanController extends \Micro\Controller {
             $ps = json_decode($params['sort']);
 
             $sort = array();
-            $maps = array();
+
+            $maps = array(
+                'user' => 'user.su_fullname',
+                'date' => 'task.lkh_start_date'
+            );
 
             foreach($ps as $e) {
                 $dirs = $e->direction;
@@ -390,14 +400,9 @@ class KanbanController extends \Micro\Controller {
 
                 if (isset($maps[$e->property])) {
                     $name = $maps[$e->property];
-                    $sort[] = $name.' '.$dirs;
-                    $cols[] = $aggr.'(task.'.$name.') AS '.$name;
-                } else if ($e->property == 'date') {
-                    $sort[] = 'lkh_start_date '.$dirs;
-                    $cols[] = $aggr.'(task.lkh_start_date) AS lkh_start_date';
-                } else if ($e->property == 'user') {
-                    $sort[] = 'su_fullname '.$dirs;
-                    $cols[] = $aggr.'(user.su_fullname) AS su_fullname';
+                    $prop = str_replace('.', '_', $name);
+                    $sort[] = $prop.' '.$dirs;
+                    $cols[] = $aggr.'('.$name.') AS '.$prop;
                 }
             }
 

@@ -9,6 +9,10 @@ class CompanyController extends \Micro\Controller {
         return Company::get()->paginate();
     }
 
+    public function findByIdAction($id) {
+        return Company::get($id);
+    }
+
     public function loadAction() {
         $company = Company::findFirst('scp_default = 1');
 

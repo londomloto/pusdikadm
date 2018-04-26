@@ -1,0 +1,241 @@
+<link rel="import" href="mixins.html">
+
+<script>
+    Mixins.Formatter = Polymer.dedupingMixin(superclass => {
+
+        const REGEXES = {
+            hashes: /^#+$/,
+            masker: /[\d,\.#]+/,
+            cleaner: /[^\d\.#]/g,
+            I18Ncleaner: null
+        };
+
+        let storage = {};
+
+        return class extends superclass  {
+
+            static get properties() {
+                return {
+                    decimalSeparator: { type: String, value: ',' },
+                    thousandSeparator: { type: String, value: '.' }
+                };
+            }
+
+            _numberFormat(value, mask = '#', decimalSeparator = null, thousandSeparator = null) {
+                let formatter;
+
+                formatter = this._createFormatter(mask, decimalSeparator, thousandSeparator);
+
+                // parse value
+                value = this._parseNumber(value, decimalSeparator, thousandSeparator);
+                value = this._preciseNumber(value, formatter.precision);
+
+                let formatted = '';
+
+                if (value === null) {
+                    formatted = '';
+                } else {
+                    formatted = formatter.format(value);
+                }
+
+                return formatted;
+            }
+
+            _preciseNumber(value, precision) {
+                let nan = isNaN(value);
+                if (nan || !value) {
+                    return nan ? '' : value;
+                } else if (precision <= 0) {
+                    precision = 0;
+                }
+
+                return parseFloat(parseFloat(value).toFixed(precision));
+            }
+
+            _parseNumber(value, decimalSeparator = null, thousandSeparator = null) {
+                let cleaner = REGEXES.cleaner;
+                let negative = false;
+
+                decimalSeparator = decimalSeparator || this.decimalSeparator;
+                thousandSeparator = thousandSeparator || this.thousandSeparator;
+
+                value = String(value);
+                
+                // check negative
+                let number = +value;
+                
+                if ( ! isNaN(number) && number < 0) {
+                    negative = true;
+                }
+
+                value = value.replace(cleaner, '').replace(decimalSeparator, '.');
+                value = negative ? ('-' + value) : value;
+                value = parseFloat(value);
+
+                return isNaN(value) ? null : value;
+            }
+
+            _createFormatter(mask, decimalSeparator, thousandSeparator) {
+                let originalMask, storageKey, formatter;
+
+                if ( ! mask) {
+                    throw new Error('Number mask is required');
+                }
+
+                decimalSeparator = decimalSeparator || this.decimalSeparator;
+                thousandSeparator = thousandSeparator || this.thousandSeparator;
+
+                originalMask = mask;
+                storageKey = `${originalMask}${decimalSeparator}${thousandSeparator}`;
+                formatter = storage[storageKey];
+
+                if ( ! formatter) {
+                    let comma = thousandSeparator,
+                        hasComma,
+                        splitFormat,
+                        extraChars,
+                        precision = 0,
+                        multiplier,
+                        trimTrailingZeroes,
+                        code;
+
+                    if (decimalSeparator != '.') {
+                        if ( ! REGEXES.I18Ncleaner) {
+                            REGEXES.I18Ncleaner = new RegExp('[^\\d\\' + decimalSeparator + ']', 'g');
+                        }
+                        hasComma = mask.indexOf(comma) != -1;
+                        splitFormat = mask.replace(REGEXES.I18Ncleaner, '').split(decimalSeparator);
+                    } else {
+                        hasComma = mask.indexOf(',') != -1;
+                        splitFormat = mask.replace(REGEXES.cleaner, '').split('.');
+                    }
+
+                    extraChars = mask.replace(REGEXES.masker, '');
+
+                    if (splitFormat.length > 2) {
+                        throw new Error('Invalid number format, should have no more than 1 decimal');
+                    } else if (splitFormat.length === 2) {
+                        precision = splitFormat[1].length;
+                        trimTrailingZeroes = REGEXES.hashes.test(splitFormat[1]);
+                    }
+
+                    code = `let decimalSeparator = '${decimalSeparator}', neg, fnum, parts`;
+
+                    if (hasComma) {
+                        code += `, thousandSeparator, thousands = [], j, n, i`
+                    }
+
+                    if (extraChars) {
+                        code += `, mask = '${mask}', pattern=/[\\d,\\.#]+/`;
+                    }
+
+                    if (trimTrailingZeroes) {
+                        code += `, trailingZeroes=/\\.?0+$/`;
+                    }
+
+                    code += `;`;
+
+                    code += `
+                        return function(v) {
+                            if ( typeof v !== 'number' && isNaN(+v)) return '';
+                            neg = v < 0;
+                            fnum = Math.abs(v).toFixed(${precision});`;
+
+                    if (hasComma) {
+                        if (precision) {
+                            code += `
+                            parts = fnum.split('.');
+                            fnum = parts[0];
+                            `;
+                        }
+
+                        code += `
+                            if ( v >= 1000 ) {
+                                thousandSeparator = '${thousandSeparator}';
+                                thousands.length = 0;
+                                j = fnum.length;
+                                n = fnum.length % 3 || 3;
+
+                                for(i = 0; i < j; i += n) {
+                                    if (i !== 0) {
+                                        n = 3;
+                                    }
+                                    thousands[thousands.length] = fnum.substr(i, n);
+                                }
+                                fnum = thousands.join(thousandSeparator);
+                            }
+                        `;
+
+                        if (precision) {
+                            code += `
+                            fnum += '${decimalSeparator}' + parts[1];
+                            `;
+                        }
+
+                    } else if (precision) {
+                        code += `
+                            if (decimalSeparator !== '.') {
+                                parts = fnum.split('.');
+                                fnum = parts[0] + '${decimalSeparator}' + parts[1];
+                            }
+                        `;
+                    }
+
+                    if (trimTrailingZeroes) {
+                        code += `
+                        fnum = fnum.replace(trailingZeroes, '');
+                        `;
+                    }
+
+                    let fnum = precision ? '0.' + this._stringRepeat('0', precision) : '0';
+
+                    code += `
+                            if (neg && fnum !== '${fnum}') fnum= '-' + fnum;
+                    `;
+
+                    code += `
+                            return `;
+
+                    if (extraChars) {
+                        code += `mask.replace(pattern, fnum);`;
+                    } else {
+                        code += `fnum;`;
+                    }
+
+                    code += `
+                        };
+                    `;
+
+                    let factory = Function.prototype.constructor.apply(Function.prototype, [code]);
+
+                    formatter = storage[storageKey] = {
+                        mask: originalMask,
+                        decimalSeparator: decimalSeparator,
+                        thousandSeparator: thousandSeparator,
+                        precision: precision,
+                        format: factory()
+                    };
+
+                }
+
+                return formatter;
+            }
+
+            _stringRepeat(pattern, count, sep) {
+                if (count < 1) {
+                    count = 0;
+                }
+
+                let buf = [], i;
+
+                for (i = count; i--; ) {
+                    buf.push(pattern);
+                }
+
+                return buf.join(sep || '');
+            }
+
+        };
+
+    });
+</script>

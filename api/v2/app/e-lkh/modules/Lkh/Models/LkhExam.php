@@ -6,13 +6,12 @@ use Micro\Helpers\Date;
 class LkhExam extends \Micro\Model {
 
     public function initialize() {
-
-        $this->hasOne(
-            'lke_examiner',
-            'App\Users\Models\User',
-            'su_id',
+        $this->belongsTo(
+            'lke_lkh_id',
+            'App\Lkh\Models\Task',
+            'lkh_id',
             array(
-                'alias' => 'Examiner'
+                'alias' => 'Task'
             )
         );
     }
@@ -21,34 +20,18 @@ class LkhExam extends \Micro\Model {
         return 'trx_lkh_exams';
     }
 
-    public function toArray($columns = NULL) {
-        $data = parent::toArray($columns);
-
-        $data['lke_flag_label'] = self::__getFlagLabel($data['lke_flag']);
-        $data['lke_date_formatted'] = Date::format($this->lke_date, 'd M Y');
-        $data['lke_has_notes'] = !empty(trim($data['lke_notes']));
-
-        $data['examiner_su_fullname'] = NULL;
-
-        if (($examiner = $this->examiner)) {
-            $data['examiner_su_fullname'] = $examiner->getName();
-        }
-
-        return $data;
+    public function hasNotes() {
+        $notes = trim((string)$this->lke_notes);
+        return ! empty($notes);
     }
 
-    private static function __getFlagLabel($name) {
+    public function getLabel() {
         static $flags;
-        
         if (is_null($flags)) {
             $flags = Lkh::flags();
         }
-
-        if ( ! empty($name) && isset($flags[$name])) {
-            return $flags[$name]['text'];
-        }
-
-        return NULL;
+        $flag = isset($flags[$this->lke_flag]) ? $flags[$this->lke_flag] : NULL;
+        return $flag ? $flag['text'] : NULL;
     }
 
 }

@@ -6,7 +6,6 @@
 <link rel="import" href="../../../../cores/bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../../../../cores/bower_components/paper-card/paper-card.html">
 <link rel="import" href="../../../../cores/bower_components/vaadin-material-theme/vaadin-date-picker.html">
-<link rel="import" href="../../../../cores/bower_components/vaadin-date-picker/vaadin-date-picker.html">
 <link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
 <link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../../../cores/elements/kct-file/kct-file.html">
@@ -15,6 +14,7 @@
 <link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
 <link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
 <link rel="import" href="../../../../cores/elements/kct-media/kct-media.html">
+<link rel="import" href="../../../../cores/elements/kct-date/kct-date-picker.html">
 <link rel="import" href="../settings/blocks/setting-header-block.html">
 
 <dom-module id="profile-page">
@@ -86,43 +86,50 @@
                         <paper-card class="block">
                             <div class="card-content">
                                 <h3 class="block-title">Data Pribadi</h3>
-                                <paper-input label="Nama Lengkap" value="{{ user.su_fullname }}"></paper-input>
-                                <paper-input label="Jenis Kelamin" value="{{ user.su_sex }}"></paper-input>
-                                <kct-column columns="2" spacer="0px">
+                                <kct-column columns="2">
                                     <div>
+                                        <paper-input label="Nama Lengkap" value="{{ user.su_fullname }}"></paper-input>
+                                        <paper-input label="Jenis Kelamin" value="{{ user.su_sex }}"></paper-input>
                                         <paper-input label="Tempat Lahir" value="{{ user.su_pob }}"></paper-input>
+                                        <kct-date-picker label="Tanggal Lahir" value="{{ user.su_dob }}"></kct-date-picker>
+                                        <paper-input label="No. Telepon" value="{{ user.su_phone }}"></paper-input>
                                     </div>
                                     <div>
-                                        <vaadin-date-picker label="Tanggal Lahir" value="{{ user.su_dob }}"></vaadin-date-picker>        
+                                        <paper-input label="Nomor Induk Pegawai" value="{{ user.su_no }}"></paper-input>
+                                        <kct-combobox 
+                                            url="/grades" 
+                                            label="Pangkat/Gol. Ruang" 
+                                            value="{{ user.su_sg_id }}" 
+                                            page-size="10" 
+                                            item-label-path="sg_name" 
+                                            item-value-path="sg_id" 
+                                            autoload></kct-combobox>
+                                        <kct-combobox 
+                                            url="/jobs" 
+                                            label="Jabatan (Pekerjaan)" 
+                                            value="{{ user.su_sj_id }}" 
+                                            page-size="10" 
+                                            item-label-path="sj_name" 
+                                            item-value-path="sj_id"></kct-combobox>
+
+                                        <kct-combobox 
+                                            url="/departments" 
+                                            label="Unit Kerja" 
+                                            value="{{ user.su_sdp_id }}" 
+                                            page-size="10" 
+                                            item-label-path="sdp_name" 
+                                            item-value-path="sdp_id"></kct-combobox>
+                                        <kct-combobox 
+                                            url="/company" 
+                                            label="Organisasi" 
+                                            value="{{ user.su_scp_id }}" 
+                                            page-size="10" 
+                                            item-label-path="scp_name" 
+                                            item-value-path="scp_id"></kct-combobox>
                                     </div>
                                 </kct-column>
-                                <paper-input label="Nomor Induk Pegawai" value="{{ user.su_no }}"></paper-input>
-                                <paper-input label="Pangkat Golongan Ruang" value="{{ user.su_grade }}"></paper-input>
-                                <kct-combobox 
-                                    url="/jobs" 
-                                    label="Jabatan (Pekerjaan)" 
-                                    value="{{ user.su_sj_id }}" 
-                                    page-size="10" 
-                                    item-label-path="sj_name" 
-                                    item-value-path="sj_id" 
-                                    autoload></kct-combobox>
-
-                                <kct-combobox 
-                                    url="/departments" 
-                                    label="Unit Kerja" 
-                                    value="{{ user.su_sdp_id }}" 
-                                    page-size="10" 
-                                    item-label-path="sdp_name" 
-                                    item-value-path="sdp_id" 
-                                    autoload></kct-combobox>
-                                <kct-combobox 
-                                    url="/company" 
-                                    label="Organisasi" 
-                                    value="{{ user.su_scp_id }}" 
-                                    page-size="10" 
-                                    item-label-path="scp_name" 
-                                    item-value-path="scp_id" 
-                                    autoload></kct-combobox>
+                                
+                                
 
                                 <div class="m-t">
                                     <paper-button class="btn-primary" on-tap="__onSaveBasicTap">Simpan Perubahan</paper-button> 
@@ -133,9 +140,19 @@
                         <paper-card class="block">
                             <div class="card-content">
                                 <h3 class="block-title">Data Akun</h3>
-                                <paper-input label="Alamat Email" value="{{ user.su_email }}"></paper-input>
-                                <paper-input label="Password" type="password" value="{{ __account.password1 }}"></paper-input>
-                                <paper-input label="Konfirmasi Password" type="password" value="{{ __account.password2 }}"></paper-input>
+                                <kct-column columns="2">
+                                    <div>
+                                        <paper-input label="Alamat Email" value="[[ user.su_email ]]" readonly></paper-input>
+                                        <paper-input label="Group Akses" value="[[ user.sr_name ]]" readonly></paper-input>
+                                        
+                                    </div>
+                                    <div>
+                                        <paper-input label="Password" type="password" value="{{ __account.password1 }}"></paper-input>
+                                        <paper-input label="Konfirmasi Password" type="password" value="{{ __account.password2 }}"></paper-input>
+                                    </div>
+                                </kct-column>
+                                
+                                
                                 <div class="m-t">
                                     <paper-button class="btn-primary" on-tap="__onSaveAccountTap">Simpan Perubahan</paper-button>
                                 </div>

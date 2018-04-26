@@ -87,6 +87,7 @@ class Notification extends \App\Activities\Models\Activity {
         $data['ta_task_id'] = $this->ta_task_id;
         $data['ta_link'] = $this->getLink();
         $data['ta_sender'] = $this->ta_sender;
+        $data['ta_data'] = $this->ta_data;
 
         return $data;
     }
@@ -108,9 +109,12 @@ class Notification extends \App\Activities\Models\Activity {
 
         switch($type) {
             case 'create':
+            case 'delete':
+                $action = $type == 'create' ? 'membuat' : 'menghapus';
                 $verb = sprintf(
-                    '**%s** membuat dokumen %s: "**%s**"',
+                    '**%s** %s dokumen %s: "**%s**"',
                     $senderName,
+                    $action,
                     $projectTitle,
                     $taskTitle
                 );
@@ -227,14 +231,22 @@ class Notification extends \App\Activities\Models\Activity {
                 );
                 
                 break;
-            case 'add_task':
+            case 'create_lkh_item':
                 $json = json_decode($this->ta_data, TRUE);
-                $date = date('d M Y', strtotime($json['date']));
+                $date = date('d M Y', strtotime($json['lki_date']));
 
                 $verb = sprintf(
                     '**%s** menambahkan kegiatan untuk tanggal **%s** pada dokumen %s: "%s"',
                     $senderName,
                     $date,
+                    $projectTitle,
+                    $taskTitle
+                );
+                break;
+            case 'create_skp_item':
+                $verb = sprintf(
+                    '**%s** menambahkan kegiatan pada dokumen %s: "%s"',
+                    $senderName,
                     $projectTitle,
                     $taskTitle
                 );
@@ -245,6 +257,39 @@ class Notification extends \App\Activities\Models\Activity {
                     '**%s** mengirimkan pemberitahuan perihal: "%s"',
                     $senderName,
                     $json['message']
+                );
+                break;
+            case 'activation':
+                $verb = sprintf(
+                    '**%s** melakukan aktivasi akun',
+                    $senderName
+                );
+                break;
+            case 'examine':
+                $verb = sprintf(
+                    '**%s** memberikan catatan pemeriksaan pada dokumen %s: "%s"',
+                    $senderName,
+                    $projectTitle,
+                    $taskTitle
+                );
+                break;
+
+            case 'objection':
+            case 'response':
+            case 'resolution':
+
+                $action = $type == 'objection' 
+                    ? 'menyatakan keberatan' 
+                    : ($type == 'response'
+                        ? 'menanggapi keberatan' 
+                        : 'memberi putusan');
+
+                $verb = sprintf(
+                    '**%s** %s atas hasil penilaian pada dokumen %s: "%s"',
+                    $senderName,
+                    $action,
+                    $projectTitle,
+                    $taskTitle
                 );
                 break;
         }

@@ -4,6 +4,7 @@
 <link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
 <link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
 <link rel="import" href="../../../../cores/elements/kct-media/kct-media.html">
 <link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
 <link rel="import" href="../../../../cores/elements/kct-input/kct-input-file.html">
@@ -39,7 +40,7 @@
                 <div class="separator"></div>
                 <paper-button on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Simpan</paper-button>
             </setting-header-block>
-            <div class="flex padding">
+            <div class="flex scroll-y padding">
                 <kct-hbox>
                     <div class="logo hidden-sm m-r">
                         <img alt="." src$="[[ company.scp_logo_thumb ]]&w=150&h=150">
@@ -48,6 +49,17 @@
                         <h3 class="title">Data Organisasi</h3>
                         <paper-input label="Nama Organisasi" value="{{ company.scp_name }}"></paper-input>
                         <paper-input label="Alamat" value="{{ company.scp_address }}"></paper-input>
+                        <kct-column columns="3">
+                            <div>
+                                <paper-input label="Kota" value="{{ company.scp_city }}"></paper-input>
+                            </div>
+                            <div>
+                                <paper-input label="Propinsi" value="{{ company.scp_state }}"></paper-input>
+                            </div>
+                            <div>
+                                <paper-input label="Kode Pos" value="{{ company.scp_zip }}"></paper-input>
+                            </div>
+                        </kct-column>
                         <paper-input label="No. Telepon" value="{{ company.scp_phone }}"></paper-input>
                         <paper-input label="No. Fax" value="{{ company.scp_fax }}"></paper-input>
                         <paper-input label="Alamat Email" value="{{ company.scp_email }}"></paper-input>

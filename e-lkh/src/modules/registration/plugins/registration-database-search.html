@@ -1,0 +1,227 @@
+<link rel="import" href="../../../../../cores/mixins/search.html">
+
+<dom-module id="registration-database-search">
+    <template>
+        <style include="kct-search-styles"></style>
+        <kct-hbox class="container" on-ready="__onContainerReady">
+            <div class="column-history">
+                <paper-icon-button icon="search"></paper-icon-button>
+            </div>
+            <div class="column-search flex" id="column-search">
+                <kct-hbox class="scoller-container">
+                    <div class="scroller-nav" hidden$="[[ __hideNav ]]">
+                        <iron-icon data-nav="left" on-tap="__onNavTap" icon="chevron-left"></iron-icon>
+                    </div>
+                    <div class="scroller flex" id="scroller">
+                        <kct-hbox id="list" class="list">
+                            <template is="dom-repeat" items="[[ filters ]]">
+                                <div class="item selectable-item">
+                                    <kct-hbox class="selectable" fit>
+                                        <div class="label">[[ item.label ]]</div>
+                                        <div class="value" hidden$="[[ !item.values.length ]]">
+                                            <template is="dom-repeat" items="[[ item.values ]]">
+                                                <div class="item-value">
+                                                    <span class="item-value-label" on-tap="__onFilterTap">[[ item.label ]]</span>  
+                                                    <span class="item-value-trash"><iron-icon on-tap="__onRemoveTap" icon="close"></iron-icon></span>    
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </kct-hbox>
+                                </div>
+                            </template>
+                            
+                            <div class="item flex">
+                                <iron-selector id="selector" attr-for-selected="name" selected="[[ selectedFeature ]]">
+                                    <kct-search-combo 
+                                        id="combo-search" 
+                                        name="search" 
+                                        class="popup" 
+                                        items="[[ features ]]" 
+                                        item-label-path="hint" 
+                                        item-value-path="label" 
+                                        placeholder="Pencarian atau filter data..." 
+                                        overlay-vertical-offset="2" 
+                                        on-change="__onCommandChange" 
+                                        on-keydown="__onCommandKeydown" 
+                                        no-label-float 
+                                        hide-trigger>
+                                        
+                                        <template>
+                                            <style>
+                                                paper-item {
+                                                    --paper-item-min-height: 34px;
+                                                    font-size: 13px;
+                                                    font-weight: 400;
+                                                }
+                                                paper-item iron-icon {
+                                                    --iron-icon-width: 16px;
+                                                    --iron-icon-height: 16px;
+                                                    margin-right: 5px;
+                                                }
+                                                hidden {
+                                                    display: none;
+                                                }
+                                            </style>
+
+                                            <paper-item hidden$="[[ item.hide ]]">
+                                                <iron-icon icon="[[ item.icon ]]"></iron-icon>
+                                                <paper-item-body>
+                                                    <span class="hint" inner-h-t-m-l="[[ item.hint ]]"></span>
+                                                </paper-item-body>    
+                                            </paper-item>
+
+                                        </template>
+
+                                    </kct-search-combo>
+
+                                    <kct-search-combo 
+                                        name="su_id" 
+                                        url="/users" 
+                                        item-label-path="su_fullname" 
+                                        item-value-path="su_id" 
+                                        list-width="400" 
+                                        page-size="10" 
+                                        class="popup" 
+                                        on-beforeload="__onComboBeforeload" 
+                                        on-change="__onComboChange">
+                                        <template>
+                                            <style>
+                                                paper-item {
+                                                    --paper-item-min-height: 34px;
+                                                    font-size: 13px;
+                                                    font-weight: 400;
+                                                }
+                                                paper-item iron-icon {
+                                                    --iron-icon-width: 16px;
+                                                    --iron-icon-height: 16px;
+                                                    margin-right: 5px;
+                                                }
+                                            </style>
+
+                                            <paper-item>
+                                                <iron-icon icon="face"></iron-icon>
+                                                <paper-item-body>[[ item.su_fullname ]]</paper-item-body>    
+                                            </paper-item>
+
+                                        </template>        
+                                    </kct-search-combo>
+
+                                    <kct-search-combo 
+                                        name="status" 
+                                        url="/registration/grouped-statuses"  
+                                        item-label-path="kp_title" 
+                                        item-value-path="kp_id" 
+                                        list-width="400" 
+                                        page-size="10" 
+                                        class="popup" 
+                                        on-beforeload="__onComboBeforeload" 
+                                        on-change="__onComboChange">
+                                        <template>
+                                            <style>
+                                                paper-item {
+                                                    --paper-item-min-height: 34px;
+                                                    font-size: 13px;
+                                                    font-weight: 400;
+                                                }
+                                                paper-item iron-icon {
+                                                    --iron-icon-width: 16px;
+                                                    --iron-icon-height: 16px;
+                                                    margin-right: 5px;
+                                                }
+                                            </style>
+
+                                            <paper-item>
+                                                <iron-icon icon="bookmark-border"></iron-icon>
+                                                <paper-item-body>[[ item.kp_title ]]</paper-item-body>    
+                                            </paper-item>
+
+                                        </template>        
+                                    </kct-search-combo>
+
+                                </iron-selector>
+                                
+                            </div>
+                        </kct-hbox>    
+                    </div>
+                    <div class="scroller-nav" hidden$="[[ __hideNav ]]">
+                        <iron-icon data-nav="right" on-tap="__onNavTap" icon="chevron-right"></iron-icon>
+                    </div>
+                </kct-hbox>
+                
+                
+            </div>
+            <div class="column-clear">
+                <paper-icon-button on-tap="__onClearTap" icon="clear"></paper-icon-button>
+            </div>
+            <div class="column-sorter">
+                <paper-menu-button horizontal-align="right" vertical-offset="34" no-animations>
+                    <paper-button slot="dropdown-trigger">
+                        <span>Urut [[ selectedSorter.label ]]</span>
+                    </paper-button>
+                    <paper-listbox selectable="paper-item" slot="dropdown-content">
+                        <template is="dom-repeat" items="[[ sorters ]]">
+                            <paper-item on-tap="__onSortCheckChange">
+                                <iron-icon hidden$="[[ item.checked ]]"></iron-icon>
+                                <iron-icon icon="done" hidden$="[[ !item.checked ]]"></iron-icon>
+                                <paper-item-body>&nbsp;Urut [[ item.label ]]</paper-item-body>
+                            </paper-item>
+                        </template>
+                    </paper-listbox>
+                </paper-menu-button>
+            </div>
+        </kct-hbox>
+    </template>
+    <script>
+        class RegistrationDatabaseSearch extends Mixins(Polymer.Element).use(Mixins.Search) {
+            static get is() {
+                return 'registration-database-search';
+            }
+            static get properties() {
+                return {
+                    search: { type: Object, notify: true },
+                    filters: { 
+                        type: Array,
+                        value: () => ([])
+                    },
+
+                    features: {
+                        type: Array,
+                        value: () => ([
+                            { field: 'search', label: 'Search', icon: 'search', hide: false, hint: 'Tekan enter atau klik...' }, 
+                            { field: 'su_id', label: 'Pegawai', icon: 'perm-identity', hide: false, hint: 'Filter data pegawai: <b>@pegawai</b>' },
+                            { field: 'status', label: 'Status', icon: 'bookmark-border', hide: false, hint: 'Filter data status: <b>#status</b>' },
+                            { field: 'su_fullname', label: 'Nama Pegawai', icon: '', hide: true, hint: '' },
+                            { field: 'su_no', label: 'Nomor Induk', icon: '', hide: true, hint: '' },
+                            { field: 'su_email', label: 'Email', icon: '', hide: true, hint: '' }
+                        ])
+                    },
+
+                    selectedFeature: { type: String, value: 'search' },
+
+                    sorters: {
+                        type: Array,
+                        value: () => ([
+                            { field: 'su_fullname', sort: 'ASC', label: 'Pegawai' },
+                            { field: 'su_no', sort: 'ASC', label: 'No. Induk' },
+                            { field: 'su_sex', sort: 'ASC', label: 'Jenis Kelamin' },
+                            { field: 'su_email', sort: 'ASC', label: 'Email' },
+                            { field: 'su_created_dt', sort: 'DESC', label: 'Baru' },
+                            { field: 'su_created_dt', sort: 'ASC', label: 'Lama' }
+                        ])
+                    },
+
+                    selectedSorter: { type: Object },
+                    project: { type: String }
+                };
+            }
+
+            ready() {
+                super.ready();
+                
+                this.set('selectedSorter', this.sorters[0]);
+                this.set('sorters.0.checked', true);
+            }
+        }
+        customElements.define(RegistrationDatabaseSearch.is, RegistrationDatabaseSearch);
+    </script>
+</dom-module>

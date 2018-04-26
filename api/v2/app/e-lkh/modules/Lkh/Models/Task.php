@@ -115,12 +115,17 @@ class Task extends Lkh implements \App\Tasks\Interfaces\TaskModel {
         }
     }
 
-    public function afterFetch() {
-        $this->__snapshot = array();
-        if (isset($this->lkh_id, $this->lkh_flag)) {
-            $this->__snapshot[$this->lkh_id] = array(
-                'lkh_flag' => $this->lkh_flag
-            );
+    public function beforeDelete() {
+        if ($this->__loggable) {
+            $log = Activity::log('delete', array(
+                'ta_task_ns' => $this->getScope(),
+                'ta_task_id' => $this->lkh_id,
+                'ta_sp_id' => $this->lkh_task_project
+            ));
+
+            if ($log) {
+                $log->subscribe();
+            }
         }
     }
 
@@ -134,7 +139,7 @@ class Task extends Lkh implements \App\Tasks\Interfaces\TaskModel {
             
             $data['creator_su_fullname'] = $creator->getName();
             $data['creator_su_no'] = $creator->su_no;
-            $data['creator_su_grade'] = $creator->su_grade;
+            $data['creator_su_sg_name'] = $creator->getGradeName();
             $data['creator_su_avatar_thumb'] = $creator->getAvatarThumb();
         }
 
@@ -327,7 +332,7 @@ class Task extends Lkh implements \App\Tasks\Interfaces\TaskModel {
             $data['su_id'] = $user->su_id;
             $data['su_avatar_thumb'] = $user->getAvatarThumb();
             $data['su_fullname'] = $user->su_fullname;
-            $data['su_grade'] = $user->su_grade;
+            $data['su_sg_name'] = $user->getGradeName();
             $data['su_no'] = $user->su_no;
 
             return $data;

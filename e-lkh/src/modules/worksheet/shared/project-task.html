@@ -77,6 +77,12 @@
                 }
                 
                 this.set('actionBack', actionBack);
+
+                // buggy: calling this page from another module not update route path
+                if (this.route.path == this.actionBack) {
+                    this.set('route.addr', this.state.path);
+                }
+
                 this.set('actionRecord', type);
                 this.set('profile.status.primary_val', id);
 
@@ -140,12 +146,8 @@
                 function done(res) {
                     this.unmask();
 
-                    this.$.taskform.afterSave(res).then(() => {
+                    this.$.taskform.afterSave(res, options).then(() => {
                         this.unmask();
-
-                        if (back) {
-                            this.set('route.path', this.actionBack);    
-                        }
 
                         if (res.success) {
 
@@ -161,6 +163,10 @@
                             if (res.message) {
                                 this.toast('Warning', res.message, 'warn');
                             }
+                        }
+
+                        if (back) {
+                            this.__goBack();
                         }
 
                     });
@@ -252,7 +258,11 @@
 
             __initUpdate() {
                 if ( ! this.profile.status.primary_val) {
-                    this.set('loading', false);
+                    //this.set('loading', false);
+                    this.alert('Peringatan', 'Data tidak dapat diakses').then(() => {
+                        this.__goBack();
+                    });
+
                     return;
                 }
 
@@ -269,12 +279,12 @@
                 }
 
                 function handle(record) {
-                    if ( ! record) {
-                        this.toast('Warning', 'Data tidak ditemukan', 'warn');
+                    if ( ! record ) {
+                        this.alert('Peringatan', 'Data tidak dapat diakses').then(() => {
+                            this.__goBack();
+                        });
 
-                        this.set('route.path', this.actionBack);
-                        this.set('loading', false);
-
+                        //this.set('loading', false);
                         return;
                     }
 
@@ -397,13 +407,21 @@
                 }
             }
 
+            __goBack() {
+                let path = this.route.path;
+                let back = this.actionBack;
+
+                this.set('route.data.back', null);
+                this.set('route.path', back);
+            }
+
             __onSaveTap() {
                 let back = this.actionRecord == 'create';
                 this.save({ send: false, back: back });
             }
 
             __onSendTap() {
-                this.confirm('Konfirmasi', 'Lanjutkan ke tahap berikutnya?').then(y => {
+                this.confirm('Konfirmasi', 'Apakah Anda yakin akan memproses dokumen ini?').then(y => {
                     if (y) {
                         this.save({ send: true, back: true });        
                     }
@@ -412,7 +430,7 @@
             }
 
             __onRemoveTap() {
-                this.confirm('Konfirmasi', 'Apakah Anda yakin akan menghapus kegiatan ini?').then(y => {
+                this.confirm('Konfirmasi', 'Apakah Anda yakin akan menghapus dokumen ini?').then(y => {
                     if (y) {
                         this.mask('Sedang menghapus...');
 
@@ -426,7 +444,7 @@
                                         project: this.project
                                     });
 
-                                    this.set('route.path', this.actionBack);
+                                    this.__goBack();
                                 });
                             } else {
                                 this.unmask();
@@ -444,17 +462,16 @@
                 });
 
                 if (e.detail.back) {
-                    this.set('route.path', this.actionBack);
+                    this.__goBack();
                 }
             }
 
             __onCancelTap() {
-                this.set('route.path', this.actionBack);
+                this.__goBack();
             }
 
             __onBackTap() {
-                this.set('route.data.back', null);
-                this.set('route.path', this.actionBack);
+                this.__goBack();
             }
 
             __onSocketNotify(e) {
@@ -462,11 +479,25 @@
                 let project = this.projectRecord && this.projectRecord.sp_id;
                 let task = this.taskRecord && this.taskRecord.task && this.taskRecord.task[this.profile.task.primary_key];
                 
-                if (project && task && (project == payload.project) && (task == payload.task)) {
-                    if (payload.type == 'update_status') {
-                        this.set('route.path', this.actionBack);
-                    } else {
-                        this.$.tasklogs.reload();
+                if (project == payload.project && task == payload.task) {
+                    switch(payload.type) {
+                        case 'update_status':
+                        case 'activation':
+                            this.__goBack();
+                            break;
+                        default:
+                            if (payload.type) {
+                                let excludes = [
+                                    'update_skp_item',
+                                    'remove_skp_item',
+                                    'update_skp_behavior'
+                                ];
+                                if (excludes.indexOf(payload.type) === -1) {
+                                    this.$.tasklogs.reload();
+                                }
+                            } else {
+                                this.$.tasklogs.reload();    
+                            }
                     }
                 }
             }

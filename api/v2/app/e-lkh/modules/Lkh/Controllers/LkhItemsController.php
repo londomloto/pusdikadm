@@ -79,11 +79,21 @@ class LkhItemsController extends \Micro\Controller {
             default:
 
                 $query = LkhItem::get()
+                    ->columns(array('lki_id'))
                     ->join('App\Lkh\Models\LkhDay', 'lkd_id = lki_lkd_id')
                     ->join('App\Lkh\Models\Task', 'lkh_id = lkd_lkh_id')
                     ->join('App\Users\Models\User', 'su_id = lkh_su_id')
                     ->filterable()
                     ->sortable();
+
+                if ( ! $this->role->can('manage@lkh')) {
+                    $auth = $this->auth->user();
+                    $query
+                        ->columns(array('lki_id'))
+                        ->join('App\Lkh\Models\TaskUser', 'task_user.lku_lkh_id = lkh_id', 'task_user', 'LEFT')
+                        ->andWhere('task_user.lku_su_id = :user:', array('user' => $auth['su_id']))
+                        ->groupBy('lki_id');
+                }
 
                 $sort = $this->request->getQuery('sort');
                 
@@ -92,6 +102,11 @@ class LkhItemsController extends \Micro\Controller {
                 }
 
                 $result = $query->paginate();
+                $result->data = $result->data->filter(function($row){
+                    $item = LkhItem::findFirst($row->lki_id);
+                    $data = $item->toArray();
+                    return $data;
+                });
                 return $result;
         }
         
@@ -137,13 +152,13 @@ class LkhItemsController extends \Micro\Controller {
                 $lkh = $lkd->getTask();
 
                 if ($lkh) {
-                    $log = Activity::log('add_task', array(
+                    $log = Activity::log('create_lkh_item', array(
                         'ta_task_ns' => $lkh->getScope(),
                         'ta_task_id' => $lkh->lkh_id,
                         'ta_sp_id' => $lkh->lkh_task_project,
                         'ta_data' => json_encode(array(
-                            'date' => $lkd->lkd_date,
-                            'desc' => $data->lki_desc
+                            'lki_id' => $data->lki_id,
+                            'lki_date' => $data->lki_date
                         ))
                     ));
 

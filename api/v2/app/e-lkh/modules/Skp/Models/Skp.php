@@ -2,7 +2,7 @@
 namespace App\Skp\Models;
 
 use App\System\Models\Constant;
-use Micro\Helpers\Date as DateHelper;
+use Micro\Helpers\Date;
 
 class Skp extends \Micro\Model {
 
@@ -36,15 +36,6 @@ class Skp extends \Micro\Model {
             )
         );
 
-        $this->hasOne(
-            'skp_superior',
-            'App\Users\Models\User',
-            'su_id',
-            array(
-                'alias' => 'Superior'
-            )
-        );
-
         $this->hasMany(
             'skp_id',
             'App\Skp\Models\SkpItem',
@@ -75,29 +66,20 @@ class Skp extends \Micro\Model {
     }
 
     public function beforeSave() {
-        if (isset($this->skp_examiner) && $this->skp_examiner == '') {
-            $this->skp_examiner = NULL;
-        }
-
-        if (isset($this->skp_superior) && $this->skp_superior == '') {
-            $this->skp_superior = NULL;
-        }
-
-        if (isset($this->skp_evaluator) && $this->skp_evaluator == '') {
-            $this->skp_evaluator = NULL;
-        }
+        $this->nulled(array(
+            'skp_examiner',
+            'skp_evaluator',
+            'skp_report_dt',
+            'skp_receive_dt',
+            'skp_objection_dt',
+            'skp_response_dt',
+            'skp_resolution_dt',
+            'skp_disposition_dt'
+        ));
 
         // create period
         if (isset($this->skp_start_date, $this->skp_end_date)) {
-            $this->skp_period = DateHelper::formatPeriod($this->skp_start_date, $this->skp_end_date);
-        }
-
-        if (isset($this->skp_report_dt) && $this->skp_report_dt == '') {
-            $this->skp_report_dt = NULL;
-        }
-
-        if (isset($this->skp_receive_dt) && $this->skp_receive_dt == '') {
-            $this->skp_receive_dt = NULL;
+            $this->skp_period = Date::formatPeriod($this->skp_start_date, $this->skp_end_date);
         }
     }
 
@@ -112,62 +94,86 @@ class Skp extends \Micro\Model {
 
     }
 
+    public function getYear() {
+        if ( ! empty($this->skp_start_date)) {
+            return date('Y', strtotime($this->skp_start_date));
+        }
+        return NULL;
+    }
+
+    public function hasEvaluator() {
+        return $this->evaluator !== FALSE;
+    }
+
+    public function hasExaminer() {
+        return $this->examiner !== FALSE;
+    }
+
     public function toArray($columns = NULL) {
         $data = parent::toArray($columns);
 
         
         $data['skp_title'] = $this->getTitle();
-        $data['skp_start_date_formatted'] = DateHelper::format($this->skp_start_date, 'd M Y');
-        $data['skp_end_date_formatted'] = DateHelper::format($this->skp_end_date, 'd M Y');
-        $data['skp_created_dt_formatted'] = DateHelper::format($this->skp_created_dt, 'd M Y');
+        $data['skp_year'] = $this->getYear();
+        $data['skp_start_date_formatted'] = Date::format($this->skp_start_date, 'd M Y');
+        $data['skp_end_date_formatted'] = Date::format($this->skp_end_date, 'd M Y');
+        $data['skp_created_dt_formatted'] = Date::format($this->skp_created_dt, 'd M Y');
         $data['skp_performance_criteria_text'] = !empty($this->skp_performance_criteria) ? '('.$this->skp_performance_criteria.')' : '';
         $data['skp_behavior_criteria_text'] = !empty($this->skp_behavior_criteria) ? '('.$this->skp_behavior_criteria.')' : '';
         $data['skp_criteria_text'] = !empty($this->skp_criteria) ? '('.$this->skp_criteria.')' : '';
         
+        $data['company_scp_name'] = NULL;
+
         if (($user = $this->user)) {
             $data['skp_su_fullname'] = $user->getName();
             $data['skp_su_no'] = $user->su_no;
-            $data['skp_su_grade'] = $user->su_grade;
+            $data['skp_su_sg_name'] = $user->getGradeName();
             $data['skp_su_sj_name'] = $user->job ? $user->job->sj_name : '';
             $data['skp_su_sdp_name'] = $user->department ? $user->department->sdp_name : '';
             $data['skp_su_avatar_thumb'] = $user->getAvatarThumb();
+
+            if (($company = $user->company)) {
+                $data['company_scp_name'] = $company->scp_name;
+            }
         }
 
-        if (($examiner = $this->examiner)) {
-            $data['examiner_su_fullname'] = $examiner->getName();
-            $data['examiner_su_no'] = $examiner->su_no;
-            $data['examiner_su_grade'] = $examiner->su_grade;
-            $data['examiner_su_sj_name'] = $examiner->job ? $examiner->job->sj_name : '';
-            $data['examiner_su_sdp_name'] = $examiner->department ? $examiner->department->sdp_name : '';
-        }
+        $data['skp_has_evaluator'] = FALSE;
+        $data['skp_has_examiner'] = FALSE;
 
         if (($evaluator = $this->evaluator)) {
+            $data['skp_has_evaluator'] = TRUE;
+            
             $data['evaluator_su_fullname'] = $evaluator->getName();
             $data['evaluator_su_no'] = $evaluator->su_no;
-            $data['evaluator_su_grade'] = $evaluator->su_grade;
+            $data['evaluator_su_sg_name'] = $evaluator->getGradeName();
             $data['evaluator_su_sj_name'] = $evaluator->job ? $evaluator->job->sj_name : '';
             $data['evaluator_su_sdp_name'] = $evaluator->department ? $evaluator->department->sdp_name : '';
         }
 
-        if (($superior = $this->superior)) {
-            $data['superior_su_fullname'] = $superior->getName();
-            $data['superior_su_no'] = $superior->su_no;
-            $data['superior_su_grade'] = $superior->su_grade;
-            $data['superior_su_sj_name'] = $superior->job ? $superior->job->sj_name : '';
-            $data['superior_su_sdp_name'] = $superior->department ? $superior->department->sdp_name : '';
-        }
+        if (($examiner = $this->examiner)) {
+            $data['skp_has_examiner'] = TRUE;
 
-        $data['skp_authorized'] = FALSE;
-        $auth = \Micro\App::getDefault()->auth->user();
-
-        if ($auth['su_id'] == $this->skp_su_id) {
-            $data['skp_authorized'] = TRUE;
+            $data['examiner_su_fullname'] = $examiner->getName();
+            $data['examiner_su_no'] = $examiner->su_no;
+            $data['examiner_su_sg_name'] = $examiner->getGradeName();
+            $data['examiner_su_sj_name'] = $examiner->job ? $examiner->job->sj_name : '';
+            $data['examiner_su_sdp_name'] = $examiner->department ? $examiner->department->sdp_name : '';
         }
 
         $data['skp_performance_portion'] = Constant::valueOf('PERFORMANCE_PORTION');
         $data['skp_behavior_portion'] = Constant::valueOf('BEHAVIOR_PORTION');
-
+        $data['skp_value_formatted'] = self::__format($data['skp_value'], 2);
+        $data['skp_performance_formatted'] = self::__format($data['skp_performance'], 2);
+        $data['skp_performance_value_formatted'] = self::__format($data['skp_performance_value'], 2);
+        $data['skp_behavior_total_formatted'] = self::__format($data['skp_behavior_total'], 2);
+        $data['skp_behavior_value_formatted'] = self::__format($data['skp_behavior_value'], 2);
+        $data['skp_behavior_average_formatted'] = self::__format($data['skp_behavior_average'], 2);
+        
         return $data;
+    }
+
+    private static function __format($value, $decimal = 0) {
+        return is_null($value) ? NULL : number_format($value, $decimal, ',', '.');
     }
 
     public function getSortedItems() {
@@ -245,5 +251,24 @@ class Skp extends \Micro\Model {
         foreach($current as $e) {
             $e->delete();
         }
+    }
+
+    public static function flags() {
+
+        return array(
+            'EXAM' => array(
+                'name' => 'EXAM',
+                'text' => 'Tidak ada tindakan'
+            ),
+            'REVISION' => array(
+                'name' => 'REVISION',
+                'text' => 'Dikembalikan untuk diperbaiki'
+            ),
+            'DONE' => array(
+                'name' => 'DONE',
+                'text' => 'Diteruskan untuk disahkan'
+            )
+        );
+
     }
 }

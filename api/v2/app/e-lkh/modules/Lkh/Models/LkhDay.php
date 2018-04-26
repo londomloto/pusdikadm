@@ -72,6 +72,7 @@ class LkhDay extends \Micro\Model {
 
         $data['input'] = new \stdClass();
 
+
         $data['items'] = $this->getItems()->filter(function($model){
             return $model->toArray();
         });

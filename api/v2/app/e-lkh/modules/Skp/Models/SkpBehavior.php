@@ -5,7 +5,16 @@ use App\Behaviors\Models\Behavior;
 
 class SkpBehavior extends \Micro\Model {
 
-    
+    public function initialize() {
+        $this->hasOne(
+            'tsb_tbh_id',
+            'App\Behaviors\Models\Behavior',
+            'tbh_id',
+            array(
+                'alias' => 'Behavior'
+            )
+        );
+    }
 
     public function getSource() {
         return 'trx_skp_behaviors';
@@ -13,7 +22,17 @@ class SkpBehavior extends \Micro\Model {
 
     public function toArray($columns = NULL) {
         $data = parent::toArray($columns);
+
         $data['tsb_criteria_text'] = !empty($data['tsb_criteria']) ? '('.$data['tsb_criteria'].')' : '';
+        $data['tsb_dirty'] = FALSE;
+        $data['tsb_tbh_name'] = NULL;
+        $data['tsb_tbh_mandatory'] = 1;
+        $data['tsb_value_formatted'] = is_null($data['tsb_value']) ? NULL : number_format($data['tsb_value'], 2, ',', '.');
+
+        if (($behavior = $this->behavior)) {
+            $data['tsb_tbh_name'] = $behavior->tbh_name;
+            $data['tsb_tbh_mandatory'] = $behavior->tbh_mandatory;
+        }
         
         return $data;
     }
@@ -41,6 +60,7 @@ class SkpBehavior extends \Micro\Model {
 
         foreach($result as &$row) {
             $row['tsb_criteria_text'] = empty($row['tsb_criteria']) ? '' : '('.$row['tsb_criteria'].')';
+            $row['tsb_dirty'] = FALSE;
         }
 
         return $result;

@@ -1,0 +1,59 @@
+<link rel="import" href="../../../../../cores/mixins/mixins.html">
+<script>
+    Mixins.SkpPageBehavior = Polymer.dedupingMixin(superclass => {
+
+        return class extends superclass {
+
+            __computeYears() {
+                let today = moment();
+                let year = +today.format('YYYY');
+                let start = year - 10;
+                let end = year + 10;
+                let years = [];
+
+                for (let i = start; i <= end; i++) {
+                    years.push({
+                        label: '' + i,
+                        value: '' + i
+                    });
+                }   
+
+                this.set('years', years);
+            }
+            
+            __computePeriod(start, end) {
+                if (start && end) {
+                    if (start == end) {
+                        return start;
+                    } else {
+                        return start + ' s/d ' + end;
+                    }
+                }
+                return '';
+            }
+
+            __toggleDrawer() {
+                let layout = this.$['drawer-layout'];
+
+                if (layout.forceNarrow || !layout.narrow) {
+                    layout.forceNarrow = !layout.forceNarrow;
+                } else {
+                    layout.drawer.toggle();
+                }
+            }
+            
+            __onOpenDrawerTap() {
+                this.__toggleDrawer();
+            }
+
+            __onCloseDrawerTap() {
+                this.__toggleDrawer();
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/skp');
+            }
+        };
+
+    });
+</script>

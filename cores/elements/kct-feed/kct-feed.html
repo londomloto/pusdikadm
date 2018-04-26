@@ -274,6 +274,9 @@
                                 def.resolve();
                             });
                         };
+                        fb.onerror = () => {
+                            //console.log('error');
+                        };
                         document.body.appendChild(fb);
                     }
 

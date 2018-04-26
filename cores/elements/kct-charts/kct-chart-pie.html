@@ -90,9 +90,9 @@
                 serie.colorByPoint = true;
                 serie.innerSize = '60%';
 
-                (this.chart.series || []).forEach(s => {
-                    s.remove();
-                });
+                while(this.chart.series.length > 0) {
+                    this.chart.series[0].remove(true);
+                }
                 
                 this.chart.addSeries(serie);
             }

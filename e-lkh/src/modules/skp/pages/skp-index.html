@@ -2,6 +2,7 @@
 <link rel="import" href="../../../../../cores/bower_components/paper-card/paper-card.html">
 <link rel="import" href="../../../../../cores/bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../../../../cores/elements/kct-media/kct-media.html">
+<link rel="import" href="../../../../../cores/elements/kct-role/kct-role.html">
 
 <dom-module id="skp-index">
     <template>
@@ -65,11 +66,12 @@
         </style>
 
         <kct-media screen="{{ screen }}"></kct-media>
+        <kct-role id="role"></kct-role>
 
         <div class$="container [[ screen ]]">
             <div class="app-grid">
-                <template is="dom-repeat" items="[[ menus ]]">
-                    <div class="menu">
+                <template is="dom-repeat" items="[[ menus ]]" on-dom-change="__onMenuRender">
+                    <div class="menu" data-perm$="[[ item.perm ]]">
                         <paper-card class="card" on-tap="__onMenuTap">
                             <div class="card-content">
                                 <div class="icon">
@@ -99,8 +101,12 @@
                     menus: {
                         type: Array,
                         value: () => ([
-                            { text: 'Datasheet', icon: 'view-list', name: 'datasheet' },
-                            { text: 'Dashboard', icon: 'dashboard', name: 'dashboard' }
+                            { text: 'Monitoring', icon: 'device:dvr', name: 'live', perm: 'access_monitoring@skp' },
+                            { text: 'Dokumen', icon: 'description', name: 'database', perm: 'access_database@skp' },
+                            { text: 'Kegiatan', icon: 'done', name: 'database-items', perm: 'access_database_items@skp' },
+                            { text: 'Laporan', icon: 'today', name: 'report', perm: 'access_report@skp' },
+                            { text: 'Statistik', icon: 'editor:bubble-chart', name: 'statistic', perm: 'access_statistic@skp' },
+                            { text: 'Dashboard', icon: 'editor:insert-chart', name: 'dashboard', perm: 'access_dashboard@skp' }
                         ])
                     }
                 };
@@ -109,6 +115,10 @@
             __onMenuTap(e) {
                 let menu = e.model.item;
                 this.set('route.path', '/skp/pages/' + menu.name);
+            }
+
+            __onMenuRender() {
+                this.$.role.validate();
             }
         }
         customElements.define(SkpIndex.is, SkpIndex);

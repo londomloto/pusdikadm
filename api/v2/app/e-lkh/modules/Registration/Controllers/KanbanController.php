@@ -5,10 +5,12 @@ use App\Registration\Models\Task;
 use App\Registration\Models\TaskStatus;
 use App\Registration\Models\TaskLabel;
 use App\Projects\Models\Project;
+use App\Activities\Models\Activity;
 
 class KanbanController extends \Micro\Controller {
 
     public function findAction() {
+        $auth = $this->auth->user();
         $params = $this->request->getQuery();
 
         $project = isset($params['project']) ? $params['project'] : FALSE;
@@ -29,9 +31,12 @@ class KanbanController extends \Micro\Controller {
             ->columns($columns) 
             ->join('App\Registration\Models\Task', 'task_status.tus_su_id = task.su_id', 'task')
             ->join('App\Registration\Models\TaskLabel', 'task.su_id = task_label.tul_su_id', 'task_label', 'left')
+            ->join('App\Registration\Models\TaskUser', 'task.su_id = task_user.tru_task', 'task_user', 'left')
             ->join('App\Labels\Models\Label', 'task_label.tul_sl_id = label.sl_id', 'label', 'left')
             ->join('App\Users\Models\User', 'task.su_created_by = creator.su_id', 'creator', 'left')
             ->groupBy('task_status.tus_id');
+
+        $query->inWhere('task_user.tru_user', array($auth['su_id']));
 
         if ($project) {
             $query->andWhere('task.su_task_project = :project:', array('project' => $project));
@@ -57,10 +62,13 @@ class KanbanController extends \Micro\Controller {
                 $item['task'] = NULL;
                 $item['status'] = $stat;
                 $item['labels'] = array();
+                $item['users'] = array();
+                $item['perms'] = array();
                 
                 if ($task) {
                     $item['task'] = $task->toArray();
                     $item['labels'] = $task->labels->filter(function($label){ return $label->toArray(); });
+                    $item['users'] = $task->getAssignee();
                 }
 
                 return $item;
@@ -82,10 +90,10 @@ class KanbanController extends \Micro\Controller {
                 $task = new Task();
                 $form = $post['record'];
 
-                if (empty($form['task']['su_due_date'])) {
+                if (empty($form['task']['su_task_due'])) {
                     $today = new \DateTime();
                     $today->modify('+1 day');
-                    $form['task']['su_due_date'] = $today->format('Y-m-d');
+                    $form['task']['su_task_due'] = $today->format('Y-m-d');
                 }
 
                 $form['task']['su_created_by'] = $auth['su_id'];
@@ -93,10 +101,19 @@ class KanbanController extends \Micro\Controller {
                 $form['task']['su_updated_by'] = $form['task']['su_created_by'];
                 $form['task']['su_updated_dt'] = $form['task']['su_created_dt'];
 
+                // set password if any
+                if (isset($form['task']['su_passwd']) && ! empty($form['task']['su_passwd'])) {
+                    $form['task']['su_passwd'] = $this->security->createHash($form['task']['su_passwd']);
+                }
+
                 if ($task->save($form['task'])) {
 
                     if (isset($form['labels'])) {
                         $task->saveLabels($form['labels']);
+                    }
+
+                    if (isset($form['users'])) {
+                        $task->saveUsers($form['users']);
                     }
 
                     $affected = array();
@@ -158,6 +175,11 @@ class KanbanController extends \Micro\Controller {
                 $form['task']['su_task_due'] = NULL;
             }
 
+            // set password if any
+            if (isset($form['task']['su_passwd']) && ! empty($form['task']['su_passwd'])) {
+                $form['task']['su_passwd'] = $this->security->createHash($form['task']['su_passwd']);
+            }
+
             $affected = array();
 
             if (FALSE === $logs || $send) {
@@ -170,6 +192,10 @@ class KanbanController extends \Micro\Controller {
                     $task->saveLabels($form['labels']);
                 }
 
+                if (isset($form['users'])) {
+                    $task->saveUsers($form['users']);
+                }
+
                 $task->resumeLog();
 
                 if ($send) {
@@ -177,6 +203,7 @@ class KanbanController extends \Micro\Controller {
                     $curr = $task->getCurrentStatuses();
 
                     $worker = $this->bpmn->worker($post['worker']);
+                    $change = array();
 
                     foreach($curr as $c) {
                         $next = $worker->next($c->tus_status, $form['task']);
@@ -218,6 +245,9 @@ class KanbanController extends \Micro\Controller {
                                     );
                                     
                                     if ($status->save($create)) {
+                                        $status   = $status->refresh();
+                                        $change[] = $status->getLabel();
+
                                         $move[] = $c;
                                     }
                                 } else {
@@ -226,6 +256,20 @@ class KanbanController extends \Micro\Controller {
                             }
                         }
 
+                    }
+
+                    if (count($change) > 0) {
+                        $log = Activity::log('update_status', array(
+                            'ta_task_ns' => $task->getScope(),
+                            'ta_task_id' => $task->su_id,
+                            'ta_sp_id' => $task->su_task_project,
+                            'ta_data' => json_encode($change)
+                        ));
+
+                        if ($log) {
+                            $log->subscribe();
+                            $log->broadcast();
+                        }
                     }
 
                     // nothing changed
@@ -289,8 +333,10 @@ class KanbanController extends \Micro\Controller {
             
             $maps = array(
                 'user' => 'task.su_fullname',
-                'date' => 'task.su_created_dt',
-                'label' => 'label.sl_label'
+                'card' => 'task.su_no',
+                'sex' => 'task.su_sex',
+                'label' => 'label.sl_label',
+                'email' => 'task.su_email'
             );
 
             $where = array();
@@ -324,10 +370,6 @@ class KanbanController extends \Micro\Controller {
                 if (isset($json->label) && count($json->label) > 0) {
                     $query->inWhere('task_label.tul_sl_id', $json->label[1]);
                 }
-
-                if (isset($json->date) && count($json->date) > 0) {
-                    $query->inWhere('task_status.tus_created', $json->date[1]);
-                }
             }
         }
     }
@@ -341,9 +383,11 @@ class KanbanController extends \Micro\Controller {
             $ps = json_decode($params['sort']);
 
             $sort = array();
+
             $maps = array(
-                'title' => 'su_fullname',
-                'due' => 'su_due_date'
+                'name' => 'task.su_fullname',
+                'card' => 'task.su_no',
+                'email' => 'task.su_email'
             );
 
             foreach($ps as $e) {
@@ -352,14 +396,12 @@ class KanbanController extends \Micro\Controller {
 
                 if (isset($maps[$e->property])) {
                     $name = $maps[$e->property];
-                    $sort[] = $name.' '.$dirs;
-                    $cols[] = $aggr.'(task.'.$name.') AS '.$name;
+                    $prop = str_replace('.', '_', $name);
+                    $sort[] = $prop.' '.$dirs;
+                    $cols[] = $aggr.'('.$name.') AS '.$prop;
                 } else if ($e->property == 'created') {
                     $sort[] = 'su_created_dt '.$dirs;
                     $cols[] = $aggr.'(task.su_created_dt) AS su_created_dt';
-                } else if ($e->property == 'creator') {
-                    $sort[] = 'su_fullname '.$dirs;
-                    $cols[] = $aggr.'(creator.su_fullname) AS su_fullname';
                 }
             }
 

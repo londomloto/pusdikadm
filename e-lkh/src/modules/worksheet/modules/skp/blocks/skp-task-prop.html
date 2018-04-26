@@ -42,7 +42,7 @@
             <div class="form-group">
                 <div class="tools">
                     <save-indicator id="user-indicator"></save-indicator>
-                    <paper-button on-tap="__onUserEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
+                    <paper-button hidden$="[[ !record.perms.update_users ]]" on-tap="__onUserEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
                 </div>
                 <div class="label">Pengakses Dokumen</div>
                 <div class="field">
@@ -62,8 +62,8 @@
                                 </div>
                                 <div class="text">
                                     <div>[[ item.su_fullname ]]</div>
-                                    <div class="meta">[[ __computeUserMeta(item.su_no, item.su_grade) ]]</div>
-                                    <div hidden$="[[ __hideRemoveUser(item.su_id) ]]"><a on-tap="__onUserRemoveTap" href="javascript:void(0)">Hapus</a></div>
+                                    <div class="meta">[[ __computeUserMeta(item.su_no, item.su_sg_name) ]]</div>
+                                    <div hidden$="[[ __hideRemoveUser(item.su_id, record.perms.update_users) ]]"><a on-tap="__onUserRemoveTap" href="javascript:void(0)">Hapus</a></div>
                                 </div>
                                 <div class="clearfix"></div>
                             </div>
@@ -110,7 +110,7 @@
             <div class="form-group">
                 <div class="tools">
                     <save-indicator id="label-indicator"></save-indicator>
-                    <paper-button on-tap="__onLabelEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
+                    <paper-button hidden$="[[ !record.perms.update_labels ]]" on-tap="__onLabelEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
                 </div>
                 <div class="label">Label Dokumen</div>
                 <div class="field">
@@ -161,7 +161,11 @@
                 this.set('record.task.skp_created_dt_formatted', formattedToday);
             }
 
-            __hideRemoveUser(id) {
+            __hideRemoveUser(id, perm) {
+                if ( ! perm) {
+                    return true;
+                }
+
                 let authors = [this.record.task.skp_su_id];
                 
                 if (this.project) {

@@ -110,7 +110,7 @@ class Activity extends \Micro\Model {
     }
 
     public function isComment() {
-        return in_array($this->ta_type, array('comment', 'warning'));
+        return in_array($this->ta_type, array('comment', 'warning', 'examine'));
     }
 
     public function getComment() {
@@ -166,6 +166,8 @@ class Activity extends \Micro\Model {
             case 'create':
             case 'update':
                 return 'image:edit';
+            case 'delete':
+                return 'delete-forever';
             case 'update_status':
                 return 'bookmark-border';
             case 'disposition':
@@ -182,10 +184,19 @@ class Activity extends \Micro\Model {
                 return 'label-outline';
             case 'warning':
                 return 'warning';
-            case 'add_task':
+            case 'create_lkh_item':
+            case 'create_skp_item':
                 return 'description';
             case 'alert':
                 return 'warning';
+            case 'activation':
+                return 'lock-open';
+            case 'examine':
+                return 'communication:chat-bubble-outline';
+            case 'objection':
+            case 'response':
+            case 'resolution':
+                return 'error-outline';
         }
     }
 
@@ -308,14 +319,21 @@ class Activity extends \Micro\Model {
                 );
 
                 break;
-            case 'add_task':
+            case 'create_lkh_item':
                 $json = json_decode($this->ta_data, TRUE);
-                $date = date('d M', strtotime($json['date']));
+                $date = date('d M', strtotime($json['lki_date']));
 
                 $verb = sprintf(
-                    '**%s** menambahkan item kegiatan untuk tanggal **%s** %s',
+                    '**%s** menambahkan kegiatan untuk tanggal **%s** %s',
                     $senderName,
                     $date,
+                    $time
+                );
+                break;
+            case 'create_skp_item':
+                $verb = sprintf(
+                    '**%s** menambahkan kegiatan %s',
+                    $senderName,
                     $time
                 );
                 break;
@@ -325,6 +343,37 @@ class Activity extends \Micro\Model {
                     '**%s** memberitahukan %s %s',
                     $senderName,
                     $json['message'],
+                    $time
+                );
+                break;
+            case 'activation':
+                $verb = sprintf(
+                    '**%s** mengaktifkan akun %s',
+                    $senderName,
+                    $time
+                );
+                break;
+            case 'examine':
+                $verb = sprintf(
+                    '**%s** memberikan catatan pemeriksaan %s',
+                    $senderName, 
+                    $time
+                );
+                break;
+            case 'objection':
+            case 'response':
+            case 'recommendation':
+
+                $action = $type == 'objection' 
+                    ? 'menyatakan keberatan' 
+                    : ($type == 'response'
+                        ? 'menanggapi keberatan' 
+                        : 'memberi putusan');
+
+                $verb = sprintf(
+                    '**%s** %s atas hasil penilaian %s',
+                    $senderName, 
+                    $action,
                     $time
                 );
                 break;

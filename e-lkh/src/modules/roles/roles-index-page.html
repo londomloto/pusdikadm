@@ -239,6 +239,9 @@
                 return desc || 'No description';
             }
             __loadRoles(data = {}) {
+                data.sort = [
+                    { property: 'sr_name', direction: 'asc' }
+                ];
                 this.$.ajax.GET('/roles', data).then(res => {
                     this.set('roles', res.data);
                 });

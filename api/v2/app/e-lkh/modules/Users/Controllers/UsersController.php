@@ -1,8 +1,10 @@
 <?php
 namespace App\Users\Controllers;
 
-use App\Users\Models\User,
-    App\Roles\Models\Role;
+use App\Users\Models\User;
+use App\Users\Models\UserToken;
+use App\Roles\Models\Role;
+use App\Activities\Models\Activity;
 
 class UsersController extends \Micro\Controller {
 
@@ -151,7 +153,7 @@ class UsersController extends \Micro\Controller {
         );
 
         if ( ! empty($email)) {
-            if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            if ($this->mailer->validateEmail($email)) {
                 $user = User::findFirst(array(
                     'su_email = :email:',
                     'bind' => array(
@@ -249,6 +251,7 @@ class UsersController extends \Micro\Controller {
     }
 
     public function validateActivationAction() {
+
         $result = array(
             'success' => FALSE
         );
@@ -291,22 +294,74 @@ class UsersController extends \Micro\Controller {
     public function activateAction() {
         $post = $this->request->getJson();
         $user = User::findFirst($post['su_id']);
-
+        $done = FALSE;
+        
         $post['su_active'] = 1;
         $post['su_invite_token'] = NULL;
-
+        
         if (isset($post['password'])) {
             $post['su_passwd'] = $this->security->createHash($post['password']);
         }
 
         if ($user) {
             if ($user->save($post)) {
-                if ($user->su_task_flag == 'CONFIRMATION') {
-                    $task = \App\Registration\Models\Task::findFirst($user->su_id);
-                    $task->forward();
 
-                    $task->su_task_flag = NULL;
-                    $task->save();
+                $done = TRUE;
+
+                if ($user->su_task_flag == 'CONFIRMATION') {
+
+                    $user->su_task_flag = 'DONE';
+                    $user->save();
+
+                    $task = \App\Registration\Models\Task::findFirst($user->su_id);
+                    $subs = array();
+
+                    foreach($task->getUsers() as $assignee) {
+                        $subs[] = $assignee->su_id;
+                    }
+
+                    if (count($subs) > 0) {
+                        
+                        $log = Activity::log('activation', array(
+                            'ta_sender' => $task->su_id,
+                            'ta_task_ns' => $task->getScope(),
+                            'ta_task_id' => $task->su_id,
+                            'ta_sp_id' => $task->su_task_project
+                        ));
+
+                        if ($log) {
+                            $log->subscribe($subs);
+                            $log->broadcast();
+                        }
+                        
+                        $queryToken = UserToken::get()
+                            ->inWhere('sut_su_id', $subs)
+                            ->execute();
+
+                        $tokens = array();
+
+                        foreach($queryToken as $row) {
+                            if ( ! empty($row->sut_token)) {
+                                $tokens[] = $row->sut_token;
+                            }
+                        }
+
+                        if (count($tokens) > 0) {
+                            $topic = 'user-activation';
+                            $reg = $this->gcm->subscribe($topic, $tokens, TRUE);
+                            if ($reg->success) {
+                                $this->gcm->broadcast($topic, array(
+                                    'title' => 'Aktivasi Akun',
+                                    'body' => $user->getName().' baru saja melakukan aktivasi akun.',
+                                    'link' => $task->getLink(TRUE)
+                                ));
+
+                                $this->gcm->unsubscribe($topic, $tokens);
+                            }
+                        }
+                    }
+
+                    $task->forward();
                 }
             }
         }
@@ -314,7 +369,7 @@ class UsersController extends \Micro\Controller {
         $redir = $this->url->getClientUrl().'profile/';
 
         return array(
-            'success' => TRUE,
+            'success' => $done,
             'data' => array(
                 'redir' => $redir
             )

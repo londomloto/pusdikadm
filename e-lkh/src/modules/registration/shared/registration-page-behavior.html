@@ -1,0 +1,31 @@
+<link rel="import" href="../../../../../cores/mixins/mixins.html">
+<script>
+    Mixins.RegistrationPageBehavior = Polymer.dedupingMixin(superclass => {
+
+        return class extends superclass {
+
+            __toggleDrawer() {
+                let layout = this.$['drawer-layout'];
+
+                if (layout.forceNarrow || !layout.narrow) {
+                    layout.forceNarrow = !layout.forceNarrow;
+                } else {
+                    layout.drawer.toggle();
+                }
+            }
+            
+            __onOpenDrawerTap() {
+                this.__toggleDrawer();
+            }
+
+            __onCloseDrawerTap() {
+                this.__toggleDrawer();
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/registration');
+            }
+        };
+
+    });
+</script>

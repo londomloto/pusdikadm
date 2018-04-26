@@ -161,17 +161,31 @@
                 border-left: 1px solid #d0d0d0;
             }
 
+            /*.table td.editable {
+                background-color: var(--paper-yellow-100);
+            }*/
+
             .table paper-input,
             .table kct-input-number {
                 --paper-input-container: {
-                    padding: 2px 0;
+                    padding: 0;
                 };
                 --paper-input-container-input: {
                     text-align: center;
+                    padding: 5px 0;
                 };
                 --paper-input-container-underline: {
                     display: none;
                 };
+            }
+
+            .table td.readonly {
+                background-color: var(--paper-grey-100);
+            }
+
+            .table td.editable {
+                padding: 1px;
+                position: relative;
             }
 
             .table paper-icon-button {
@@ -192,10 +206,72 @@
                 --paper-checkbox-margin: 0;    
             }
 
+            .table tbody tr:hover {
+                background: none;
+            }
+
+            .form-section {
+                margin-bottom: 30px; 
+                padding: 20px; 
+                border: 1px solid #dfdfdf; 
+                border-radius: 3px;
+            }
+            .form-section h3 {
+                font-size: 15px;
+                font-weight: 500;
+            }
+            .form-section paper-button[focused] {
+                background-color: var(--paper-green-500);
+                @apply --shadow-elevation-2dp;
+            }
+
+            .cover {
+                border: 1px solid #d0d0d0;
+                padding: 30px;
+                text-align: center;
+                font-family: Cambria, 'Segoe UI', Arial, sans-serif;
+            }
+            .cover-logo {
+                display: inline-block;
+                width: 130px;
+                height: 130px;
+                background-image: url(../../../../images/misc/garuda.jpg);
+                background-repeat: no-repeat;
+            }
+            .cover-headers,
+            .cover-subheaders,
+            .cover-body {
+                margin-bottom: 50px;
+            }
+            .cover-headers paper-input,
+            .cover-footers paper-input {
+                --paper-input-container-input: {
+                    font-weight: bold;
+                    font-size: 20px;
+                    font-family: Cambria, 'Segoe UI', Arial, sans-serif;
+                };
+            }
+
+            .cover-subheaders,
+            .cover-body {
+                font-size: 16px;
+            }
+            .cover-subheaders {
+                font-weight: bold;
+            }
+            .cover table {
+                margin: auto;
+                border-collapse: collapse;
+            }
+            .cover table td {
+                padding: 5px;
+                text-align: left;
+            }
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
         <kct-media screen="{{ screen }}"></kct-media>
+        <kct-socket manager="global-socket" on-notify="__onSocketNotify"></kct-socket>
 
         <div class="tabs" hidden$="[[ phantom ]]">
             <paper-tabs id="tabs" attr-for-selected="name" selected="{{ page }}" scrollable no-slide no-bar noink>
@@ -203,8 +279,9 @@
                 <paper-tab name="cover">Cover SKP</paper-tab>
                 <paper-tab name="kegiatan">Form SKP</paper-tab>
                 <paper-tab name="pengukuran">Pengukuran</paper-tab>
-                <paper-tab name="perilaku">Perilaku Kerja</paper-tab>
-                <paper-tab name="penilaian">Penilaian</paper-tab>
+                <paper-tab name="perilaku">Perilaku</paper-tab>
+                <paper-tab name="evaluasi">Penilaian</paper-tab>
+                <paper-tab name="rapor">Rapor</paper-tab>
             </paper-tabs>
         </div>
 
@@ -212,7 +289,7 @@
             <kct-pages attr-for-selected="name" selected="[[ page ]]">
                 <div class="page" name="dokumen">
                     <div class="section">
-                        <h3 class="section-title">Periode SKP</h3>
+                        <h3 class="section-title">Periode</h3>
                         <div>
                             <kct-column columns="2">
                                 <div>
@@ -222,19 +299,11 @@
                                     <kct-date-picker value="{{ record.task.skp_end_date }}" label="Tanggal Akhir *)"></kct-date-picker>
                                 </div>
                             </kct-column>
-                            <kct-column columns="2">
-                                <div>
-                                    <kct-date-picker value="{{ record.task.skp_report_dt }}" label="Tanggal Penilaian"></kct-date-picker>
-                                </div>
-                                <div>
-                                    <kct-date-picker value="{{ record.task.skp_receive_dt }}" label="Tanggal Penerimaan"></kct-date-picker>
-                                </div>
-                            </kct-column>
                         </div>
                     </div>
                     
                     <div class="section">
-                        <h3 class="section-title">Identias Pegawai</h3>
+                        <h3 class="section-title">Pegawai</h3>
                         <div>
                             <template is="dom-if" if="[[ phantom ]]">
                                 <combo-user 
@@ -256,7 +325,7 @@
                                     <paper-input label="No. Induk Pegawai" value="[[ record.task.skp_su_no ]]"></paper-input>
                                 </div>
                                 <div>
-                                    <paper-input label="Pangkat/Gol. Ruang" value="[[ record.task.skp_su_grade ]]"></paper-input>
+                                    <paper-input label="Pangkat/Gol. Ruang" value="[[ record.task.skp_su_sg_name ]]"></paper-input>
                                 </div>
                             </kct-column>
                             <paper-input label="Jabatan" value="[[ record.task.skp_su_sj_name ]]"></paper-input>
@@ -264,94 +333,126 @@
                         </div>
                     </div>
 
-                    <div class="section">
-                        <h3 class="section-title">Pejabat Pemeriksa</h3>
+                    <kct-column columns="2">
                         <div>
-                            <combo-user 
-                                id="combo-examiner" 
-                                label="Pejabat Pemeriksa" 
-                                value="{{ record.task.skp_examiner }}" 
-                                on-change="__onComboExaminerChange"></combo-user>
-                            
-                            <kct-column columns="2">
+                            <div class="section">
+                                <h3 class="section-title">Penilai</h3>
                                 <div>
-                                    <paper-input value="[[ record.task.examiner_su_no ]]" label="No. Induk Pegawai"></paper-input>
+                                    <combo-user 
+                                        id="combo-evaluator" 
+                                        label="Nama Pejabat" 
+                                        value="{{ record.task.skp_evaluator }}" 
+                                        on-change="__onComboEvaluatorChange"></combo-user>
+                                    
+                                    <kct-column columns="2">
+                                        <div>
+                                            <paper-input value="[[ record.task.evaluator_su_no ]]" label="No. Induk Pegawai"></paper-input>
+                                        </div>
+                                        <div>
+                                            <paper-input value="[[ record.task.evaluator_su_sg_name ]]" label="Pangkat/Gol.Ruang"></paper-input>
+                                        </div>
+                                    </kct-column>
+                                    <paper-input value="[[ record.task.evaluator_su_sj_name ]]" label="Jabatan"></paper-input>
+                                    <paper-input value="[[ record.task.evaluator_su_sdp_name ]]" label="Unit Kerja"></paper-input>
                                 </div>
-                                <div>
-                                    <paper-input value="[[ record.task.examiner_su_grade ]]" label="Pangkat/Gol.Ruang"></paper-input>
-                                </div>
-                            </kct-column>
-                            <paper-input value="[[ record.task.examiner_su_sj_name ]]" label="Jabatan"></paper-input>
-                            <paper-input value="[[ record.task.examiner_su_sdp_name ]]" label="Unit Kerja"></paper-input>
+                            </div>
                         </div>
-                    </div>
-
-                    <div class="section">
-                        <h3 class="section-title">Pejabat Penilai</h3>
                         <div>
-                            <combo-user 
-                                id="combo-evaluator" 
-                                label="Pejabat Penilai" 
-                                value="{{ record.task.skp_evaluator }}" 
-                                on-change="__onComboEvaluatorChange"></combo-user>
-                            
-                            <kct-column columns="2">
+                            <div class="section">
+                                <h3 class="section-title">Atasan Penilai</h3>
                                 <div>
-                                    <paper-input value="[[ record.task.evaluator_su_no ]]" label="No. Induk Pegawai"></paper-input>
+                                    <combo-user 
+                                        id="combo-examiner" 
+                                        label="Nama Pejabat" 
+                                        value="{{ record.task.skp_examiner }}" 
+                                        on-change="__onComboExaminerChange"></combo-user>
+                                    
+                                    <kct-column columns="2">
+                                        <div>
+                                            <paper-input value="[[ record.task.examiner_su_no ]]" label="No. Induk Pegawai"></paper-input>
+                                        </div>
+                                        <div>
+                                            <paper-input value="[[ record.task.examiner_su_sg_name ]]" label="Pangkat/Gol.Ruang"></paper-input>
+                                        </div>
+                                    </kct-column>
+                                    <paper-input value="[[ record.task.examiner_su_sj_name ]]" label="Jabatan"></paper-input>
+                                    <paper-input value="[[ record.task.examiner_su_sdp_name ]]" label="Unit Kerja"></paper-input>
                                 </div>
-                                <div>
-                                    <paper-input value="[[ record.task.evaluator_su_grade ]]" label="Pangkat/Gol.Ruang"></paper-input>
-                                </div>
-                            </kct-column>
-                            <paper-input value="[[ record.task.evaluator_su_sj_name ]]" label="Jabatan"></paper-input>
-                            <paper-input value="[[ record.task.evaluator_su_sdp_name ]]" label="Unit Kerja"></paper-input>
+                            </div>
                         </div>
-                    </div>
-
-                    <div class="section">
-                        <h3 class="section-title">Atasan Pejabat Penilai</h3>
-                        <div>
-                            <combo-user 
-                                id="combo-superior" 
-                                label="Nama Pejabat" 
-                                value="{{ record.task.skp_superior }}" 
-                                on-change="__onComboSuperiorChange"></combo-user>
-                            
-                            <kct-column columns="2">
-                                <div>
-                                    <paper-input value="[[ record.task.superior_su_no ]]" label="No. Induk Pegawai"></paper-input>
-                                </div>
-                                <div>
-                                    <paper-input value="[[ record.task.superior_su_grade ]]" label="Pangkat/Gol.Ruang"></paper-input>
-                                </div>
-                            </kct-column>
-                            <paper-input value="[[ record.task.superior_su_sj_name ]]" label="Jabatan"></paper-input>
-                            <paper-input value="[[ record.task.superior_su_sdp_name ]]" label="Unit Kerja"></paper-input>
-                        </div>
-                    </div>
+                    </kct-column>
 
                 </div>
                 <div class="page" name="cover">
-                    <paper-input label="Header #1" value="{{ record.task.skp_cover_header_1 }}"></paper-input>
-                    <paper-input label="Header #2" value="{{ record.task.skp_cover_header_2 }}"></paper-input>
-                    <paper-input label="Footer #1" value="{{ record.task.skp_cover_footer_1 }}"></paper-input>
-                    <paper-input label="Footer #2" value="{{ record.task.skp_cover_footer_2 }}"></paper-input>
+
+                    <div class="cover">
+                        <div class="cover-logo"></div>
+                        <div class="cover-headers">
+                            <paper-input placeholder="HEADER" value="{{ record.task.skp_cover_header_1 }}" no-label-float></paper-input>
+                            <paper-input placeholder="HEADER" value="{{ record.task.skp_cover_header_2 }}" no-label-float></paper-input>
+                        </div>
+                        <div class="cover-subheaders">
+                            <div>Jangka Waktu Penilaian</div>
+                            <div>[[ record.task.skp_period ]]</div>
+                        </div>
+
+                        <div class="cover-body">
+                            <table>
+                                <tbody>
+                                    <tr><td style="width: 200px;">Nama Pegawai</td><td>:</td><td><strong>[[ record.task.skp_su_fullname ]]</strong></td></tr>
+                                    <tr><td>NIP</td><td>:</td><td>[[ record.task.skp_su_no ]]</td></tr>
+                                    <tr><td>Pangkat Golongan Ruang</td><td>:</td><td>[[ record.task.skp_su_sg_name ]]</td></tr>
+                                    <tr><td>Jabatan</td><td>:</td><td>[[ record.task.skp_su_sj_name ]]</td></tr>
+                                    <tr><td>Unit Kerja</td><td>:</td><td>[[ record.task.skp_su_sdp_name ]]</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="cover-footers">
+                            <paper-input placeholder="FOOTER" value="{{ record.task.skp_cover_footer_1 }}" no-label-float></paper-input>
+                            <paper-input placeholder="FOOTER" value="{{ record.task.skp_cover_footer_2 }}" no-label-float></paper-input>
+                        </div>
+
+                    </div>
                 </div>
                 <div class="page" name="kegiatan">
-                    <div class="input-task" hidden$="[[ !record.task.skp_authorized ]]">
-                        <div class="input-wrapper">
-                            <paper-input id="input1" on-keydown="__onTaskInput1Keydown" placeholder="Tulis kegiatan tugas jabatan Anda di sini..." no-label-float></paper-input>    
+                    <div class="form-section" hidden$="[[ !record.perms.update ]]">
+                        <h3>Form Kegiatan</h3>
+                        <div>
+                            <paper-input id="input-description" value="{{ inputRecord.ski_desc }}" label="Uraian tugas (kegiatan)" always-float-label></paper-input>    
                         </div>
-                        <div class="input-action">
-                            <kct-column columns="2">
-                                <div class="flex">
-                                    <paper-button on-tap="__onAddTask1Tap">Tambahkan</paper-button>&nbsp;&nbsp;atau tambahkan dari <a on-tap="__onLookupTap" href="javascript:;">kegiatan harian</a>
-                                </div>
-                                <div class="flex text-right">
-                                    <kct-checkbox id="checkbox1">Tandai sebagai tugas tambahan</kct-checkbox>
-                                </div>
-                            </kct-column>
-                            
+                        <kct-column columns="4">
+                            <div>
+                                <kct-input-number mask="[[ formats.VOLUME ]]" label="Kuantitas" value="{{ inputRecord.ski_volume }}"  always-float-label></kct-input-number>
+                            </div>
+                            <div>
+                                <combo-unit value="{{ inputRecord.ski_unit }}" label="Satuan Kuantitas"  always-float-label></combo-unit>
+                            </div>
+                            <div>
+                                <kct-input-number mask="[[ formats.QUALITY ]]" label="Kualitas" value="{{ inputRecord.ski_quality }}"  always-float-label></kct-input-number>
+                            </div>
+                            <div>
+                                <kct-input-number mask="[[ formats.FACTOR ]]" label="Faktor Angka Kredit" value="{{ inputRecord.ski_ak_factor }}"  always-float-label></kct-input-number>
+                            </div>
+                        </kct-column>
+                        <kct-column columns="4">
+                            <div>
+                                <kct-input-number mask="[[ formats.DURATION ]]" label="Waktu" value="{{ inputRecord.ski_duration }}"  always-float-label></kct-input-number>
+                            </div>
+                            <div>
+                                <paper-input label="Satuan Waktu" value="{{ inputRecord.ski_duration_unit }}"  always-float-label></paper-input>
+                            </div>
+                            <div>
+                                <kct-input-number mask="[[ formats.COST ]]" value="{{ inputRecord.ski_cost }}" label="Biaya"  always-float-label></kct-input-number>
+                            </div>
+                            <div></div>
+                        </kct-column>
+                        <div class="m-t">
+                            <kct-checkbox value="{{ inputRecord.ski_extra }}">Tandai sebagai tugas tambahan</kct-checkbox>
+                        </div>
+                        <div class="m-t">
+                            <paper-button disabled$="[[ __computeInvaliditem(inputRecord.ski_desc) ]]" on-tap="__onAddItemTap" class="btn-blue">Tambahkan</paper-button>&nbsp;&nbsp;
+                            atau tambahkan dari <a href="javascript:;" on-click="__onLookupTap">kegiatan harian</a> yang pernah dilakukan.
                         </div>
                     </div>
 
@@ -359,53 +460,37 @@
                         <thead>
                             <tr>
                                 <th rowspan="2" style="width: 30px;">NO</th>
-                                <th rowspan="2" style="width: 30px;"></th>
+                                <th rowspan="2" style="width: 30px;" hidden$="[[ !record.perms.update ]]"></th>
                                 <th rowspan="2" style="min-width: 300px;">KEGIATAN TUGAS JABATAN</th>
                                 <th rowspan="2" style="width: 30px;"></th>
-                                <th rowspan="2" style="width: 50px;">AK</th>
+                                <th rowspan="2" style="width: 60px;">AK</th>
                                 <th colspan="6" style="width: 450px;">TARGET</th>
                             </tr>
                             <tr>
-                                <th colspan="2" style="width: 160px;">KUANTITAS</th>
-                                <th style="width: 80px;">MUTU</th>
-                                <th colspan="2" style="width: 130px;">WAKTU</th>
+                                <th colspan="2">KUANTITAS</th>
+                                <th style="width: 60px;">MUTU</th>
+                                <th colspan="2">WAKTU</th>
                                 <th style="width: 80px;">BIAYA</th>
                             </tr>
                         </thead>
                         <tbody>
                             <template is="dom-repeat" items="{{ record.items }}">
                                 <tr>
-                                    <td class="text-center">[[ __computeNo(index) ]]</td>
-                                    <td>
+                                    <td class="text-center">[[ __computeSequence(index) ]]</td>
+                                    <td  hidden$="[[ !record.perms.update ]]">
                                         <paper-icon-button icon="close" on-tap="__onRemoveItemTap"></paper-icon-button>
                                     </td>
                                     <td>
-                                        <div on-input="__onItemDescriptionChange" class="task-item-text" contenteditable spellcheck="false">[[ item.ski_text ]]</div>
+                                        <div on-input="__onItemDescTargetChange" class="task-item-text" contenteditable spellcheck="false">[[ item.ski_text ]]</div>
                                     </td>
-                                    <td>
-                                        <kct-input-number mask="#.###,00" value="{{ item.ski_ak_factor }}" on-change="__onItemValueChange" no-label-float></kct-input-number>
-                                    </td>
-                                    <td>
-                                        <kct-input-number mask="#.###,00" value="{{ item.ski_ak }}" no-label-float></kct-input-number>
-                                    </td>
-                                    <td>
-                                        <kct-input-number mask="#.###,00" value="{{ item.ski_volume }}" on-change="__onItemValueChange" no-label-float></kct-input-number>
-                                    </td>
-                                    <td>
-                                        <paper-input value="{{ item.ski_unit }}" no-label-float></paper-input>
-                                    </td>
-                                    <td>
-                                        <kct-input-number mask="#.###,00" value="{{ item.ski_quality }}" on-change="__onItemValueChange" no-label-float></kct-input-number>
-                                    </td>
-                                    <td>
-                                        <kct-input-number mask="#.###,00" value="{{ item.ski_duration }}" on-change="__onItemValueChange" no-label-float></kct-input-number>
-                                    </td>
-                                    <td>
-                                        <paper-input value="{{ item.ski_duration_unit }}" no-label-float></paper-input>
-                                    </td>
-                                    <td>
-                                        <kct-input-number mask="#.###,00" value="{{ item.ski_cost }}" on-change="__onItemValueChange" no-label-float></kct-input-number>
-                                    </td>
+                                    <td class="editable"><kct-input-number mask="[[ formats.FACTOR ]]" value="{{ item.ski_ak_factor }}" placeholder="..." on-change="__onItemTargetChange" no-label-float></kct-input-number></td>
+                                    <td class="text-center">[[ _numberFormat(item.ski_ak, formats.AK) ]]</td>
+                                    <td class="editable" style="width: 60px;"><kct-input-number mask="[[ formats.VOLUME ]]" value="{{ item.ski_volume }}" placeholder="..." on-change="__onItemTargetChange" no-label-float></kct-input-number></td>
+                                    <td class="text-center" style="width: 80px;">[[ item.ski_unit ]]</td>
+                                    <td class="editable"><kct-input-number mask="[[ formats.QUALITY ]]" value="{{ item.ski_quality }}" placeholder="..." on-change="__onItemTargetChange" no-label-float></kct-input-number></td>
+                                    <td class="editable" style="width: 60px;"><kct-input-number mask="[[ formats.DURATION ]]" value="{{ item.ski_duration }}" placeholder="..." on-change="__onItemTargetChange" no-label-float></kct-input-number></td>
+                                    <td class="text-center" style="width: 60px;">[[ item.ski_duration_unit ]]</td>
+                                    <td class="editable"><kct-input-number mask="[[ formats.COST ]]" value="{{ item.ski_cost }}" placeholder="..." on-change="__onItemTargetChange" no-label-float></kct-input-number></td>
                                 </tr>
                             </template>
                             <tr class="header">
@@ -415,334 +500,228 @@
                             </tr>
                             <template is="dom-repeat" items="{{ record.extra }}">
                                 <tr>
-                                    <td class="text-center">[[ __computeNo(index) ]]</td>
+                                    <td class="text-center">[[ __computeSequence(index) ]]</td>
                                     <td>
                                         <paper-icon-button icon="close" on-tap="__onRemoveItemTap"></paper-icon-button>
                                     </td>
                                     <td>
-                                        <div on-input="__onItemDescriptionChange" class="task-item-text" contenteditable spellcheck="false">[[ item.ski_text ]]</div>
+                                        <div on-input="__onItemDescTargetChange" class="task-item-text" contenteditable spellcheck="false">[[ item.ski_text ]]</div>
                                     </td>
                                     <td colspan="8"></td>
                                 </tr>
                             </template>
                         </tbody>
                     </table>
-
-                    <!-- <div class="table-responsive">
-                        <div class="table-scroller">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th rowspan="2" style="width: 30px;">NO</th>
-                                        <th rowspan="2" style="width: 30px;"></th>
-                                        <th rowspan="2" style="min-width: 300px;">KEGIATAN TUGAS JABATAN</th>
-                                        <th rowspan="2" style="width: 30px;"></th>
-                                        <th rowspan="2" style="width: 50px;">AK</th>
-                                        <th colspan="6" style="width: 450px;">TARGET</th>
-                                    </tr>
-                                    <tr>
-                                        <th colspan="2" style="width: 160px;">KUANTITAS</th>
-                                        <th style="width: 80px;">MUTU</th>
-                                        <th colspan="2" style="width: 130px;">WAKTU</th>
-                                        <th style="width: 80px;">BIAYA</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <template is="dom-repeat" items="{{ record.items }}">
-                                        <tr>
-                                            <td class="text-center">[[ __computeNo(index) ]]</td>
-                                            <td>
-                                                <paper-icon-button icon="close" on-tap="__onRemoveItemTap"></paper-icon-button>
-                                            </td>
-                                            <td>
-                                                <div on-input="__onItemDescriptionChange" class="task-item-text" contenteditable spellcheck="false">[[ item.ski_text ]]</div>
-                                            </td>
-                                            <td>
-                                                <kct-input-number mask="#.###,00" value="{{ item.ski_ak_factor }}" on-change="__onItemValueChange" no-label-float></kct-input-number>
-                                            </td>
-                                            <td>
-                                                <kct-input-number mask="#.###,00" value="{{ item.ski_ak }}" no-label-float></kct-input-number>
-                                            </td>
-                                            <td>
-                                                <kct-input-number mask="#.###,00" value="{{ item.ski_volume }}" on-change="__onItemValueChange" no-label-float></kct-input-number>
-                                            </td>
-                                            <td>
-                                                <paper-input value="{{ item.ski_unit }}" no-label-float></paper-input>
-                                            </td>
-                                            <td>
-                                                <kct-input-number mask="#.###,00" value="{{ item.ski_quality }}" on-change="__onItemValueChange" no-label-float></kct-input-number>
-                                            </td>
-                                            <td>
-                                                <kct-input-number mask="#.###,00" value="{{ item.ski_duration }}" on-change="__onItemValueChange" no-label-float></kct-input-number>
-                                            </td>
-                                            <td>
-                                                <paper-input value="{{ item.ski_duration_unit }}" no-label-float></paper-input>
-                                            </td>
-                                            <td>
-                                                <kct-input-number mask="#.###,00" value="{{ item.ski_cost }}" on-change="__onItemValueChange" no-label-float></kct-input-number>
-                                            </td>
-                                        </tr>
-                                    </template>
-                                    <tr class="header">
-                                        <td>NO</td>
-                                        <td colspan="2">TUGAS TAMBAHAN</td>
-                                        <td colspan="8"></td>
-                                    </tr>
-                                    <template is="dom-repeat" items="{{ record.extra }}">
-                                        <tr>
-                                            <td class="text-center">[[ __computeNo(index) ]]</td>
-                                            <td>
-                                                <paper-icon-button icon="close" on-tap="__onRemoveItemTap"></paper-icon-button>
-                                            </td>
-                                            <td>
-                                                <div on-input="__onItemDescriptionChange" class="task-item-text" contenteditable spellcheck="false">[[ item.ski_text ]]</div>
-                                            </td>
-                                            <td colspan="8"></td>
-                                        </tr>
-                                    </template>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div> -->
-
-                    
-
                 </div>
                 <div class="page" name="pengukuran">
-                    <div class="table-responsive">
-                        <div class="table-scroller" style="height: 450px;">
-                            <table class="table table-measurement">
-                                <thead>
-                                    <tr>
-                                        <th rowspan="2" style="width: 30px;">NO</th>
-                                        <th rowspan="2" style="width: 300px;">TUGAS UTAMA</th>
-                                        <th rowspan="2" style="width: 30px;">AK</th>
-                                        <th colspan="6" style="width: 480px;">TARGET</th>
-                                        <th rowspan="2" style="width: 30px;">AK</th>
-                                        <th colspan="6" style="width: 480px;">REALISASI</th>
-                                        <th rowspan="2" style="width: 80px;">PENGHI TUNGAN</th>
-                                        <th rowspan="2" style="width: 80px;">NILAI CAPAIAN</th>
-                                    </tr>
-                                    <tr>
-                                        <th colspan="2" style="width: 160px;">KUANTITAS</th>
-                                        <th style="width: 80px;">MUTU</th>
-                                        <th colspan="2" style="width: 160px;">WAKTU</th>
-                                        <th style="width: 80px;">BIAYA</th>
-
-                                        <th colspan="2" style="width: 160px;">KUANTITAS</th>
-                                        <th style="width: 80px;">MUTU</th>
-                                        <th colspan="2" style="width: 160px;">WAKTU</th>
-                                        <th style="width: 80px;">BIAYA</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <template is="dom-repeat" items="{{ record.items }}">
-                                        <tr>
-                                            <td class="text-center">[[ __computeNo(index) ]]</td>
-                                            <td><span class="text-link" on-click="__onDetailItemTap">[[ item.ski_desc ]]</span></td>
-                                            <td>
-                                                <kct-input-number mask="#.###,00" value="[[ item.ski_ak ]]" no-label-float></kct-input-number>
-                                            </td>
-                                            <td>
-                                                <kct-input-number mask="#.###,00" value="[[ item.ski_volume ]]" no-label-float></kct-input-number>
-                                            </td>
-                                            <td class="text-center">[[ item.ski_unit ]]</td>
-                                            <td>
-                                                <kct-input-number mask="#.###,00" value="[[ item.ski_quality ]]" no-label-float></kct-input-number>
-                                            </td>
-                                            <td>
-                                                <kct-input-number mask="#.###,00" value="[[ item.ski_duration ]]" no-label-float></kct-input-number>
-                                            </td>
-                                            <td>
-                                                <paper-input value="[[ item.ski_duration_unit ]]" no-label-float></paper-input>
-                                            </td>
-                                            <td>
-                                                <kct-input-number mask="#.###" value="[[ item.ski_cost ]]" no-label-float></kct-input-number>
-                                            </td>
-                                            <td>
-                                                <kct-input-number mask="#.###,00" value="{{ item.ski_ak_real }}" no-label-float></kct-input-number>
-                                            </td>
-                                            <td>
-                                                <kct-input-number mask="#.###,00" value="{{ item.ski_volume_real }}" on-change="__onItemValueChange" no-label-float></kct-input-number>
-                                            </td>
-                                            <td class="text-center">[[ item.ski_unit ]]</td>
-                                            <td>
-                                                <kct-input-number mask="#.###,00" value="{{ item.ski_quality_real }}" on-change="__onItemValueChange" no-label-float></kct-input-number>
-                                            </td>
-                                            <td>
-                                                <kct-input-number mask="#.###,00" value="{{ item.ski_duration_real }}" on-change="__onItemValueChange" no-label-float></kct-input-number>
-                                            </td>
-                                            <td>
-                                                <paper-input value="[[ item.ski_duration_unit ]]" no-label-float></paper-input>
-                                            </td>
-                                            <td>
-                                                <kct-input-number mask="#.###" value="{{ item.ski_cost_real }}" on-change="__onItemValueChange" no-label-float></kct-input-number>
-                                            </td>
-                                            <td>
-                                                <kct-input-number mask="#.###" value="[[ item.ski_total ]]" no-label-float></kct-input-number>
-                                            </td>
-                                            <td>
-                                                <kct-input-number mask="#.###,00" value="[[ item.ski_performance ]]" no-label-float></kct-input-number>
-                                            </td>
-                                        </tr>
-                                    </template>
-                                    <tr class="header">
-                                        <td class="text-center">NO</td>
-                                        <td>TUGAS TAMBAHAN</td>
-                                        <td colspan="16"></td>
-                                    </tr>
-                                    <template is="dom-repeat" items="[[ record.extra ]]">
-                                        <tr>
-                                            <td class="text-center">[[ __computeNo(index) ]]</td>
-                                            <td>[[ item.ski_desc ]]</td>
-                                            <td colspan="14"></td>
-                                            <td>
-                                                <kct-input-number mask="#.###" value="{{ item.ski_total }}" on-change="__onExtraValueChange" no-label-float></kct-input-number>
-                                            </td>
-                                            <td>
-                                                <kct-input-number mask="#.###,00" value="{{ item.ski_performance }}" on-change="__onExtraValueChange" no-label-float></kct-input-number>
-                                            </td>
-                                        </tr>
-                                    </template>
-                                    <tr class="group">
-                                        <td rowspan="2" colspan="17"><strong>NILAI CAPAIAN SKP</strong></td>
-                                        <td>
-                                            <kct-input-number mask="#.###,00" value="[[ record.task.skp_performance ]]" no-label-float></kct-input-number>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-center">[[ record.task.skp_performance_criteria_text ]]</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        
-                    </div>
+                    <table class="table table-measurement">
+                        <thead>
+                            <tr>
+                                <th style="width: 30px;">NO</th>
+                                <th style="width: 180px;">TUGAS UTAMA</th>
+                                <th style="width: 20px;">&nbsp;</th>
+                                <th style="width: 60px;">AK</th>
+                                <th colspan="2">KUANTITAS</th>
+                                <th style="width: 60px;">MUTU</th>
+                                <th colspan="2">WAKTU</th>
+                                <th style="width: 80px;">BIAYA</th>
+                                <th style="width: 60px;">PENGHI TUNGAN</th>
+                                <th style="width: 60px;">NILAI CAPAIAN</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template is="dom-repeat" items="{{ record.items }}">
+                                <tr>
+                                    <td rowspan="2" class="text-center">[[ __computeSequence(index) ]]</td>
+                                    <td rowspan="2"><span class="text-link" on-click="__onDetailItemTap">[[ item.ski_desc ]]</span></td>
+                                    <td class="text-center readonly">T</td>
+                                    <td class="text-center readonly">[[ _numberFormat(item.ski_ak, formats.AK) ]]</td>
+                                    <td class="text-center readonly" style="width: 60px;">[[ _numberFormat(item.ski_volume, formats.VOLUME) ]]</td>
+                                    <td class="text-center readonly" style="width: 60px;">[[ item.ski_unit ]]</td>
+                                    <td class="text-center readonly">[[ _numberFormat(item.ski_quality, formats.QUALITY) ]]</td>
+                                    <td class="text-center readonly" style="width: 60px">[[ _numberFormat(item.ski_duration, formats.DURATION) ]]</td>
+                                    <td class="text-center readonly" style="width: 60px">[[ item.ski_duration_unit ]]</td>
+                                    <td class="text-center readonly">[[ _numberFormat(item.ski_cost, formats.COST) ]]</td>
+                                    <td class="text-center" rowspan="2">[[ _numberFormat(item.ski_total, formats.TOTAL) ]]</td>
+                                    <td class="text-center" rowspan="2">[[ _numberFormat(item.ski_performance, formats.PERFORMANCE) ]]</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">R</td>
+                                    <td class="text-center">[[ _numberFormat(item.ski_ak_real, formats.AK) ]]</td>
+                                    <td class="editable"><kct-input-number mask="[[ formats.VOLUME ]]" value="{{ item.ski_volume_real }}" placeholder="..." on-change="__onItemRealChange" no-label-float></kct-input-number></td>
+                                    <td class="text-center">[[ item.ski_unit ]]</td>
+                                    <td class="editable"><kct-input-number mask="[[ formats.QUALITY ]]" value="{{ item.ski_quality_real }}" placeholder="..." on-change="__onItemRealChange" no-label-float></kct-input-number></td>
+                                    <td class="editable"><kct-input-number mask="[[ formats.DURATION ]]" value="{{ item.ski_duration_real }}" placeholder="..." on-change="__onItemRealChange" no-label-float></kct-input-number></td>
+                                    <td class="text-center">[[ item.ski_duration_unit ]]</td>
+                                    <td class="editable"><kct-input-number mask="[[ formats.COST ]]" value="{{ item.ski_cost_real }}" placeholder="..." on-change="__onItemRealChange" no-label-float></kct-input-number></td>
+                                </tr>
+                            </template>
+                            <tr class="header">
+                                <td class="text-center">NO</td>
+                                <td>TUGAS TAMBAHAN</td>
+                                <td colspan="10"></td>
+                            </tr>
+                            <template is="dom-repeat" items="[[ record.extra ]]">
+                                <tr>
+                                    <td class="text-center">[[ __computeSequence(index) ]]</td>
+                                    <td>[[ item.ski_desc ]]</td>
+                                    <td colspan="8"></td>
+                                    <td class="editable"><kct-input-number mask="[[ formats.TOTAL ]]" value="{{ item.ski_total }}" placeholder="..." on-change="__onItemExtraChange" no-label-float></kct-input-number></td>
+                                    <td class="editable"><kct-input-number mask="[[ formats.PERFORMANCE ]]" value="{{ item.ski_performance }}" placeholder="..." on-change="__onItemExtraChange" no-label-float></kct-input-number></td>
+                                </tr>
+                            </template>
+                            <tr class="group">
+                                <td rowspan="2" colspan="11"><strong>NILAI CAPAIAN SKP</strong></td>
+                                <td class="text-center">&nbsp;[[ _numberFormat(record.task.skp_performance, formats.PERFORMANCE) ]]&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">&nbsp;[[ record.task.skp_performance_criteria_text ]]&nbsp;</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
                 <div class="page" name="perilaku">
-                    <div class="table-responsive">
-                        <div class="table-scroller">
-                            <table class="table table-behavior">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 500px;">PARAMETER</th>
-                                        <th style="width: 100px;">NILAI</th>
-                                        <th style="width: 100px;">KRITERIA</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <template is="dom-repeat" items="{{ behaviors }}">
-                                        <tr>
-                                            <td>[[ item.tsb_tbh_name ]]</td>
-                                            <td>
-                                                <kct-input-number mask="#.###,00" value="{{ item.tsb_value }}" on-change="__onBehaviorValueChange" no-label-float></kct-input-number>
-                                            </td>
-                                            <td class="text-center">[[ item.tsb_criteria_text ]]</td>
-                                        </tr>
-                                    </template>
-                                    <tr class="group">
-                                        <td><strong>JUMLAH</strong></td>
-                                        <td>
-                                            <kct-input-number mask="#.###,00" value="[[ record.task.skp_behavior_total ]]" no-label-float></kct-input-number>
-                                        </td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>RATA-RATA</strong></td>
-                                        <td>
-                                            <kct-input-number mask="#.###,00" value="[[ record.task.skp_behavior_average ]]" no-label-float></kct-input-number>
-                                        </td>
-                                        <td class="text-center">[[ record.task.skp_behavior_criteria_text ]]</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                    <table class="table table-behavior">
+                        <thead>
+                            <tr>
+                                <th style="width: 500px;">PARAMETER</th>
+                                <th style="width: 100px;">NILAI</th>
+                                <th style="width: 100px;">KRITERIA</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template is="dom-repeat" items="{{ behaviors }}">
+                                <tr>
+                                    <td>[[ item.tsb_tbh_name ]]</td>
+                                    <td class="editable"><kct-input-number mask="[[ formats.BEHAVIOR ]]" value="{{ item.tsb_value }}" placeholder="..." on-change="__onItemBehaviorChange" no-label-float></kct-input-number></td>
+                                    <td class="text-center">[[ item.tsb_criteria_text ]]</td>
+                                </tr>
+                            </template>
+                            <tr class="group">
+                                <td><strong>JUMLAH</strong></td>
+                                <td class="text-center">[[ _numberFormat(record.task.skp_behavior_total, formats.BEHAVIOR) ]]</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><strong>RATA-RATA</strong></td>
+                                <td class="text-center">[[ _numberFormat(record.task.skp_behavior_average, formats.BEHAVIOR) ]]</td>
+                                <td class="text-center">[[ record.task.skp_behavior_criteria_text ]]</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="page" name="evaluasi">
+                    <table class="table table-report">
+                        <thead>
+                            <tr>
+                                <th colspan="4" style="width: 600px;">UNSUR YANG DINILAI</th>
+                                <th style="width: 100px;">JUMLAH</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="2"><strong>A. Sasaran Kerja Pegawai (SKP)</strong></td>
+                                <td class="text-center">[[ _numberFormat(record.task.skp_performance, formats.PERFORMANCE) ]]</td>
+                                <td class=" text-center">X [[ record.task.skp_performance_portion ]] %</td>
+                                <td class="text-center">[[ _numberFormat(record.task.skp_performance_value, formats.PERFORMANCE) ]]</td>
+                            </tr>
+                            <tr class="group">
+                                <td style="width: 200px;"><strong>B. Perilaku Kerja</strong></td>
+                                <td style="width: 200px;"></td>
+                                <td style="width: 100px;"></td>
+                                <td style="width: 100px;"></td>
+                                <td style="width: 100px;"></td>
+                            </tr>
+                            <template is="dom-repeat" items="[[ behaviors ]]">
+                                <tr>
+                                    <td></td>
+                                    <td style="width: 180px;" >[[ __computeSequence(index) ]]. [[ item.tsb_tbh_name ]]</td>
+                                    <td class="text-center">[[ _numberFormat(item.tsb_value, formats.BEHAVIOR) ]]</td>
+                                    <td class=" text-center" >[[ item.tsb_criteria_text ]]</td>
+                                    <td class="" ></td>
+                                </tr>
+                            </template>
+                            <tr class="group">
+                                <td></td>
+                                <td class="" >Jumlah</td>
+                                <td class="text-center">[[ _numberFormat(record.task.skp_behavior_total, formats.BEHAVIOR) ]]</td>
+                                <td class="" ></td>
+                                <td class="" ></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>Rata-rata</td>
+                                <td class="text-center">[[ _numberFormat(record.task.skp_behavior_average, formats.BEHAVIOR) ]]</td>
+                                <td class=" text-center" >[[ record.task.skp_behavior_criteria_text ]]</td>
+                                <td class="" ></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td class="" >Nilai Perilaku Kerja</td>
+                                <td class="text-center">[[ _numberFormat(record.task.skp_behavior_average, formats.BEHAVIOR) ]]</td>
+                                <td class=" text-center" >X [[ record.task.skp_behavior_portion ]] %</td>
+                                <td class="text-center">[[ _numberFormat(record.task.skp_behavior_value, formats.BEHAVIOR) ]]</td>
+                            </tr>
+                            <tr class="group">
+                                <td colspan="4" rowspan="2"><strong>C. Nilai Prestasi Kerja</strong></td>
+                                <td class="text-center">[[ _numberFormat(record.task.skp_value, formats.PERFORMANCE) ]]</td>
+                            </tr>
+                            <tr>
+                                <td class=" text-center" >&nbsp;[[ record.task.skp_criteria_text ]]&nbsp;</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                </div>
+
+                <div class="page" name="rapor">
+                    <kct-column columns="2">
+                        <div>
+                            <div class="section">
+                                <h3 class="section-title">Keberatan (Pegawai)</h3>
+                                <div>
+                                    <kct-date-picker value="{{ record.task.skp_objection_dt }}" label="Tanggal"></kct-date-picker>
+                                    <paper-textarea value="{{ record.task.skp_objection }}" label="Isi Keberatan"></paper-textarea>
+                                </div>
+                            </div>
+                            <div class="section">
+                                <h3 class="section-title">Tanggapan Keberatan (Penilai)</h3>
+                                <div>
+                                    <kct-date-picker value="{{ record.task.skp_response_dt }}" label="Tanggal"></kct-date-picker>
+                                    <paper-textarea value="{{ record.task.skp_response }}" label="Isi Tanggapan"></paper-textarea>
+                                </div>
+                            </div>
+                            <div class="section">
+                                <h3 class="section-title">Putusan Keberatan (Atasan Penilai)</h3>
+                                <div>
+                                    <kct-date-picker value="{{ record.task.skp_resolution_dt }}" label="Tanggal"></kct-date-picker>
+                                    <paper-textarea value="{{ record.task.skp_resolution }}" label="Isi Tanggapan"></paper-textarea>
+                                </div>
+                            </div>
+                            <div class="section">
+                                <h3 class="section-title">Rekomendasi</h3>
+                                <div>
+                                    <paper-textarea value="{{ record.task.skp_recommendation }}" label="Isi Rekomendasi"></paper-textarea>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                        <div>
+                            <div class="section">
+                                <h3 class="section-title">Pelaporan</h3>
+                                <div>
+                                    <paper-input value="{{ record.task.skp_report_addr }}" label="Tempat Pembuatan"></paper-input>
+                                    <kct-date-picker value="{{ record.task.skp_report_dt }}" label="Tanggal Pembuatan"></kct-date-picker>
+                                    <kct-date-picker value="{{ record.task.skp_receive_dt }}" label="Tanggal Diterima Pegawai"></kct-date-picker>
+                                    <kct-date-picker value="{{ record.task.skp_disposition_dt }}" label="Tanggal Diterima Atasan Penilai"></kct-date-picker>
+                                </div>
+                            </div>
+                        </div>
+                    </kct-column>
+                    
+                    
                     
                 </div>
-                <div class="page" name="penilaian">
-                    <div class="table-responsive">
-                        <div class="table-scroller">
-                            <table class="table table-report">
-                                <thead>
-                                    <tr>
-                                        <th colspan="4" style="width: 600px;">UNSUR YANG DINILAI</th>
-                                        <th style="width: 100px;">JUMLAH</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td colspan="2"><strong>A. Sasaran Kerja Pegawai (SKP)</strong></td>
-                                        <td>
-                                            <kct-input-number mask="#.###,00" value="[[ record.task.skp_performance ]]" readonly no-label-float></kct-input-number>
-                                        </td>
-                                        <td class=" text-center">X [[ record.task.skp_performance_portion ]]%</td>
-                                        <td>
-                                            <kct-input-number mask="#.###,00" value="[[ record.task.skp_performance_value ]]" readonly no-label-float></kct-input-number>
-                                        </td>
-                                    </tr>
-                                    <tr class="group">
-                                        <td style="width: 200px;"><strong>B. Perilaku Kerja</strong></td>
-                                        <td style="width: 200px;"></td>
-                                        <td style="width: 100px;"></td>
-                                        <td style="width: 100px;"></td>
-                                        <td style="width: 100px;"></td>
-                                    </tr>
-                                    <template is="dom-repeat" items="[[ behaviors ]]">
-                                        <tr>
-                                            <td></td>
-                                            <td style="width: 180px;" >[[ __computeNo(index) ]]. [[ item.tsb_tbh_name ]]</td>
-                                            <td>
-                                                <kct-input-number mask="#.###,00" value="[[ item.tsb_value ]]" readonly no-label-float></kct-input-number>
-                                            </td>
-                                            <td class=" text-center" >[[ item.tsb_criteria_text ]]</td>
-                                            <td class="" ></td>
-                                        </tr>
-                                    </template>
-                                    <tr class="group">
-                                        <td></td>
-                                        <td class="" >Jumlah</td>
-                                        <td>
-                                            <kct-input-number mask="#.###,00" value="[[ record.task.skp_behavior_total ]]" readonly no-label-float></kct-input-number>
-                                        </td>
-                                        <td class="" ></td>
-                                        <td class="" ></td>
-                                    </tr>
-                                    <tr>
-                                        <td></td>
-                                        <td>Rata-rata</td>
-                                        <td>
-                                            <kct-input-number mask="#.###,00" value="[[ record.task.skp_behavior_average ]]" readonly no-label-float></kct-input-number>
-                                        </td>
-                                        <td class=" text-center" >[[ record.task.skp_behavior_criteria_text ]]</td>
-                                        <td class="" ></td>
-                                    </tr>
-                                    <tr>
-                                        <td></td>
-                                        <td class="" >Nilai Perilaku Kerja</td>
-                                        <td>
-                                            <kct-input-number mask="#.###,00" value="[[ record.task.skp_behavior_average ]]" readonly no-label-float></kct-input-number>
-                                        </td>
-                                        <td class=" text-center" >X [[ record.task.skp_behavior_portion ]]%</td>
-                                        <td>
-                                            <kct-input-number mask="#.###,00" value="[[ record.task.skp_behavior_value ]]" readonly no-label-float></kct-input-number>
-                                        </td>
-                                    </tr>
-                                    <tr class="group">
-                                        <td colspan="4" rowspan="2"><strong>C. Nilai Prestasi Kerja</strong></td>
-                                        <td>
-                                            <kct-input-number mask="#.###,00" value="[[ record.task.skp_value ]]" readonly no-label-float></kct-input-number>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class=" text-center" >[[ record.task.skp_criteria_text ]]</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    
-                </div>
+
             </kct-pages>
         </div>
 
@@ -750,19 +729,19 @@
             <template preserve-content>
                 <style include="theme-helper"></style>
                 <div slot="dialog-body">
-                    <paper-input label="Konter kuantitas" value="[[ detail.calculation.volume_counter ]]"></paper-input>
-                    <paper-input label="Persen waktu" value="[[ detail.calculation.duration_percentage ]]"></paper-input>
-                    <paper-input label="Persen biaya" value="[[ detail.calculation.cost_percentage ]]"></paper-input>
-                    <paper-input label="Kuantitas" value="[[ detail.calculation.volume_total ]]"></paper-input>
-                    <paper-input label="Kualitas" value="[[ detail.calculation.quality_total ]]"></paper-input>
-                    <paper-input label="Waktu" value="[[ detail.calculation.duration_total ]]"></paper-input>
-                    <paper-input label="Wiaya" value="[[ detail.calculation.cost_total ]]"></paper-input>
-                    <paper-input label$="Realisasi waktu &lt; [[ detail.calculation.duration_tolerance ]]" value="[[ detail.calculation.duration_lower ]]"></paper-input>
-                    <paper-input label$="Realisasi waktu &gt; [[ detail.calculation.duration_tolerance ]]" value="[[ detail.calculation.duration_upper ]]"></paper-input>
-                    <paper-input label$="Realisasi biaya &lt; [[ detail.calculation.cost_tolerance ]]" value="[[ detail.calculation.cost_lower ]]"></paper-input>
-                    <paper-input label$="Realisasi biaya &gt; [[ detail.calculation.cost_tolerance ]]" value="[[ detail.calculation.cost_upper ]]"></paper-input>
-                    <paper-input label="Total nilai" value="[[ detail.ski_total ]]"></paper-input>
-                    <paper-input label="Nilai capaian (performansi)" value="[[ detail.ski_performance ]]"></paper-input>
+                    <paper-input label="Faktor kuantitas" value="[[ detailRecord.calculation.volume_counter ]]"></paper-input>
+                    <paper-input label="Persen waktu" value="[[ detailRecord.calculation.duration_percentage ]]"></paper-input>
+                    <paper-input label="Persen biaya" value="[[ detailRecord.calculation.cost_percentage ]]"></paper-input>
+                    <paper-input label="Kuantitas" value="[[ detailRecord.calculation.volume_total ]]"></paper-input>
+                    <paper-input label="Kualitas" value="[[ detailRecord.calculation.quality_total ]]"></paper-input>
+                    <paper-input label="Waktu" value="[[ detailRecord.calculation.duration_total ]]"></paper-input>
+                    <paper-input label="Wiaya" value="[[ detailRecord.calculation.cost_total ]]"></paper-input>
+                    <paper-input label$="Realisasi waktu &lt; [[ detailRecord.calculation.duration_tolerance ]]" value="[[ detailRecord.calculation.duration_lower ]]"></paper-input>
+                    <paper-input label$="Realisasi waktu &gt; [[ detailRecord.calculation.duration_tolerance ]]" value="[[ detailRecord.calculation.duration_upper ]]"></paper-input>
+                    <paper-input label$="Realisasi biaya &lt; [[ detailRecord.calculation.cost_tolerance ]]" value="[[ detailRecord.calculation.cost_lower ]]"></paper-input>
+                    <paper-input label$="Realisasi biaya &gt; [[ detailRecord.calculation.cost_tolerance ]]" value="[[ detailRecord.calculation.cost_upper ]]"></paper-input>
+                    <paper-input label="Total nilai" value="[[ detailRecord.ski_total ]]"></paper-input>
+                    <paper-input label="Nilai capaian (performansi)" value="[[ detailRecord.ski_performance ]]"></paper-input>
                 </div>
                 <div slot="dialog-footer">
                     <paper-button on-tap="__onDetailCloseTap">Tutup</paper-button>
@@ -770,82 +749,62 @@
             </template>
         </kct-dialog>
 
+        <kct-dialog id="exam-dialog" title="Pemeriksaan" width="400" height="100%" scrollable>
+            <template preserve-content>
+                <style include="theme-helper"></style>
+
+                <div slot="dialog-body">
+                    <kct-date-picker value="{{ examRecord.ske_date }}" label="Tanggal Pemeriksaan"></kct-date-picker>
+                    <kct-combobox 
+                        url="/skp/skp-flags" 
+                        label="Tindakan" 
+                        value="{{ examRecord.ske_flag }}" 
+                        item-label-path="text" 
+                        item-value-path="name"></kct-combobox>
+                    <paper-input value="{{ examRecord.ske_notes }}" label="Catatan Pemeriksaan"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onExamDialogSave">OK</paper-button>
+                    <paper-button on-tap="__onExamDialogCancel">BATAL</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
     </template>
     <script>
-        class FormSkp extends Mixins(FormBase).use(Mixins.SkpBehavior) {
+        class FormSkp extends Mixins(FormBase).use(Mixins.SkpBehavior, Mixins.Formatter) {
             static get is() {
                 return 'form-skp';
             }
 
             static get properties() {
                 return {
-                    page: { type: String, value: 'dokumen' },
-                    units: { type: Array, value: () => ([]) },
-                    behaviors: { type: Array, value: () => ([]) },
-                    criteria: { type: Array, value: () => ([]) },
-                    detail: { type: Object, value: () => ({}) }
+                    page: { type: String, value: 'dokumen' }
                 }
-            }
-
-            static get observers() {
-                return [
-                    '__validationChanged(record.task.skp_su_id, record.task.skp_start_date, record.task.skp_end_date)',
-                    '__periodChanged(record.task.skp_start_date, record.task.skp_end_date)'
-                ];
-            }
-
-            constructor() {
-                super();
-                this.__duration = null;
             }
 
             setup() {
 
-                if ( ! this.$['combo-examiner']) {
-                    this.$['combo-examiner'] = this.shadowRoot.querySelector('#combo-examiner');
-                }
-
-                if ( ! this.$['combo-evaluator']) {
-                    this.$['combo-evaluator'] = this.shadowRoot.querySelector('#combo-evaluator');
-                }
-
-                if ( ! this.$['combo-superior']) {
-                    this.$['combo-superior'] = this.shadowRoot.querySelector('#combo-superior');
-                }
-
+                this.__registerComponent('combo-evaluator');
+                this.__registerComponent('combo-examiner');
+                
                 if (this.action == 'create') {
 
-                    if ( ! this.$['combo-user']) {
-                        this.$['combo-user'] = this.shadowRoot.querySelector('#combo-user');
-                    }
+                    this.__registerComponent('combo-user');
 
                     // resolve dependencies
                     return Promise.all([
-                        this.__loadBehaviors(),
-                        this.$['combo-user'].load(),
-                        this.$['combo-examiner'].load(),
-                        this.$['combo-evaluator'].load(),
-                        this.$['combo-superior'].load()
-                    ]).then(() => {
-                        this.set('buttons', 'save');
-                        this.set('page', 'dokumen');
-                        this.$.tabs.notifyResize();
-                    });
+                        this.__loadBehaviors()
+                    ]);
                 } else {
                     return Promise.all([
-                        // this.__loadCriteria(),
-                        // this.$['combo-examiner'].load(),
-                        // this.$['combo-evaluator'].load(),
-                        // this.$['combo-superior'].load()
-                    ]).then(() => {
-                        this.set('buttons', 'save,send,remove,print');
-                        this.set('page', 'kegiatan');
-                        this.$.tabs.notifyResize();
-                    });
+                        this.__loadCriteria()
+                    ]);
                 }
             }
 
             initialize() {
+
                 if (this.action == 'create') {
                     let today = moment();
                     let startDate = today.clone().startOf('year');
@@ -857,7 +816,7 @@
                     this.set('record.task.skp_su_id', this.user.su_id);
                     this.set('record.task.skp_su_fullname', this.user.su_fullname);
                     this.set('record.task.skp_su_no', this.user.su_no);
-                    this.set('record.task.skp_su_grade', this.user.su_grade);
+                    this.set('record.task.skp_su_sg_name', this.user.su_sg_name);
                     this.set('record.task.skp_su_sj_name', this.user.su_sj_name);
                     this.set('record.task.skp_su_sdp_name', this.user.su_sdp_name);
 
@@ -865,19 +824,95 @@
                     this.set('record.task.skp_cover_header_2', 'PEGAWAI NEGERI SIPIL');
                     this.set('record.task.skp_cover_footer_1', (this.user.su_scp_name || '').toUpperCase());
                     this.set('record.task.skp_cover_footer_2', 'TAHUN ' + today.format('YYYY'));
+
+                    this.set('record.perms.update_labels', true);
+                    this.set('record.perms.update_users', true);
+
+                    this.set('buttons', 'save');
+
+                    this.set('page', 'dokumen');
+                    this.$.tabs.notifyResize();
                 } else {
+                    let buttons = [];
+                    let page = 'kegiatan';
+
+                    switch(this.record.task.skp_task_flag) {
+                        case 'TODO':
+                        case 'REVISION':
+                            this.set('record.perms.update', this.record.task.skp_su_id == this.user.su_id);
+                            this.set('record.perms.update_users', true);
+                            this.set('record.perms.update_labels', true);
+                            this.set('record.perms.remove', this.record.perms.update);
+                            this.set('record.perms.exam', [this.record.task.skp_evaluator, this.record.task.skp_examiner].indexOf(this.user.su_id) !== -1);
+                            buttons = ['save', 'send', 'print'];
+
+                            break;
+                        case 'EXAM':
+                            this.set('record.perms.update', this.record.task.skp_su_id == this.user.su_id);
+                            this.set('record.perms.update_users', true);
+                            this.set('record.perms.update_labels', true);
+                            this.set('record.perms.remove', this.record.perms.update);
+                            this.set('record.perms.exam', [this.record.task.skp_evaluator, this.record.task.skp_examiner].indexOf(this.user.su_id) !== -1);
+
+                            if (this.record.perms.exam) {
+                                buttons = ['save', 'send', 'print'];
+                            } else {
+                                buttons = ['save', 'print'];
+                            }
+
+                            page = 'perilaku';
+
+                            break;
+                        case 'DONE':
+                            this.set('record.perms.update', false);
+                            this.set('record.perms.update_users', false);
+                            this.set('record.perms.update_labels', false);
+                            this.set('record.perms.remove', false);
+                            this.set('record.perms.exam', false);
+
+                            buttons = ['print'];
+
+                            page = 'evaluasi';
+
+                            break;
+                    }
+
+                    if (this.record.perms.remove) {
+                        buttons.push('remove');
+                    }
+
+                    this.set('buttons', buttons.join(','));
+
                     this.__loadItems();
                     this.__loadBehaviors();
+
+                    this.set('page', page);
+                    this.$.tabs.notifyResize();
                 }
 
                 this.__doLayout();
             }
 
             beforeSave(options) {
-                if (options.send) {
-                    this.set('record.task.skp_task_flag', 'VERIFICATION');
+                let promise = this.resolve({ success: true });
+
+                if (this.action == 'create') {
+                    this.set('record.task.skp_task_flag', 'TODO');
+                } else {
+                    if (options.send) {
+                        let flag = this.record.task.skp_task_flag;
+
+                        if (flag == 'TODO' || flag == 'REVISION') {
+                            this.set('record.task.skp_task_flag', 'EXAM');
+                        } else if (flag == 'EXAM') {
+                            promise = this.__examine().then(exam => {
+                                console.log(exam);
+                                return { success: exam };
+                            });
+                        }
+                    }
                 }
-                return this.resolve({ success: true });
+                return promise;
             }
 
             __doLayout() {
@@ -902,136 +937,25 @@
                 }, 100);
             }
 
-            __computeNo(index) {
-                return index + 1;
+            __examine() {
+                this.__examResolver = this.defer();
+                this.__initExamRecord();
+                this.$['exam-dialog'].open();
+                return this.__examResolver.promise;
             }
 
-            __computeDurations() {
-                if (this.__duration == null) {
-                    if (this.record.task.skp_start_date && this.record.task.skp_end_date) {
-                        let start = moment(this.record.task.skp_start_date);
-                        let end = moment(this.record.task.skp_end_date);
-                        let diff = end.diff(start);
+            __onAddItemTap() {
+                let payload = Object.assign({}, this.inputRecord);
+                this.__addItem(payload);
 
-                        this.__duration = parseInt(end.diff(start, 'months'), 10) + 1;
-                    }
-                }
-                return this.__duration;
-            }
+                // cleanup and focus
+                let timer = setTimeout(() => {
+                    clearTimeout(timer);
+                    timer = null;
 
-            __loadCriteria() {
-                return this.$.ajax.GET('/criteria').then(res => {
-                    this.set('criteria', res.data);
-                });
-            }
-
-            __loadItems() {
-
-                let payload = {
-                    params: {
-                        ski_skp_id: this.record.task.skp_id
-                    }
-                };
-
-                this.set('record.items', []);
-                this.set('record.extra', []);
-
-                return this.$.ajax.GET('/skp/skp-items', payload).then(res => {
-                    
-                    if (res.success) {
-                        let items = res.data.filter(e => e.ski_extra == 0);
-                        let extra = res.data.filter(e => e.ski_extra == 1);
-
-                        this.set('record.items', items);
-                        this.set('record.extra', extra);
-                    }
-                });
-            }
-
-            __loadBehaviors() {
-                let payload = {
-                    display: 'setup',
-                    skp: this.record.task.skp_id || ''
-                };
-
-                return this.$.ajax.GET('/skp/skp-behaviors', payload).then(res => {
-                    this.set('behaviors', res.data);
-                });
-            }
-
-            __saveBehaviors() {
-                let items = [];
-
-                (this.behaviors || []).forEach(b => {
-                    b.tsb_skp_id = this.record.task.skp_id;
-                    items.push(b);
-                });
-
-                return this.$.ajax.POST('/skp/' + this.record.task.skp_id + '/save-behaviors', {
-                    behaviors: items
-                });
-            }
-
-            __saveItem(item, index) {
-                this.$.ajax.PUT('/skp/skp-items/' + item.ski_id, item);
-            }
-
-            __periodChanged(start, end) {
-                this.set('__duration', null);
-            }
-
-            __validationChanged(user, startDate, endDate) {
-                let valid = true;
-                
-                valid = valid && !!user;
-                valid = valid && !!startDate;
-                valid = valid && !!endDate;
-
-                this.set('invalid', !valid);
-            }
-
-            __addItem(value, extra = false) {
-                if (value) {
-
-                    if (/lorem/.test(value)) {
-                        value = 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua';
-                    }
-
-                    let data = {
-                        ski_skp_id: this.record.task.skp_id,
-                        ski_desc: value,
-                        ski_volume: null,
-                        ski_volume_real: null,
-                        ski_unit: 'dokumen',
-                        ski_cost: null,
-                        ski_cost_real: null,
-                        ski_quality: null,
-                        ski_quality_real: null,
-                        ski_ak: null,
-                        ski_ak_real: null,
-                        ski_ak_factor: null,
-                        ski_extra: extra ? 1 : 0,
-                        ski_total: null,
-                        ski_performance: null,
-                        ski_duration: null,
-                        ski_duration_real: null,
-                        ski_duration_unit: 'bulan'
-                    };
-                    
-
-                    this.$.ajax.POST('/skp/skp-items', data).then(res => {
-                        if (res.success) {
-                            let item = res.data;
-                            if (data.ski_extra == 0) {
-                                this.push('record.items', item);
-                            } else {
-                                this.push('record.extra', item);
-                            }
-                            this.__computeSummary();
-                        }
-                    });
-                    
-                }
+                    this.set('inputRecord', {});
+                    this.$['input-description'].focus();
+                }, 1);
             }
 
             __onRemoveItemTap(e) {
@@ -1044,94 +968,13 @@
                                 } else {
                                     this.splice('record.extra', e.model.index, 1);    
                                 }
+
                                 this.__computeSummary();
+                                this.__saveSummary();
                             }
                         });
                     }
                 });
-            }
-
-            __onAddTask1Tap() {
-                let value = this.$.input1.value,
-                    extra = this.$.checkbox1.checked;
-
-                this.__addItem(value, extra);
-
-                this.$.input1.value = '';
-                this.$.input1.focus();
-            }
-
-            __onComboUserChange(e) {
-                let user = e.target.getModelForValue(e.target.value);
-
-                if (user) {
-                    this.set('record.task.skp_su_no', user.su_no);
-                    this.set('record.task.skp_su_grade', user.su_grade);
-                    this.set('record.task.skp_su_sdp_name', user.su_sdp_name);
-                    this.set('record.task.skp_su_sj_name', user.su_sj_name);
-                } else {
-                    this.set('record.task.skp_su_no', '');
-                    this.set('record.task.skp_su_grade', '');
-                    this.set('record.task.skp_su_sdp_name', '');
-                    this.set('record.task.skp_su_sj_name', '');
-                }
-            }
-
-            __onComboExaminerChange(e) {
-                let user = e.target.getModelForValue(e.target.value);
-
-                if (user) {
-                    this.set('record.task.examiner_su_no', user.su_no);
-                    this.set('record.task.examiner_su_grade', user.su_grade);
-                    this.set('record.task.examiner_su_sdp_name', user.su_sdp_name);
-                    this.set('record.task.examiner_su_sj_name', user.su_sj_name);
-
-                    this.__addAssignee(user);
-
-                } else {
-                    this.set('record.task.examiner_su_no', '');
-                    this.set('record.task.examiner_su_grade', '');
-                    this.set('record.task.examiner_su_sdp_name', '');
-                    this.set('record.task.examiner_su_sj_name', '');
-                }
-            }
-
-            __onComboEvaluatorChange(e) {
-                let user = e.target.getModelForValue(e.target.value);
-                
-                if (user) {
-                    this.set('record.task.evaluator_su_no', user.su_no);
-                    this.set('record.task.evaluator_su_grade', user.su_grade);
-                    this.set('record.task.evaluator_su_sdp_name', user.su_sdp_name);
-                    this.set('record.task.evaluator_su_sj_name', user.su_sj_name);
-
-                    this.__addAssignee(user);
-
-                } else {
-                    this.set('record.task.evaluator_su_no', '');
-                    this.set('record.task.evaluator_su_grade', '');
-                    this.set('record.task.evaluator_su_sdp_name', '');
-                    this.set('record.task.evaluator_su_sj_name', '');
-                }
-            }
-
-            __onComboSuperiorChange(e) {
-                let user = e.target.getModelForValue(e.target.value);
-                
-                if (user) {
-                    this.set('record.task.superior_su_no', user.su_no);
-                    this.set('record.task.superior_su_grade', user.su_grade);
-                    this.set('record.task.superior_su_sdp_name', user.su_sdp_name);
-                    this.set('record.task.superior_su_sj_name', user.su_sj_name);
-
-                    this.__addAssignee(user);
-
-                } else {
-                    this.set('record.task.superior_su_no', '');
-                    this.set('record.task.superior_su_grade', '');
-                    this.set('record.task.superior_su_sdp_name', '');
-                    this.set('record.task.superior_su_sj_name', '');
-                }
             }
 
             __onLookupTap(e) {
@@ -1158,13 +1001,14 @@
                         });
 
                         lov.addEventListener('close', () => {
-                            lov.selection.forEach(item => {
+                            let items = [];
 
+                            lov.selection.forEach(item => {
                                 let data = {
                                     ski_skp_id: this.record.task.skp_id,
                                     ski_desc: item.lki_desc,
-                                    ski_volume: item.lki_volume,
-                                    ski_volume_real: item.lki_volume,
+                                    ski_volume: null,
+                                    ski_volume_real: null,
                                     ski_unit: item.lki_unit,
                                     ski_quality: null,
                                     ski_quality_real: null,
@@ -1181,14 +1025,29 @@
                                     ski_performance: null
                                 };
 
-                                this.$.ajax.POST('/skp/skp-items', data).then(res => {
-                                    if (res.success) {
-                                        let item = res.data;
-                                        this.push('record.items', item);
-                                    }
-                                });
+                                items.push(data);
 
                             });
+
+                            if (items.length) {
+                                this.$.ajax.POST('/skp/skp-items/save-batch', { items: items }).then(res => {
+                                    if (res.success) {
+                                        let items = (this.record.items || []).slice();
+                                        Array.prototype.push.apply(items, res.data || []);
+                                        this.set('record.items', items);
+
+                                        let timer = setTimeout(() => {
+                                            clearTimeout(timer);
+                                            timer = null;
+
+                                            this.__computeSummary();
+                                            this.__saveSummary();
+
+                                        }, 10);
+                                    }   
+                                });
+                            }
+
                         });
 
                         this.shadowRoot.appendChild(lov);
@@ -1201,7 +1060,88 @@
                 
             }
 
-            __onItemDescriptionChange(e) {
+            __onDetailItemTap(e) {
+                this.set('detailRecord', Object.assign({}, e.model.item));
+                this.$['detail-dialog'].open();
+            }
+
+            __onDetailCloseTap() {
+                this.$['detail-dialog'].close();
+            }
+
+            __onComboUserChange(e) {
+                let user = e.target.getModelForValue(e.target.value);
+
+                if (user) {
+                    this.set('record.task.skp_su_no', user.su_no);
+                    this.set('record.task.skp_su_sg_name', user.su_sg_name);
+                    this.set('record.task.skp_su_sdp_name', user.su_sdp_name);
+                    this.set('record.task.skp_su_sj_name', user.su_sj_name);
+                } else {
+                    this.set('record.task.skp_su_no', '');
+                    this.set('record.task.skp_su_sg_name', '');
+                    this.set('record.task.skp_su_sdp_name', '');
+                    this.set('record.task.skp_su_sj_name', '');
+                }
+            }
+
+            __onComboEvaluatorChange(e) {
+                let user = e.target.getModelForValue(e.target.value);
+                
+                if (user) {
+                    this.set('record.task.evaluator_su_no', user.su_no);
+                    this.set('record.task.evaluator_su_sg_name', user.su_sg_name);
+                    this.set('record.task.evaluator_su_sdp_name', user.su_sdp_name);
+                    this.set('record.task.evaluator_su_sj_name', user.su_sj_name);
+
+                    this.__addAssignee(user);
+
+                } else {
+                    this.set('record.task.evaluator_su_no', '');
+                    this.set('record.task.evaluator_su_sg_name', '');
+                    this.set('record.task.evaluator_su_sdp_name', '');
+                    this.set('record.task.evaluator_su_sj_name', '');
+                }
+            }
+
+            __onComboExaminerChange(e) {
+                let user = e.target.getModelForValue(e.target.value);
+
+                if (user) {
+                    this.set('record.task.examiner_su_no', user.su_no);
+                    this.set('record.task.examiner_su_sg_name', user.su_sg_name);
+                    this.set('record.task.examiner_su_sdp_name', user.su_sdp_name);
+                    this.set('record.task.examiner_su_sj_name', user.su_sj_name);
+
+                    this.__addAssignee(user);
+
+                } else {
+                    this.set('record.task.examiner_su_no', '');
+                    this.set('record.task.examiner_su_sg_name', '');
+                    this.set('record.task.examiner_su_sdp_name', '');
+                    this.set('record.task.examiner_su_sj_name', '');
+                }
+            }     
+
+            __onItemBehaviorChange(e) {
+                let updatable = this.record.perms.update || this.record.perms.exam;
+
+                if ( ! updatable) {
+                    return;
+                }
+
+                this.__computeBehavior(e.model.item, e.model.index);
+                this.__computeSummary();
+
+                this.__saveBehaviors(e.model.item);
+                this.__saveSummary();
+            }
+
+            __onItemDescTargetChange(e) {
+                if ( ! this.record.perms.update) {
+                    return;
+                }
+
                 let text = e.target.textContent;
 
                 if (e.model.item.ski_extra == 0) {
@@ -1213,23 +1153,148 @@
                 this.__saveItem(e.model.item, e.model.index);
             }
 
-            __onTaskInput1Keydown(e) {
-                if (e.code == 'Enter') {
-                    let value = this.$.input1.value,
-                        extra = this.$.checkbox1.checked;
+            __onItemTargetChange(e) {
+                if ( ! this.record.perms.update) {
+                    return;
+                }
 
-                    this.__addItem(value, extra);
-                    this.$.input1.value = '';
+                this.__computeItem(e.model.item, e.model.index);
+                this.__computeSummary();
+
+                this.__saveItem(e.model.item, e.model.index);
+                this.__saveSummary();    
+            }
+
+            __onItemRealChange(e) {
+                let updatable = this.record.perms.update || this.record.perms.exam;
+                if ( ! updatable) {
+                    return;
+                }
+
+                this.__computeItem(e.model.item, e.model.index);
+                this.__computeSummary();
+
+                this.__saveItem(e.model.item, e.model.index);
+                this.__saveSummary();
+            }
+
+            __onItemExtraChange(e) {
+                let updatable = this.record.perms.update || this.record.perms.exam;
+                if ( ! updatable) {
+                    return;
+                }
+
+                this.__computeSummary();
+
+                this.__saveItem(e.model.item, e.model.index);
+                this.__saveSummary();
+            }
+
+            __onExamDialogSave() {
+                this.$['exam-dialog'].close();
+
+                let payload = Object.assign({}, this.examRecord);
+
+                if (payload.ske_id) {
+                    this.$.ajax.PUT('/skp/skp-exams/' + payload.ske_id, payload).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/skp/skp-exams', payload).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.set('record.task.skp_task_flag', res.data.ske_flag);
+                        this.__examResolver.resolve(true);
+                    }
                 }
             }
 
-            __onDetailItemTap(e) {
-                this.set('detail', Object.assign({}, e.model.item));
-                this.$['detail-dialog'].open();
+            __onExamDialogCancel() {
+                this.$['exam-dialog'].close();
+                this.__examResolver.resolve(false);
             }
 
-            __onDetailCloseTap() {
-                this.$['detail-dialog'].close();
+            __onSocketNotify(e) {
+                let payload = e.detail;
+                let project = this.project && this.project.sp_id;
+                let task = this.record && this.record.task && this.record.task.skp_id;
+
+                if (project == payload.project && task == payload.task) {
+                    let data, path, items, index;
+
+                    data = JSON.parse(payload.data || '{}');
+
+                    switch(payload.type) {
+                        case 'create_skp_item':
+
+                            if (data.ski_id) {
+                                items = data.ski_extra == 1 ? (this.record.extra || []) : (this.record.items || []);
+                                index = items.findIndex(elem => elem.ski_id == data.ski_id);
+
+                                if (index === -1) {
+                                    path = 'record.' + (data.ski_extra == 1 ? 'extra' : 'items');
+
+                                    this.$.ajax.GET('/skp/skp-items/' + data.ski_id).then(res => {
+                                        if (res.success) {
+                                            this.push(path, res.data);
+                                            this.__computeSummary();
+                                        }
+                                    });
+                                }
+                            }
+
+                            break;
+
+                        case 'update_skp_item':
+                            if (data.ski_id) {
+                                items = data.ski_extra == 1 ? (this.record.extra || []) : (this.record.items || []);
+                                index = items.findIndex(elem => elem.ski_id == data.ski_id);
+
+                                if (index !== -1) {
+                                    path = 'record.' + (data.ski_extra == 1 ? 'extra' : 'items') + '.' + index;
+                                    
+                                    this.$.ajax.GET('/skp/skp-items/' + data.ski_id).then(res => {
+                                        if (res.success) {
+                                            this.set(path, res.data);
+                                            this.__computeSummary();
+                                        }
+                                    });
+                                }
+                            }
+                            break;
+                        case 'remove_skp_item':
+                            if (data.ski_id) {
+                                items = data.ski_extra == 1 ? (this.record.extra || []) : (this.record.items || []);
+                                index = items.findIndex(elem => elem.ski_id == data.ski_id);
+
+                                if (index !== -1) {
+                                    path = 'record.' + (data.ski_extra == 1 ? 'extra' : 'items');
+                                    this.splice(path, index, 1);
+                                    this.__computeSummary();
+                                }
+                            }
+
+                            break;
+
+                        case 'update_skp_behavior':
+                            if (data.tsb_id) {
+                                index = (this.behaviors || []).findIndex(elem => elem.tsb_id == data.tsb_id);
+                                if (index !== -1) {
+                                    this.$.ajax.GET('/skp/skp-behaviors/' + data.tsb_id).then(res => {
+                                        if (res.success) {
+                                            this.set('behaviors.' + index, res.data);
+                                            this.__computeBehavior(res.data, index);
+                                            this.__computeSummary();
+                                        }
+                                    });    
+                                }
+                                
+                            }
+                            break;
+                    }
+
+                    
+                }
             }
         }
         customElements.define(FormSkp.is, FormSkp);

@@ -98,7 +98,8 @@
                         'registerElement' in document && 
                         'import' in document.createElement('link') && 
                         'content' in document.createElement('template')
-                    )
+                    ),
+                    CUSTOM_ELEMENTS: 'customElements' in window
                 },
 
                 run: function() {
@@ -168,15 +169,27 @@
                     function prepare() {
                         let d = defer();
 
-                        if (app.supports.WEB_COMPONENT) {
+                        if (app.supports.WEB_COMPONENT && app.supports.CUSTOM_ELEMENTS) {
                             d.resolve();
                         } else {
                             var script = document.createElement('script');
+
                             script.async = true;
                             script.src = '../cores/bower_components/webcomponentsjs/webcomponents-lite.js';
+                            
                             script.addEventListener('load', () => {
-                                d.resolve();
+
+                                document.addEventListener('WebComponentsReady', () => {
+                                    d.resolve();
+                                });
+
+                                if ( ! window.HTMLImports) {
+                                    document.dispatchEvent(
+                                        new CustomEvent('WebComponentsReady', { bubbles: true })
+                                    );
+                                }
                             });
+                            
                             document.head.appendChild(script);
                         }
 

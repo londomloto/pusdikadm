@@ -133,7 +133,9 @@
                     let opt = {
                         query: { room: nsp },
                         reconnectionDelay: 1000,
-                        reconnectionAttempts: 10
+                        reconnectionAttempts: 10,
+                        transports: [ 'websocket' ],
+                        upgrade: false
                     };
 
                     if (this.secure) {
