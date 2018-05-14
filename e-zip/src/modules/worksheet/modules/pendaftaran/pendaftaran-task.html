@@ -1,0 +1,152 @@
+<link rel="import" href="../../shared/project-task.html">
+
+<link rel="import" href="blocks/pendaftaran-task-prop.html">
+<link rel="import" href="blocks/pendaftaran-task-logs.html">
+<link rel="import" href="blocks/pendaftaran-task-form.html">
+
+<dom-module id="pendaftaran-task">
+    <template>
+        <style include="project-task-style"></style>
+        
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-media screen="{{ screen }}"></kct-media>
+        <kct-event-publisher id="publisher"></kct-event-publisher>
+        <kct-socket manager="global-socket" session="{{ socketSession }}" on-notify="__onSocketNotify"></kct-socket>
+        <kct-role id="role"></kct-role>
+        
+        <kct-vbox class$="layout [[ __computeClass(loading) ]]">
+            <header-block id="header" on-back-tap="__onBackTap" text="[[ formRecord.bf_name ]]" hide-header$="[[ __hideHeader(screen) ]]">
+                <h3 slot="header-value">[[ header ]]</h3>
+
+                <paper-button hidden$="[[ __hideButton('save', formButtons) ]]" disabled$="[[ formInvalid ]]" on-tap="__onSaveTap" class="btn-action primary" slot="right-toolbar" style="margin-left: 8px;">
+                    <iron-icon icon="done"></iron-icon>&nbsp;[[ __computeSaveLabel(actionRecord) ]]
+                </paper-button>
+                
+                <paper-button hidden$="[[ __hideButton('send', formButtons) ]]" disabled$="[[ formInvalid ]]"  on-tap="__onSendTap" class="btn-action info" slot="right-toolbar">
+                    <iron-icon icon="arrow-forward"></iron-icon>&nbsp;Proses
+                </paper-button>
+
+                <paper-button hidden$="[[ __hideButton('print', formButtons) ]]" on-tap="__onPrintTap" class="btn-action default" slot="right-toolbar">
+                    <iron-icon icon="print"></iron-icon>&nbsp;Print
+                </paper-button>
+
+                <paper-button hidden$="[[ __hideButton('remove', formButtons) ]]" on-tap="__onRemoveTap" class="btn-action danger" slot="right-toolbar">
+                    <iron-icon icon="close"></iron-icon>&nbsp;Hapus
+                </paper-button>
+
+            </header-block>
+            <div id="workspace" class$="workspace flex [[ screen ]]">
+                
+                <kct-hbox class="workspace-wrapper">
+                    <div class="flex workspace-body">
+                        <pendaftaran-task-form 
+                            id="taskform" 
+                            project="[[ projectRecord ]]" 
+                            record="{{ taskRecord }}" 
+                            workspace="[[ workspaceRecord ]]" 
+                            action="[[ actionRecord ]]" 
+                            form="[[ formRecord ]]" 
+                            user="[[ user ]]" 
+                            route="{{ route }}" 
+                            invalid="{{ formInvalid }}" 
+                            buttons="{{ formButtons }}" 
+                            socket-session="[[ socketSession ]]" 
+                            loading="[[ loading ]]"></pendaftaran-task-form>
+
+                        <pendaftaran-task-logs 
+                            id="tasklogs" 
+                            record="{{ taskRecord }}" 
+                            project="[[ projectRecord ]]" 
+                            hidden$="[[ __phantom ]]" 
+                            profile="[[ profile ]]" 
+                            loading="[[ loading ]]" 
+                            socket-session="[[ socketSession ]]"></pendaftaran-task-logs> 
+                    </div>
+                    <div class="workspace-side hidden-sm hidden-md">
+                        <pendaftaran-task-prop 
+                            id="taskprop" 
+                            project="[[ projectRecord ]]" 
+                            action="[[ actionRecord ]]" 
+                            record="{{ taskRecord }}" 
+                            workspace="[[ workspaceRecord ]]" 
+                            user="[[ user ]]" 
+                            route="{{ route }}"
+                            loading="[[ loading ]]" 
+                            profile="[[ profile ]]" 
+                            socket-session="[[ socketSession ]]" 
+                            on-after-update="__onPropAfterUpdate"></pendaftaran-task-prop>
+                    </div>
+                </kct-hbox>
+
+            </div>
+        </kct-vbox>
+
+    </template>
+    <script>
+        
+        class PendaftaranTask extends Mixins(KctView).use(Mixins.ProjectTask) {
+            static get is() {
+                return 'pendaftaran-task';
+            }
+
+            static get observers() {
+                return [
+                    '__computeHeader(taskRecord.task.su_fullname)'
+                ];
+            }
+
+            static get properties() {
+                return {
+                    profile: { 
+                        type: Object,
+                        value: () => ({
+                            activity: {
+                                scope: 'registration'
+                            },
+                            service: {
+                                url: '/registration/kanban'
+                            },
+                            task: {
+                                primary_key: 'su_id',
+                                primary_val: null,
+                                project_key: 'su_task_project',
+                                due_key: 'su_task_due',
+                                due_formatted_key: 'su_task_due_formatted',
+                                creator_key: 'su_created_by'
+                            },
+                            status: {
+                                primary_key: 'tus_id',
+                                primary_val: null,
+                                status_key: 'tus_status',
+                                worker_key: 'tus_worker',
+                                target_key: 'tus_target'
+                            }
+                        })
+                    }
+                };
+            }
+
+            initialize() {
+                this.set('taskRecord', {
+                    task: {},
+                    status: {},
+                    labels: [],
+                    users: [],
+                    perms: {}
+                });
+            }
+
+            __computeHeader(name) {
+                let header = name ? name : '(kosong)';
+                this.set('header', header);
+            }
+
+            __onPrintTap() {
+                this.$.ajax.DOWNLOAD('/registration/print/document/' + this.taskRecord.task.su_id + '/xls');
+            }
+
+        }
+        
+        customElements.define(PendaftaranTask.is, PendaftaranTask);
+    </script>
+</dom-module>

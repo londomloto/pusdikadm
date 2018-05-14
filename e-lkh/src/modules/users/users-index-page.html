@@ -54,7 +54,14 @@
 
             .card-info { line-height: 1.2rem; font-size: 13px;  }
             .card-info .label { color: var(--paper-grey-500)  }
-            .card-info .value { color: var(--paper-blue-grey-500); font-weight: 500;  }
+            .card-info .value { 
+                color: var(--paper-blue-grey-500); 
+                font-weight: 500;  
+                overflow: hidden;
+                white-space: nowrap;
+                position: relative;
+                text-overflow: ellipsis;
+            }
 
             .card-actions paper-button iron-icon {
                 --iron-icon-width: 16px;
@@ -104,9 +111,9 @@
                                 
                                 <div class="card-content">
                                     <div class="card-info">
-                                        <div class="label">Email</div>
-                                        <div class="value">[[ item.su_email ]]</div>
-                                        <div class="label">Group Akses</div>
+                                        <div class="label">Jabatan</div>
+                                        <div class="value">[[ __computeCoalesce(item.su_sj_name) ]]</div>
+                                        <div class="label">Role Aplikasi</div>
                                         <div class="value">[[ item.sr_name ]]</div>
                                         <!-- <div class="label">Phone</div>
                                         <div class="value">[[ item.su_phone ]]</div> -->
@@ -215,6 +222,10 @@
                 if (setting == 'users' && ! action) {
                     this.__loadUsers();
                 }
+            }
+
+            __computeCoalesce(value) {
+                return value || '(kosong)';
             }
 
             __hideIncognito(incognito) {

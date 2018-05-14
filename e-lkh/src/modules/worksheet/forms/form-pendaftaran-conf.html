@@ -41,11 +41,11 @@
                         <paper-input label="No. Induk Pagawai" value="{{ record.task.su_no }}"></paper-input>
                         <combo-grade label="Pangkat / Gol. Ruang" value="{{ record.task.su_sg_id }}"></combo-grade>
                         <combo-job label="Jabatan (Pekerjaan)" value="{{ record.task.su_sj_id }}"></combo-job>
-                        <combo-department label="Unit Kerja" value="{{ record.task.su_sdp_id }}"></combo-department>
+                        <combo-department label="Divisi" value="{{ record.task.su_sdp_id }}"></combo-department>
 
                         <kct-combobox 
                             url="/company" 
-                            label="Organisasi" 
+                            label="Unit Kerja" 
                             value="{{ record.task.su_scp_id }}" 
                             page-size="10" 
                             item-label-path="scp_name" 

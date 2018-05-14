@@ -239,8 +239,10 @@ class User extends \Micro\Model {
             $array['su_sdp_name'] = $this->department->sdp_name;
         }
 
-        if ($this->company) {
-            $array['su_scp_name'] = $this->company->scp_name;
+        if (($company = $this->company)) {
+            $array['su_scp_name'] = $company->scp_name;
+            $array['su_scp_parent'] = $company->scp_parent;
+            $array['su_scp_fullname'] = $company->getFullname();
         }
 
         if ($this->grade) {
@@ -251,14 +253,21 @@ class User extends \Micro\Model {
     }
 
     public function toSimpleArray() {
+
+        $company = $this->company;
+        $department = $this->department;
+        $job = $this->job;
+
         $array = array(
             'su_id' => $this->su_id,
             'su_fullname' => $this->getName(),
             'su_no' => $this->su_no,
             'su_sg_name' => $this->getGradeName(),
-            'su_sdp_name' => $this->department ? $this->department->sdp_name : NULL,
-            'su_scp_name' => $this->company ? $this->company->scp_name : NULL,
-            'su_sj_name' => $this->job ? $this->job->sj_name : NULL,
+            'su_sdp_name' => $department ? $department->sdp_name : NULL,
+            'su_scp_name' => $company ? $company->scp_name : NULL,
+            'su_scp_parent' => $company ? $company->scp_parent : NULL,
+            'su_scp_fullname' => $company ? $company->getFullname() : NULL,
+            'su_sj_name' => $job ? $job->sj_name : NULL,
             'su_avatar_thumb' => $this->getAvatarThumb()
         );
 

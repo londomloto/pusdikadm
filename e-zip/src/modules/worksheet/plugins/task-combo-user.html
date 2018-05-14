@@ -1,0 +1,95 @@
+<link rel="import" type="text/css" href="../../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" type="text/css" href="../../../../../cores/elements/kct-combobox/kct-combobox.html">
+<link rel="import" type="text/css" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+
+<dom-module id="task-combo-user">
+    <template>
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-combobox 
+            id="combo" 
+            url="/users" 
+            page-size="10" 
+            item-label-path="su_fullname" 
+            placeholder="Pilih atau cari pengguna..." 
+            item-value-path="su_id" 
+            hide-clear 
+            no-label-float>
+            
+            <paper-button slot="toolbar" on-tap="__onComboCloseTap"><iron-icon icon="close"></iron-icon>&nbsp;Tutup</paper-button>
+            
+            <template>
+                <style>
+                    .icon {
+                        position: relative;
+                        width: 32x;
+                        height: 32px;
+                        border-radius: 50%;
+                        overflow: hidden;
+                        float: left;
+                    }
+                    .text {
+                        margin-left: 40px;
+                        font-size: 13px;
+                    }
+                    .meta {
+                        font-size: 12px;
+                        color: #999;
+                    }
+                    .clearfix {
+                        clear: both;
+                    }
+                </style>
+                <div>
+                    <div class="icon">
+                        <img src$="[[ item.su_avatar_thumb ]]&w=32&h=32">
+                    </div>
+                    <div class="text">
+                        <div>[[ item.su_fullname ]]</div>
+                        <div class="meta">[[ item.su_email ]]</div>
+                    </div>
+                    <div class="clearfix"></div>
+                </div>
+            </template>
+        </kct-combobox>
+
+    </template>
+    <script>
+        class TaskComboUser extends Polymer.Element {
+            static get is() {
+                return 'task-combo-user';
+            }
+
+            open() {
+                this.set('__message', '');
+
+                this.$.combo.value = '';
+                
+                this.$.combo.load({
+                    sort: [{ property: 'su_fullname', direction: 'asc' }]
+                }).then(() => {
+                    this.$.combo.open();
+                });
+            }
+
+            close() {
+                this.$.combo.close();
+            }
+
+            clear() {
+                this.$.combo.value = '';
+            }
+
+            getSelectedUser() {
+                let value = this.$.combo.value;
+                return this.$.combo.getModelForValue(value);
+            }
+
+            __onComboCloseTap() {
+                this.close();
+                this.dispatchEvent(new CustomEvent('action'));
+            }
+        }
+
+        customElements.define(TaskComboUser.is, TaskComboUser);
+    </script>
+</dom-module>

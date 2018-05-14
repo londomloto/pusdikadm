@@ -22,7 +22,7 @@
             columns="[[ columns ]]" 
             selected="{{ selectedRecord }}" 
             header-text="Referensi" 
-            header-desc="Daftar Unit Kerja" 
+            header-desc="Daftar Divisi" 
             header-icon="work" 
             selection-model="row" 
             on-back-tap="__onBackTap" 
@@ -32,12 +32,12 @@
             <paper-button slot="left-toolbar" on-tap="__onRemoveTap"><iron-icon icon="close"></iron-icon>&nbsp;Hapus</paper-button>
         </kct-grid>
 
-        <kct-dialog id="editor" title="Editor Unit Kerja" width="400" height="100%">
+        <kct-dialog id="editor" title="Editor Divisi" width="400" height="100%">
             <template preserve-content>
                 <div slot="dialog-body">
-                    <paper-input label="Nama Unit Kerja" value="{{ editingRecord.sdp_name }}"></paper-input>
-                    <combo-user label="Pemeriksa I" value="{{ editingRecord.sdp_evaluator }}" autoload></combo-user>
-                    <combo-user label="Pemeriksa II" value="{{ editingRecord.sdp_examiner }}" autoload></combo-user>
+                    <paper-input label="Nama Divisi" value="{{ editingRecord.sdp_name }}"></paper-input>
+                    <combo-user label="Pejabat Penilai" value="{{ editingRecord.sdp_evaluator }}" autoload></combo-user>
+                    <combo-user label="Atasan Penilai" value="{{ editingRecord.sdp_examiner }}" autoload></combo-user>
                 </div>
                 <div slot="dialog-footer">
                     <paper-button on-tap="__onEditorSaveTap">Simpan</paper-button>
@@ -61,9 +61,9 @@
                         type: Array,
                         value: () => ([
                             { type: 'rownumber' },
-                            { text: 'Unit Kerja', dataIndex: 'sdp_name', width: 400 },
+                            { text: 'Nama Divisi', dataIndex: 'sdp_name', width: 400 },
                             { 
-                                text: 'Pemeriksa I', 
+                                text: 'Pejabat Penilai', 
                                 dataIndex: 'sdp_evaluator', 
                                 width: 200,
                                 renderer: e => {
@@ -71,7 +71,7 @@
                                 }
                             },
                             { 
-                                text: 'Pemeriksa II', 
+                                text: 'Atasan Penilai', 
                                 dataIndex: 'sdp_examiner', 
                                 width: 200,
                                 renderer: e => {
@@ -109,13 +109,16 @@
             }
 
             __onRemoveTap() {
-                if ( ! this.selectedRecord) {
+                let record = this.selectedRecord;
+
+                if ( ! record) {
                     return;
                 }
 
+
                 this.confirm('Konfirmasi', 'Apakah Anda yakin akan menghapus data ini?').then(y => {
                     if (y) {
-                        this.$.ajax.DELETE('/departments/' + e.data.sdp_id).then(() => {
+                        this.$.ajax.DELETE('/departments/' + record.sdp_id).then(() => {
                             this.$.grid.load();
                         });
                     }

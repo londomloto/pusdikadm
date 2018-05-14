@@ -1,0 +1,138 @@
+<dom-module id="form-surat-masuk">
+    <template>
+        <style include="form-style"></style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="message" hidden$="[[ __hideMessage(message) ]]">
+            <div class="message-tool">
+                <paper-icon-button on-tap="__onMessageCloseTap" icon="close"></paper-icon-button>
+            </div>
+            <div class="message-body">
+                <div class="message-title">PERHATIAN</div>
+                <div class="message-content">[[ message ]]</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Registrasi &amp; Kodefikasi</h3>
+            <div>
+                <kct-column columns="2">
+                    <div>
+                        <paper-input label="No. Agenda (Urut)" value="{{ record.task.tsm_index }}">
+                            <div slot="suffix">
+                                <paper-icon-button on-tap="__onGenerateIndexTap" icon="refresh"></paper-icon-button>
+                            </div>
+                        </paper-input>
+                        <combo-class label="Klasifikasi Surat" value="{{ record.task.tsm_class }}"></combo-class>
+                        <paper-input label="No. Arsip (Kode)" value="{{ record.task.tsm_regno }}"></paper-input>
+                    </div>
+                    <div>
+                        <kct-date-picker label="Tanggal Registrasi" value="{{ record.task.tsm_regdate }}"></kct-date-picker>
+                        <combo-user label="Petugas Registrasi" value="{{ record.task.tsm_reguser }}"></combo-user>
+                        <paper-input label="Pengolah Surat" value="{{ record.task.tsm_author }}"></paper-input>
+                    </div>
+                </kct-column>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Identitas Surat Masuk</h3>
+            <div>
+                <kct-column columns="2">
+                    <div>
+                        <paper-input label="No. Surat*" value="{{ record.task.tsm_no }}" required auto-validate error-message="Nomor surat wajib diisi"></paper-input>
+                    </div>
+                    <div>
+                        <kct-date-picker label="Tanggal Surat" value="{{ record.task.tsm_date }}"></kct-date-picker>
+                    </div>
+                </kct-column>
+                <paper-input label="Pengirim" value="{{ record.task.tsm_from }}"></paper-input>
+                <combo-user 
+                    label="Tujuan" 
+                    value="{{ record.task.tsm_to }}" 
+                    on-change="__onComboReceiverChange"></combo-user>
+                <paper-input label="Perihal" value="{{ record.task.tsm_subject }}"></paper-input>
+                <paper-textarea label="Ringkasan" value="{{ record.task.tsm_snippet }}"></paper-textarea>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Attachment</h3>
+            <div>
+                <div class="m-b">Unggah dokumen yang berkaitan dengan surat masuk.</div>
+                <div class="m-b">
+                    <paper-button class="btn-cyan">
+                        <iron-icon icon="file-upload"></iron-icon>&nbsp;Upload Dokumen
+                    </paper-button>    
+                </div>
+            </div>
+        </div>
+
+    </template>
+    <script>
+        class FormSuratMasuk extends Mixins(FormBase).use(Mixins.SuratMasukBehavior) {
+            static get is() {
+                return 'form-surat-masuk';
+            }
+
+            initialize() {
+                super.initialize();
+                
+                if (this.action == 'create') {
+                    let today = moment();
+                    
+                    this.set('record.task.tsm_regdate', today.format('YYYY-MM-DD'));
+                    this.set('record.task.tsm_reguser', this.user.su_id);
+
+                    this.set('buttons', 'save');
+                } else {
+                    
+                    if (this.record.task.su_task_flag == 'REVISION') {
+                        this.set('message', 'Berdasarkan hasil verifikasi, data pegawai berikut ini tidak otentik. Silakan lakukan perbaikan data, kemudian proses kembali.');
+                    }
+
+                    this.set('buttons', 'save,send,remove');
+                }
+            }
+
+            beforeSave(options) {
+                super.beforeSave(options);
+
+                let promise = this.resolve({ success: true });
+
+                if (this.action == 'create') {
+                    if ( ! this.record.task.tsm_index) {
+                        promise = this.__computeIndex();
+                    }
+                }
+
+                return promise;
+            }
+
+            afterSave(response, options) {
+                
+                if (response.success && options.send) {
+                    let data = response.data.task;
+                    if (data.tsm_to) {
+
+                        this.$.ajax.POST('/surat-masuk/' + data.tsm_id + '/notify', {
+                            type: 'forward',
+                            data: {
+                                from: data.tsm_from,
+                                date: data.tsm_date_formatted,
+                                code: data.tsm_no
+                            },
+                            users: [ data.tsm_to ]
+                        });        
+                    }
+                }
+                
+
+                return this.resolve({ success: true });
+            }
+            
+        }
+        customElements.define(FormSuratMasuk.is, FormSuratMasuk);
+    </script>
+</dom-module>

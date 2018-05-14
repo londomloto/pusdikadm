@@ -1,0 +1,106 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../../cores/bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../../../../cores/elements/kct-combobox/kct-combobox.html">
+<link rel="import" href="../../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+
+<dom-module id="combo-autonumber">
+    <template>
+        <style>
+            #combo {
+                padding: 4px 0;
+                --paper-input-container-label: {
+                    top: 3px;
+                };
+            }
+        </style>
+        <kct-ajax id="ajax"></kct-ajax>
+        
+        <kct-combobox 
+            id="combo" 
+            url="/system/autonumber" 
+            page-size="10"
+            label="[[ label ]]" 
+            value="{{ value }}" 
+            item-label-path="sn_name" 
+            item-value-path="sn_name" 
+            required$="[[ required ]]" 
+            auto-validate$="[[ autoValidate ]]" 
+            error-message="Penomoran wajib diisi">
+            <paper-button on-tap="__onAddTap" slot="toolbar"><iron-icon icon="add"></iron-icon>&nbsp;Tambah</paper-button>        
+        </kct-combobox>        
+
+        <kct-dialog id="editor" title="Editor Penomoran" width="400" height="100%" scrollable>
+            <template preserve-content>
+                <style include="theme-helper"></style>
+                <div slot="dialog-body">
+                    <paper-input label="Kode" value="{{ editingRecord.sn_name }}" required auto-validate error-message="Kode wajib diisi"></paper-input>
+                    <paper-input label="Keterangan" value="{{ editingRecord.sn_desc }}"></paper-input>
+                    <paper-input label="Nilai Sekarang" value="{{ editingRecord.sn_value }}"></paper-input>
+                    <paper-input label="Panjang Karakter" value="{{ editingRecord.sn_length }}"></paper-input>
+                    <paper-input label="Awalan" value="{{ editingRecord.sn_prefix }}"></paper-input>
+                    <paper-input label="Akhiran" value="{{ editingRecord.sn_suffix }}"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button disabled$="[[ editingInvalid ]]" on-tap="__onSaveTap">Simpan</paper-button>
+                    <paper-button on-tap="__onCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+    </template>
+    <script>
+        class ComboAutonumber extends Polymer.Element {
+            static get is() {
+                return 'combo-autonumber';
+            }
+            static get properties() {
+                return {
+                    label: { type: String },
+                    value: { type: String, value: '', notify: true },
+                    required: { type: Boolean, value: false, reflectToAttribute: true },
+                    autoValidate: { type: Boolean, value: false },
+                    editingRecord: { type: Object },
+                    editingInvalid: { type: Boolean, value: false }
+                }
+            }
+            static get observers() {
+                return [
+                    '__computeEditorValidation(editingRecord.sn_name)'
+                ];
+            }
+            load() {
+                return this.$.combo.load();
+            }
+            getSelectedUnit() {
+                return this.$.combo.getModelForValue(this.$.combo.value);
+            }
+            __computeEditorValidation(name) {
+                let valid = true;
+                valid = valid && !!name;
+                this.set('editingInvalid', !valid);
+            }
+            __onAddTap() {
+                this.set('editingRecord', {
+                    sn_type: 'USER'
+                });
+                
+                this.$.editor.open();
+            }
+            __onCloseTap() {
+                this.$.editor.close();
+            }
+            __onSaveTap() {
+                this.$.editor.close();
+                let payload = this.editingRecord;
+
+                this.$.ajax.POST('/system/autonumber', payload).then(res => {
+                    if (res.success) {
+                        this.set('value', res.data.sn_name);
+                    }
+                });
+            }
+        }
+        customElements.define(ComboAutonumber.is, ComboAutonumber);
+    </script>
+</dom-module>

@@ -1,0 +1,131 @@
+<link rel="import" href="../../../../../cores/elements/kct-grid/kct-grid.html">
+<link rel="import" href="../plugins/skp-database-search.html">
+
+<dom-module id="skp-database">
+    <template>
+        <style include="skp-page-style">
+            :host {
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-grid 
+            id="grid" 
+            url="/skp" 
+            params="[[ params ]]" 
+            icon="description"
+            header-text="Dokumen" 
+            header-desc="Dokumen SKP" 
+            columns="[[ columns ]]" 
+            selection-model="row" 
+            row-height="50" 
+            pagination 
+            on-back-tap="__onBackTap">
+            <skp-database-search slot="center-toolbar" search="{{ params }}"></skp-database-search>
+            <paper-icon-button slot="right-toolbar" icon="print" on-tap="__onPrintTap"></paper-icon-button>
+        </kct-grid>
+    </template>
+    <script>
+        class SkpDatabase extends Mixins(KctView).use(Mixins.SkpPageBehavior) {
+            static get is() {
+                return 'skp-database';
+            }
+            static get properties() {
+                return {
+                    params: { type: Object },
+                    columns: {
+                        type: Array,
+                        value: () => ([
+
+                            { type: 'rownumber' }, 
+                            {
+                                type: 'action',
+                                width: 40,
+                                align: 'center',
+                                renderer: e => {
+                                    if (e.data) {
+                                        return '<kct-grid-action on-tap="__onItemTap" icon="search" accent="blue-grey" icon-only rounded></kct-grid-action>';
+                                    }
+                                    return '';
+                                }
+                            },
+                            { text: 'PERIODE', dataIndex: 'skp_period', sorting: false },
+                            { text: 'NILAI SKP', dataIndex: 'skp_performance_formatted', align: 'right', width: 100, sorting: false },
+                            { text: 'PERILAKU', dataIndex: 'skp_behavior_average_formatted', align: 'right', width: 100, sorting: false },
+                            { text: 'PRESTASI', dataIndex: 'skp_value_formatted', align: 'right', width: 100, sorting: false },
+                            { 
+                                text: 'PEGAWAI', 
+                                dataIndex: 'skp_su_fullname', 
+                                sorting: false,
+                                renderer: e => {
+                                    if (e.data) {
+                                        return `
+                                            <div><strong>${e.data.skp_su_fullname}</strong></div>
+                                            <div>${e.data.skp_su_no}</div>
+                                        `;
+                                    }
+                                    return '';
+                                }
+                            },
+                            {
+                                text: 'PENILAI',
+                                dataIndex: 'evaluator_su_fullname',
+                                renderer: e => {
+                                    if (e.data) {
+                                        let name = e.data.evaluator_su_fullname || '-';
+                                        let iden = e.data.evaluator_su_no || '';
+
+                                        return `
+                                            <div><strong>${name}</strong></div>
+                                            <div>${iden}</div>
+                                        `;
+                                    }
+                                    return '';
+                                }
+                            },
+                            {
+                                text: 'STATUS',
+                                dataIndex: 'skp_task_flag', 
+                                sorting: false,
+                                width: 200,
+                                renderer: e => {
+                                    if (e.data) {
+                                        let statuses = e.data.statuses.map(s => {
+                                            return s.status_text;
+                                        });
+                                        return statuses.join(', ');
+                                    }
+                                    return '';
+                                }
+                            }
+
+                        ])
+                    }
+                };
+            }
+            handleRouteParams(page) {
+                if (page != 'database') return;
+                this.$.grid.deferAutoresize();
+                this.__load();
+            }
+            handleResizing() {
+                this.$.grid && this.$.grid.resize();
+            }
+            __load() {
+                this.$.grid.load();
+            }
+            __onItemTap(e) {
+                if (e.data && e.data.skp_link) {
+                    this.set('route.path', e.data.skp_link);
+                }
+            }
+            __onPrintTap() {
+                let payload = this.$.grid.params;
+                this.$.ajax.DOWNLOAD('/skp/print/database/xls', payload);
+            }
+        }
+        customElements.define(SkpDatabase.is, SkpDatabase);
+    </script>
+</dom-module>

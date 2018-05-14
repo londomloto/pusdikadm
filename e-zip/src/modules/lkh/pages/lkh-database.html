@@ -1,0 +1,128 @@
+<link rel="import" href="../../../../../cores/elements/kct-grid/kct-grid.html">
+<link rel="import" href="../plugins/lkh-database-search.html">
+
+<dom-module id="lkh-database">
+    <template>
+        <style include="lkh-page-style">
+            :host {
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-grid 
+            id="grid" 
+            url="/lkh" 
+            params="[[ params ]]" 
+            icon="description"
+            header-text="Dokumen" 
+            header-desc="Dokumen LKH" 
+            columns="[[ columns ]]" 
+            selection-model="row" 
+            row-height="50" 
+            pagination 
+            on-back-tap="__onBackTap">
+            <lkh-database-search slot="center-toolbar" search="{{ params }}"></lkh-database-search>
+            <paper-icon-button slot="right-toolbar" icon="print" on-tap="__onPrintTap"></paper-icon-button>
+        </kct-grid>
+    </template>
+    <script>
+        class LkhDatabase extends Mixins(KctView).use(Mixins.LkhPageBehavior) {
+            static get is() {
+                return 'lkh-database';
+            }
+            static get properties() {
+                return {
+                    params: { type: Object },
+                    columns: {
+                        type: Array,
+                        value: () => ([
+
+                            { type: 'rownumber' }, 
+                            {
+                                type: 'action',
+                                width: 40,
+                                align: 'center',
+                                renderer: e => {
+                                    if (e.data) {
+                                        return '<kct-grid-action on-tap="__onItemTap" icon="search" accent="blue-grey" icon-only rounded></kct-grid-action>';
+                                    }
+                                    return '';
+                                }
+                            },
+                            { text: 'Dokumen (Periode)', dataIndex: 'lkh_period', sorting: false },
+                            { 
+                                text: 'Pegawai', 
+                                dataIndex: 'lkh_su_fullname', 
+                                sorting: false,
+                                renderer: e => {
+                                    if (e.data) {
+                                        return `
+                                            <div><strong>${e.data.lkh_su_fullname}</strong></div>
+                                            <div>${e.data.lkh_su_no}</div>
+                                        `;
+                                    }
+                                    return '';
+                                }
+                            },
+                            {
+                                text: 'Pemeriksa (Atasan)',
+                                dataIndex: 'evaluator_su_fullname',
+                                renderer: e => {
+                                    if (e.data) {
+                                        let name = e.data.evaluator_su_fullname || '-';
+                                        let iden = e.data.evaluator_su_no || '';
+
+                                        return `
+                                            <div><strong>${name}</strong></div>
+                                            <div>${iden}</div>
+                                        `;
+                                    }
+                                    return '';
+                                }
+                            },
+                            {
+                                text: 'Status',
+                                dataIndex: 'lkh_flag', 
+                                sorting: false,
+                                width: 300,
+                                renderer: e => {
+                                    if (e.data) {
+                                        let statuses = e.data.statuses.map(s => {
+                                            return s.status_text;
+                                        });
+                                        return statuses.join(', ');
+                                    }
+                                    return '';
+                                }
+                            }
+
+                        ])
+                    }
+                };
+            }
+            handleRouteParams(page) {
+                if (page != 'database') return;
+                this.$.grid.deferAutoresize();
+                this.__load();
+            }
+            handleResizing() {
+                this.$.grid && this.$.grid.resize();
+            }
+            __load() {
+                this.$.grid.load();
+            }
+            __onItemTap(e) {
+                if (e.data && e.data.lkh_link) {
+                    this.set('route.path', e.data.lkh_link);
+                }
+            }
+            __onPrintTap() {
+                let payload = this.$.grid.params;
+                this.$.ajax.DOWNLOAD('/lkh/print/database/xls', payload);
+            }
+        }
+        customElements.define(LkhDatabase.is, LkhDatabase);
+    </script>
+</dom-module>

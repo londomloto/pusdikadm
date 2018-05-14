@@ -1,0 +1,493 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-radio-group/paper-radio-group.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-radio-button/paper-radio-button.html">
+<link rel="import" href="../../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-event/kct-event-publisher.html">
+<link rel="import" href="../../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../../cores/elements/kct-media/kct-media.html">
+<link rel="import" href="../../../../../cores/elements/kct-socket/kct-socket.html">
+<link rel="import" href="../../../../../cores/elements/kct-role/kct-role.html">
+<link rel="import" href="../../../../../cores/mixins/mixins.html">
+
+<link rel="import" href="../../settings/plugins/combo-autonumber.html">
+
+<!-- <link rel="import" href="../blocks/activity-block.html"> -->
+<!-- <link rel="import" href="../blocks/taskform-block.html"> -->
+<!-- <link rel="import" href="../blocks/taskprop-block.html"> -->
+
+<link rel="import" href="../blocks/header-block.html">
+<link rel="import" href="../styles/project-task-style.html">
+
+<script>
+
+    Mixins.ProjectTask = Polymer.dedupingMixin(superclass => {
+        
+        return class extends superclass {
+            static get properties() {
+                return {
+                    header: { type: String, value: 'Loading...' },
+                    actionRecord: { type: String, value: 'create' },
+                    actionBack: { type: String },
+                    project: { type: String },
+                    projectRecord: { type: Object },
+                    workspaces: { type: Array },
+                    workspaceRecord: { type: Object },
+                    formRecord: { type: Object },
+                    taskRecord: { type: Object },
+                    loading: { type: Boolean, value: false },
+                    storage: { type: Object, value: () => ({}) },
+                    socketSession: { type: String }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__actionRecordChanged(actionRecord)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__phantom = true;
+            }
+
+            ready() {
+                super.ready();
+                this.set('loading', true);
+            }
+
+            handleRouteParams(project, action, type, id) {
+                let actionBack = '/worksheet/' + project + '/view/kanban';
+
+                this.set('formButtons', '');
+                this.set('taskRecord', {});
+
+                if (this.route.data) {
+                    if (this.route.data.task) {
+                        this.set('taskRecord', this.route.data.task);
+                        this.set('route.data.task', null);
+                    }
+
+                    if (this.route.data.back) {
+                        actionBack = this.route.data.back;    
+                    }
+                }
+                
+                this.set('actionBack', actionBack);
+
+                // buggy: calling this page from another module not update route path
+                if (this.route.path == this.actionBack) {
+                    this.set('route.addr', this.state.path);
+                }
+
+                this.set('actionRecord', type);
+                this.set('profile.status.primary_val', id);
+
+                this.$.taskprop.stopEditing();
+
+                this.set('project', project);
+                this.__loadProject();
+            }
+
+            initialize() {
+                this.set('taskRecord', {
+                    task: {},
+                    status: {},
+                    labels: [],
+                    users: []
+                });
+            }
+
+            save(options = {}) {
+
+                if ( ! this.workspaceRecord.worker) return;
+                if ( ! this.projectRecord) return;
+
+                let send = options.send === undefined ? false : options.send,
+                    back = options.back === undefined ? false : options.back;
+
+                this.mask('Sedang menyimpan...');
+
+                this.$.taskform.beforeSave(options).then(res => {
+
+                    if ( ! res.success) {
+                        this.unmask();
+                        return;
+                    }
+
+                    let record = this.taskRecord;
+                    record.task[this.profile.task.project_key] = this.projectRecord.sp_id;
+
+                    let payload = {
+                        worker: this.workspaceRecord.worker,
+                        record: record,
+                        send: send
+                    };
+
+                    let options = {};
+                    
+                    if (this.socketSession) {
+                        options.headers = {
+                            'X-Socket-Session': this.socketSession
+                        };
+                    }
+
+                    if (this.actionRecord == 'create') {
+                        this.$.ajax.POST(this.profile.service.url, payload, options).then(done.bind(this));
+                    } else {
+                        this.$.ajax.PUT(this.profile.service.url + '/' + record.task[this.profile.task.primary_key], payload, options).then(done.bind(this));
+                    }
+
+                });
+
+                function done(res) {
+                    this.unmask();
+
+                    this.$.taskform.afterSave(res, options).then(() => {
+                        this.unmask();
+
+                        if (res.success) {
+
+                            this.$.publisher.publish('notify', {
+                                project: this.project
+                            });
+
+                            if ( ! back) {
+                                this.toast('Sukses', 'Data berhasil disimpan', 'info');
+                                this.$.tasklogs.reload();
+                            }
+
+                            if (res.message) {
+                                this.toast('Warning', res.message, 'warn');
+                            }
+                        }
+
+                        if (back) {
+                            this.__goBack();
+                        }
+
+                    });
+                    
+                }
+            }
+
+            __loadProject() {
+                if ( ! this.project) return;
+
+                this.set('loading', true);
+
+                this.$.ajax.GET('/projects/' + this.project + '/load' ).then(res => {
+                    this.set('projectRecord', res.data);
+                    this.set('loading', false);
+                    this.__loadWorkspaces();
+                });
+            }
+
+            __computeClass(loading) {
+                return loading ? 'loading' : '';
+            }
+
+            __hideHeader(screen) {
+                if (screen == 'lg' || screen == 'xl') {
+                    return false;
+                }
+                return true;
+            }
+
+            __computeProjectTitle(title) {
+                return title || 'Loading...';
+            }
+
+            __computeSaveLabel(action) {
+                return action == 'create' ? 'Simpan' : 'Update';
+            }
+
+            __hideActivity() {
+                return this.actionRecord == 'create' ? true : false;
+            }
+
+            __hideButton(type, buttons) {
+                return (buttons || '').indexOf(type) === -1;
+            }
+
+            __actionRecordChanged(action) {
+                this.set('__phantom', action != 'update');
+            }
+
+            __loadWorkspaces() {
+                if ( ! this.projectRecord) {
+                    return;
+                }
+
+                let sheet = this.projectRecord.sp_worksheet_id;
+
+                this.set('loading', true);
+                this.set('workspaces', []);
+
+                this.$.ajax.GET('/kanban/kanban-workspaces?kanban=' + sheet).then(res => {
+                    this.set('workspaces', res.data);
+                    this.set('workspaceRecord', {});
+                    
+                    if (this.actionRecord == 'create') {
+                        this.__initCreate();
+                    } else {
+                        this.__initUpdate();
+                    }
+                });
+            }
+
+            __initUpdate() {
+                if ( ! this.profile.status.primary_val) {
+                    //this.set('loading', false);
+                    this.alert('Peringatan', 'Data tidak dapat diakses').then(() => {
+                        this.__goBack();
+                    });
+
+                    return;
+                }
+
+                if (this.taskRecord && this.taskRecord.task) {
+                    handle.bind(this)(this.taskRecord);
+                } else {
+                    let params = {};
+                    params[this.profile.status.primary_key] = this.profile.status.primary_val;
+                    
+                    this.$.ajax.GET(this.profile.service.url, { params: params }).then(res => {
+                        let record = res.data.length ? res.data[0] : null;
+                        handle.bind(this)(record);
+                    });
+                }
+
+                function handle(record) {
+                    if ( ! record ) {
+                        this.alert('Peringatan', 'Data tidak dapat diakses').then(() => {
+                            this.__goBack();
+                        });
+
+                        //this.set('loading', false);
+                        return;
+                    }
+
+                    let user = this.user && this.user.su_id;
+                    let role = this.user && this.user.su_sr_id;
+
+                    let workspace = (this.workspaces || []).find(item => {
+                        return item.worker == record.status[this.profile.status.worker_key];
+                    });
+
+                    if (workspace) {
+                        this.set('workspaceRecord', workspace);
+
+                        let form = workspace.forms.find(f => {
+                            if (f.bf_activity == record.status[this.profile.status.target_key]) {
+
+                                let users = f.bf_users.map(u => u.bfu_su_id),
+                                    roles = f.bf_roles.map(r => r.bfr_sr_id),
+                                    grant = false;
+
+                                if ( ! users.length && ! roles.length) {
+                                    grant = true;
+                                } else {
+                                    if (users.indexOf(user) !== -1) {
+                                        grant = true;
+                                    }
+                                    
+                                    if ( ! grant) {
+                                        if (roles.indexOf(role) !== -1) {
+                                            grant = true;
+                                        }
+                                    }
+                                }
+
+                                return grant;
+                            }
+
+                            return false;
+                        });
+
+                        this.set('formRecord', form);
+
+                        if (form) {
+                            this.$.taskform.render().then(() => {
+                                this.set('loading', false);
+                                this.$.taskform.setup().then(() => {
+                                    this.set('taskRecord', record);
+                                    this.$.tasklogs.initialize();
+                                    this.$.taskform.initialize();
+                                });
+                            });
+                        } else {
+                            this.$.taskform.cleanup();
+                            this.set('taskRecord', {});
+                            this.set('loading', false);
+                        }
+                    }  else {
+                        this.$.taskform.cleanup();
+                        this.set('taskRecord', {});
+                        this.set('loading', false);
+                    }
+                }
+
+            }
+
+            __initCreate() {
+                let workspace = this.workspaces[0],
+                    user = this.user && this.user.su_id,
+                    role = this.user && this.user.su_sr_id;
+
+                if (workspace) {
+
+                    this.set('workspaceRecord', workspace);
+
+                    let form = workspace.forms.find(f => {
+                        if (f.bf_init) {
+                            let users = f.bf_users.map(u => u.bfu_su_id),
+                                roles = f.bf_roles.map(r => r.bfr_sr_id),
+                                grant = false;
+
+                            if ( ! users.length && ! roles.length) {
+                                grant = true;
+                            } else {
+                                if (users.indexOf(user) !== -1) {
+                                    grant = true;
+                                }
+                                
+                                if ( ! grant) {
+                                    if (roles.indexOf(role) !== -1) {
+                                        grant = true;
+                                    }
+                                }
+                            }
+
+                            return grant;
+                        }
+                        return false;
+                    });
+
+                    this.set('formRecord', form);
+                    this.initialize();
+
+                    if (form) {
+                        this.$.taskform.render().then(() => {
+                            this.set('loading', false);
+                            this.$.taskform.setup().then(() => {
+                                this.$.taskform.initialize();
+                                this.$.tasklogs.initialize();
+                                this.$.taskprop.initialize();
+                            });
+                        });
+                    } else {
+                        this.$.taskform.cleanup();
+                        this.set('loading', false);
+                    }
+                } else {
+                    this.$.taskform.cleanup();
+                    this.set('taskRecord', {});
+                    this.set('loading', false);
+                }
+            }
+
+            __goBack() {
+                let path = this.route.path;
+                let back = this.actionBack;
+
+                this.set('route.data.back', null);
+                this.set('route.path', back);
+            }
+
+            __onSaveTap() {
+                let back = this.actionRecord == 'create';
+                this.save({ send: false, back: back });
+            }
+
+            __onSendTap() {
+                this.confirm('Konfirmasi', 'Apakah Anda yakin akan memproses dokumen ini?').then(y => {
+                    if (y) {
+                        this.save({ send: true, back: true });        
+                    }
+                });
+            }
+            
+            __onPrintTap() {}
+
+            __onRemoveTap() {
+                this.confirm('Konfirmasi', 'Apakah Anda yakin akan menghapus dokumen ini?').then(y => {
+                    if (y) {
+                        this.mask('Sedang menghapus...');
+
+                        this.$.taskform.beforeRemove().then(res => {
+                            if (res.success) {
+                                let identity = this.taskRecord.task[this.profile.task.primary_key];
+                                this.$.ajax.DELETE(this.profile.service.url + '/' + identity).then(() => {
+                                    this.unmask();
+
+                                    this.$.publisher.publish('notify', {
+                                        project: this.project
+                                    });
+
+                                    this.__goBack();
+                                });
+                            } else {
+                                this.unmask();
+                            }
+                        });
+                    }
+                }); 
+            }
+
+            __onPropAfterUpdate(e) {
+                this.$.tasklogs.reload();
+                
+                this.$.publisher.publish('notify', {
+                    project: this.project
+                });
+
+                if (e.detail.back) {
+                    this.__goBack();
+                }
+            }
+
+            __onCancelTap() {
+                this.__goBack();
+            }
+
+            __onBackTap() {
+                this.__goBack();
+            }
+
+            __onSocketNotify(e) {
+                let payload = e.detail;
+                let project = this.projectRecord && this.projectRecord.sp_id;
+                let task = this.taskRecord && this.taskRecord.task && this.taskRecord.task[this.profile.task.primary_key];
+                
+                if (project == payload.project && task == payload.task) {
+                    switch(payload.type) {
+                        case 'update_status':
+                        case 'activation':
+                            this.__goBack();
+                            break;
+                        default:
+                            if (payload.type) {
+                                let excludes = [
+                                    'update_skp_item',
+                                    'remove_skp_item',
+                                    'update_skp_behavior'
+                                ];
+                                if (excludes.indexOf(payload.type) === -1) {
+                                    this.$.tasklogs.reload();
+                                }
+                            } else {
+                                this.$.tasklogs.reload();    
+                            }
+                    }
+                }
+            }
+        }
+
+    });
+
+</script>

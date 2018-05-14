@@ -1,0 +1,64 @@
+<link rel="import" href="../../../../cores/bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
+<link rel="import" href="../../../../cores/bower_components/app-layout/app-drawer/app-drawer.html">
+<link rel="import" href="../../../../cores/bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-spinner/paper-spinner-lite.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-pages/kct-pages.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-date/kct-date-picker.html">
+<link rel="import" href="../../../../cores/vendors/moment/moment.html">
+<link rel="import" href="../settings/blocks/setting-header-block.html">
+<link rel="import" href="../worksheet/plugins/combo-user.html">
+<link rel="import" href="styles/skp-page-style.html">
+<link rel="import" href="shared/skp-page-behavior.html">
+
+<dom-module id="skp-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--page-background-color);
+            }
+            #switcher {
+                display: block;
+                height: 100%;
+            }
+        </style>        
+        <kct-pages id="switcher" attr-for-selected="name" selected="[[ page ]]" lazy-load>
+            <skp-index name="index" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" import="pages/skp-index.html"></skp-index>
+            <skp-live name="live" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" import="pages/skp-live.html"></skp-live>
+            <skp-report name="report" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" import="pages/skp-report.html"></skp-report>
+            <skp-database name="database" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" import="pages/skp-database.html"></skp-database>
+            <skp-database-items name="database-items" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" import="pages/skp-database-items.html"></skp-database-items>
+            <skp-statistic name="statistic" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" import="pages/skp-statistic.html"></skp-statistic>
+            <skp-dashboard name="dashboard" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" import="pages/skp-dashboard.html"></skp-dashboard>
+        </kct-pages>
+    </template>
+    <script>
+        class SkpPage extends KctView {
+            static get is() {
+                return 'skp-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Sasaran Kerja', notify: true }
+                };
+            }
+            handleRouteParams(page) {
+                page = page || 'index';
+                this.set('page', page)
+            }
+            handleResizing() {
+                let pageItem = this.$.switcher.selectedItem;
+                if (pageItem && pageItem.handleResizing) {
+                    pageItem.handleResizing();
+                }
+            }
+        }
+        customElements.define(SkpPage.is, SkpPage);
+    </script>
+</dom-module>

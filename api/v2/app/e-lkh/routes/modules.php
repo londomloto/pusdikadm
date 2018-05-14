@@ -56,19 +56,6 @@ Router::group(array(
 ->post('/save', 'save');
 
 Router::group(array(
-    'prefix' => '/presence',
-    'handler' => 'App\Presence\Controllers\PresenceController',
-    'middleware' => 'auth'
-))
-->post('/attach', 'attach')
-->post('/{id}/upload', 'upload')
-->post('/{id}/download', 'download');
-
-Router::get('/lkh/alert', 'App\Lkh\Controllers\LkhController@alert');
-
-
-
-Router::group(array(
     'prefix' => '/messages/inbox',
     'handler' => 'App\Messages\Controllers\InboxController',
     'middleware' => 'auth'
@@ -141,6 +128,8 @@ Router::group(array(
 ))
 ->get('/observable-users', 'observableUsers')
 ->get('/grouped-statuses', 'groupedStatuses');
+
+Router::get('/lkh/alert', 'App\Lkh\Controllers\LkhController@alert');
 
 Router::group(array(
     'prefix' => '/lkh/lkh-items',

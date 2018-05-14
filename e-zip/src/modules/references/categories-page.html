@@ -1,0 +1,200 @@
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../cores/mixins/theme.html">
+
+<dom-module id="categories-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-grid   
+            id="grid" 
+            url="/categories" 
+            columns="[[ columns ]]" 
+            selected="{{ selectedRecord }}" 
+            selection-model="row" 
+            icon="view-list"
+            header-text="Referensi" 
+            header-desc="[[ title ]]" 
+            on-back-tap="__onBackTap" 
+            pagination>
+            <paper-button slot="left-toolbar" on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Tambah</paper-button>
+            <paper-button slot="left-toolbar" on-tap="__onEditTap"><iron-icon icon="done"></iron-icon>&nbsp;Sunting</paper-button>
+            <paper-button slot="left-toolbar" on-tap="__onRemoveTap"><iron-icon icon="close"></iron-icon>&nbsp;Hapus</paper-button>        
+        </kct-grid>
+
+        <kct-dialog id="editor" title="[[ title ]]" width="400" height="100%">
+            <template preserve-content>
+                <style include="theme-helper">
+                    label { font-size: 12px; color: #777; margin-bottom: 5px; display: block; }
+                    .item-color {
+                        display: block;
+                        float: left;
+                        width: 24px;
+                        height: 24px;
+                        margin: 0 5px 5px 0;
+                    }
+                    .item-color.iron-selected {
+                        outline: 1px solid #fff;
+                        outline-offset: -2px;
+                    }
+                    .form-group {
+                        margin-top: 8px;
+                    }
+                </style>
+                <div slot="dialog-body">
+                    <paper-input label="Kode" value="{{ editingRecord.sct_code }}"></paper-input>
+                    <paper-input label="Nama" value="{{ editingRecord.sct_name }}"></paper-input>
+                    <div class="form-group">
+                        <label>Warna Penanda</label>
+                        <div>
+                            <iron-selector attr-for-selected="name" selected="{{ editingRecord.sct_color }}">
+                                <template is="dom-repeat" items="[[ colors ]]">
+                                    <a class="item-color" href="javascript:;" name="[[ _cssval(item.color) ]]" style$="background-color: [[ _cssval(item.color) ]]"></a>    
+                                </template>
+                                <div class="clearfix"></div>
+                            </iron-selector>
+                        </div>
+                    </div>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap">Simpan</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class CategoriesPage extends Mixins(KctView).use(Mixins.Theme) {
+
+            static get is() {
+                return 'categories-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Sifat Surat', notify: true },
+                    columns: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'rownumber' },
+                            { text: 'Kode', dataIndex: 'sct_code', align: 'center', width: 100 },
+                            { 
+                                text: 'Nama', 
+                                dataIndex: 'sct_name',
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        return `<iron-icon icon="image:lens" style="color: ${e.data.sct_color}"></iron-icon>&nbsp;${e.data.sct_name}`;
+                                    }
+                                    return '';
+                                }
+                            }
+                        ])
+                    },
+                    selectedRecord: { type: Object },
+                    editingRecord: { type: Object },
+                    colors: {
+                        type: Array,
+                        value: () => ([
+                            { color: 'var(--paper-purple-500)' },
+                            { color: 'var(--paper-red-500)' },
+                            { color: 'var(--paper-amber-500)' },
+                            { color: 'var(--paper-indigo-500)' },
+                            { color: 'var(--paper-pink-500)' },
+                            { color: 'var(--paper-blue-500)' },
+                            { color: 'var(--paper-cyan-500)' },
+                            { color: 'var(--paper-teal-500)' },
+                            { color: 'var(--paper-blue-grey-500)' },
+                            { color: 'var(--paper-green-500)' },
+                            { color: '#E9676C' },
+                            { color: '#7D8EE1' },
+                            { color: '#4BC075' },
+                            { color: '#FDB858' }
+                        ])
+                    }
+                }
+            }
+
+            handleRouteParams(setting) {
+                if (setting != 'categories') return;
+
+                if (this.$.grid) {
+                    this.$.grid.deferAutoresize();
+                    this.$.grid.deferAutoload();
+                }
+            }
+
+            handleResizing() {
+                if (this.$.grid) {
+                    this.$.grid.resize();
+                }
+            }
+
+            __onAddTap() {
+                this.set('editingRecord', {});
+                this.$.editor.open();
+            }
+
+            __onEditTap() {
+                if ( ! this.selectedRecord) {
+                    return;
+                }
+
+                this.set('editingRecord', Object.assign({}, this.selectedRecord));
+                this.$.editor.open();
+            }
+
+            __onRemoveTap() {
+                if ( ! this.selectedRecord) {
+                    return;
+                }
+
+                this.confirm('Konfirmasi', 'Anda yakin akan menghapus data tersebut?').then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/categories/' + this.selectedRecord.sct_id).then(() => {
+                            this.$.grid.load();
+                        });
+                    }
+                });
+            }
+
+            __onEditorSaveTap() {
+                this.$.editor.close();
+
+                let payload = this.editingRecord;
+
+                if (payload.sun_id) {
+                    this.$.ajax.PUT('/categories/' + payload.sct_id, payload).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/categories', payload).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.$.grid.load();
+                    }
+                }
+            }
+
+            __onEditorCloseTap() {
+                this.$.editor.close();
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+
+        customElements.define(CategoriesPage.is, CategoriesPage);
+    </script>
+</dom-module>

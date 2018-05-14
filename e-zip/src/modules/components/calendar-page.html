@@ -1,0 +1,23 @@
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+
+<dom-module id="calendar-page">
+    <template>
+        <style include="theme-helper">
+            
+        </style>
+    </template>
+    <script>
+        class CalendarPage extends KctView {
+            static get is() {
+                return 'calendar-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Calendar' }
+                }
+            }
+        }
+        customElements.define(CalendarPage.is, CalendarPage);
+    </script>
+</dom-module>

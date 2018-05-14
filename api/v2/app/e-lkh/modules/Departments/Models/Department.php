@@ -27,6 +27,13 @@ class Department extends \Micro\Model {
         return 'sys_departments';
     }
 
+    public function beforeSave() {
+        $this->nulled(array(
+            'sdp_evaluator',
+            'sdp_examiner'
+        ));
+    }
+
     public function toArray($columns = NULL) {
         $data = parent::toArray($columns);
         $data['evaluator_su_fullname'] = '';

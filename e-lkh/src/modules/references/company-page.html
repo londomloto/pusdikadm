@@ -36,7 +36,7 @@
         <kct-media screen="{{ screen }}"></kct-media>
 
         <kct-vbox class$="[[ screen ]]">
-            <setting-header-block icon="home" text="Konfigurasi" desc="Organisasi" on-back-tap="__onBackTap">
+            <setting-header-block icon="home" text="Konfigurasi" desc="Unit Kerja" on-back-tap="__onBackTap">
                 <div class="separator"></div>
                 <paper-button on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Simpan</paper-button>
             </setting-header-block>
@@ -46,8 +46,9 @@
                         <img alt="." src$="[[ company.scp_logo_thumb ]]&w=150&h=150">
                     </div>
                     <div class="flex">
-                        <h3 class="title">Data Organisasi</h3>
-                        <paper-input label="Nama Organisasi" value="{{ company.scp_name }}"></paper-input>
+                        <h3 class="title">Data Unit Kerja</h3>
+                        <paper-input label="Nama Unit Kerja" value="{{ company.scp_name }}"></paper-input>
+                        <paper-input label="Nama Organisasi" value="{{ company.scp_parent }}"></paper-input>
                         <paper-input label="Alamat" value="{{ company.scp_address }}"></paper-input>
                         <kct-column columns="3">
                             <div>

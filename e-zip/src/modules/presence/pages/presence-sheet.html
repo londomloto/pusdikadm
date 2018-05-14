@@ -1,0 +1,362 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../../cores/bower_components/vaadin-material-theme/vaadin-date-picker.html">
+<link rel="import" href="../../../../../cores/bower_components/vaadin-date-picker/vaadin-date-picker.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../../cores/vendors/moment/moment.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../../../../cores/elements/kct-combobox/kct-combobox.html">
+<link rel="import" href="../../../../../cores/elements/kct-file/kct-file-viewer.html">
+<link rel="import" href="../../settings/blocks/setting-header-block.html">
+
+<dom-module id="presence-sheet">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                overflow: hidden;
+            }
+            .container {
+                
+            }
+            .main {
+                @apply --shadow-elevation-2dp;
+            }
+            .side {
+                width: 300px;
+                
+            }
+            .side .scroller {
+                height: calc(100vh - 128px);
+                overflow-y: auto;
+                position: relative;
+                overflow-x: hidden;
+                padding: 1.5em;
+                box-sizing: border-box;
+            }
+            .side h3 {
+                font-size: 16px;
+                font-weight: 400;
+                display: block;
+                padding: 0 0 8px 0;
+                border-bottom: 1px solid #dfdfdf;
+                margin-bottom: 8px;
+            }
+            paper-button[disabled] {
+                background-color: var(--paper-grey-500);
+            }
+        </style>
+
+        <kct-file-viewer id="viewer"></kct-file-viewer>
+
+        <kct-vbox class="container">
+            <setting-header-block 
+                icon="perm-identity" 
+                text="Monitoring" 
+                desc="[[ __title ]]" 
+                on-back-tap="__onBackTap"></setting-header-block>
+            <div class="workspace flex">
+                <kct-hbox fit>
+                    <div class="main flex">
+                        <kct-grid 
+                            id="grid" 
+                            url="/presence" 
+                            page-size="50" 
+                            columns="[[ columns ]]" 
+                            selection-model="row" 
+                            on-beforeload="__onGridBeforeload" 
+                            pagination 
+                            hide-header>
+                            
+                        </kct-grid>
+                    </div>
+                    <div class="side">
+                        <div class="scroller">
+                            <h3>Parameter</h3>
+                            <kct-combobox 
+                                label="Pilih Pegawai" 
+                                value="{{ params.user }}" 
+                                url="/users" 
+                                page-size="10" 
+                                item-value-path="su_id" 
+                                item-label-path="su_fullname" 
+                                on-change="__onComboUserChange" 
+                                autoload>
+                                <template>
+                                    <style>
+                                        .icon {
+                                            float: left;
+                                            margin-right: 10px;
+                                        }
+                                        .icon {
+                                            position: relative;
+                                            overflow: hidden;
+                                        }
+                                        .text {
+                                            position: relative;
+                                            top: -3px;
+                                        }
+                                        .text-sm {
+                                            font-size: 12px;
+                                            color: #999;
+                                        }
+                                        img {
+                                            display: block;
+                                            width: 30px;
+                                            height: 30px;
+                                            border-radius: 50%;
+                                        }
+                                    </style>
+                                    <div class="hbox">
+                                        <div class="icon">
+                                            <img src$="[[ item.su_avatar_thumb ]]&w=30&h=30">
+                                        </div>
+                                        <div class="text">
+                                            <div>[[ item.su_fullname ]]</div>
+                                            <div class="text-sm">[[ item.su_sj_name ]]</div>
+                                        </div>
+                                    </div>
+                                </template>        
+                            </kct-combobox>
+                            <vaadin-combo-box 
+                                label="Pilih Periode" 
+                                value="{{ params.report }}" 
+                                items="[[ reports ]]" 
+                                item-value-path="value" 
+                                item-label-path="label"></vaadin-combo-box>
+
+                            <div hidden$="[[ daily ]]">
+                                <vaadin-combo-box 
+                                    label="Pilih Bulan" 
+                                    value="{{ params.month }}" 
+                                    items="[[ months ]]" 
+                                    item-value-path="value" 
+                                    item-label-path="label"></vaadin-combo-box>
+                                <vaadin-combo-box 
+                                    label="Pilih Tahun" 
+                                    value="{{ params.year }}" 
+                                    items="[[ years ]]" 
+                                    item-value-path="value" 
+                                    item-label-path="label"></vaadin-combo-box>
+                            </div>
+
+                            <div hidden$="[[ !daily ]]">
+                                <vaadin-date-picker 
+                                    label="Dari Tanggal" value="{{ params.from }}"></vaadin-date-picker>
+                                <vaadin-date-picker 
+                                    label="Sampai Tanggal" value="{{ params.to }}"></vaadin-date-picker>
+                            </div>
+
+                            <div class="m-t">
+                                <paper-button disabled$="[[ invalid ]]" on-tap="__onQueryTap" class="btn-primary">Query Data</paper-button>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </kct-hbox>
+            </div>
+        </kct-vbox>
+
+    </template>
+    <script>
+        class PresenceSheet extends KctView {
+            static get is() {
+                return 'presence-sheet';
+            }
+
+            static get properties() {
+                return {
+                    params: { type: Object, value: () => ({}) },
+                    columns: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'rownumber' },
+                            { text: 'Tanggal', dataIndex: 'tpr_date_formatted', align: 'center', width: 120 },
+                            { text: 'Absensi', dataIndex: 'tpr_type', width: 120 },
+                            { text: 'Jam', dataIndex: 'tpr_checkin', width: 80, align: 'center' },
+                            { text: 'Keterangan' },
+                            { 
+                                text: 'Attach',
+                                type: 'action',
+                                width: 100,
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        return e.data.tpr_has_file 
+                                            ? '<kct-grid-action on-tap="__onAttachmentTap" icon="file-download">Unduh</kct-grid-action>' 
+                                            : '';    
+                                    } else {
+                                        return '';
+                                    }
+                                }
+                            }
+
+                        ])
+                    },
+                    reports: {
+                        type: Array,
+                        value: () => ([
+                            { label: 'Bulanan', value: 'monthly' },
+                            { label: 'Harian', value: 'daily' }
+                        ])
+                    },
+                    months: {
+                        type: Array,
+                        value: () => ([
+                            { label: 'Januari', value: '01' },
+                            { label: 'Februari', value: '02' },
+                            { label: 'Maret', value: '03' },
+                            { label: 'April', value: '04' },
+                            { label: 'Mei', value: '05' },
+                            { label: 'Juni', value: '06' },
+                            { label: 'Juli', value: '07' },
+                            { label: 'Agustus', value: '08' },
+                            { label: 'September', value: '09' },
+                            { label: 'Oktober', value: '10' },
+                            { label: 'Nopember', value: '11' },
+                            { label: 'Desember', value: '12' }
+                        ])
+                    },
+                    years: { type: Array, value: () => ([]) },
+                    daily: { type: Boolean },
+                    invalid: { type: Boolean, value: true }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__reportChanged(params.report)',
+                    '__validationChanged(params.*)'
+                ]
+            }
+
+            constructor() {
+                super();
+                this.__title = 'Absensi Pegawai';
+            }
+
+            ready() {
+                super.ready();
+
+                this.__loadYears();
+
+                let today = moment(),
+                    from = moment(),
+                    to = moment();
+
+                this.set('params', {
+                    report: 'monthly',
+                    month: today.format('MM'),
+                    year: today.format('YYYY'),
+                    from: from.format('YYYY-MM-DD'),
+                    to: to.format('YYYY-MM-DD')
+                });
+
+                this.__loadGrid();
+            }
+
+            handleResizing() {
+                this.$.grid && this.$.grid.resize();
+            }
+
+            __validationChanged() {
+                let params = this.params || {};
+                let valid = true;
+                
+                valid = valid && !!params.user;
+                valid = valid && !!params.report;
+
+                if (params.report == 'monthly') {
+                    valid = valid && !!params.month;
+                    valid = valid && !!params.year;
+                } else {
+
+                    valid = valid && !!params.from;
+                    valid = valid && !!params.to;
+
+                    if (valid) {
+                        let from = moment(params.from),
+                            to = moment(params.to),
+                            diff = to.diff(from, 'days');
+
+                        if (diff < 0) {
+                            valid = false;
+                        }
+                    }
+                }
+
+                this.set('invalid', !valid);
+            }
+
+            __reportChanged(report) {
+                this.set('daily', report == 'daily');
+            }
+
+            __loadGrid() {
+                this.$.grid.load();
+            }
+
+            __loadYears() {
+                let today = moment(),
+                    year = +today.format('YYYY'),
+                    years = [],
+                    from = year - 10,
+                    to = year + 10;
+
+                for (let i = from; i < to; i++) {
+                    years.push({
+                        value: i + '',
+                        label: i + ''
+                    });
+                }
+
+                this.set('years', years);
+            }
+
+            __onComboUserChange(e) {
+                let user = e.target.getModelForValue(e.target.value);
+
+                if (user) {
+                    this.set('__title', 'Absensi ' + user.su_fullname);
+                } else {
+                    this.set('__title', 'Absensi Pegawai');
+                }
+
+                if ( ! this.invalid) {
+                    this.__loadGrid();
+                }
+            }
+
+            __onGridBeforeload(e) {
+                let report = {
+                        type: this.params.report,
+                        user: this.params.user,
+                        from: this.params.from,
+                        to: this.params.to,
+                        month: this.params.month,
+                        year: this.params.year
+                    };
+
+                e.detail.options.display = 'report';
+                e.detail.options.report = JSON.stringify(report);
+            }
+
+            __onAttachmentTap(e) {
+                if (e.data) {
+                    if (e.data.tpr_filepath) {
+                        this.$.viewer.open(e.data.tpr_filepath, e.data.tpr_filetype);
+                    }
+                }
+            }
+
+            __onQueryTap() {
+                this.__loadGrid();
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/presence');
+            }
+        }
+        customElements.define(PresenceSheet.is, PresenceSheet);
+    </script>
+</dom-module>

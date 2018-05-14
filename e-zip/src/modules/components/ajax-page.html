@@ -1,0 +1,40 @@
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+
+<dom-module id="ajax-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                background-color: var(--page-background-color);
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="padding">
+            <paper-button on-tap="__onDownloadTap" class="btn-primary btn-raised">Test Download</paper-button>
+        </div>
+
+    </template>
+    <script>
+        class AjaxPage extends KctView {
+            static get is() {
+                return 'ajax-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Ajax Component', notify: true }
+                };
+            }
+            __onDownloadTap() {
+                this.$.ajax.DOWNLOAD('/assets/download').then(res => {
+                    console.log(res);
+                });
+            }
+        }
+
+        customElements.define(AjaxPage.is, AjaxPage);
+    </script>
+</dom-module>

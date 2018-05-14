@@ -362,10 +362,18 @@ class BpmnWorker {
                 $cv = NULL;
             }
 
+            if (is_string($cv)) {
+                $cv = strtoupper($cv);
+            }
+
             foreach($fields as $k) {
                 if ($k != $cond->field) continue;
 
                 $pv = $payload[$k];
+
+                if (is_string($pv)) {
+                    $pv = strtoupper($pv);
+                }
 
                 switch(strtolower(trim($cond->comparison))) {
                     case '=':

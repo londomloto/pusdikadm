@@ -1,0 +1,118 @@
+<link rel="import" href="../../../../../cores/bower_components/app-layout/app-grid/app-grid-style.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../../cores/elements/kct-media/kct-media.html">
+
+<dom-module id="presence-index">
+    <template>
+        <style include="app-grid-style"></style>
+        <style include="theme-helper">
+            .container {
+                --app-grid-columns: 5;
+                --app-grid-item-height: 50%;
+                --app-grid-expandible-item-columns: 0;
+            }
+            .container.sm {
+                --app-grid-columns: 1;
+            }
+            .container.md {
+                --app-grid-columns: 2;
+            }
+            .container.lg {
+                --app-grid-columns: 3;
+            }
+            .container {
+                padding: 1.5em;
+            }
+            .menu {
+                padding: .5em;
+                text-align: center;
+            }
+            .menu .card {
+                display: block;
+                cursor: pointer;
+                color: var(--paper-blue-grey-500);
+                box-shadow:0 2px 2px rgba(0,0,0,0.03),0 1px 0 rgba(0,0,0,0.03);
+            }
+            .menu .card:hover {
+                @apply --shadow-elevation-2dp;
+            }
+            .menu .icon {
+                display: inline-block;
+                margin: 15px 0;
+                padding: 12px;
+                background-color: var(--paper-blue-grey-500);
+                color: #fff;
+                border-radius: 50%;
+            }
+            .menu .text {
+                font-size: 16px;
+                font-weight: 400;
+                margin-bottom: 15px;
+            }
+            .menu paper-button {
+                font-size: 11px;
+                font-weight: 500;
+                border-radius: 2px;
+                background-color: var(--paper-cyan-500);
+                color: #fff;
+            }
+            .menu .icon iron-icon {
+                --iron-icon-width: 32px;
+                --iron-icon-height: 32px;
+            }
+        </style>
+
+        <kct-media screen="{{ screen }}"></kct-media>
+
+        <div class$="container [[ screen ]]">
+            <div class="app-grid">
+                <template is="dom-repeat" items="[[ menus ]]">
+                    <div class="menu">
+                        <paper-card class="card" on-tap="__onMenuTap">
+                            <div class="card-content">
+                                <div class="icon">
+                                    <iron-icon icon="[[ item.icon ]]"></iron-icon>
+                                </div>
+                                <div class="text">
+                                    [[ item.text ]]
+                                </div>
+                                <div class="open">
+                                    <paper-button>Buka Module</paper-button>
+                                </div>
+                            </div>
+                        </paper-card>    
+                    </div>
+                </template>
+                
+                
+            </div>
+        </div>
+
+    </template>
+    <script>
+        class PresenceIndex extends KctView {
+            static get is() {
+                return 'presence-index';
+            }
+
+            static get properties() {
+                return {
+                    menus: {
+                        type: Array,
+                        value: () => ([
+                            { text: 'Statistik', icon: 'dashboard', name: 'board' },
+                            { text: 'Datasheet', icon: 'perm-identity', name: 'sheet' }
+                        ])
+                    }
+                };
+            }
+
+            __onMenuTap(e) {
+                let menu = e.model.item;
+                this.set('route.path', '/presence/pages/' + menu.name);
+            }
+        }
+        customElements.define(PresenceIndex.is, PresenceIndex);
+    </script>
+</dom-module>

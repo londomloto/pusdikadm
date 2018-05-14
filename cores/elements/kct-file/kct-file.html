@@ -40,7 +40,15 @@
                 this.__reader.removeEventListener('load', this.__readerHandler);
             }
             browse() {
+                this.__resolver = {};
+                this.__resolver.promise = new Promise((res, rej) => {
+                    this.__resolver.resolve = res;
+                    this.__resolver.reject = rej;
+                });
+
                 this.__input.click();
+
+                return this.__resolver.promise;
             }
             reset() {
                 this.__input.value = '';
@@ -61,11 +69,20 @@
             }
             __onInputChange(e) {
                 let event = new e.constructor(e.type, e);
+                let files = this.__input.files;
+
                 this.dispatchEvent(event);
                 
                 if (this.previewEnabled) {
-                    let file = this.__input.files[0];
-                    this.__reader.readAsDataURL(file);    
+                    this.__reader.readAsDataURL(files[0]);    
+                }
+
+                if (this.__resolver) {
+                    let array = [];
+                    for(let i = 0, j = files.length; i < j; i++) {
+                        array.push(files[i]);
+                    }
+                    this.__resolver.resolve(array);
                 }
             }
             __onReaderLoad(e) {

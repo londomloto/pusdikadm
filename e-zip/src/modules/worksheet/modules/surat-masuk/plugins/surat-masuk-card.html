@@ -1,0 +1,269 @@
+<!-- <link rel="import" href="user-dock.html"> -->
+
+<dom-module id="surat-masuk-card">
+    <template>
+        <style include="theme-helper">
+            .item {
+                border-radius: 3px;
+                margin-bottom: 0;
+                border-left: 2px solid var(--paper-blue-grey-500);
+            }
+            .item .box-body {
+                cursor: pointer;
+                /*padding-bottom: 0;*/
+                padding: 8px 12px 0 12px;
+            }
+            .item .box-label {
+                margin-top: 5px;
+            }
+            .item .box-foot {
+                padding: 5px 5px;
+                font-size: 11px;
+                color: var(--paper-blue-grey-500);
+            }
+            .item .box-foot iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
+                position: relative;
+            }
+            .item .box-title,
+            .item .box-content {
+                color: var(--paper-blue-grey-500);
+                
+            }
+            .item .box-title {
+                margin-bottom: 5px;
+            }
+            .item .separator {
+                margin: 5px 0;
+                border-top: 1px solid #f2f2f2;
+            }
+            .item-logo {
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                position: relative;
+                overflow: hidden;
+                margin-right: 10px;
+                color: #fff;
+            }
+            .item .box-user {
+                position: absolute;
+                right: 10px;
+                bottom: 6px;
+            }
+            .item-user {
+                position: relative;
+                overflow: hidden;
+                width: 30px;
+                height: 30px;
+                border-radius: 3px;
+                float: left;
+                margin-left: 2px;
+            }
+            .item-prop {
+                width: 75%;
+                font-size: 12px;
+                white-space: nowrap;
+                position: relative;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .item-prop[hidden] {
+                display: none;
+            }
+            .item-prop iron-icon {
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
+                position: relative;
+                top: -2px;
+            }
+            .item-badge {
+                font-size: 11px;
+                text-transform: none;
+                padding: 3px 5px;
+                margin: 0;
+                float: left;
+            }
+            .item-title {
+                font-weight: 600;
+                color: var(--paper-blue-grey-500);
+                font-size: 14px;
+            }
+            .item-title iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
+                position: relative;
+                top: -2px;
+            }
+            .item-content {
+                color: var(--paper-blue-grey-500);
+                margin-top: 5px;
+                padding-right: 36px;
+                font-size: 12px;
+            }
+            .item-content iron-icon {
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
+                position: relative;
+                top: -1px;
+            }
+            .item-content-group + .item-content-group {
+                margin-top: 5px;
+            }
+            .item-content-label {
+                color: #999;   
+            }
+            .item-content-value {
+                font-weight: 500;
+            }
+            .item-meta {
+                font-size: 11px;
+                color: #888;
+            }
+            .item-meta iron-icon {
+                --iron-icon-width: 14px;
+                --iron-icon-height: 14px;
+                position: relative;
+                top: -1px;
+            }
+            .item-label {
+                font-size: 11px;
+                font-weight: 400;
+                float: left;
+                background-color: var(--paper-grey-500);
+                color: #fff;
+                padding: 2px 5px;
+                border-radius: 2px;
+                margin: 0 1px;
+            }
+            .item-clear {
+                display: block;
+                clear: both;
+            }
+            .item-desc {
+                padding-right: 50px;
+                font-size: 12px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                color: var(--paper-blue-grey-500);
+            }
+            .item-desc iron-icon {
+                --iron-icon-width: 14px;
+                --iron-icon-height: 14px;
+                position: relative;
+                top: -1px;
+            }
+            .box-flags {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+            }
+            .item-flag {
+                display: block;
+                font-size: 12px;
+                font-weight: 600;
+                text-transform: uppercase;
+                width: 18px;
+                height: 18px;
+                background-color: var(--paper-grey-500);
+                color: #fff;
+                margin-bottom: 2px;
+                text-align: center;
+                border-radius: 2px;
+            }
+        </style>
+        
+        <div class="box box-shadow-z2 item" style$="border-color: [[ record.task.category_sct_color ]]">
+            <div class="box-body" on-tap="__onCardTap">
+                <kct-hbox>
+                    <div class="flex">
+                        <div class="box-title">
+                            <h3 class="item-title text-u-c" style$="color: [[ record.task.category_sct_color ]]">[[ __computeCoalesce(record.task.tsm_no, 'NO. SURAT (BELUM ADA)') ]]</h3>   
+                            <div class="item-meta text-u-c">[[ __computeCoalesce(record.task.tsm_date_formatted, '(TGL. BELUM ADA)') ]]</div>
+                        </div>
+                        <div class="box-content">
+                            <div class="item-prop">
+                                <iron-icon icon="communication:mail-outline"></iron-icon>&nbsp;Dari [[ __computeCoalesce(record.task.tsm_from) ]]
+                            </div>
+                            <div class="item-prop">
+                                <iron-icon icon="perm-identity"></iron-icon>&nbsp;Kepada [[ __computeCoalesce(record.task.tsm_to) ]]
+                            </div>
+                        </div>
+                        <div class="box-label">
+                            <template is="dom-repeat" items="[[ record.labels ]]">
+                                <span class="item-label" style$="background-color: [[ item.sl_color ]]">[[ item.sl_label ]]</span>
+                            </template>
+                            <span class="item-clear"></span>
+                        </div>
+                    </div>
+                </kct-hbox>
+                <div class="box-flags">
+                    <span class="item-flag" title="[[ record.task.category_sct_name ]]" style$="background-color: [[ record.task.category_sct_color ]]">[[ record.task.category_sct_code ]]</span>
+                    <span class="item-flag" title="[[ record.task.priority_spt_name ]]">[[ record.task.priority_spt_code ]]</span>
+                    <span class="item-clear"></span>
+                </div>
+            </div>
+            <div class="box-foot"></div>
+        </div>
+
+    </template>
+    <script>
+        class SuratMasukCard extends Polymer.Element {
+            static get is() {
+                return 'surat-masuk-card';
+            }
+
+            static get properties() {
+                return {
+                    accent: { type: String },
+                    record: { type: Object },
+                    items: { type: Array, value: () => ([]) }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__itemsChanged(record.items.*)'
+                ]
+            }
+
+            __computeCoalesce(value, defaults) {
+                return value || defaults || '(belum ada)';
+            }
+
+            __hideSection(section, flag) {
+                return section != flag;
+            }
+
+            __hideProperty(value) {
+                return !(!!value);
+            }
+
+            __itemsChanged() {
+                let items = (this.record.items || []);
+                let items__ = [];
+
+                if (items.length == 1) {
+                    items__ = [
+                        { text: items[0].ski_desc }
+                    ];
+                } else if (items.length > 1) {
+                    items__ = [
+                        { text: items[0].ski_desc },
+                        { text: '...... ( ' + (items.length - 1) + '+ )' }
+                    ];
+                }
+                this.set('items', items__);
+            }
+
+            __onCardTap() {
+                this.dispatchEvent(new CustomEvent('card-tap'));
+            }
+
+        }
+
+        customElements.define(SuratMasukCard.is, SuratMasukCard);
+    </script>
+</dom-module>

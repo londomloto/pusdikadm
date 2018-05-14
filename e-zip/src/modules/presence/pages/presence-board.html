@@ -1,0 +1,259 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-media/kct-media.html">
+<link rel="import" href="../../../../../cores/elements/kct-charts/kct-chart-pie.html">
+<link rel="import" href="../../../../../cores/elements/kct-charts/kct-chart-bar.html">
+<link rel="import" href="../../../../../cores/elements/kct-dropdown/kct-dropdown-checkbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-date/kct-date-picker.html">
+<link rel="import" href="../../../../../cores/vendors/moment/moment.html">
+<link rel="import" href="../../../../../cores/mixins/dom.html">
+<link rel="import" href="../../settings/blocks/setting-header-block.html">
+
+<dom-module id="presence-board">
+    <template>
+        
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                
+            }
+            setting-header-block {
+                border-bottom: none;
+            }
+            .main {
+                padding: 5px;
+                overflow-x: hidden;
+                overflow-y: auto;
+            }
+            .chart-item {
+                box-sizing: border-box;
+                padding: 5px;
+            }
+            .section > div {
+                overflow: hidden;
+                position: relative;
+            }
+            #chart1 {
+                width: 300px;
+                height: 300px;
+            }
+            #chart2,
+            #chart3 {
+                height: 300px;
+            }
+            .container.sm .section {
+                display: block;
+            }
+            .container.sm .section > div {
+                display: block;
+            }
+            .container.sm #chart1 {
+                width: 100%;
+            }
+        </style>
+
+        <kct-media screen="{{ screen }}"></kct-media>
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox class$="container [[ screen ]]">
+            <setting-header-block icon="dashboard" text="Monitoring" desc="Statistik Absensi" on-back-tap="__onBackTap"></setting-header-block>
+            <div class="flex main">
+                <kct-hbox class="section">
+                    <div>
+                        <div class="chart-item">
+                            <kct-chart-pie title="Persentase Absensi" class="chart" id="chart1" donut>
+                                <kct-dropdown-checkbox 
+                                    class="tool" 
+                                    url="/users" 
+                                    page-size="5" 
+                                    slot="toolbar" 
+                                    icon="perm-identity" 
+                                    values="{{ __params.chart1.users }}"
+                                    item-label-path="su_fullname" 
+                                    item-value-path="su_id" 
+                                    item-query-path="su_fullname" 
+                                    horizontal-align="left" 
+                                    on-close="__onFilterUsers1Close" 
+                                    autoload>
+                                    <template preserve-content>
+                                        <style>
+                                            .item { padding: 10px 0; }
+                                            .name { font-size: 13px; font-weight: 500;  }
+                                            .meta { font-size: 11px; }
+                                            .meta {
+                                                white-space: nowrap; 
+                                                text-overflow: ellipsis; 
+                                                max-width: 120px; 
+                                                position: relative; 
+                                                overflow: hidden;
+                                            }
+                                            .clear { clear: both;  }
+                                        </style>
+                                        <div class="item">
+                                            <div class="name">[[ item.su_fullname ]]</div>
+                                            <div class="meta">[[ item.sr_name ]]</div>
+                                        </div>
+                                    </template>        
+                                </kct-dropdown-checkbox>
+
+                                <kct-date-picker slot="toolbar"></kct-date-picker>
+                            </kct-chart-pie>
+                        </div>
+                    </div>
+                    <div class="flex">
+                        <div class="chart-item">
+                            <kct-chart-bar title="Statistik Absensi" label-y="Jumlah Absensi" class="chart" id="chart2">
+                                <kct-dropdown-checkbox 
+                                    class="tool" 
+                                    url="/users" 
+                                    page-size="5" 
+                                    slot="toolbar" 
+                                    icon="perm-identity" 
+                                    values="{{ __params.chart2.users }}"
+                                    item-label-path="su_fullname" 
+                                    item-value-path="su_id" 
+                                    item-query-path="su_fullname" 
+                                    horizontal-align="right" 
+                                    on-close="__onFilterUsers2Close" 
+                                    autoload>
+                                    <template preserve-content>
+                                        <style>
+                                            .item { padding: 10px 0; }
+                                            .name { font-size: 13px; font-weight: 500;  }
+                                            .meta { font-size: 11px; }
+                                            .meta {
+                                                white-space: nowrap; 
+                                                text-overflow: ellipsis; 
+                                                max-width: 120px; 
+                                                position: relative; 
+                                                overflow: hidden;
+                                            }
+                                            .clear { clear: both;  }
+                                        </style>
+                                        <div class="item">
+                                            <div class="name">[[ item.su_fullname ]]</div>
+                                            <div class="meta">[[ item.sr_name ]]</div>
+                                        </div>
+                                    </template>        
+                                </kct-dropdown-checkbox>
+                                <paper-icon-button slot="toolbar" icon="today"></paper-icon-button>    
+                            </kct-chart-bar>        
+                        </div>
+                    </div>
+                </kct-hbox>
+
+            </div>
+        </kct-vbox>
+
+    </template>
+    <script>
+        class PresenceBoard extends Mixins(KctView).use(Mixins.DOM) {
+            static get is() {
+                return 'presence-board';
+            }
+
+            static get properties() {
+                return {
+                    
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__screenChanged(screen)'
+                ];
+            }
+
+            constructor() {
+                super();
+
+                this.__params = {
+                    chart1: {
+                        users: []
+                    },
+                    chart2: {
+                        users: []
+                    }
+                };
+            }
+
+            handleRouteParams() {
+                this.__loadChart1();
+                this.__loadChart2();
+                this.__loadChart3();
+            }
+
+            __resizeCharts() {
+                this.shadowRoot.querySelectorAll('.chart').forEach(c => {
+                    c.resize();
+                });
+            }
+
+            __loadChart1() {
+
+                let payload = {
+                    params: {
+                        user: null,
+                        from: null,
+                        to: null
+                    }
+                }
+
+                if (this.__params.chart1.users.length) {
+                    payload.params.user = this.__params.chart1.users[0];
+                }
+
+                this.$.ajax.GET('/presence/chart?chart=pie', payload).then(res => {
+                    this.$.chart1.series = res.data.series;
+                    this.$.chart1.title = res.data.title;
+                    this.$.chart1.subtitle = res.data.subtitle;
+                });
+            }
+
+            __loadChart2() {
+
+                let payload = {
+                    params: {
+                        user: null,
+                        from: null,
+                        to: null
+                    }
+                }
+
+                if (this.__params.chart2.users.length) {
+                    payload.params.user = this.__params.chart2.users[0];
+                }
+
+                this.$.ajax.GET('/presence/chart?chart=bar', payload).then(res => {
+                    this.$.chart2.categories = res.data.categories;
+                    this.$.chart2.series = res.data.series;
+                    this.$.chart2.title = res.data.title;
+                    this.$.chart2.subtitle = res.data.subtitle;
+                });
+            }
+
+            __loadChart3() {
+
+            }
+
+            __screenChanged(screen) {
+                this.__resizeCharts();
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/presence');
+            }
+
+            __onFilterUsers1Close() {
+                this.__loadChart1();
+            }
+
+            __onFilterUsers2Close() {
+                this.__loadChart2();
+            }
+        }
+        customElements.define(PresenceBoard.is, PresenceBoard);
+    </script>
+</dom-module>

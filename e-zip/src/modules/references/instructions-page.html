@@ -1,0 +1,141 @@
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
+
+<dom-module id="instructions-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-grid   
+            id="grid" 
+            url="/instructions" 
+            columns="[[ columns ]]" 
+            selected="{{ selectedRecord }}" 
+            selection-model="row" 
+            icon="view-list"
+            header-text="Referensi" 
+            header-desc="[[ title ]]"
+            pagination 
+            on-back-tap="__onBackTap">
+            <paper-button slot="left-toolbar" on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Tambah</paper-button>
+            <paper-button slot="left-toolbar" on-tap="__onEditTap"><iron-icon icon="done"></iron-icon>&nbsp;Sunting</paper-button>
+            <paper-button slot="left-toolbar" on-tap="__onRemoveTap"><iron-icon icon="close"></iron-icon>&nbsp;Hapus</paper-button>        
+        </kct-grid>
+
+        <kct-dialog id="editor" title="[[ title ]]" width="400" height="100%">
+            <template preserve-content>
+                <style include="theme-helper"></style>
+                <div slot="dialog-body">
+                    <paper-input label="Petunjuk" value="{{ editingRecord.sin_name }}"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap">Simpan</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class InstructionsPage extends KctView {
+
+            static get is() {
+                return 'instructions-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Petunjuk Disposisi', notify: true },
+                    columns: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'rownumber' },
+                            { text: 'Petunjuk', dataIndex: 'sin_name' }
+                        ])
+                    },
+                    selectedRecord: { type: Object },
+                    editingRecord: { type: Object }
+                }
+            }
+
+            handleRouteParams(setting) {
+                if (setting != 'instructions') return;
+
+                if (this.$.grid) {
+                    this.$.grid.deferAutoresize();
+                    this.$.grid.deferAutoload();
+                }
+            }
+
+            handleResizing() {
+                if (this.$.grid) {
+                    this.$.grid.resize();
+                }
+            }
+
+            __onAddTap() {
+                this.set('editingRecord', {});
+                this.$.editor.open();
+            }
+
+            __onEditTap() {
+                if ( ! this.selectedRecord) {
+                    return;
+                }
+
+                this.set('editingRecord', Object.assign({}, this.selectedRecord));
+                this.$.editor.open();
+            }
+
+            __onRemoveTap() {
+                if ( ! this.selectedRecord) {
+                    return;
+                }
+
+                this.confirm('Konfirmasi', 'Anda yakin akan menghapus data tersebut?').then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/instructions/' + this.selectedRecord.sin_id).then(() => {
+                            this.$.grid.load();
+                        });
+                    }
+                });
+            }
+
+            __onEditorSaveTap() {
+                this.$.editor.close();
+
+                let payload = this.editingRecord;
+
+                if (payload.sun_id) {
+                    this.$.ajax.PUT('/instructions/' + payload.sin_id, payload).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/instructions', payload).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.$.grid.load();
+                    }
+                }
+            }
+
+            __onEditorCloseTap() {
+                this.$.editor.close();
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+
+        customElements.define(InstructionsPage.is, InstructionsPage);
+    </script>
+</dom-module>

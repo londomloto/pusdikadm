@@ -1,0 +1,462 @@
+<link rel="import" href="../../../../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../../../../cores/bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../../../../cores/elements/kct-message/kct-confirm.html">
+<link rel="import" href="../../../../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../../../../cores/elements/kct-date/kct-date-picker.html">
+<link rel="import" href="../../../../../../../cores/elements/kct-message/kct-confirm.html">
+<link rel="import" href="../../../../../../../cores/elements/kct-painter/kct-painter.html">
+<link rel="import" href="../../../../../../../cores/vendors/moment/moment.html">
+<link rel="import" href="../../../plugins/combo-user.html">
+
+<dom-module id="surat-masuk-distribution">
+    <template>
+
+        <style include="form-style">
+            .message {
+                margin: 0 0 30px 0;
+                border-bottom: none;
+                border-radius: 3px;
+                background-color: var(--paper-yellow-100);
+            }
+            .message .icon {
+                width: 40px;
+            }
+            .message .icon iron-icon {
+                --iron-icon-width: 32px;
+                --iron-icon-height: 32px;
+                color: var(--paper-red-300);
+                position: relative;
+                top: 5px;
+            }
+        </style>
+        
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="message" hidden$="[[ __hideMessage(message) ]]">
+            <kct-hbox>
+                <div class="icon">
+                    <iron-icon icon="warning"></iron-icon>
+                </div>
+                <div class="flex">
+                    <h3>Peringatan</h3>
+                    <div>
+                        [[ message ]]
+                    </div>
+                </div>
+            </kct-hbox>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Penerimaan Surat</h3>
+            <div>Daftar riwatat distribusi (ekpsedisi internal) penerimaan surat.</div>
+            <div class="m-t">
+                
+                <table class="table bordered">
+                    <thead>
+                        <tr>
+                            <th style="width: 30px;">&nbsp;</th>
+                            <th style="width: 30px;">No.</th>
+                            <th style="width: 100px;">Masuk</th>
+                            <th class="text-left" style="width: 400px;">Tujuan</th>
+                            <th style="width: 30px;">&nbsp;</th>
+                            <th style="width: 100px;">Terima</th>
+                            <th class="text-left">Penerima</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template is="dom-repeat" items="[[ record.distributions ]]" filter="__displayDistributions">
+                            <tr>
+                                <td class="text-center action">
+                                    <paper-icon-button hidden$="[[ readonly ]]" on-tap="__onRemoveTap" icon="close"></paper-icon-button>
+                                </td>
+                                <td class="text-center">[[ __computeSequence(index) ]]</td>
+                                <td class="text-center">[[ item.sending.tdp_sending_date_formatted ]]</td>
+                                <td>[[ __computeResponsibleLabel(item.receiving.tdp_position, item.receiving.responsible_su_fullname) ]]</td>
+                                <td class="text-center action">
+                                    <paper-icon-button title$="[[ __computeText(item.receiving.tdp_flag) ]]" on-tap="__onReceiveTap" icon="[[ __computeIcon(item.receiving.tdp_flag) ]]"></paper-icon-button>
+                                </td>
+                                <td class="text-center">[[ item.receiving.tdp_receiving_date_formatted ]]</td>
+                                <td>[[ item.receiving.receiver_su_fullname ]]</td>
+                            </tr>
+                        </template>
+                        <tr hidden$="[[ readonly ]]">
+                            <td class="text-center action">
+                                <paper-icon-button on-tap="__onCreateTap" icon="add"></paper-icon-button>
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">Penerimaan Disposisi</h3>
+            <div>Daftar riwatat distribusi (ekpsedisi internal) disposisi surat.</div>
+            <div class="m-t">
+                
+                <table class="table bordered">
+                    <thead>
+                        <tr>
+                            <th style="width: 30px;">&nbsp;</th>
+                            <th style="width: 30px;">No.</th>
+                            <th style="width: 100px;">Disposisi</th>
+                            <th class="text-left" style="width: 400px;">Tujuan</th>
+                            <th style="width: 30px;">&nbsp;</th>
+                            <th style="width: 100px;">Terima</th>
+                            <th class="text-left">Penerima</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template is="dom-repeat" items="[[ record.distributions ]]" filter="__displayDispositions">
+                            <tr>
+                                <td class="text-center action">&nbsp;</td>
+                                <td class="text-center">[[ __computeSequence(index) ]]</td>
+                                <td class="text-center">[[ item.sending.tdp_sending_date_formatted ]]</td>
+                                <td>[[ __computeResponsibleLabel(item.receiving.tdp_position, item.receiving.responsible_su_fullname) ]]</td>
+                                <td class="text-center action">
+                                    <paper-icon-button title$="[[ __computeText(item.receiving.tdp_flag) ]]" on-tap="__onReceiveTap" icon="[[ __computeIcon(item.receiving.tdp_flag) ]]"></paper-icon-button>
+                                </td>
+                                <td class="text-center">[[ item.receiving.tdp_receiving_date_formatted ]]</td>
+                                <td>[[ item.receiving.receiver_su_fullname ]]</td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+                
+            </div>
+        </div>
+
+        <kct-dialog id="dialog" title="Distribusi" width="400" height="100%" scrollable>
+            <template preserve-content>
+                <style include="theme-helper"></style>
+                <div slot="dialog-body">
+                    <kct-date-picker label="Tanggal" value="{{ sending.tdp_sending_date }}"></kct-date-picker>
+                    <paper-input label="Perihal" value="{{ sending.tdp_notes }}"></paper-input>
+                    <combo-user 
+                        label="Tujuan" 
+                        value="{{ receiving.tdp_responsible }}" 
+                        on-change="__onComboReceiverChange"></combo-user>
+                    <paper-input label="Jabatan" value="{{ receiving.tdp_position }}"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onSaveTap">Simpan</paper-button>
+                    <paper-button on-tap="__onDialogSendingCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        <kct-dialog 
+            id="dialog-receiving" 
+            title="Penerimaan" 
+            width="400" 
+            height="100%" 
+            on-opened="__onDialogReceivingOpened">
+            <template preserve-content>
+                <style include="theme-helper"></style>
+                <div slot="dialog-body">
+                    <div>
+                        Anda yakin akan menerima distribusi surat ini?<br>
+                        Bubuhkan tanda tangan atau paraf pada kolom di bawah ini.
+                    </div>
+                    <div class="m-t">
+                        <kct-painter id="signature" height="300px"></kct-painter>
+                    </div>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onDialogReceivingSaveTap">Terima</paper-button>
+                    <paper-button on-tap="__onDialogReceivingCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class SuratMasukDistribution extends Polymer.Element {
+            static get is() {
+                return 'surat-masuk-distribution';
+            }
+
+            static get properties() {
+                return {
+                    type: { type: String },
+                    user: { type: Object },
+                    record: { type: Object, notify: true },
+                    sending: { type: Object },
+                    receiving: { type: Object },
+                    readonly: { type: Boolean, value: false, reflectToAttribute: true },
+                    message: { type: String, value: '' },
+                    outstandings: { type: Array, value: () => ([]) }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__dispositionChanged(record.dispositions.*)'
+                ];
+            }
+
+            load() {
+                let valid = this.record && this.record.task && this.record.task.tsm_id;
+
+                if ( ! valid) {
+                    return;
+                }
+
+                let payload = {
+                    task: this.record.task.tsm_id
+                };
+
+                this.$.ajax.GET('/surat-masuk/distributions', payload).then(res => {
+                    if (res.success) {
+                        let items = res.data;
+                        this.set('record.distributions', items);
+                    }
+                });
+            }
+
+            createDistribution() {
+                let today = moment();
+
+                this.set('sending', {
+                    tdp_sending_date: today.format('YYYY-MM-DD'),
+                    tdp_type: 'DISTRIBUTION',
+                    tdp_tsm_id: this.record.task.tsm_id,
+                    tdp_position: this.user.su_sj_name,
+                    tdp_responsible: this.user.su_id,
+                    tdp_notes: this.record.task.tsm_subject,
+                    tdp_flag: 'DRAFT'
+                });
+
+                this.set('receiving', {
+                    tdp_type: 'DISTRIBUTION',
+                    tdp_tsm_id: this.record.task.tsm_id,
+                    tdp_flag: 'DRAFT'
+                });
+            }
+
+            validate() {
+                return this.$.ajax.GET('/surat-masuk/' + this.record.task.tsm_id + '/outstandings').then(res => {
+                    let outstandings = [];
+
+                    if (res.success) {
+                        outstandings = (res.data || []).map(e => e.receiving.tdp_id);
+                    }
+
+                    if (outstandings.length) {
+                        this.set('message', 'Anda belum melakukan konfirmasi penerimaan surat.');
+                    } else {
+                        this.set('message', '');
+                    }
+
+                    this.dispatchEvent(new CustomEvent('validate', {
+                        detail: {
+                            outstandings: outstandings
+                        }
+                    }));
+
+                    return outstandings;
+                });
+            }
+
+            __dispositionChanged(changed) {
+                if (changed.path == 'record.dispositions') {
+                    this.load();
+                }
+            }
+
+            __displayDistributions(item) {
+                return item.receiving.tdp_type == 'DISTRIBUTION';
+            }
+
+            __displayDispositions(item) {
+                return item.receiving.tdp_type == 'DISPOSITION';
+            }
+
+            __hideMessage(message) {
+                return !(!!message);
+            }
+
+            __computeSequence(index) {
+                return index + 1;
+            }
+
+            __computeResponsibleLabel(position, name) {
+                if (name) {
+                    return position + ' ( ' + name + ' )';
+                }
+                return position;
+            }
+
+            __computeIcon(flag) {
+                return flag == 'RECEIVED' ? 'drafts' : 'mail';
+            }
+
+            __computeText(flag) {
+                return flag == 'RECEIVED' ? 'Sudah dikonfirmasi' : 'Konfirmasi penerimaan';
+            }
+
+            __warning(title, message) {
+                let dialog = document.createElement('kct-alert');
+                dialog.title = title;
+                dialog.message = message;
+
+                dialog.addEventListener('close', e => {
+                    document.body.removeChild(dialog);
+                });
+
+                document.body.appendChild(dialog);
+                dialog.open();
+            }
+
+            __confirm(title, message) {
+                let dialog = document.createElement('kct-confirm');
+                let defer = {};
+
+                defer.promise = new Promise(res => {
+                    defer.resolve = res;
+                });
+
+                dialog.title = title;
+                dialog.message = message;
+
+                dialog.addEventListener('close', e => {
+                    document.body.removeChild(dialog);
+                    let yes = e.detail.value == 'yes' ? true : false;
+                    defer.resolve(yes);
+                });
+
+                document.body.appendChild(dialog);
+                dialog.open();
+
+                return defer.promise;
+            }
+
+            __onComboReceiverChange(e) {
+                let model = e.target.getSelectedUser();
+
+                if (model) {
+                    this.set('receiving.tdp_position', model.su_sj_name);
+                } else {
+                    this.set('receiving.tdp_position', '');
+                }
+            }
+
+            __onCreateTap() {
+                this.createDistribution();
+                this.$['dialog'].open();
+            }
+
+            __onRemoveTap(e) {
+                this.__confirm('Konfirmasi', 'Anda yakin akan menghapus daftar distribusi?').then(y => {
+                    if (y) {
+                        let item = e.model.item;
+
+                        this.$.ajax.DELETE('/surat-masuk/distributions/' + item.sending.tdp_id).then(res => {
+                            if (res.success) {
+                                this.load();
+                            }
+                        });
+                    }
+                });
+            }
+
+            __onSaveTap() {
+                this.$['dialog'].close();
+
+                let sending = this.sending,
+                    receiving = this.receiving;
+
+                let payload = {
+                    sending: sending,
+                    receiving: receiving
+                };
+
+                if (sending.tdp_id) {
+                    this.$.ajax.PUT('/surat-masuk/distributions/' + sending.tdp_id, payload).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('surat-masuk/distributions', payload).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.load();
+                    }
+                }
+            }
+
+            __onReceiveTap(e) {
+                let item = e.model.item;
+                let user = this.user.su_id;
+                let authors = (this.record.authors || []);
+                
+                if (item.receiving.tdp_receiving_date) {
+                    if (authors.indexOf(user) === -1) {
+                        return;    
+                    }
+                }
+
+                if (item.receiving.tdp_responsible != this.user.su_id) {
+                    if (authors.indexOf(user) === -1) {
+                        this.__warning('Peringatan', 'Anda tidak berhak melakukan konfirmasi');
+                        return;
+                    }
+                }
+
+                this.set('sending', item.sending);
+                this.set('receiving', item.receiving);
+
+                this.$['dialog-receiving'].open();
+            }
+
+            __onDialogSendingCloseTap() {
+                this.$['dialog'].close();
+            }
+
+            __onDialogReceivingOpened() {
+                this.$.signature.resize();
+            }
+
+            __onDialogReceivingCloseTap() {
+                this.$['dialog-receiving'].close();
+            }
+
+            __onDialogReceivingSaveTap(e) {
+                this.$['dialog-receiving'].close();
+
+                let sending = this.sending;
+                let receiving = this.receiving;
+
+                this.$.ajax.POST('/surat-masuk/' + this.record.task.tsm_id + '/receive', {
+                    sending: sending.tdp_id,
+                    receiving: receiving.tdp_id
+                }).then(res => {
+                    if (res.success) {
+                        this.load();
+                        this.validate();
+
+                        let signature = this.$.signature.saveAsJPG();
+
+                        if (signature) {
+                            this.$.ajax.UPLOAD('/surat-masuk/distributions/' + receiving.tdp_id + '/signature', {
+                                files: [
+                                    { name: 'userfile', file: signature }
+                                ]
+                            });
+                        }
+                    }
+                });
+            }
+
+        }
+        customElements.define(SuratMasukDistribution.is, SuratMasukDistribution);
+    </script>
+</dom-module>

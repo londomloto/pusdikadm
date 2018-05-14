@@ -86,30 +86,21 @@ class Lkh extends \Micro\Model {
         $data['lkh_end_date_formatted'] = Date::format($this->lkh_end_date, 'd M Y');
 
         if (($user = $this->user)) {
-            $data['lkh_su_fullname'] = $user->getName();
-            $data['lkh_su_no'] = $user->su_no;
-            $data['lkh_su_sg_name'] = $user->getGradeName();
-            $data['lkh_su_sj_name'] = $user->job ? $user->job->sj_name : '';
-            $data['lkh_su_sdp_name'] = $user->department ? $user->department->sdp_name : '';
-            $data['lkh_su_avatar_thumb'] = $user->getAvatarThumb();
+            foreach($user->toSimpleArray() as $key => $val) {
+                $data['lkh_'.$key] = $val;
+            }
         }
 
         if (($examiner = $this->examiner)) {
-            $data['examiner_su_fullname'] = $examiner->getName();
-            $data['examiner_su_no'] = $examiner->su_no;
-            $data['examiner_su_sg_name'] = $examiner->getGradeName();
-            $data['examiner_su_sj_name'] = $examiner->job ? $examiner->job->sj_name : '';
-            $data['examiner_su_sdp_name'] = $examiner->department ? $examiner->department->sdp_name : '';
-            $data['examiner_su_avatar_thumb'] = $examiner->getAvatarThumb();
+            foreach($examiner->toSimpleArray() as $key => $val) {
+                $data['examiner_'.$key] = $val;
+            }
         }
 
         if (($evaluator = $this->evaluator)) {
-            $data['evaluator_su_fullname'] = $evaluator->getName();
-            $data['evaluator_su_no'] = $evaluator->su_no;
-            $data['evaluator_su_sg_name'] = $evaluator->getGradeName();
-            $data['evaluator_su_sj_name'] = $evaluator->job ? $evaluator->job->sj_name : '';
-            $data['evaluator_su_sdp_name'] = $evaluator->department ? $evaluator->department->sdp_name : '';
-            $data['evaluator_su_avatar_thumb'] = $evaluator->getAvatarThumb();
+            foreach($evaluator->toSimpleArray() as $key => $val) {
+                $data['evaluator_'.$key] = $val;
+            }
         }
         
         return $data;

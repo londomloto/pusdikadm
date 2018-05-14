@@ -1,0 +1,129 @@
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../cores/elements/kct-app/blocks/page-header-block.html">
+
+<dom-module id="constants-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <!-- <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to Setting" on-tap="__onBackTap"></paper-fab>
+        </div> -->
+
+        <kct-grid 
+            id="grid" 
+            url="/system/constants" 
+            selected="{{ selectedRecord }}"
+            columns="{{ columns }}" 
+            icon="image:exposure" 
+            header-text="Aplikasi" 
+            header-desc="Konstanta Aplikasi" 
+            selection-model="row" 
+            on-back-tap="__onBackTap">
+
+            <paper-button slot="left-toolbar" on-tap="__onEditTap"><iron-icon icon="done"></iron-icon>&nbsp;Edit</paper-button>
+
+        </kct-grid>
+
+        <kct-dialog id="editor" title="Editor" height="100%" width="400">
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <paper-input label="Nama" value="{{ selectedRecord.sco_name }}" readonly></paper-input>
+                    <paper-input label="Nilai" value="{{ selectedRecord.sco_value }}"></paper-input>
+                    <paper-input label="Keterangan" value="{{ selectedRecord.sco_desc }}"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSave">Simpan</paper-button>
+                    <paper-button on-tap="__onEditorClose">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class ConstantsPage extends KctView {
+            static get is() {
+                return 'constants-page';
+            }
+
+            static get properties() {
+                return {
+                    columns: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'rownumber' },
+                            { text: 'Nama', dataIndex: 'sco_name' },
+                            { text: 'Nilai', dataIndex: 'sco_value' },
+                            { text: 'Keterangan', dataIndex: 'sco_desc' }
+                        ])
+                    },
+                    selectedRecord: { type: Object }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__heightChanged(height)'
+                ];
+            }
+
+            handleRouteParams(setting) {
+                if (setting != 'constants') return;
+                this.$.grid.deferAutoload();
+            }
+
+            handleResizing(width, height) {
+                if (this.$.grid) {
+                    this.$.grid.resize();
+                }
+            }
+
+            __onEditTap() {
+                if ( ! this.selectedRecord) {
+                    this.toast('Warning', 'No record selected', 'warn');
+                    return;
+                }
+
+                this.$.editor.open();
+            }
+
+            __onEditorSave() {
+                this.$.editor.close();
+
+                let data = this.selectedRecord,
+                    ajax = this.$.ajax;
+
+                if (data.sco_id) {
+                    ajax.PUT('/system/constants/' + data.sco_id, data).then(done.bind(this));
+                } else {
+                    ajax.POST('/system/constants', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.$.grid.load();
+                    }
+                }
+            }
+
+            __onEditorClose() {
+                this.$.editor.close();
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+
+        customElements.define(ConstantsPage.is, ConstantsPage);
+    </script>
+</dom-module>

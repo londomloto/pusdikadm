@@ -43,7 +43,7 @@ class PrintController extends \Micro\Controller {
             ->setCellValue('E5', $arr['skp_su_no'])
             ->setCellValue('E6', $arr['skp_su_sg_name'])
             ->setCellValue('E7', $arr['skp_su_sj_name'])
-            ->setCellValue('E8', $arr['skp_su_sdp_name']);
+            ->setCellValue('E8', $arr['skp_su_scp_fullname']);
 
         if ($skp->evaluator) {
             $sheet
@@ -51,7 +51,7 @@ class PrintController extends \Micro\Controller {
                 ->setCellValue('E11', $arr['evaluator_su_no'])
                 ->setCellValue('E12', $arr['evaluator_su_sg_name'])
                 ->setCellValue('E13', $arr['evaluator_su_sj_name'])
-                ->setCellValue('E14', $arr['evaluator_su_sdp_name']);    
+                ->setCellValue('E14', $arr['evaluator_su_scp_fullname']);    
         }
 
         if ($skp->examiner) {
@@ -60,8 +60,12 @@ class PrintController extends \Micro\Controller {
                 ->setCellValue('E17', $arr['examiner_su_no'])
                 ->setCellValue('E18', $arr['examiner_su_sg_name'])
                 ->setCellValue('E19', $arr['examiner_su_sj_name'])
-                ->setCellValue('E20', $arr['examiner_su_sdp_name']);    
+                ->setCellValue('E20', $arr['examiner_su_scp_fullname']);    
         }
+
+        $sheet->getRowDimension(8)->setRowHeight(-1);
+        $sheet->getRowDimension(14)->setRowHeight(-1);
+        $sheet->getRowDimension(20)->setRowHeight(-1);
 
         // COVER
         $sheet = $xls->getSheet(1);
@@ -70,7 +74,7 @@ class PrintController extends \Micro\Controller {
             ->setCellValue('F19', $arr['skp_su_no'])
             ->setCellValue('F20', $arr['skp_su_sg_name'])
             ->setCellValue('F21', $arr['skp_su_sj_name'])
-            ->setCellValue('F22', $arr['skp_su_sdp_name']);    
+            ->setCellValue('F22', $arr['skp_su_scp_parent']);    
 
         $sheet
             ->setCellValue('A8', $arr['skp_cover_header_1'])
@@ -88,7 +92,7 @@ class PrintController extends \Micro\Controller {
                 ->setCellValue('C6', $arr['evaluator_su_no'])
                 ->setCellValue('C7', $arr['evaluator_su_sg_name'])
                 ->setCellValue('C8', $arr['evaluator_su_sj_name'])
-                ->setCellValue('C9', $arr['evaluator_su_sdp_name']);    
+                ->setCellValue('C9', $arr['evaluator_su_scp_fullname']);    
         }
 
         $sheet
@@ -96,7 +100,7 @@ class PrintController extends \Micro\Controller {
             ->setCellValue('H6', $arr['skp_su_no'])
             ->setCellValue('H7', $arr['skp_su_sg_name'])
             ->setCellValue('H8', $arr['skp_su_sj_name'])
-            ->setCellValue('H9', $arr['skp_su_sdp_name']);
+            ->setCellValue('H9', $arr['skp_su_scp_fullname']);
 
         $row = 12;
         $num = 1;
@@ -127,7 +131,9 @@ class PrintController extends \Micro\Controller {
                 $row++;
                 $num++;
             }
-        } else {
+        }
+
+        if ($insert == 0) {
             $row = 14;
         }
 
@@ -180,7 +186,9 @@ class PrintController extends \Micro\Controller {
                 $row++;
                 $num++;
             }
-        } else {
+        }
+
+        if ($insert == 0) {
             $row = 11;
         }
 
@@ -211,7 +219,9 @@ class PrintController extends \Micro\Controller {
                 $num++;
             }
 
-        } else {
+        }
+
+        if ($insert == 0) {
             $row = 14;
         }
 
@@ -254,7 +264,9 @@ class PrintController extends \Micro\Controller {
 
                 $row++;
             }    
-        } else {
+        }
+
+        if ($insert == 0) {
             $row = 14;
         }
 
@@ -279,7 +291,7 @@ class PrintController extends \Micro\Controller {
             ->setCellValue('G15', $arr['skp_su_no'])
             ->setCellValue('G16', $arr['skp_su_sg_name'])
             ->setCellValue('G17', $arr['skp_su_sj_name'])
-            ->setCellValue('G18', $arr['skp_su_sdp_name']);
+            ->setCellValue('G18', $arr['skp_su_scp_fullname']);
 
         if ($skp->evaluator) {
             $sheet
@@ -287,7 +299,7 @@ class PrintController extends \Micro\Controller {
                 ->setCellValue('G21', $arr['evaluator_su_no'])
                 ->setCellValue('G22', $arr['evaluator_su_sg_name'])
                 ->setCellValue('G23', $arr['evaluator_su_sj_name'])
-                ->setCellValue('G24', $arr['evaluator_su_sdp_name']);    
+                ->setCellValue('G24', $arr['evaluator_su_scp_fullname']);    
         }
 
         if ($skp->examiner) {
@@ -296,7 +308,7 @@ class PrintController extends \Micro\Controller {
                 ->setCellValue('G27', $arr['examiner_su_no'])
                 ->setCellValue('G28', $arr['examiner_su_sg_name'])
                 ->setCellValue('G29', $arr['examiner_su_sj_name'])
-                ->setCellValue('G30', $arr['examiner_su_sdp_name']);    
+                ->setCellValue('G30', $arr['examiner_su_scp_fullname']);    
         }
 
         $sheet
@@ -327,7 +339,9 @@ class PrintController extends \Micro\Controller {
             $merge = (34 + $count + 3 - 1);
             $sheet->mergeCells('B34:B'.$merge);
             $sheet->mergeCells('C34:C'.$merge);
-        } else {
+        }
+
+        if ($insert == 0) {
             $row = 36;
         }
 

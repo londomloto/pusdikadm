@@ -1,0 +1,340 @@
+<link rel="import" href="../../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../../cores/elements/kct-worksheet/kct-worksheet.html">
+<link rel="import" href="../../../../../cores/elements/kct-event/kct-event-subscriber.html">
+<link rel="import" href="../../../../../cores/elements/kct-socket/kct-socket.html">
+<link rel="import" href="../../../../../cores/mixins/mixins.html">
+<link rel="import" href="../styles/project-view-kanban-style.html">
+
+<script>
+    Mixins.ProjectViewKanban = Polymer.dedupingMixin(superclass => {
+
+        let storage = {
+            projects: {},
+            worksheets: {},
+            workspaces: {}
+        };
+
+        return class extends superclass {
+            
+            static get properties() {
+                return {
+                    project: { type: String },
+                    projectRecord: { type: Object },
+                    worksheetRecord: { type: Object },
+                    workspaces: { type: Array },
+                    workspaceRecord: { type: Object },
+                    params: { type: Object },
+                    busy: { type: Boolean, value: false, notify: true },
+                    pageSize: { type: Number, value: 6 },
+                    maxPageSize: { type: Number, value: 100 }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__projectChanged(project)',
+                    '__paramsChanged(params.*)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__paging = {};
+            }
+
+            handleResizing(width, height) {
+                if (this.$.worksheet) {
+                    this.$.worksheet.resize();
+                }
+            }
+
+            reload() {
+                return this.__loadWorksheet();
+            }
+
+            __projectChanged(project) {
+                this.__loadProject();
+            }
+
+            __paramsChanged(changed) {
+                if (changed.path == 'params') {
+                    this.reload();
+                }
+            }
+
+            __resolveProject(project) {
+                let token = 'project_' + project;
+                let cache = storage.projects[token];
+
+                if ( ! cache) {
+                    return this.$.ajax.GET('/projects/' + project + '/load').then(res => {
+                        storage.projects[token] = res.data;
+                        return storage.projects[token];
+                    });
+                } else {
+                    return Promise.resolve(cache);
+                }
+            }
+
+            __loadProject() {
+                if ( ! this.project) return;
+
+                this.__resolveProject(this.project).then(record => {
+                    this.set('projectRecord', record);
+                    this.__loadWorksheet();
+                });
+            }
+
+            __resolveWorksheet(worksheet, project) {
+                let token = 'worksheet_' + worksheet + '_project_' + project;
+                let cache = storage.worksheets[token];
+
+                if ( ! cache) {
+                    return this.$.ajax.GET('/kanban/kanban-settings/' + worksheet, {
+                        request: 'granted',
+                        project: project
+                    }).then(res => {
+                        storage.worksheets[token] = res.data;
+                        return storage.worksheets[token];
+                    });
+                } else {
+                    return Promise.resolve(cache);
+                }
+            }
+
+            __loadWorksheet() {
+                this.set('busy', true);
+                this.set('workspaces', []);
+
+                if ( ! this.projectRecord) {
+                    this.set('busy', false);
+                    this.set('worksheetRecord', {});
+                    return;
+                }
+
+                this.__loader = this._defer();
+
+                this.__loader.promise.then(() => {
+                    this.set('busy', false);
+                    this.$.worksheet.resize();
+                });
+
+                let worksheet = this.projectRecord && this.projectRecord.sp_worksheet_id;
+
+                if (worksheet) {
+                    this.__resolveWorksheet(worksheet, this.projectRecord.sp_id).then(record => {
+                        
+                        record = Object.assign({}, record);
+
+                        if (this.worksheetRecord) {
+                            let cache = {};
+                               
+                            (this.worksheetRecord.ks_panels || []).forEach(p => {
+                                cache[p.kp_id] = p.kp_data;
+                            });
+
+                            (record.ks_panels || []).forEach(p => {
+                                if (cache[p.kp_id] !== undefined) {
+                                    p.kp_data = cache[p.kp_id];
+                                }
+                            });
+
+                            cache = null;
+                        }
+
+                        this.set('worksheetRecord', record);
+                        
+                        this.__loadWorkspaces();
+                        this.__loadPanels();
+
+                    });
+                } else {
+                    this.set('worksheetRecord', {});
+                }
+
+                return this.__loader.promise;
+            }
+
+            __resolveWorkspaces(worksheet) {
+                let token = 'workspaces_' + worksheet;
+                let cache = storage.workspaces[token];
+
+                if ( ! cache) {
+                    return this.$.ajax.GET('/kanban/kanban-workspaces?kanban=' + worksheet).then(res => {
+                        storage.workspaces[token] = res.data;
+                        return storage.workspaces[token];
+                    });
+                } else {
+                    return Promise.resolve(cache);
+                }
+            }
+
+            __loadWorkspaces() {
+                this.set('workspaces', []);
+
+                if ( ! this.worksheetRecord) {
+                    return;
+                }
+
+                this.__resolveWorkspaces(this.worksheetRecord.ks_id).then(workspaces => {
+                    this.set('workspaces', workspaces);
+                });
+            }
+
+            __loadPanels() {
+                let panels = (this.worksheetRecord.ks_panels || []);
+                let count = panels.length;
+                let index = 0;
+
+                if ( ! count) {
+                    this.__loader.resolve();
+                } else {
+                    panels.forEach(p => {
+                        this.__loadPanelData(p).then(() => {
+                            index++;
+                            if (index === count) {
+                                this.__loader.resolve();
+                            }
+                        });
+                    });
+                }
+            }
+
+            __loadPanelData(panel, options = {}) {
+                let statuses = (panel.kp_statuses || []).map(s => s.kst_status),
+                    index = (this.worksheetRecord.ks_panels || []).indexOf(panel),
+                    defer = this._defer();
+
+                let payload = Object.assign({}, this.params, options);
+
+                payload.statuses = JSON.stringify(statuses);
+                payload.project = this.projectRecord.sp_id;
+
+                let paging = this.__getPaging(panel);
+
+                if (payload.start === undefined) {
+                    payload.start = paging.__start;
+                }
+
+                if (payload.limit === undefined) {
+                    payload.limit = paging.__limit;
+                }
+
+                if (payload.start == 0 && payload.limit > this.maxPageSize) {
+                    payload.limit = this.maxPageSize;
+
+                    this.__setPaging(panel, { 
+                        __start: 0,
+                        __limit: payload.limit 
+                    });
+                }
+
+                this.set('worksheetRecord.ks_panels.' + index + '.kp_busy', true);
+                
+                this.$.ajax.GET(this.profile.service.url, payload).then((res) => {
+                    let items;
+
+                    if (payload.start == 0) {
+                        items = res.data;
+                    } else {
+                        items = (this.worksheetRecord.ks_panels[index].kp_data || []).slice();
+                        Array.prototype.push.apply(items, res.data);
+                    }
+                        
+                    this.set('worksheetRecord.ks_panels.' + index + '.kp_data', items);
+                    this.set('worksheetRecord.ks_panels.' + index + '.kp_busy', false);
+
+                    let count = items.length,
+                        total = +res.total;
+
+                    if (count >= res.total) {
+                        this.set('worksheetRecord.ks_panels.' + index + '.kp_more', false);
+                    } else {
+                        this.set('worksheetRecord.ks_panels.' + index + '.kp_more', true);
+                    }
+
+                    this.__setPaging(panel, {
+                        start: payload.start + payload.limit,
+                        limit: this.pageSize,
+                        __start: 0,
+                        __limit: count > this.pageSize ? count : this.pageSize
+                    });
+
+                    defer.resolve();
+                    
+                });
+
+                return defer.promise;
+            }
+
+            __setPaging(panel, params) {
+                let paging = this.__getPaging(panel);
+                Object.assign(paging, params);
+            }
+
+            __getPaging(panel) {
+                let token = 'panel_' + this.projectRecord.sp_id + '_' + panel.kp_id;
+
+                if (this.__paging[token] === undefined) {
+                    this.__paging[token] = {
+                        // load more paging
+                        start: 0,
+                        limit: this.pageSize,
+
+                        // reload paging
+                        __start: 0,
+                        __limit: this.pageSize
+                    };
+                }
+
+                return this.__paging[token];
+            }
+
+            __onCardItemTap(e) {
+                let record = e.model.item;
+                
+                this.set('route.data.back', '/worksheet/' + this.project + '/view/kanban');
+                this.set('route.path', '/worksheet/' + this.project + '/task/update/' + record.status[this.profile.status.primary_key]);
+            }
+
+            __onLocalNotify(e) {
+                if (e.detail.project == this.project) {
+                    this.reload();
+                }
+            }
+
+            __onSocketNotify(e) {
+                let payload = e.detail;
+                let project = this.projectRecord && this.projectRecord.sp_id;
+
+                if (project && project == payload.project) {
+                    switch(payload.type) {
+                        case 'update_status':
+                        case 'activation':
+                            this.reload();
+                            break;
+                    }
+                }
+            }
+
+            __onLoadMoreTap(e) {
+                let paging = this.__getPaging(e.model.panel);
+
+                if (paging) {
+                    this.set('busy', true);
+
+                    this.__loadPanelData(e.model.panel, {
+                        start: paging.start,
+                        limit: paging.limit
+                    }).then(() => {
+                        this.set('busy', false);
+                        this.$.worksheet.resize();
+                    });
+                }
+            }
+
+        }
+
+    });
+</script>

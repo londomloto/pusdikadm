@@ -30,6 +30,14 @@ class Company extends \Micro\Model {
         return $logos[$this->scp_id];
     }
 
+    public function getFullname() {
+        $name = $this->scp_name;
+        if ( ! empty($this->scp_parent)) {
+            $name .= ', '.$this->scp_parent;
+        }
+        return $name;
+    }
+
     public function getLogoThumb() {
         $logo = $this->getLogo();
         $app = \Micro\App::getDefault();

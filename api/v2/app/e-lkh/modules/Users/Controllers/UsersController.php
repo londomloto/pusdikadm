@@ -27,7 +27,7 @@ class UsersController extends \Micro\Controller {
         $user = new User();
 
         $post['su_created_date'] = date('Y-m-d H:i:s');
-        $post['su_created_by'] = $auth['su_fullname'];
+        $post['su_created_by'] = $auth['su_id'];
 
         if (isset($post['su_passwd']) && ! empty($post['su_passwd'])) {
             $post['su_passwd'] = $this->security->createHash($post['su_passwd']);

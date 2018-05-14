@@ -1,0 +1,86 @@
+<link rel="import" href="../../../../../../../cores/mixins/mixins.html">
+
+<script>
+    Mixins.SuratMasukBehavior = Polymer.dedupingMixin(superclass => {
+
+        return class extends superclass {
+
+            static get properties() {
+                return {
+                    message: { type: String, value: '' }
+                };
+            }
+
+            initialize() {
+                this.set('record.perms.update_users', true);
+                this.set('record.perms.update_labels', true);
+            }
+
+            __hideMessage(message) {
+                return !(!!message);
+            }
+
+            __addAssignee(user) {
+
+                if ( ! this.record.users) {
+                    this.set('record.users', []);
+                }
+
+                let index = this.record.users.findIndex(e => {
+                    return e.su_id == user.su_id;
+                });
+
+                if (index === -1) {
+                    this.push('record.users', {
+                        su_id: user.su_id,
+                        su_fullname: user.su_fullname,
+                        su_avatar_thumb: user.su_avatar_thumb,
+                        su_sg_name: user.su_sg_name,
+                        su_sj_name: user.su_sj_name,
+                        su_no: user.su_no
+                    });
+                }
+
+            }
+
+            __computeAgenda() {
+                let code = this.record.task.tsm_serial || 'AGENDA-MASUK';
+
+                return this.$.ajax.GET('/system/autonumber/generate', {
+                    code: code
+                }).then(res => {
+                    if (res.success) {
+                        this.set('record.task.tsm_agenda', res.data);
+                    }
+                    return res.success;
+                });
+            }
+
+            __computeAuthors() {
+                return this.$.ajax.GET('/surat-masuk/' + this.record.task.tsm_id + '/authors').then(res => {
+                    if (res.success) {
+                        this.set('record.authors', res.data);
+                    }
+                });
+            }
+
+            __send() {
+                this.$.ajax.POST('/surat-masuk/' + this.record.task.tsm_id + '/send');
+            }
+
+            __onMessageCloseTap() {
+                this.set('message', '');
+            }
+
+            __onGenerateRegisterTap() {
+                this.__computeRegister();
+            }
+
+            __onGenerateAgendaTap() {
+                this.__computeAgenda();
+            }
+
+        };
+
+    });
+</script>

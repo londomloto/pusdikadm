@@ -171,6 +171,8 @@
                 __menusChanged(changed) {
                     if (changed.path == 'menus') {
                         if (this.menus && this.menus.length) {
+                            let group = null;
+
                             this.menus.forEach((elem, index) => {
                                 elem.smn_class = 'item';
                                 elem.smn_visible = !this.collapsed;
@@ -180,6 +182,10 @@
                                     elem.smn_class += ' item-parent';
                                     elem.smn_expanded = false;
                                 }
+                                if (group == elem.smn_group) {
+                                    elem.smn_group = null;
+                                }
+                                group = elem.smn_group;
                             });
                         }
                     }

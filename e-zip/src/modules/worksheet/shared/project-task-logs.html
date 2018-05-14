@@ -1,0 +1,234 @@
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-editor/kct-html-editor.html">
+<link rel="import" href="../../../../../cores/elements/kct-html/kct-html.html">
+<link rel="import" href="../../../../../cores/elements/kct-file/kct-file.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../../cores/elements/kct-message/kct-confirm.html">
+<link rel="import" href="../../../../../cores/mixins/mixins.html">
+<link rel="import" href="../styles/project-task-logs-style.html">
+
+<script>
+    Mixins.ProjectTaskLogs = Polymer.dedupingMixin(superclass => {
+
+        return class extends superclass {
+
+            static get properties() {
+                return {
+                    record: { type: Object, notify: true },
+                    message: { type: String }, 
+                    comment: { 
+                        type: Object,
+                        value: () => ({
+                            ta_type: 'comment'
+                        })
+                    },
+                    project: { type: Object },
+                    activities: { 
+                        type: Array, 
+                        value: () => ([]), 
+                        notify: true 
+                    },
+                    paginator: {
+                        type: Object,
+                        value: () => ({
+                            start: 0,
+                            limit: 20
+                        })
+                    }, 
+                    profile: { type: Object },
+                    loading: { type: Boolean, value: false, reflectToAttribute: true },
+                    display: { type: String, value: '0' },
+                    socketSession: { type: String }
+                };
+            }
+
+            constructor() {
+                super();
+                this.__hidePaginator = true;
+            }
+
+            initialize() {
+                this.load({ start: 0 });
+            }
+
+            reload() {
+                this.load({ start: 0 });
+            }
+            
+            load(options = {}) {
+
+                let start, limit;
+
+                if (options.start !== undefined) {
+                    start = options.start;
+                    this.set('paginator.start', start);
+                } else {
+                    start = this.paginator.start;
+                }
+
+                limit = this.paginator.limit;
+
+                let taskId = this.record && this.record.task && this.record.task[this.profile.task.primary_key];
+
+                if ( ! taskId) {
+                    this.set('activities', []);
+                    return;
+                }
+
+                let params = {};
+
+                params.ta_task_ns = this.profile.activity.scope;
+                params.ta_task_id = taskId;
+
+                if (this.display == '0') {
+                    params.ta_type = ['IN', ['comment', 'warning', 'examine']];
+                }
+
+                let payload = {
+                    params: params,
+                    sort: [
+                        { property: 'ta_created', direction: 'desc' }
+                    ],
+                    start: start,
+                    limit: limit
+                };
+                    
+                this.$.ajax.GET('/activities', payload).then(res => {
+                    if (start == 0) {
+                        this.set('activities', []);
+                    }
+
+                    let activities = this.activities.slice();
+                    Array.prototype.push.apply(activities, res.data);
+                    this.set('activities', activities);
+
+                    start = this.paginator.start + this.paginator.limit;
+                    this.set('paginator.start', start);
+
+                    if (start >= res.total) {
+                        this.set('__hidePaginator', true);
+                    } else {
+                        this.set('__hidePaginator', false);
+                    }
+
+                });
+            }
+
+            __onSubmitTap() {
+                let message = this.$.msgbox.value;
+
+                if ( ! message) {
+                    if ( ! this.attachment) {
+                        return;
+                    }
+                }
+
+                let payload = Object.assign({}, this.comment);
+
+                payload.ta_type = payload.ta_type || 'comment';
+                
+                payload.ta_data = JSON.stringify({
+                    comment: message
+                });
+
+                payload.ta_task_id = this.record.task[this.profile.task.primary_key];
+                payload.ta_task_ns = this.profile.activity.scope;
+                payload.ta_sp_id = this.project.sp_id;
+                
+                let options = {};
+                
+                if (this.socketSession) {
+                    options.headers = {
+                        'X-Socket-Session': this.socketSession
+                    };
+                }
+
+                this.$.ajax.POST('/activities', payload, options).then(res => {
+                    if (res.success) {
+                        let activity = res.data;
+                        
+                        this.load({ start: 0 });
+                        this.$.msgbox.value = '';
+
+                        // notify users
+                        this.$.ajax.POST('/notifications/' + activity.ta_id + '/notify', {
+                            target: 'users'
+                        });
+                    }
+                });
+                
+            }
+
+            __onAttachTap() {
+                this.$.file.browse();
+            }
+
+            __onFileChange() {
+                let attachment = this.$.file.file().files[0];
+
+                if (attachment) {
+                    let payload = {
+                        files: [
+                            { name: 'userfile', file: attachment }
+                        ]
+                    };
+
+                    this.$.ajax.UPLOAD('/activities/upload', payload).then(res => {
+                        if (res.success) {
+                            this.$.msgbox.insert(res.data.code);
+                        }
+                        this.$.file.reset();
+                    });
+                }
+            }
+
+            __onEditCommentTap(e) {
+                let index = e.model.index;
+                this.set('activities.' + index + '.ta_editing', true);
+            }
+
+            __onSaveCommentTap(e) {
+                let data = e.model.item;
+
+                data.ta_data = JSON.parse(data.ta_data || '{}');
+                data.ta_data.comment = data.ta_comment;
+                data.ta_data = JSON.stringify(data.ta_data);
+
+                this.$.ajax.PUT('/activities/' + data.ta_id, data).then(res => {
+                    if (res.success) {
+                        this.set('activities.' + e.model.index + '.ta_comment', res.data.ta_comment);    
+                        this.set('activities.' + e.model.index + '.ta_comment_formatted', res.data.ta_comment_formatted);
+                    }
+                    this.set('activities.' + e.model.index + '.ta_editing', false);
+                });
+            }
+
+            __onCancelEditCommentTap(e) {
+                let index = e.model.index;
+                this.set('activities.' + index + '.ta_editing', false);
+            }
+
+            __onRemoveCommentTap(e) {
+                this.$.confirm.title = 'Konfirmasi';
+                this.$.confirm.message = 'Anda yakin akan menghapus komentar ini?';
+                this.$.confirm.open().then(y => {
+                    if (y == 'yes') {
+                        this.$.ajax.DELETE('/activities/' + e.model.item.ta_id).then(res => {
+                            this.load({start: 0});
+                        });
+                    }
+                }); 
+            }
+
+            __onPaginatorTap() {
+                this.load();
+            }
+
+            __onDisplayToggle() {
+                this.reload();
+            }
+
+        };
+
+    });
+</script>

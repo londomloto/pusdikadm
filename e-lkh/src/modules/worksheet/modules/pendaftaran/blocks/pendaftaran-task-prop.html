@@ -44,7 +44,7 @@
                                 </div>
                                 <div class="text">
                                     <div>[[ item.su_fullname ]]</div>
-                                    <div class="meta">[[ __computeUserMeta(item.su_no, item.su_sg_name) ]]</div>
+                                    <div class="meta">[[ __computeCoalesce(item.su_sj_name) ]]</div>
                                     <div hidden$="[[ __hideRemoveUser(item.su_id, record.perms.update_users) ]]"><a on-tap="__onUserRemoveTap" href="javascript:void(0)">Hapus</a></div>
                                 </div>
                                 <div class="clearfix"></div>

@@ -1,0 +1,121 @@
+<dom-module id="form-surat-masuk-disposition">
+    <template>
+        <style include="form-style">
+            :host {
+                margin: -30px;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="tabs">
+            <paper-tabs id="tabs" attr-for-selected="name" selected="{{ page }}" scrollable no-slide no-bar noink>
+                <paper-tab name="identitas">IDENTITAS SURAT</paper-tab>
+                <paper-tab name="berkas">BERKAS SURAT</paper-tab>
+                <paper-tab name="disposisi">DISPOSISI SURAT</paper-tab>
+                <paper-tab name="distribusi">DISTRIBUSI SURAT</paper-tab>
+            </paper-tabs>
+        </div>
+
+        <div class="tabs-content">
+
+            <kct-pages attr-for-selected="name" selected="[[ page ]]">
+                    
+                <div class="page" name="identitas">
+                    
+                    <surat-masuk-readonly record="[[ record ]]"></surat-masuk-readonly>
+
+                </div>
+
+                <div class="page" name="berkas">
+                    <surat-masuk-filemgr record="[[ record ]]" readonly$="[[ !record.perms.update_files ]]"></surat-masuk-filemgr>
+                </div>
+
+                <div class="page" name="disposisi">
+                    <surat-masuk-disposition    
+                        user="[[ user ]]" 
+                        record="{{ record }}"></surat-masuk-disposition>
+                </div>
+
+                <div class="page" name="distribusi">
+
+                    <surat-masuk-distribution 
+                        id="distribution" 
+                        user="[[ user ]]"
+                        record="{{ record }}" 
+                        readonly$="[[ !record.perms.update_distributions ]]"></surat-masuk-distribution>
+
+                </div>
+
+            </kct-pages>
+        </div>
+
+    </template>
+    <script>
+        class FormSuratMasukDisposition extends Mixins(FormBase).use(Mixins.SuratMasukBehavior) {
+            static get is() {
+                return 'form-surat-masuk-disposition';
+            }
+
+            static get properties() {
+                return {
+                    page: { type: String }
+                };
+            }
+
+            initialize() {
+                super.initialize();
+
+                this.set('invalid', false);
+                this.set('page', 'berkas');
+                
+                this.__computeAuthors().then(() => {
+                    let buttons = ['save', 'send', 'print'];
+
+                    if (this.record.authors.indexOf(this.user.su_id) !== -1) {
+                        this.set('record.perms.update_files', true);
+                        this.set('record.perms.update_distributions', true);
+                        
+                        buttons.push('remove');
+                    }
+
+                    this.set('buttons', buttons.join(','));
+
+                    this.$.distribution.validate().then(ost => {
+                        if (ost.length) {
+                            this.set('page', 'distribusi');
+                        }
+                    });
+                });
+
+            }
+
+            beforeSave(options) {
+                let promises = [];
+
+                if ( ! this.record.task.tsm_agenda) {
+                    promises.push(this.__computeAgenda());
+                }
+
+                if (promises.length) {
+                    return Promise.all(promises).then(() => {
+                        return { success: true };
+                    });
+                } else {
+                    return this.resolve({ success: true });
+                }
+            }
+
+            afterSave(response, options) {
+                if (response.success) {
+                    if (options.send) {
+                        // send disposition and notify responsible users
+                        this.__send();
+                    }
+                }
+                return this.resolve({ success: true });
+            }
+        }
+        customElements.define(FormSuratMasukDisposition.is, FormSuratMasukDisposition);
+    </script>
+</dom-module>

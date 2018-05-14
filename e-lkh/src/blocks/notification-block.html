@@ -190,7 +190,8 @@
                     dirty: { type: Boolean, value: false, reflectToAttribute: true},
                     screen: { type: String },
                     offsetX: { type: Number, value: 0 },
-                    offsetY: { type: Number, value: 0 }
+                    offsetY: { type: Number, value: 0 },
+                    playing: { type: Boolean, value: false }
                 };
             }
 
@@ -249,14 +250,29 @@
             }
 
             play() {
-                if ( ! window.Audio) return;
+                if ( ! window.Audio || this.playing) return;
+                
+                this.set('playing', true);
 
                 let audio, source;
+
+                let ended = function() {
+                    
+                    audio.removeEventListener('ended', ended);
+                    audio.parentNode.removeChild(audio);
+                    
+                    let delay = setTimeout(() => {
+                        clearTimeout(delay);
+                        delay = null;
+                        this.set('playing', false);
+                    }, 1000);
+
+                }.bind(this);
 
                 audio = document.createElement('audio');
                 audio.volume = 0.3;
                 audio.classList.add('sound');
-                audio.addEventListener('ended', ended);
+                audio.addEventListener('ended', ended.bind(this));
 
                 source = document.createElement('source');
                 source.type = 'audio/ogg';
@@ -273,11 +289,6 @@
                 this.shadowRoot.appendChild(audio);
 
                 audio.play();
-
-                function ended() {
-                    audio.removeEventListener('ended', ended);
-                    audio.parentNode.removeChild(audio);
-                }
             }
 
             __onReadAllTap() {

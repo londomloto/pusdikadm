@@ -1,0 +1,208 @@
+<dom-module id="form-surat-masuk-archive">
+    <template>
+        <style include="form-style">
+            :host {
+                margin: -30px;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="tabs">
+            <paper-tabs id="tabs" attr-for-selected="name" selected="{{ page }}" scrollable no-slide no-bar noink>
+                <paper-tab name="identitas">IDENTITAS SURAT</paper-tab>
+                <paper-tab name="berkas">BERKAS SURAT</paper-tab>
+                <paper-tab name="disposisi">DISPOSISI SURAT</paper-tab>
+                <paper-tab name="distribusi">DISTRIBUSI SURAT</paper-tab>
+                <paper-tab name="arsip">PENYIMPANAN</paper-tab>
+            </paper-tabs>
+        </div>
+
+        <div class="tabs-content">
+
+            <kct-pages attr-for-selected="name" selected="[[ page ]]">
+                    
+                <div class="page" name="identitas">
+                    
+                    <surat-masuk-readonly record="[[ record ]]"></surat-masuk-readonly>
+
+                </div>
+
+                <div class="page" name="berkas">
+                    <surat-masuk-filemgr record="[[ record ]]" readonly$="[[ !record.perms.update_files ]]"></surat-masuk-filemgr>
+                </div>
+
+                <div class="page" name="disposisi">
+                    <surat-masuk-disposition    
+                        user="[[ user ]]" 
+                        record="{{ record }}" 
+                        readonly$="[[ !record.perms.update_dispositions ]]"></surat-masuk-disposition>
+                </div>
+
+                <div class="page" name="distribusi">
+
+                    <surat-masuk-distribution 
+                        id="distribution" 
+                        user="[[ user ]]"
+                        record="{{ record }}" 
+                        readonly$="[[ !record.perms.update_distributions ]]"></surat-masuk-distribution>
+
+                </div>
+
+                <div class="page" name="arsip">
+                    <div class="section">
+                        <h3 class="section-title">Penyimpanan</h3>
+                        <div>
+                            <div>
+                                <kct-checkbox value="{{ record.task.tsm_active }}">Arsip Aktif</kct-checkbox>
+                            </div>
+                            <kct-column columns="3">
+                                <div>
+                                    <kct-date-picker label="Tanggal Penyimpanan" value="{{ record.task.tsm_storing_date }}"></kct-date-picker>
+                                </div>
+                                <div>
+                                    <paper-input label="Lokasi penyimpanan" value="{{ record.task.tsm_storing_location }}"></paper-input>
+                                </div>
+                                <div>
+                                    <paper-input label="Metode Penyimpanan" value="{{ record.task.tsm_storing_type }}"></paper-input>
+                                </div>
+                            </kct-column>
+                        </div>
+                    </div>
+                    <div class="section">
+                        <h3 class="section-title">Pengolahan Ulang</h3>
+                        <div>
+                            <kct-column columns="3">
+                                <div>
+                                    <vaadin-combo-box 
+                                        label="Pengolahan ulang oleh"  
+                                        value="{{ recurrent.flag }}"
+                                        items="[[ flags ]]" 
+                                        item-value-path="value" 
+                                        item-label-path="label"></vaadin-combo-box>
+                                </div>
+                                <div>
+                                    <combo-user 
+                                        label="Pegawai yang mengolah" 
+                                        value="{{ recurrent.user }}"></combo-user>
+                                </div>
+                                <div>
+                                    <kct-date-picker 
+                                        label="Tanggal pengolahan ulang" 
+                                        value="{{ recurrent.date }}"></kct-date-picker>
+                                </div>
+                            </kct-column>
+                            
+                            <div>
+                            <kct-combobox 
+                                label="Dokumen (disposisi) yang akan diolah" 
+                                value="{{ recurrent.disposition }}"
+                                url="/surat-masuk/dispositions" 
+                                item-label-path="tdp_name" 
+                                item-value-path="tdp_id" 
+                                on-beforeload="__onComboDispositionBeforeload" 
+                                page-size="10"></kct-combobox>
+                        </div>
+                    </div>
+                </div>
+
+            </kct-pages>
+        </div>
+
+    </template>
+    <script>
+        class FormSuratMasukArchive extends Mixins(FormBase).use(Mixins.SuratMasukBehavior) {
+            static get is() {
+                return 'form-surat-masuk-archive';
+            }
+
+            static get properties() {
+                return {
+                    page: { type: String },
+                    flags: {
+                        type: Array,
+                        value: () => ([
+                            { label: 'Pimpinan', value: 'PIMPINAN' },
+                            { label: 'Pelaksana', value: 'PELAKSANA' }
+                        ])
+                    },
+                    recurrent: { type: Object, value: () => ({}) }
+                };
+            }
+
+            initialize() {
+                super.initialize();
+
+                this.set('invalid', false);
+                this.set('page', 'arsip');
+                
+                this.__computeAuthors().then(() => {
+                    let buttons = ['save', 'send', 'print'];
+
+                    if (this.record.authors.indexOf(this.user.su_id) !== -1) {
+                        this.set('record.perms.update_files', true);
+                        this.set('record.perms.update_distributions', true);
+                        this.set('record.perms.update_dispositions', true);
+                        
+                        buttons.push('remove');
+                    }
+
+                    this.set('buttons', buttons.join(','));
+                });
+
+            }
+
+            beforeSave(options) {
+                if (options.send) {
+                    if (this.recurrent.flag) {
+                        this.set('record.task.tsm_task_flag', this.recurrent.flag);
+                    }
+                }
+                return this.resolve({ success: true });
+            }
+
+            afterSave(response, options) {
+                if (response.success) {
+                    if (options.send) {
+                        let recurrent = this.recurrent;
+                        let valid = recurrent.disposition && recurrent.date && recurrent.flag && recurrent.user;
+
+                        console.log(recurrent);
+
+                        if (valid) {
+                            this.$.ajax.PUT('/surat-masuk/dispositions/' + recurrent.disposition, {
+                                tdp_recurrent_date: recurrent.date,
+                                tdp_recurrent_user: recurrent.user
+                            });
+                        }
+                    }
+                }
+                return this.resolve({ success: true });
+            }
+
+            __onComboDispositionBeforeload(e) {
+                let params = {};
+
+                if (this.record && this.record.task && this.record.task.tsm_id) {
+                    params = {
+                        tdp_type: 'DISPOSITION',
+                        tdp_tsm_id: this.record.task.tsm_id,
+                        tdp_name: ['<>', '']
+                    };
+                }
+                e.detail.options.params = params;
+            }
+
+            __onDialogFlagProcessTap() {
+                this.$['dialog-flag'].close();
+                this.__flagResolver.resolve(true);
+            }
+
+            __onDialogFlagCancelTap() {
+                this.$['dialog-flag'].close();   
+                this.__flagResolver.resolve(false);
+            }
+        }
+        customElements.define(FormSuratMasukArchive.is, FormSuratMasukArchive);
+    </script>
+</dom-module>

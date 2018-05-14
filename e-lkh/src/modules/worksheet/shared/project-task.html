@@ -45,7 +45,7 @@
             static get observers() {
                 return [
                     '__actionRecordChanged(actionRecord)',
-                    '__formButtonsChanged(formButtons)'
+                    '__formButtonsChanged(formButtons, actionRecord)'
                 ];
             }
 
@@ -213,8 +213,8 @@
                 return (buttons || '').indexOf(type) === -1;
             }
 
-            __formButtonsChanged(buttons) {
-                if (buttons && this.$.role) {
+            __formButtonsChanged(buttons, action) {
+                if (buttons && this.$.role && action != 'create') {
                     if ( ! /remove/.test(buttons)) {
                         this._debounce('authorizeRemove', () => {
                             this.$.role.authorize('manage@application').then(auth => {

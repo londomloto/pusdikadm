@@ -1,0 +1,197 @@
+<link rel="import" href="../../shared/project-task.html">
+
+<link rel="import" href="blocks/surat-masuk-task-prop.html">
+<link rel="import" href="blocks/surat-masuk-task-logs.html">
+<link rel="import" href="blocks/surat-masuk-task-form.html">
+
+<dom-module id="surat-masuk-task">
+    <template>
+        <style include="project-task-style"></style>
+        
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-media screen="{{ screen }}"></kct-media>
+        <kct-event-publisher id="publisher"></kct-event-publisher>
+        <kct-socket manager="global-socket" session="{{ socketSession }}" on-notify="__onSocketNotify"></kct-socket>
+        <kct-role id="role"></kct-role>
+        
+        <kct-vbox class$="layout [[ __computeClass(loading) ]]">
+            <header-block id="header" on-back-tap="__onBackTap" text="[[ formRecord.bf_name ]]" hide-header$="[[ __hideHeader(screen) ]]">
+                <h3 slot="header-value">[[ header ]]</h3>
+
+                <paper-button hidden$="[[ __hideButton('save', formButtons) ]]" disabled$="[[ formInvalid ]]" on-tap="__onSaveTap" class="btn-action primary" slot="right-toolbar" style="margin-left: 8px;">
+                    <iron-icon icon="done"></iron-icon>&nbsp;[[ __computeSaveLabel(actionRecord) ]]
+                </paper-button>
+                
+                <paper-button hidden$="[[ __hideButton('send', formButtons) ]]" disabled$="[[ formInvalid ]]"  on-tap="__onSendTap" class="btn-action info" slot="right-toolbar">
+                    <iron-icon icon="arrow-forward"></iron-icon>&nbsp;Proses
+                </paper-button>
+
+                <paper-button hidden$="[[ __hideButton('remove', formButtons) ]]" on-tap="__onRemoveTap" class="btn-action danger" slot="right-toolbar">
+                    <iron-icon icon="close"></iron-icon>&nbsp;Hapus
+                </paper-button>
+
+                <paper-button hidden$="[[ __hideButton('print', formButtons) ]]" on-tap="__onPrintTap" class="btn-action default" slot="right-toolbar">
+                    <iron-icon icon="print"></iron-icon>&nbsp;Cetak
+                </paper-button>
+
+            </header-block>
+            <div id="workspace" class$="workspace flex [[ screen ]]">
+                
+                <kct-hbox class="workspace-wrapper">
+                    <div class="flex workspace-body">
+                        <surat-masuk-task-form 
+                            id="taskform" 
+                            project="[[ projectRecord ]]" 
+                            record="{{ taskRecord }}" 
+                            workspace="[[ workspaceRecord ]]" 
+                            action="[[ actionRecord ]]" 
+                            form="[[ formRecord ]]" 
+                            user="[[ user ]]" 
+                            route="{{ route }}" 
+                            invalid="{{ formInvalid }}" 
+                            buttons="{{ formButtons }}" 
+                            socket-session="[[ socketSession ]]"
+                            loading="[[ loading ]]"></surat-masuk-task-form>
+
+                        <surat-masuk-task-logs 
+                            id="tasklogs" 
+                            record="{{ taskRecord }}" 
+                            project="[[ projectRecord ]]" 
+                            hidden$="[[ __phantom ]]" 
+                            profile="[[ profile ]]" 
+                            socket-session="[[ socketSession ]]"
+                            loading="[[ loading ]]"></surat-masuk-task-logs> 
+                    </div>
+                    <div class="workspace-side hidden-sm hidden-md">
+                        <surat-masuk-task-prop 
+                            id="taskprop" 
+                            project="[[ projectRecord ]]" 
+                            action="[[ actionRecord ]]" 
+                            record="{{ taskRecord }}" 
+                            workspace="[[ workspaceRecord ]]" 
+                            user="[[ user ]]" 
+                            route="{{ route }}"
+                            loading="[[ loading ]]" 
+                            profile="[[ profile ]]" 
+                            socket-session="[[ socketSession ]]"
+                            on-after-update="__onPropAfterUpdate"></surat-masuk-task-prop>
+                    </div>
+                </kct-hbox>
+
+            </div>
+        </kct-vbox>
+
+        <kct-dialog id="print-dialog" title="Print Surat Masuk" width="400" height="100%" scrollable>
+            <template preserve-content>
+                <style include="theme-helper">
+                    .print-menu paper-button {
+                        display: block;
+                        text-transform: none;
+                    }
+                    .print-menu paper-button iron-icon {
+                        --iron-icon-width: 18px;
+                        --iron-icon-height: 18px;
+                        position: relative;
+                        top: -2px;
+                    }
+                </style>
+                <div slot="dialog-body">
+                    <div class="print-menu">
+                        <template is="dom-repeat" items="[[ prints ]]">
+                            <paper-button on-tap="__onMenuPrintTap"><iron-icon icon="print"></iron-icon>&nbsp;[[ item.text ]]</paper-button>    
+                        </template>
+                    </div>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onDialogPrintCloseTap">Tutup</paper-button>    
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        
+        class SuratMasukTask extends Mixins(KctView).use(Mixins.ProjectTask) {
+            static get is() {
+                return 'surat-masuk-task';
+            }
+
+            static get properties() {
+                return {
+                    profile: { 
+                        type: Object,
+                        value: () => ({
+                            activity: {
+                                scope: 'surat-masuk'
+                            },
+                            service: {
+                                url: '/surat-masuk/kanban'
+                            },
+                            task: {
+                                primary_key: 'tsm_id',
+                                primary_val: null,
+                                project_key: 'tsm_task_project',
+                                due_key: 'tsm_task_due',
+                                due_formatted_key: 'tsm_task_due_formatted',
+                                creator_key: 'tsm_created_by'
+                            },
+                            status: {
+                                primary_key: 'tsms_id',
+                                primary_val: null,
+                                status_key: 'tsms_status',
+                                worker_key: 'tsms_worker',
+                                target_key: 'tsms_target'
+                            }
+                        })
+                    },
+                    prints: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'document', text: 'Print kartu kendali' },
+                            { type: 'document-distributions', text: 'Print distribusi surat' }
+                        ])
+                    }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__computeHeader(taskRecord.task.tsm_no)'
+                ];
+            }
+
+            initialize() {
+                this.set('taskRecord', {
+                    task: {},
+                    status: {},
+                    labels: [],
+                    files: [],
+                    users: [],
+                    perms: {},
+                    authors: [],
+                    distributions: [],
+                    dispositions: []
+                });
+            }
+
+            __computeHeader(identity) {
+                this.set('header', identity || 'Nomor Surat (Belum Ada)');
+            }
+
+            __onPrintTap() {
+                this.$['print-dialog'].open();
+            }
+
+            __onDialogPrintCloseTap() {
+                this.$['print-dialog'].close();
+            }
+
+            __onMenuPrintTap(e) {
+                let item = e.model.item;
+                this.$.ajax.DOWNLOAD('/surat-masuk/print/' + item.type + '/xls/' + this.taskRecord.task.tsm_id);
+            }
+        }
+        
+        customElements.define(SuratMasukTask.is, SuratMasukTask);
+    </script>
+</dom-module>

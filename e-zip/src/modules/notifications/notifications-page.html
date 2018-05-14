@@ -1,0 +1,356 @@
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-html/kct-html.html">
+<link rel="import" href="../../../../cores/elements/kct-feed/kct-feed.html">
+<link rel="import" href="../../../../cores/elements/kct-checkbox/kct-checkbox.html">
+<link rel="import" href="../../../../cores/elements/kct-socket/kct-socket.html">
+<link rel="import" href="../../../../cores/elements/kct-media/kct-media.html">
+<link rel="import" href="../../../../cores/elements/kct-event/kct-event-publisher.html">
+<link rel="import" href="../../../../cores/elements/kct-checkbox/kct-checkbox.html">
+<link rel="import" href="../settings/blocks/setting-header-block.html">
+
+<dom-module id="notifications-page">
+    <template>
+        <style include="theme-helper">
+            :host{ 
+                height: 100%;  
+                background-color: var(--page-background-color);
+            };
+            .item {
+                padding: 5px 10px;
+                color: #666;
+                cursor: pointer;
+                @apply --layout-horizontal;
+            }
+            .item + .item {
+                border-top: 1px solid var(--paper-grey-100);
+            }
+            .item + .item.unread,
+            .item.unread + .item, 
+            .item.unread + .item.unread {
+                border-top-color: #dddfe2;
+            }
+            .item.unread {
+                background-color: #edf2fa;
+            }
+            .item.warning .icon,
+            .item.alert .icon {
+                color: var(--paper-red-500);
+            }
+            .item.objection .icon,
+            .item.response .icon,
+            .item.resolution .icon {
+                color: var(--paper-amber-700);
+            }
+
+            .item:hover:not(.unread) {
+                background-color: var(--paper-grey-100);
+            }
+            .item.unread:hover {
+                background-color: #E5EAF2;
+            }
+            .item > .text {
+                @apply --layout-flex;
+            }
+            .item > .icon {
+                margin-right: 10px;
+                display: block;
+            }
+            .item > .icon iron-icon {
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
+            }
+            .item paper-icon-button {
+                width: 32px;
+                height: 32px;
+                padding: 8px;
+            }
+            
+            .time {
+                font-size: 11px;
+                color: #999;
+            }
+            kct-html {
+                --strong: { font-weight: 600; color: var(--paper-indigo-500);  }; 
+                --paragraph: { font-size: 12px;  }
+            }
+            .paginator {
+                text-align: center;
+                margin-top: 20px;
+            }
+            .paginator paper-button {
+                font-size: 13px;
+                text-transform: none;
+                padding-left: 30px;
+                padding-right: 30px;
+            }
+            .main {
+                background-color: #fff;
+                min-height: calc(100vh - 72px - 55px);
+                padding-bottom: 20px;
+                @apply --shadow-elevation-2dp;
+            }
+            .side {
+                width: 300px;
+
+            }
+            #layout.sm,
+            #layout.md {
+                @apply --layout-vertical;
+            }
+
+            #layout.sm .main,
+            #layout.md .main {
+                min-height: auto;
+                box-shadow: none;
+            }
+            h3 {
+                font-weight: 600;
+                margin: 0 0 5px;
+                font-size: 16px;
+            }
+            kct-checkbox {
+                --paper-checkbox-margin: 0;
+            }
+            .item kct-checkbox {
+                --paper-checkbox-size: 14px;
+                --paper-checkbox-unchecked-color: #888;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-feed subscribed="{{ subscribed }}" id="feed"></kct-feed>
+
+        <kct-media screen="{{ screen }}"></kct-media>
+        <kct-socket manager="global-socket" on-notify="__onSocketNotify"></kct-socket>
+        <kct-event-publisher id="publisher"></kct-event-publisher>
+
+        <kct-vbox>
+            <setting-header-block icon="social:notifications" text="Module" desc="Notifikasi" hide-nav>
+                <div class="separator"></div>
+                <paper-icon-button icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
+            </setting-header-block>
+            <div class="flex scroll-y">
+                <kct-hbox id="layout" class$="[[ screen ]]">
+                    <div class="main flex">
+                        <template is="dom-repeat" items="[[ items ]]">
+                            <div class$="item [[ __computeItemClass(item.ta_type, item.ta_unread) ]]">
+                                <div class="icon">
+                                    <iron-icon icon="[[ item.ta_icon ]]"></iron-icon>
+                                </div>
+                                <div class="text" on-tap="__onItemTap">
+                                    <div class="time">[[ item.ta_time ]]</div>
+                                    <kct-html html="[[ item.ta_verb ]]"></kct-html>    
+                                </div>
+                                <div>
+                                    <paper-icon-button on-tap="__onRemoveItemTap" icon="close"></paper-icon-button>
+                                </div>
+                            </div>
+                        </template>
+                        <div class="paginator">
+                            <paper-button hidden$="[[ !__more ]]" on-tap="__onLoadMoreTap" class="btn-more">Tampilkan data lainnya...&nbsp;<iron-icon icon="arrow-drop-down"></iron-icon></paper-button>    
+                        </div>
+                    </div>
+                    <div class="side padding">
+                        <div class="m-b">
+                            <h3>Notifikasi</h3>
+                            <div>Anda dapat menerima pesan notifikasi dari perangkat yang Anda gunakan pada saat aplikasi tidak aktif.</div>
+                            <div class="m-t">
+                                <kct-hbox>
+                                    <div><kct-checkbox checked="[[ subscribed ]]"></kct-checkbox></div>
+                                    <div class="flex"><a href="javascript:;" on-tap="__onSubToggle">Aktifkan notifikasi</a></div>
+                                </kct-hbox>
+                            </div>    
+                        </div>
+                        
+                    </div>
+                </kct-hbox>
+                                
+            </div>
+        </kct-vbox>
+
+    </template>
+    <script>
+        class NotificationsPage extends KctView {
+            
+            static get is() {
+                return 'notifications-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Notifikasi', notify: true },
+                    items: { type: Array, value: () => ([]) },
+                    setup: { type: Object, value: () => ({}) }
+                };
+            }
+
+            constructor() {
+                super();
+
+                this.__more = false;
+
+                this.__paging = {
+                    start: 0,
+                    limit: 25
+                };
+            }
+
+            ready() {
+                super.ready();
+                this.__load();
+            }
+
+            __computeItemClass(type, unread) {
+                return type + (unread ? ' unread' : '');
+            }
+
+            __computeSubClass(subscribed) {
+                return subscribed ? 'btn-danger' : 'btn-blue';
+            }
+
+            __computeSubLabel(subscribed) {
+                return subscribed ? 'Non-aktifkan Notifikasi' : 'Aktifkan Notifikasi';
+            }
+
+            __load(options = {}) {
+                let payload = Object.assign({}, options);
+
+                if (payload.start === undefined) {
+                    payload.start = this.__paging.start;
+                } else {
+                    this.__paging.start = payload.start;
+                }
+
+                if (payload.limit === undefined) {
+                    payload.limit = this.__paging.limit;
+                } else {
+                    this.__paging.limit = payload.limit;
+                }
+
+                this.$.ajax.GET('/notifications', payload).then(res => {
+                    let data = res.data || [];
+
+                    if (payload.start == 0) {
+                        this.set('items', data);    
+                    } else {
+                        let items = (this.items || []).slice();
+                        Array.prototype.push.apply(items, data);
+                        this.set('items', items);
+                    }
+
+                    this.set('__paging.start', (this.__paging.start + this.__paging.limit));
+                    this.set('__paging.total', res.total);
+
+                    if ( (payload.start + payload.limit) >= res.total ) {
+                        this.set('__more', false);
+                    } else{
+                        this.set('__more', true);
+                    }
+                });
+            }
+
+            __onReloadTap() {
+                this.__load({ start: 0 });
+            }
+
+            __onSubToggle(e) {
+                let action = this.subscribed ? 'unsubscribe' : 'subscribe';
+                let caption = this.subscribed ? 'menonaktifkan' : 'mengaktifkan';
+                
+                this.confirm(
+                    'Konfirmasi',
+                    'Apakah Anda akan ' + caption + ' pesan notifikasi pada perangkat ini?'
+                ).then(y => {
+                    if (y) {
+                        this.mask('Sedang ' + caption + '...');
+
+                        if (action == 'subscribe') {
+                            this.$.feed.subscribe().then(res => {
+                                this.unmask();
+                                if ( ! res.success) {
+                                    this.toast('Peringatan', res.message, 'danger');
+                                }
+                            });
+                        } else {
+                            this.$.feed.unsubscribe().then(res => {
+                                this.unmask();
+                                if ( ! res.success) {
+                                    this.toast('Peringatan', res.message, 'danger');
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+
+            __onItemTap(e) {
+                let item = e.model.item;
+                if (item.ta_link) {
+                    
+                    if (item.ta_type == 'create_lkh_item') {
+                        let payload = JSON.parse(item.ta_data || '{}');
+                        if (payload.lki_date) {
+                            this.set('route.data.lkd_date', payload.lki_date);
+                        }
+                    }
+
+                    this.set('route.path', item.ta_link);
+                }
+                if (item.ta_unread) {
+                    this.$.ajax.POST('/notifications/' + item.ta_id + '/read').then(res => {
+                        if (res.success) {
+                            this.set('items.' + e.model.index + '.ta_unread', false);
+                            this.$.publisher.publish('notification-change', {
+                                item: item.ta_id
+                            });
+                        }
+                    });
+                }
+            }
+
+            __onRemoveItemTap(e) {
+                let item = e.model.item;
+
+                this.$.ajax.DELETE('/activities/' + item.ta_id).then(res => {
+                    if (res.success) {
+                        this.splice('items', e.model.index, 1);
+                        this.$.publisher.publish('notification-change', {
+                            item: item.ta_id
+                        });
+                    }
+                });
+            }
+
+            __onSocketNotify(e) {
+                let payload = e.detail;
+                
+                if (payload.type) {
+                    
+                    let excludes = [
+                        'update_skp_item',
+                        'remove_skp_item',
+                        'update_skp_behavior'
+                    ];
+
+                    if (excludes.indexOf(payload.type) === -1) {
+                        this.__load({ start: 0 });
+                    }
+                } else {
+                    this.__load({ start: 0 });    
+                }
+            }
+
+            __onLoadMoreTap() {
+                let start = this.__paging.start,
+                    limit = this.__paging.limit;
+
+                this.__load({ start: start, limit: limit });
+            }   
+        }
+
+        customElements.define(NotificationsPage.is, NotificationsPage);
+    </script>
+</dom-module>

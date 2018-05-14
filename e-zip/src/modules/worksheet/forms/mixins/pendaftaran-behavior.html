@@ -1,0 +1,79 @@
+<link rel="import" href="../../../../../../cores/mixins/mixins.html">
+
+<script>
+    Mixins.PendaftaranBehavior = Polymer.dedupingMixin(superclass => {
+
+        return class extends superclass {
+
+            static get properties() {
+                return {
+                    passwd1: { type: String },
+                    passwd2: { type: String },
+                    message: { type: String, value: '' },
+                    invalidPassword: { type: Boolean, value: false }
+                };
+            }
+
+            static get observers() {
+                return [
+                    `__computeValidation(
+                        record.task.su_fullname, 
+                        record.task.su_email, 
+                        record.task.su_sr_id,
+                        passwd1,
+                        passwd2
+                    )`,
+                    '__invalidPasswordChanged(invalidPassword)'
+                ];
+            }
+
+            initialize() {
+                this.set('record.perms.update_users', true);
+                this.set('record.perms.update_labels', true);
+            }
+
+            beforeSave(options) {
+                if (this.passwd1) {
+                    this.set('record.task.su_passwd', this.passwd1);
+                }
+
+                return this.resolve({ success: true });
+            }
+
+            __invalidPasswordChanged(invalid) {
+                this.$.passwd1 && (this.$.passwd1.invalid = invalid);
+                this.$.passwd2 && (this.$.passwd2.invalid = invalid);
+            }
+
+            __hideMessage(message) {
+                return !(!!message);
+            }
+
+            __computeValidation(fullname, email, role, passwd1, passwd2) {
+                let valid = true;
+
+                valid = valid && fullname;
+                valid = valid && email;
+                valid = valid && role;
+
+                let validpass = true;
+
+                if (passwd1 || passwd2) {
+                    validpass = passwd1 == passwd2;
+                }
+
+                valid = valid && validpass;
+
+                this.set('invalid', ! valid);
+                this.set('invalidPassword', ! validpass);
+
+            }
+
+            __onMessageCloseTap() {
+                this.set('message', '');
+            }
+            
+        };
+
+    });
+</script>

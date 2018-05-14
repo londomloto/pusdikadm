@@ -15,7 +15,7 @@
     <style>
         html {
             -webkit-font-smoothing: antialiased;
-            --app-font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            --app-font-family: Cambria, 'Segoe UI', Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif;
 
 
             --app-primary-toolbar: {
@@ -381,6 +381,13 @@
                 };
             }
 
+            paper-input paper-icon-button {
+                width: 24px;
+                height: 24px;
+                padding: 2px;
+                color: rgba(0,0,0,.44);
+            }
+
             /** vaadin-combo-box */
             vaadin-combo-box { 
                 padding: 4px 0; 
@@ -616,7 +623,7 @@
                 font-size: 13px;
             }
             .table th {
-                font-weight: 500;
+                font-weight: 600;
                 font-size: 13px;
             }
             .table,
@@ -628,9 +635,16 @@
                 width:100%;
                 display:table;
             }
-            .table.bordered > thead > tr,
+            .table.bordered > thead > tr {
+                border-top:2px solid #d0d0d0;
+                border-bottom:2px solid #d0d0d0;
+            }
             .table.bordered > tbody > tr {
                 border-bottom:1px solid #d0d0d0;
+            }
+            .table.bordered > thead > tr > th + th,
+            .table.bordered > tbody > tr > td + td {
+                border-left: 1px solid #d0d0d0;
             }
             .table.striped > tbody > tr:nth-child(even) {
                 background-color:#f2f2f2;
@@ -656,7 +670,7 @@
             .table th {
                 padding: 8px 5px;
                 display: table-cell;
-                vertical-align: top;
+                vertical-align: middle;
             }
             .table tr.group-row {
                 background-color:#f4f4f4;
@@ -667,6 +681,17 @@
             .table tr.group-row td iron-icon {
                 position: relative;
                 top: -1px;
+            }
+
+            .table paper-icon-button {
+                padding: 4px;
+                width: 28px;
+                height: 28px;
+                color: #555;
+            }
+
+            .table td.action {
+                padding: 3px;
             }
 
             .table th[hidden],

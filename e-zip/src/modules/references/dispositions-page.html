@@ -1,0 +1,376 @@
+<link rel="import" href="../../../../cores/bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../cores/elements/kct-combobox/kct-combobox.html">
+<link rel="import" href="../settings/blocks/setting-header-block.html">
+<link rel="import" href="../worksheet/plugins/combo-user.html">
+<link rel="import" href="../worksheet/plugins/combo-job.html">
+
+<dom-module id="dispositions-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            .card-content {
+                padding: 0;
+                height: 100%;
+                box-sizing: border-box;
+            }
+
+            .card-image {
+                text-align: center;
+                --iron-icon-width: 32px;
+                --iron-icon-height: 32px;
+            }
+
+            .card-image > span {
+                display: inline-block;
+                background-color: var(--paper-cyan-500);
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                text-align: center;
+                line-height: 50px;
+                color: #fff;
+            }
+
+            paper-card h3 {
+                font-size: 14px;
+                font-weight: 600;
+            }
+            paper-card p {
+                font-size: 13px;
+                font-weight: 300;
+            }
+            paper-card .card-actions {
+                border-top: 1px solid #dfdfdf;
+                padding: 5px;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox>
+            <setting-header-block icon="description" text="Konfigurasi" desc="Template Disposisi" on-back-tap="__onBackTap">
+                <div class="separator"></div>
+                <paper-icon-button icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
+                <paper-button on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Tambah</paper-button>
+            </setting-header-block>
+            <div class="flex scroll-y">
+                <div class="padding">
+                    <kct-column columns="5" spacer="15px">
+                        <template is="dom-repeat" items="[[ items ]]">
+                            <paper-card title="[[ item.stp_name ]]">
+                                <div class="card-content">
+                                    <kct-vbox>
+                                        <div>
+                                            <div class="card-image p-a">
+                                                <span><iron-icon icon="social:group"></iron-icon></span>
+                                            </div>
+                                        </div>
+                                        <div class="flex">
+                                            <div class="p-a p-t-0 text-center">
+                                                <h3>[[ item.stp_name ]]</h3>
+                                                <p>[[ __coalesce(item.responsible_su_fullname, '(tidak ada)') ]]</p>    
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="card-actions text-center">
+                                                <paper-button class="btn-sm" on-tap="__onEditTap">Sunting</paper-button>
+                                                <!-- <paper-button class="btn-sm" on-tap="__onKanbanTap">Worksheet</paper-button> -->
+                                                <paper-button class="btn-sm" on-tap="__onDeleteTap" class="text-danger">Hapus</paper-button>
+                                            </div>
+                                        </div>
+                                    </kct-vbox>
+                                </div>
+                                
+                                
+                            </paper-card>
+                        </template>
+                    </kct-column>
+                </div>
+            </div> 
+        </kct-vbox>
+
+        <kct-dialog id="editor" title="Template Disposisi" width="100%" height="100%" scrollable>
+            <template preserve-content>
+                <style include="theme-helper">
+                    td.editable {
+                        padding-top: 0;
+                        padding-bottom: 0;
+                    }
+                    td paper-input,
+                    td kct-combobox {
+                        padding: 0;
+                        --paper-input-container: {
+                            padding: 0;
+                        };
+                        --paper-input-container-input: {
+                            font-size: 14px;
+                        };
+                        --paper-input-container-label: {
+                            font-size: 14px;
+                        };
+                        --paper-input-container-underline: {
+                            display: none;
+                        };
+                    }
+                </style>
+                <div slot="dialog-body">
+                    <kct-column columns="3">
+                        <div>
+                            <combo-job label="Jabatan (Satker)" value="{{ editingRecord.stp_job }}"></combo-job>
+                        </div>
+                        <div>
+                            <paper-input label="Nama Disposisi" value="{{ editingRecord.stp_name }}"></paper-input>
+                        </div>
+                        <div>
+                            <combo-user label="Pembuat Disposisi" value="{{ editingRecord.stp_responsible }}"></combo-user>
+                        </div>
+                    </kct-column>
+
+                    <div class="m-t-lg">
+                        <table class="table bordered">
+                            <thead>
+                                <tr>
+                                    <th style="width: 30px;">&nbsp;</th>
+                                    <th style="width: 30px;">No.</th>
+                                    <th class="text-left">Daftar Penerima Disposisi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template is="dom-repeat" items="[[ editingRecord.subordinates ]]">
+                                    <tr>
+                                        <td class="action text-center">
+                                            <paper-icon-button on-tap="__onRemoveSubordinateTap" icon="close"></paper-icon-button>
+                                        </td>
+                                        <td class="text-center">[[ __computeSequence(index) ]]</td>
+                                        <td>[[ item.su_position ]]</td>
+                                    </tr>
+                                </template>
+                                <tr>
+                                    <td class="action text-center">
+                                        <paper-icon-button on-tap="__onAddSubordinateTap" icon="add"></paper-icon-button>
+                                    </td>
+                                    <td></td>
+                                    <td class="editable">
+                                        <kct-combobox 
+                                            id="combo-job" 
+                                            placeholder="Pilih jabatan..." 
+                                            value="{{ editingSubordinate.su_sj_id }}" 
+                                            url="/jobs" 
+                                            item-label-path="sj_name" 
+                                            item-value-path="sj_id" 
+                                            page-size="10" 
+                                            on-change="__onComboJobChange" 
+                                            no-label-float></kct-combobox>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="m-t-lg">
+                        <table class="table bordered">
+                            <thead>
+                                <tr>
+                                    <th style="width: 30px;">&nbsp;</th>
+                                    <th style="width: 30px;">No.</th>
+                                    <th class="text-left">Daftar Aliran Disposisi</th>
+                                    <th class="text-left">Tujuan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template is="dom-repeat" items="[[ editingRecord.flows ]]">
+                                    <tr>
+                                        <td class="action text-center">
+                                            <paper-icon-button on-tap="__onRemoveFlowTap" icon="close"></paper-icon-button>
+                                        </td>
+                                        <td class="text-center">[[ __computeSequence(index) ]]</td>
+                                        <td>[[ item.sdp_name ]]</td>
+                                        <td>[[ item.sdp_to ]]</td>
+                                    </tr>
+                                </template>
+                                <tr>
+                                    <td class="action text-center">
+                                        <paper-icon-button on-tap="__onAddFlowTap" icon="add"></paper-icon-button>
+                                    </td>
+                                    <td></td>
+                                    <td class="editable">
+                                        <paper-input placeholder="Nama disposisi..." value="{{ editingFlow.sdp_name }}" no-label-float></paper-input>
+                                    </td>
+                                    <td class="editable">
+                                        <paper-input placeholder="Tujuan disposisi..." value="{{ editingFlow.sdp_to }}" no-label-float></paper-input>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button disabled$="[[ editingInvalid ]]" on-tap="__onEditorSaveTap">Simpan</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class DispositionsPage extends KctView {
+            static get is() {
+                return 'dispositions-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Disposisi' },
+                    items: { type: Array, value: () => ([]) },
+                    editingRecord: { type: Object },
+                    editingInvalid: { type: Boolean, value: false },
+                    editingSubordinate: { type: Object, value: () => ({}) },
+                    editingFlow: { type: Object, value: () => ({}) }
+                };
+            }
+            static get observers() {
+                return [
+                    '__computeValidation(editingRecord.stp_name)'
+                ];
+            }
+            handleRouteParams(setting) {
+                if (setting != 'dispositions') return;
+                this.__load();
+            }
+            __load() {
+                this.$.ajax.GET('/dispositions').then(res => {
+                    this.set('items', res.data);
+                });
+            }
+            __coalesce(value, defaults) {
+                return value || defaults;
+            }
+            __computeValidation(name) {
+                let valid = true;
+                valid = valid && !!name;
+                this.set('editingInvalid', !valid);
+            }
+            __computeSequence(index) {
+                return index + 1;
+            }
+            __addSubordinate() {
+                let payload = Object.assign({}, this.editingSubordinate);
+
+                if (payload.su_position) {
+                    payload.su_copy = '0';
+                    payload.su_orig = '0';
+                    payload.su_checked = '0';
+
+                    this.push('editingRecord.subordinates', payload);
+                }
+
+                this.set('editingSubordinate', {});
+            }
+            __addFlow() {
+                let payload = Object.assign({}, this.editingFlow);
+                if (payload.sdp_name) {
+                    this.push('editingRecord.flows', payload);
+                }
+
+                this.set('editingFlow', {});
+            }
+            __onAddTap() {
+                this.set('editingRecord', {
+                    stp_name: '',
+                    stp_responsible: null,
+                    subordinates: [],
+                    flows: []
+                });
+
+                this.set('editingSubordinate', {});
+                this.set('editingFlow', {});
+
+                this.$.editor.open();
+            }
+            __onEditTap(e) {
+                let item = e.model.item;
+                
+                this.set('editingRecord', Object.assign({}, item));
+                
+                this.set('editingSubordinate', {});
+                this.set('editingFlow', {});
+
+                this.$.editor.open();
+            }
+            __onDeleteTap(e) {
+                this.confirm('Konfirmasi', 'Anda yakin akan menghapus template disposisi tersebut?').then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/dispositions/' + e.model.item.stp_id).then(res => {
+                            if (res.success) {
+                                this.__load();
+                            }
+                        });
+                    }
+                });
+            }
+            __onEditorSaveTap() {
+                this.$.editor.close();
+                let payload = this.editingRecord;
+
+                if (this.editingSubordinate.su_position) {
+                    this.__addSubordinate();
+                }
+
+                if (this.editingFlow.sdp_name) {
+                    this.__addFlow();
+                }
+
+                if (payload.stp_id) {
+                    this.$.ajax.PUT('/dispositions/' + payload.stp_id, payload).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/dispositions', payload).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.__load();
+                        this.toast('Sukses', 'Data berhasil disimpan');
+                    }
+                }
+            }
+            __onEditorCloseTap() {
+                this.$.editor.close();
+            }
+            __onComboJobChange(e) {
+                let job = e.target.getModelForValue(e.target.value);
+
+                if (job) {
+                    this.set('editingSubordinate.su_position', job.sj_name);
+                } else {
+                    this.set('editingSubordinate.su_position', null);
+                }
+            }
+            __onAddSubordinateTap() {
+                this.__addSubordinate();
+            }
+            __onAddFlowTap() {
+                this.__addFlow();
+            }
+            __onRemoveSubordinateTap(e) {
+                this.splice('editingRecord.subordinates', e.model.index, 1);
+            }
+            __onRemoveFlowTap(e) {
+                this.splice('editingRecord.flows', e.model.index, 1);
+            }
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+        customElements.define(DispositionsPage.is, DispositionsPage);
+    </script>
+</dom-module>

@@ -47,8 +47,10 @@ abstract class Model extends \Phalcon\Mvc\Model {
             return;
         }
 
-        if (isset($this->{$prop}) && $this->{$prop} == '') {   
-            $this->{$prop} = NULL; 
+        if ( ! isset($this->{$prop})) {
+            $this->{$prop} = NULL;
+        } else if ($this->{$prop} == '') {
+            $this->{$prop} = NULL;
         }
     }
 }

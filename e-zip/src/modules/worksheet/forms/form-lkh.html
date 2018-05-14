@@ -1,0 +1,1040 @@
+<link rel="import" href="mixins/lkh-behavior.html">
+
+<dom-module id="form-lkh">
+    <template>
+        <style include="form-style">
+            :host {
+                margin: -30px;
+            }
+            .tabs {
+                position: relative;
+                background-color: var(--paper-grey-100);
+            }
+
+            .tabs::before {
+                content: ' ';
+                display: block;
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 1px;
+                background-color: #dfdfdf;
+            }
+
+            .tabs paper-tabs {
+                height: 32px;
+                --paper-tabs-scroller-opacity: 0.3;
+                --paper-tabs-selection-bar-color: var(--paper-blue-grey-500);
+                --paper-tabs-selection-bar: {
+                    border-bottom-width: 2px;
+                };
+            }
+
+            .tabs paper-tab {
+                min-width: 100px;
+                font-size: 13px;
+                text-transform: uppercase;
+                
+                --paper-tab-ink: var(--paper-blue-grey-500);
+            }
+
+            .tabs paper-tab[hidden] {
+                display: none;
+            }
+
+            .tabs paper-tab::before {
+                display: none;
+                content: '';
+                background-color: #fff;
+                position: absolute;
+                left: 0;
+                right: 0;
+                top: 0;
+                bottom: 0;
+                border: 1px solid #dfdfdf;
+                border-width: 0 1px 0 1px;
+            }
+
+            .tabs paper-tab.iron-selected::before {
+                display: block;
+            }
+
+            .tabs paper-tab.iron-selected {
+                
+            }
+
+            .tabs-content .page {
+                display: block;
+                padding: 30px;
+            }
+
+            .tabs-content .page[name=kegiatan] {
+                padding: 0;
+            }
+
+            
+
+            .task {
+                min-height: calc(100vh - 128px - 36px);
+            }
+
+            .task-line {
+                width: 2px;
+                box-shadow: -1px 0px 1px rgba(0,0,0,0.2);
+                position: relative;
+                z-index: 2;
+            }
+
+            .task-side {
+                background-color: var(--paper-grey-100);
+                padding-top: 10px;
+            }
+            
+            .task-side paper-listbox {
+                padding: 0;
+                background-color: transparent;
+            }
+            .task-side paper-item {
+                font-weight: normal;
+                cursor: pointer;
+                text-align: center;
+                color: #888;
+                position: relative;
+            }
+            .task-side paper-item::after {
+                content: ' ';
+                display: block;
+                position:  absolute;
+                top: 0;
+                bottom: 0;
+                left: 0;
+                width: 0;
+                height: 0;
+                border-style: solid;
+                border-width: 24px 0 24px 10px;
+                border-color: transparent transparent transparent var(--paper-grey-100);
+            }
+            .task-side paper-item.iron-selected {
+                background-color: var(--app-primary);
+                color: #fff;
+            }
+            .task-side .date {
+                font-weight: 500;
+                font-size: 18px;
+            }
+            .task-side .month {
+                font-size: 10px;
+                font-weight: 300;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }
+
+            .task-main {
+                padding: 20px;
+            }
+
+            .task-day {
+                position: relative;
+            }
+
+            .task-day-title {
+                color: #666;
+                margin: 0 0 20px 0;
+                padding-bottom: 10px;
+                font-size: 13px;
+            }
+
+            .task-day-title h3 {
+                font-size: 14px;
+                font-weight: 500;
+                text-transform: uppercase;
+            }
+            .task-day-title .icon iron-icon {
+                --iron-icon-width: 40px;
+                --iron-icon-height: 40px;
+            }
+
+            .task-day-action {
+                float: right;
+            }
+
+            .task-day-action .btn-remove {
+                color: var(--paper-red-500);
+                text-decoration: underline;
+            }
+
+            .input-task {
+                margin-bottom: 30px;
+                background-color: var(--paper-grey-100);
+                position: relative;
+                border: 1px solid var(--paper-grey-300);
+                border-radius: 3px;
+            }
+            .input-action {
+                padding: 8px;
+            }
+            .input-task paper-input {
+                --paper-input-container-underline: { display: none;  };
+                --paper-input-container-underline-focus: { display: none;  };
+            }
+            .input-wrapper {
+                background-color: #fff;
+                padding: 8px;
+                border-bottom: 1px solid var(--paper-grey-300);
+                border-radius: 3px 3px 0 0;
+            }
+            .input-task paper-icon-button {
+                position: absolute;
+                right: 5px;
+                top: 50%;
+                margin-top: -20px;
+                color: #888;
+            }
+            .input-task paper-button {
+                font-size: 14px;
+                font-weight: 400;
+                text-transform: none;
+                border: 1px solid #ccc;
+                padding: 0.3em 0.7em;
+            }
+            
+
+            .task-item-text {
+                outline: none;
+                height: 100%;
+                @apply --layout-horizontal;
+                @apply --layout-center;
+            }
+            .file-list {
+                margin-top: 5px;
+            }
+            .file-item {
+                padding: 0;
+                display: inline-block;
+                background-color: var(--paper-blue-grey-500);
+                padding:  0 5px 2px 5px;
+                border-radius: 2px;
+                margin-bottom: 3px;
+                color: #fff;
+            }
+            .file-item a {
+                color: #fff;
+                text-decoration: none;
+                font-size: 12px !important;
+            }
+            .file-item:hover a {
+                text-decoration: underline;
+            }
+            .file-item iron-icon {
+                --iron-icon-width: 14px;
+                --iron-icon-height: 14px;
+                cursor: pointer;
+                position: relative;
+                top: -1px;
+            }
+
+            .tabs-content.sm .task-day-action {
+                float: none;
+                text-align: right;
+                margin-bottom: 10px;
+            }
+            .tabs-content.sm .input-action > span {
+                display: block;
+                margin-top: 8px;
+            }
+
+            .table-responsive {
+                position: relative;
+                overflow: hidden;
+            }
+
+            .table-scroller {
+                width: 100%;
+                padding-right: 17px; 
+                overflow-y: scroll;
+                overflow-x: auto;
+            }
+
+            .table-scroller > .table {
+                table-layout: fixed;
+            }
+
+            .table th,
+            .table td {
+                vertical-align: middle;
+                padding: 5px;
+            }
+
+            .table tbody tr.header td {
+                text-align: center;
+                font-weight: 500;
+            }
+
+            .table thead,
+            .table tbody tr.header {
+                border-top: 2px solid #d0d0d0;
+                border-bottom: 2px solid #d0d0d0;
+            }
+            .table tbody tr.group {
+                border-top: 2px solid #d0d0d0;
+            }
+            .table thead tr + tr,
+            .table tbody tr + tr {
+                border-top: 1px solid #d0d0d0;
+            }
+            .table tbody {
+                border-bottom: 2px solid #d0d0d0;
+            }
+            .table tbody tr:hover {
+                background-color: var(--paper-grey-100);
+            }
+            .table th + th,
+            .table td + td {
+                border-left: 1px solid #d0d0d0;
+            }
+
+            .table td.editable {
+                position: relative;
+                padding: 1px;
+                /*background-color: #edf2fa;*/
+            }
+
+            .table paper-input,
+            .table kct-input-number {
+                --paper-input-container: {
+                    padding: 0;
+                };
+                --paper-input-container-input: {
+                    text-align: center;
+                    padding: 5px 0;
+                };
+                --paper-input-container-underline: {
+                    display: none;
+                };
+            }
+
+            .table paper-icon-button {
+                padding: 4px;
+                width: 30px;
+                height: 30px;
+            }
+
+            .table h3 {
+                font-size: 14px;
+                font-weight: 500;
+            }
+
+            .form-section {
+                margin-bottom: 30px; 
+                padding: 20px; 
+                border: 1px solid #dfdfdf; 
+                border-radius: 3px;
+            }
+            .form-section h3 {
+                font-weight: 500;
+            }
+            .table tbody tr:hover {
+                background: none;
+            }
+
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <file-viewer id="viewer"></file-viewer>
+        <kct-socket manager="global-socket" on-notify="__onSocketNotify"></kct-socket>
+
+        <kct-media screen="{{ screen }}"></kct-media>
+
+        <div class="tabs" hidden$="[[ phantom ]]">
+            <paper-tabs id="tabs" attr-for-selected="name" selected="{{ page }}" scrollable no-slide no-bar noink>
+                <paper-tab name="dokumen">Data LKH</paper-tab>
+                <paper-tab name="kegiatan">Form LKH</paper-tab>
+            </paper-tabs>
+        </div>
+
+        <div class$="tabs-content [[ screen ]]">
+            <kct-pages attr-for-selected="name" selected="[[ page ]]">
+                <div class="page" name="dokumen">
+                    <div class="section">
+                        <h3 class="section-title"><span>Periode</span></h3>
+                        <kct-column columns="2">
+                            <div>
+                                <kct-date-picker label="Tanggal Mulai" value="{{ record.task.lkh_start_date }}"></kct-date-picker>
+                            </div>
+                            <div>
+                                <kct-date-picker label="Tanggal Akhir" value="{{ record.task.lkh_end_date }}"></kct-date-picker>
+                            </div>
+                        </kct-column>
+                    </div>
+
+                    <div class="section">
+                        <h3 class="section-title">Pegawai</h3>
+                        <div>
+                            <template is="dom-if" if="[[ phantom ]]">
+                                <combo-user 
+                                    id="combo-user" 
+                                    label="Identitas Pegawai *)" 
+                                    value="{{ record.task.lkh_su_id }}" 
+                                    on-change="__onComboUserChange" 
+                                    required 
+                                    auto-validate 
+                                    error-message="Identitas pegawai wajib diisi"></combo-user>
+                            </template>
+
+                            <template is="dom-if" if="[[ !phantom ]]">
+                                <paper-input label="Identitas Pegawai" value="[[ record.task.lkh_su_fullname ]]"></paper-input>
+                            </template>
+
+                            <kct-column columns="2">
+                                <div>
+                                    <paper-input label="No. Induk" value="[[ record.task.lkh_su_no ]]"></paper-input>
+                                </div>
+                                <div>
+                                    <paper-input label="Pangkat/Gol. Ruang" value="[[ record.task.lkh_su_sg_name ]]"></paper-input>
+                                </div>
+                            </kct-column>
+
+                            <paper-input label="Jabatan" value="[[ record.task.lkh_su_sj_name ]]"></paper-input>
+                            <paper-input label="Unit Kerja" value="[[ record.task.lkh_su_sdp_name ]]"></paper-input>
+
+                        </div>
+                    </div>
+
+                    <kct-column columns="2">
+                        <div>
+                            <div class="section">
+                                <h3 class="section-title">Pemeriksa</h3>
+                                <div>
+                                    <combo-user 
+                                        id="combo-evaluator" 
+                                        label="Nama Pejabat" 
+                                        value="{{ record.task.lkh_evaluator }}" 
+                                        on-change="__onComboEvaluatorChange"></combo-user>
+
+                                    <kct-column columns="2">
+                                        <div>
+                                            <paper-input label="No. Induk" value="[[ record.task.evaluator_su_no ]]"></paper-input>
+                                        </div>
+                                        <div>
+                                            <paper-input label="Pangkat/Gol. Ruang" value="[[ record.task.evaluator_su_sg_name ]]"></paper-input>
+                                        </div>
+                                    </kct-column>
+                                    
+                                    <paper-input label="Jabatan" value="[[ record.task.evaluator_su_sj_name ]]"></paper-input>
+                                    <paper-input label="Unit Kerja" value="[[ record.task.evaluator_su_sdp_name ]]"></paper-input>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="section">
+                                <h3 class="section-title"><span>Atasan Pemeriksa</span></h3>
+                                <div>
+                                    <combo-user 
+                                        id="combo-examiner" 
+                                        label="Nama Pejabat" 
+                                        value="{{ record.task.lkh_examiner }}" 
+                                        on-change="__onComboExaminerChange"></combo-user>
+
+                                    <kct-column columns="2">
+                                        <div>
+                                            <paper-input label="No. Induk" value="[[ record.task.examiner_su_no ]]"></paper-input>
+                                        </div>
+                                        <div>
+                                            <paper-input label="Pangkat/Gol. Ruang" value="[[ record.task.examiner_su_sg_name ]]"></paper-input>
+                                        </div>
+                                    </kct-column>
+                                    
+                                    <paper-input label="Jabatan" value="[[ record.task.examiner_su_sj_name ]]"></paper-input>
+                                    <paper-input label="Unit Kerja" value="[[ record.task.examiner_su_sdp_name ]]"></paper-input>
+                                </div>
+                            </div>
+                        </div>
+                    </kct-column>
+                    
+                </div>
+                <div class="page" name="kegiatan">
+                    
+                    <kct-hbox class="task">
+                        <div class="task-side">
+
+                            <paper-listbox attr-for-selected="name" selected="{{ folder }}">
+                                <template is="dom-repeat" items="[[ folders ]]">
+                                    <paper-item name="[[ item.name ]]">
+                                        <div>
+                                            <div class="date">[[ item.d ]]</div>
+                                            <div class="month">[[ item.m ]]</div>
+                                        </div>
+                                    </paper-item>    
+                                </template>
+                            </paper-listbox>
+                            <button-date hidden$="[[ !record.perms.update ]]" id="button-date" on-change="__onButtonDateChange" icon="add"></button-date>
+                        </div>
+                        <div class="task-line"></div>
+                        <div class="task-main flex">
+                            <iron-pages attr-for-selected="name" selected="[[ folder ]]">
+                                <template is="dom-repeat" items="[[ days ]]" as="day">
+                                    <div class="task-day" name="[[ day.lkd_date ]]">
+                                        <div class="task-day-action" hidden$="[[ !record.perms.update ]]">
+                                            <paper-button on-tap="__onRemoveDayTap" class="btn-remove">Hapus Kegiatan</paper-button>
+                                        </div>
+                                        <div class="task-day-title">
+                                            <kct-hbox>
+                                                <!-- <div class="icon"><iron-icon icon="today"></iron-icon>&nbsp;</div> -->
+                                                <div class="flex">
+                                                    <h3>Kegiatan [[ day.lkd_date_formatted ]]</h3>
+                                                    <div>Dibuat oleh [[ day.creator_su_fullname ]] pada [[ day.lkd_created_dt_formatted ]]</div>    
+                                                </div>
+                                            </kct-hbox>
+                                        </div>
+
+                                        <div class="form-section" hidden$="[[ !record.perms.update ]]">
+                                            <h3>Form Kegiatan</h3>
+                                            <div>
+                                                <paper-input value="{{ day.input.lki_desc }}" label="Uraian tugas (kegiatan)" always-float-label></paper-input>    
+                                            </div>
+                                            <kct-column columns="3">
+                                                <div>
+                                                    <kct-input-number value="{{ day.input.lki_volume }}" label="Volume"  always-float-label></kct-input-number>
+                                                </div>
+                                                <div>
+                                                    <combo-unit value="{{ day.input.lki_unit }}" label="Satuan"  always-float-label></combo-unit>
+                                                </div>
+                                                <div>
+                                                    <kct-input-number mask="#.###" value="{{ day.input.lki_cost }}" label="Biaya"  always-float-label></kct-input-number>
+                                                </div>
+                                            </kct-column>
+                                            <div class="m-t">
+                                                <paper-button disabled$="[[ __computeItemValidation(day.input.lki_desc) ]]" on-tap="__onAddItemTap" class="btn-blue">Tambahkan</paper-button>&nbsp;&nbsp;
+                                                atau tambahkan dari <a href="javascript:;" on-click="__onLookupTap">kegiatan harian</a> yang pernah dilakukan.
+                                            </div>
+                                        </div>
+
+                                        <table class="table">
+                                            <thead>
+                                                <th style="width: 30px;">NO</th>
+                                                <th style="width: 30px;"></th>
+                                                <th style="width: 30px;"></th>
+                                                <th style="width: 300px;">URAIAN TUGAS / KEGIATAN</th>
+                                                <th style="width: 100px;">VOLUME</th>
+                                                <th style="width: 100px;">SATUAN</th>
+                                                <th style="width: 100px;">BIAYA</th>
+                                            </thead>
+                                            <tbody>
+                                                <template is="dom-repeat" items="[[ day.items ]]">
+                                                    <tr>
+                                                        <td class="text-center">[[ __computeSequence(index) ]]</td>
+                                                        <td class="text-center">
+                                                            <paper-icon-button hidden$="[[ !record.perms.update ]]" icon="close" on-tap="__onRemoveItemTap" title="Hapus item"></paper-icon-button>
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <paper-icon-button hidden$="[[ !record.perms.update ]]" icon="file-upload" on-tap="__onUploadItemTap" title="Upload file"></paper-icon-button>
+                                                        </td>
+                                                        <td>
+                                                            <div on-input="__onTaskItemChange" class="task-item-text" contenteditable spellcheck="false">[[ item.lki_text ]]</div>
+                                                            <div class="file-list">
+                                                                <template is="dom-repeat" items="[[ item.files ]]" as="file">
+                                                                    <div class="file-item">
+                                                                        <div class="text">
+                                                                            <iron-icon icon="file-download"></iron-icon>
+                                                                            <a title="download file" on-click="__onOpenFile" class="text" href="javascript:;">[[ file.lkf_orig ]]</a> 
+                                                                            <iron-icon on-tap="__onRemoveFileTap" class="icon-remove" icon="close" hidden$="[[ !record.perms.update ]]"></iron-icon>
+                                                                        </div>
+                                                                    </div>
+                                                                </template>    
+                                                            </div>
+                                                        </td>
+                                                        <td class="editable">
+                                                            <kct-input-number mask="#.###" value="{{ item.lki_volume }}" placeholder="..." on-change="__onItemValueChange" no-label-float></kct-input-number>
+                                                        </td>
+                                                        <td class="text-center">[[ item.lki_unit ]]</td>
+                                                        <td class="editable">
+                                                            <kct-input-number mask="#.###" value="{{ item.lki_cost }}" placeholder="..." on-change="__onItemValueChange" no-label-float></kct-input-number>
+                                                        </td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                        
+                                    </div>
+                                </template>
+                            </iron-pages>
+                        </div>
+                    </kct-hbox>
+
+                </div>
+            </kct-pages>
+        </div>
+
+        <kct-dialog id="exam-dialog" title="Pemeriksaan" width="400" height="100%" scrollable>
+            <template preserve-content>
+                <style include="theme-helper"></style>
+
+                <div slot="dialog-body">
+                    <kct-date-picker value="{{ examRecord.lke_date }}" label="Tanggal Pemeriksaan"></kct-date-picker>
+                    <kct-combobox 
+                        url="/lkh/lkh-flags" 
+                        label="Tindakan" 
+                        value="{{ examRecord.lke_flag }}" 
+                        item-label-path="text" 
+                        item-value-path="name"></kct-combobox>
+                    <paper-input value="{{ examRecord.lke_notes }}" label="Catatan Pemeriksaan"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onExamDialogSave">OK</paper-button>
+                    <paper-button on-tap="__onExamDialogCancel">BATAL</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class FormLkh extends Mixins(FormBase).use(Mixins.LkhBehavior) {
+            static get is() {
+                return 'form-lkh';
+            }
+
+            static get properties() {
+                return {
+                    page: { type: String },
+                    folders: { type: Array, value: () => ([]) },
+                    folder: { type: String, value: '' },
+                    days: { type: Array, value: () => ([]) },
+                    examRecord: { type: Object }
+                }
+            }
+
+            static get observers() {
+                return [
+                    '__computeValidation(record.task.lkh_su_id, record.task.lkh_start_date, record.task.lkh_end_date)',
+                    '__computeSuperiors(record.task.lkh_su_id)'
+                ];
+            }
+
+            setup() {
+
+                this.__registerComponent('combo-examiner');
+                this.__registerComponent('combo-evaluator');
+
+                if (this.action == 'create') {
+
+                    this.__registerComponent('combo-user');
+
+                    this.set('page', 'dokumen');
+                    this.$.tabs.notifyResize();
+                } else {
+                    this.set('page', 'kegiatan');
+                    this.$.tabs.notifyResize();
+                }
+
+                return this.resolve();
+            }
+
+            initialize() {
+
+                if (this.action == 'create') {
+
+                    let today = moment(),
+                        start = today.clone().startOf('month'),
+                        end = today.clone().endOf('month');
+
+                    this.set('record.task.lkh_start_date', start.format('YYYY-MM-DD'));
+                    this.set('record.task.lkh_end_date', end.format('YYYY-MM-DD'));
+                    
+                    this.set('record.task.lkh_su_id', this.user.su_id);
+                    this.set('record.task.lkh_su_fullname', this.user.su_fullname);
+                    this.set('record.task.lkh_su_no', this.user.su_no);
+                    this.set('record.task.lkh_su_sg_name', this.user.su_sg_name);
+                    this.set('record.task.lkh_su_sj_name', this.user.su_sj_name);
+                    this.set('record.task.lkh_su_sdp_name', this.user.su_sdp_name);
+
+                    this.set('days', []);
+                    this.set('buttons', 'save');
+
+                } else {
+                    let buttons = [];
+
+                    switch(this.record.task.lkh_flag) {
+                        case 'TODO':
+                            this.set('record.perms.update', this.record.task.lkh_su_id == this.user.su_id);
+                            this.set('record.perms.update_users', true);
+                            this.set('record.perms.update_labels', true);
+                            this.set('record.perms.remove', this.record.perms.update);
+                            this.set('record.perms.exam', [this.record.task.lkh_evaluator, this.record.task.lkh_examiner].indexOf(this.user.su_id) !== -1);
+                            buttons = ['save', 'send', 'print'];
+                            break;
+                        case 'EXAM':
+                            this.set('record.perms.update', this.record.task.lkh_su_id == this.user.su_id);
+                            this.set('record.perms.update_users', true);
+                            this.set('record.perms.update_labels', true);
+                            this.set('record.perms.remove', this.record.perms.update);
+                            this.set('record.perms.exam', [this.record.task.lkh_evaluator, this.record.task.lkh_examiner].indexOf(this.user.su_id) !== -1);
+
+                            if (this.record.perms.exam) {
+                                buttons = ['save', 'send', 'print'];
+                            } else {
+                                buttons = ['save', 'print'];
+                            }
+
+                            break;
+                        case 'DONE':
+                            
+                            this.set('record.perms.update', false);
+                            this.set('record.perms.update_users', false);
+                            this.set('record.perms.update_labels', false);
+                            this.set('record.perms.remove', false);
+                            this.set('record.perms.exam', false);
+
+                            buttons = ['print'];
+
+                            break;
+                    }
+
+                    if (this.record.perms.remove) {
+                        buttons.push('remove');
+                    }
+
+                    this.set('buttons', buttons.join(','));
+
+                    this.$['button-date'].min = this.record.task.lkh_start_date;
+                    this.$['button-date'].max = this.record.task.lkh_end_date;
+
+                    this.__loadDays();
+                }
+
+                this.__doLayout();
+            }
+
+            beforeSave(options) {
+                let promise = this.resolve({ success: true });
+
+                if (this.action == 'create') {
+                    this.set('record.task.lkh_flag', 'TODO');
+                } else {
+                    if (options.send) {
+
+                        let flag = this.record.task.lkh_flag;
+
+                        if (flag == 'TODO') {
+                            this.set('record.task.lkh_flag', 'EXAM');
+                        } else if (flag == 'EXAM' && this.record.perms.exam) {
+                            promise = this.__examine().then(exam => {
+                                return { success: exam };
+                            });
+                        }
+                    }
+                }
+                return promise;
+            }
+
+            __doLayout() {
+                // hide all table first
+                let tables = this.shadowRoot.querySelectorAll('.table-responsive');
+                
+                tables.forEach(t => {
+                    t.style.display = 'none';
+                });
+
+                let timer = setTimeout(() => {
+                    let width = this.clientWidth - 60;
+
+                    tables.forEach(t => {
+                        t.style.width = width + 'px';
+                        t.style.display = 'block';
+                    });
+
+                    clearTimeout(timer);
+                    timer = null;
+                }, 100);
+            }
+
+            __examine() {
+                this.__examResolver = this.defer();
+
+                this.__initExamRecord();
+                this.$['exam-dialog'].open();
+
+                return this.__examResolver.promise;
+            }
+
+            __onButtonDateChange(e) {
+                let value = e.target.value;
+
+                if (value) {
+                    let index = (this.days || []).findIndex(e => e.lkd_date == value);
+
+                    if (index === -1) {
+                        this.__addDay(value);
+                    } else {
+                        this.set('folder', value);
+                    }
+                }
+            }
+
+            __onRemoveDayTap(e) {
+                let index = e.model.index;
+                let folderIndex = (this.folders || []).findIndex(f => f.name == e.model.day.lkd_date);
+
+                this.confirm('Konfirmasi', 'Hapus kegiatan tersebut?').then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/lkh/lkh-days/' + e.model.day.lkd_id).then(res => {
+                            if (res.success) {
+                                this.set('folder', '');
+
+                                this.splice('folders', folderIndex, 1);
+                                this.splice('days', index, 1);
+                            }
+                        });
+                    }
+                });
+            }
+
+            __onRemoveItemTap(e) {
+                let dayIndex = e.model.parentModel.index;
+
+                this.confirm('Konfirmasi', 'Hapus item kegiatan?').then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/lkh/lkh-items/' + e.model.item.lki_id).then(res => {
+                            if (res.success) {
+                                this.splice('days.' + dayIndex + '.items', e.model.index, 1);
+                            }
+                        });
+                    }
+                });
+            }
+
+            __onUpdateItemTap(e) {
+                let payload = e.model.item;
+                this.$.ajax.PUT('/lkh/lkh-items/' + payload.lki_id, payload).then(res => {
+                    if (res.success) {
+                        this.toast('Informasi', 'Perubahan data sudah disimpan', 'info');
+                    }
+                });
+            }
+
+            __onItemValueChange(e) {
+                this.__saveItem(e.model.item);
+            }
+
+            __onUploadItemTap(e) {
+                let browser = document.createElement('kct-file');
+                let dayIndex = e.model.parentModel.index;
+                let item = e.model.item;
+
+                browser.addEventListener('change', () => {
+
+                    let file = browser.file().files[0];
+                    if (file) {
+                        this.$.ajax.UPLOAD('/lkh/lkh-items/' + item.lki_id + '/upload', {
+                            files: [
+                                { name: 'userfile', file: file }
+                            ]
+                        }).then(res => {
+                            if (res.success) {
+                                this.push('days.' + dayIndex + '.items.' + e.model.index + '.files', res.data);
+                            }
+                        });
+                    }
+
+                    browser.parentNode.removeChild(browser);
+                });
+                
+                this.shadowRoot.appendChild(browser);
+                browser.browse();
+            }
+
+            __onOpenFile(e) {
+                let model = e.model.file;
+                this.$.viewer.open(model.lkf_url, model.lkf_mime);
+            }
+
+            __onRemoveFileTap(e) {
+                let file = e.model.file;
+                let dayIndex = e.model.parentModel.parentModel.index;
+                let itemIndex = e.model.parentModel.index;
+
+                this.$.ajax.DELETE('/lkh/lkh-files/' + file.lkf_id).then(res => {
+                    this.splice('days.' + dayIndex + '.items.' + itemIndex + '.files', e.model.index, 1);
+                });
+            }
+
+            __onAddItemTap(e) {
+                this.__addDayItem(e.model.day.input, e.model.index);
+            }
+
+            __onComboUserChange(e) {
+                let user = e.target.getModelForValue(e.target.value);
+
+                if (user) {
+                    this.set('record.task.lkh_su_no', user.su_no);
+                    this.set('record.task.lkh_su_sg_name', user.su_sg_name);
+                    this.set('record.task.lkh_su_sdp_name', user.su_sdp_name);
+                    this.set('record.task.lkh_su_sj_name', user.su_sj_name);
+
+                } else {
+                    this.set('record.task.lkh_su_no', '');
+                    this.set('record.task.lkh_su_sg_name', '');
+                    this.set('record.task.lkh_su_sdp_name', '');
+                    this.set('record.task.lkh_su_sj_name', '');
+                }
+            }
+
+            __onComboExaminerChange(e) {
+                let user = e.target.getModelForValue(e.target.value);
+
+                if (user) {
+                    this.set('record.task.examiner_su_no', user.su_no);
+                    this.set('record.task.examiner_su_sg_name', user.su_sg_name);
+                    this.set('record.task.examiner_su_sdp_name', user.su_sdp_name);
+                    this.set('record.task.examiner_su_sj_name', user.su_sj_name);
+
+                    this.__addAssignee(user);
+
+                } else {
+                    this.set('record.task.examiner_su_no', '');
+                    this.set('record.task.examiner_su_sg_name', '');
+                    this.set('record.task.examiner_su_sdp_name', '');
+                    this.set('record.task.examiner_su_sj_name', '');
+                }
+            }
+
+            __onComboEvaluatorChange(e) {
+                let user = e.target.getModelForValue(e.target.value);
+                
+                if (user) {
+                    this.set('record.task.evaluator_su_no', user.su_no);
+                    this.set('record.task.evaluator_su_sg_name', user.su_sg_name);
+                    this.set('record.task.evaluator_su_sdp_name', user.su_sdp_name);
+                    this.set('record.task.evaluator_su_sj_name', user.su_sj_name);
+
+                    this.__addAssignee(user);
+
+                } else {
+                    this.set('record.task.evaluator_su_no', '');
+                    this.set('record.task.evaluator_su_sg_name', '');
+                    this.set('record.task.evaluator_su_sdp_name', '');
+                    this.set('record.task.evaluator_su_sj_name', '');
+                }
+            }
+
+            __onLookupTap(e) {
+                let dayIndex = e.model.index;
+                let dayRecord = this.get('days.' + dayIndex);
+
+                if ( ! this.$['lookup-items']) {
+                    Polymer.importHref(this.resolveUrl('../plugins/lookup-items.html'), () => {
+                        let lov = document.createElement('lookup-items');
+                        
+                        lov.addEventListener('beforeload', e => {
+                            e.detail.options.lookup = 'lkh';
+                            e.detail.options.params = {
+                                ti_user: this.record.task.lkh_su_id
+                            };
+                        });
+
+                        lov.addEventListener('close', () => {
+                            lov.selection.forEach(item => {
+
+                                let data = {
+                                    lki_lkd_id: dayRecord.lkd_id,
+                                    lki_desc: item.lki_desc,
+                                    lki_date: dayRecord.lkd_date,
+                                    lki_volume: 1,
+                                    lki_unit: 'dokumen',
+                                    lki_cost: null,
+                                    lki_ti_id: item.lki_ti_id
+                                };
+
+                                this.set('days.' + dayIndex + '.lkd_busy', false);
+
+                                this.$.ajax.POST('/lkh/lkh-items', data).then(res => {
+                                    if (res.success) {
+                                        this.push('days.' + dayIndex + '.items', res.data);
+                                        this.trigger('after-update');
+                                    }
+                                    this.set('days.' + dayIndex + '.lkd_busy', false);
+                                });
+                            });
+                        });
+                        this.shadowRoot.appendChild(lov);
+                        lov.open();
+                        this.$['lookup-items'] = lov;
+                    });
+                } else {
+                    this.$['lookup-items'].open();
+                }
+            }
+            
+            __onInputKeydown(e) {
+                if (e.code == 'Enter') {
+                    this.__addDayItem(e.model.day.input, e.model.index);
+                }
+            }
+
+            __onTaskItemToggle(e) {
+                let dayIndex = e.model.parentModel.index;
+                let model = e.model.item;
+                this.set('days.' + dayIndex + '.items.' + e.model.index + '.lki_expand', !model.lki_expand);
+            }
+
+            __onTaskItemChange(e) {
+                let dayIndex = e.model.parentModel.index;
+                let text = e.target.textContent;
+                this.set('days.' + dayIndex + '.items.' + e.model.index + '.lki_desc', text);
+                this.__saveItem(e.model.item);
+            }
+
+            __onSocketNotify(e) {
+                let payload = e.detail;
+                let project = this.project && this.project.sp_id;
+                let task = this.record && this.record.task && this.record.task.lkh_id;
+
+                if (project == payload.project && task == payload.task) {
+                    switch(payload.type) {
+                        case 'create_lkh_item':
+                            let json = JSON.parse(payload.data || '{}');
+                            let dayIndex = (this.days || []).findIndex(elem => elem.lkd_date == json.lki_date);
+                            
+                            if (dayIndex !== -1) {
+                                this.$.ajax.GET('/lkh/lkh-items', {
+                                    params: {
+                                        lki_lkd_id: this.get('days.' + dayIndex + '.lkd_id')
+                                    }
+                                }).then(res => {
+                                    let items = res.data || [];
+                                    this.set('days.' + dayIndex + '.items', items);
+                                });
+                            }
+
+                            break;
+                    }
+                }
+            }
+
+            __onExamDialogSave() {
+                this.$['exam-dialog'].close();
+
+                let payload = Object.assign({}, this.examRecord);
+
+                if (payload.lke_id) {
+                    this.$.ajax.PUT('/lkh/lkh-exams/' + payload.lke_id, payload).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/lkh/lkh-exams', payload).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.set('record.task.lkh_flag', res.data.lke_flag);
+                        this.__examResolver.resolve(true);
+                    }
+                }
+            }
+
+            __onExamDialogCancel() {
+                this.$['exam-dialog'].close();
+                this.__examResolver.resolve(false);
+            }
+        }
+        customElements.define(FormLkh.is, FormLkh);
+    </script>
+</dom-module>

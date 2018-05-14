@@ -1,0 +1,45 @@
+WS-TEAM:
+- Pertama kali masuk mirip trello
+- Ada tombol create (persis kaya sekarang) 
+- dihalaman worksheet
+- waktu dicreate ada wizard
+
+- wizard1:
+    -deskripsi
+
+- wizard2;
+    -pilih flow (mirip taskworld    )
+
+- wizard3:
+    - pilih user (bisa langsung invite)
+
+- tampilan email konfirmasi
+    - nama lengkap
+    - dll.
+- kemudian tampil worksheet (kanban)
+- ada setting2 disetiap list
+- form
+    
+BREAKDOWN
+1. CREATE (1 HARI)
+    - ada gambar template (sample)
+2. WIZARD (2 HARI)
+    - DESKRIPSI + USER + INVITE
+    - FLOW (SAMPLE TASKWORLD)
+        - TODO, DOING, DONE
+        - BACKLOG, TODO, DOING
+    - langsung ke halaman project
+3. WORKSHEET (1 HARI)
+    - Button Back
+    - Isi combo flow jadi project ( + add) ganti2
+        - combo pendek, tetapi list popup'nya lebar
+4. FORM (1 HARI)
+    - ADD/EDIT
+        - Activity (vidi) (hanya muncul: editing)
+        - Inject:
+            - title (creator tercatat)
+            - deskripsi
+        - Assignee
+        - Due date
+        - Label
+        - Status

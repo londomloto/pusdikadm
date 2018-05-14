@@ -1,0 +1,409 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-spinner/paper-spinner-lite.html">
+<link rel="import" href="../../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../../cores/elements/kct-checkbox/kct-checkbox.html">
+
+<dom-module id="lkh-report">
+    <template>
+        <style include="lkh-page-style">
+
+            paper-spinner-lite {
+                
+            }
+
+            .main, 
+            .side {
+                height: calc(100vh - 128px);
+            }
+
+            .page  {
+                padding: 20px;
+                box-sizing: border-box;
+            }
+
+            .table {
+                margin-bottom: 15px;
+            }
+
+            .table thead {
+                border-top: 2px solid #d0d0d0;
+                border-bottom: 2px solid #d0d0d0;
+            }
+
+            .table.report-header td,
+            .table.report-subheader td,
+            .table.report-footer td {
+                padding: 3px 5px;
+            }
+
+            .tabs {
+                box-sizing: border-box;
+                background-color: #fff;
+                border-top: 2px solid var(--tabs-border-color, var(--paper-blue-grey-500));
+            }
+
+            paper-tabs {
+                height: 32px;
+                font-weight: normal;
+                --paper-tabs-scroller-opacity: 0.3;
+                --paper-tabs-selection-bar-color: var(--paper-blue-grey-500);
+            }
+
+            paper-tab {
+                min-width: 40px;
+                position: relative;
+                --paper-tab-ink: var(--paper-blue-grey-500);
+            }
+
+            paper-tab.iron-selected {
+                color: #fff;
+            }
+
+            paper-tab .overlay {
+                display: none;
+                position: absolute;
+                top: 0;
+                left: -12px;
+                right: -12px;
+                bottom: 0;
+            }
+
+            paper-tab .caption {
+                position: relative;
+                z-index: 2;
+                font-size: 12px;
+                font-weight: bold;
+            }
+
+            paper-tab.iron-selected .overlay {
+                display: block;
+            }
+
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox class="container">
+            <setting-header-block 
+                icon="today" 
+                text="Laporan"
+                desc$="LKH [[ sheetRecord.sheet_fullname ]] Periode [[ sheetRecord.sheet_period ]]" 
+                on-back-tap="__onBackTap">
+                <paper-icon-button slot="right-toolbar" icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
+                <paper-icon-button slot="right-toolbar" icon="print" on-tap="__onPrintTap"></paper-icon-button>
+                <paper-icon-button slot="right-toolbar" icon="search" on-tap="__onOpenDrawerTap"></paper-icon-button>
+            </setting-header-block>
+
+            <div class="flex">
+                <app-drawer-layout id="drawer-layout" force-narrow>
+                    <app-drawer id="drawer" slot="drawer" align="end">
+                        <app-toolbar>
+                            <paper-icon-button icon="close" on-tap="__onCloseDrawerTap"></paper-icon-button>
+                        </app-toolbar>
+                        <div class="side">
+                            <h3>Parameter</h3>
+                            <div>
+                                <combo-user 
+                                    url="/lkh/observable-users"
+                                    label="Pegawai" 
+                                    value="{{ params.user }}"></combo-user>
+
+                                <kct-date-picker 
+                                    label="Dari Tanggal" 
+                                    value="{{ params.start_date }}"></kct-date-picker>
+
+                                <kct-date-picker 
+                                    label="Sampai Tanggal" 
+                                    value="{{ params.end_date }}"></kct-date-picker>
+                            </div>
+                            <div class="m-t">
+                                <paper-button disabled$="[[ loading ]]" on-tap="__onQueryTap" class="btn-primary">Query Data</paper-button>
+                            </div>
+                        </div>
+                    </app-drawer>
+                    <div class="main">
+                        
+                        <kct-vbox>
+                            <div class="flex scroll-y">
+
+                                <div class="page">
+                                    <div class="text-center" hidden$="[[ !loading ]]">
+                                        <paper-spinner-lite active></paper-spinner-lite>    
+                                    </div>
+                                    <div hidden$="[[ loading ]]">
+                                        <table class="table report-header">
+                                            <tbody>
+                                                <tr>
+                                                    <td class="text-center"><h3>LAPORAN KINERJA BULANAN</h3></td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-center"><h4>Bulan [[ reportRecord.lkh_period ]]</h4></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        <table class="table report-subheader">
+                                            <tbody>
+                                                <tr>
+                                                    <td style="width: 150px;">Nama Pegawai</td>
+                                                    <td style="width: 10px;">:</td>
+                                                    <td><strong>[[ reportRecord.lkh_su_fullname ]]</strong></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>No. Induk</td>
+                                                    <td>:</td>
+                                                    <td>[[ reportRecord.lkh_su_no ]]</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Pangkat / Gol.Ruang</td>
+                                                    <td>:</td>
+                                                    <td>[[ reportRecord.lkh_su_sg_name ]]</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Unit Kerja</td>
+                                                    <td>:</td>
+                                                    <td>[[ reportRecord.lkh_su_sdp_name ]]</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        <table class="table bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width: 40px;">NO</th>
+                                                    <th style="width: 80px;">TANGGAL</th>
+                                                    <th class="text-left">URAIAN KEGIATAN</th>
+                                                    <th style="width: 120px;">VOLUME</th>
+                                                    <th style="width: 120px;">SATUAN</th>
+                                                    <th style="width: 120px;" class="text-right">BIAYA (IDR)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <template is="dom-repeat" items="[[ reportRecord.items ]]">
+                                                    <tr>
+                                                        <td class="text-center">[[ item.lki_index ]]</td>
+                                                        <td class="text-center">[[ item.lki_group ]]</td>
+                                                        <td>[[ item.lki_desc ]]</td>
+                                                        <td class="text-center">[[ item.lki_volume ]]</td>
+                                                        <td class="text-center">[[ item.lki_unit ]]</td>
+                                                        <td class="text-right">[[ item.lki_cost_formatted ]]</td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                        <table class="table report-footer">
+                                            <tbody>
+                                                <tr>
+                                                    <td>Mengetahui</td>
+                                                    <td></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>[[ reportRecord.evaluator_su_sdp_name ]]</td>
+                                                    <td>[[ reportRecord.lkh_su_sdp_name ]]</td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="padding: 20px 5px;"></td>
+                                                    <td style="padding: 20px 5px;"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong><u>[[ reportRecord.evaluator_su_fullname ]]</u></strong></td>
+                                                    <td><strong><u>[[ reportRecord.lkh_su_fullname ]]</u></strong></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>[[ reportRecord.evaluator_su_no ]]</td>
+                                                    <td>[[ reportRecord.lkh_su_no ]]</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    
+                                    
+                                </div>
+
+                                
+                            </div>
+                            <div class="tabs">
+                                <paper-tabs selected="{{ sheetIndex }}" no-bar scrollable align-bottom>
+                                    <template is="dom-repeat" items="[[ sheets ]]">
+                                        <paper-tab>
+                                            <div class="overlay" style$="background-color: [[ item.sheet_accent ]]"></div>
+                                            <span class="caption">[[ item.sheet_period ]]</span>
+                                        </paper-tab>
+                                    </template>
+                                </paper-tabs>
+                            </div>
+                        </kct-vbox>
+
+                    </div>
+                </app-drawer-layout>
+            </div>
+
+        </kct-vbox>
+
+        <kct-dialog id="report-dialog" title="Cetak Laporan" width="400" height="100%" scrollable>
+            <template preserve-content>
+                <style>
+                    kct-checkbox {
+                        display: block;
+                        --paper-checkbox-margin: 5px 0;
+                    }
+                </style>
+                <div slot="dialog-body">
+                    <div style="margin-bottom: 15px;">Pilih periode yang akan dicetak:</div>
+                    <kct-checkbox value="1" on-change="__onPrintAllSheetChange">Pilih Semua</kct-checkbox>
+                    <template is="dom-repeat" items="{{ sheets }}">
+                        <kct-checkbox value="{{ item.sheet_print }}">[[ item.sheet_period ]]</kct-checkbox>
+                    </template>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onDialogPrintTap">PRINT</paper-button>
+                    <paper-button on-tap="__onDialogCancelTap">BATAL</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class LkhReport extends Mixins(KctView).use(Mixins.LkhPageBehavior) {
+            static get is() {
+                return 'lkh-report';
+            }
+            static get properties() {
+                return {
+                    params: { type: Object },
+                    sheets: { type: Array, value: () => ([]) },
+                    sheetRecord: { type: Object, value: () => ({}) },
+                    sheetIndex: { type: Number, value: -1 },
+                    reportRecord: { type: Object, value: () => ({}) },
+                    loading: { type: Boolean, value: false }
+                };
+            }
+            static get observers() {
+                return [
+                    '__sheetIndexChanged(sheetIndex)'
+                ];
+            }
+            handleRouteParams(page) {
+                if (page != 'report') return;
+
+                // init params
+                let today = moment();
+                let startDate = today.clone().startOf('year').format('YYYY-MM-DD');
+                let endDate = today.clone().endOf('year').format('YYYY-MM-DD');
+
+                this.set('params', {
+                    user: this.user.su_id,
+                    start_date: startDate,
+                    end_date: endDate
+                });
+
+                this.__loadPages();
+            }
+
+            __computeSequence(index) {
+                return index + 1;
+            }
+
+            __sheetIndexChanged(index) {
+                if (index !== -1) {
+                    let sheetRecord = this.get('sheets.' + index);
+
+                    this.set('sheetRecord', Object.assign({}, sheetRecord));
+                    
+                    this.updateStyles({
+                        '--tabs-border-color': sheetRecord.sheet_accent
+                    });
+
+                    this.__loadSheet(index);
+                } else {
+                    this.set('sheetRecord', {});
+                }
+            }
+
+            __reload() {
+                this.set('sheetIndex', -1);
+                this.set('sheets', []);
+                this.__loadPages();
+            }
+
+            __loadPages() {
+                let payload = this.params;
+                this.$.ajax.GET('/lkh/report/sheets', payload).then(res => {
+                    if (res.success) {
+                        let sheets = res.data || [];
+                        this.set('sheets', sheets);
+                        if (sheets.length) {
+                            this.set('sheetIndex', 0);
+                        }
+                    }
+                });
+            }
+
+            __loadSheet(index) {
+                let sheetRecord = this.get('sheets.' + index);
+
+                if (sheetRecord) {
+
+                    this.set('loading', true);
+
+                    this.$.ajax.GET('/lkh/report/' + sheetRecord.sheet_id).then(res => {
+                        
+                        this.set('loading', false);
+
+                        if (res.success) {
+                            this.set('reportRecord', res.data);
+                        }
+                    });
+                }
+                
+            }
+
+            __onQueryTap() {
+                this.__reload();
+            }
+
+            __onReloadTap() {
+                this.__reload();
+            }
+
+            __onPrintTap() {
+                this.$['report-dialog'].open();
+            }
+
+            __onDialogPrintTap() {
+                this.$['report-dialog'].close();
+                
+                let sheets = (this.sheets || [])
+                    .filter(e => {
+                        return e.sheet_print == 1;
+                    })
+                    .map(e => {
+                        return e.sheet_id;
+                    });
+
+                if (sheets.length) {
+                    let payload = {
+                        user: this.params.user,
+                        start_date: this.params.start_date,
+                        end_date: this.params.end_date,
+                        sheets: sheets
+                    };
+
+                    this.$.ajax.DOWNLOAD('/lkh/print/report/xls', payload);
+                }
+            }
+
+            __onDialogCancelTap() {
+                this.$['report-dialog'].close();
+            }
+
+            __onPrintAllSheetChange(e) {
+                let checked = e.target.checked;
+
+                (this.sheets || []).forEach((s, i) => {
+                    let print = checked ? '1' : '0';
+                    this.set('sheets.' + i + '.sheet_print', print);
+                });
+            }
+        }
+        customElements.define(LkhReport.is, LkhReport);
+    </script>
+</dom-module>

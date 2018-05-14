@@ -1,0 +1,178 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-spinner/paper-spinner.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+
+<dom-module id="file-viewer">
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-dialog id="dialog" title="Document Viewer" width="100%" height="100%" on-ready="__onDialogReady">
+            <template preserve-content>
+                <style include="theme-helper">
+                    #browser {
+                        width: 100%;
+                        height: 100%;
+                        border: none;
+                    }
+                    #masker {
+                        position: absolute;
+                        left: 50%;
+                        top: 50%;
+                        width: 160px;
+                        margin-left: -80px;
+                        margin-top: -27px;
+                        text-align: center;
+                    }
+                    #masker[hidden] {
+                        display: none;
+                    }
+                    #masker span {
+                        position: relative;
+                        top: -8px;
+                    }
+                    .dialog-header {
+                        color: #fff;
+                        background: #D1D1D1;
+                        display: none;
+                    }
+                    .dialog-body {
+                        background: #fff;
+                        padding: 0;
+                    }
+                    .dialog-body-content {
+                        height: 100%;
+                    }
+                    .main {
+                        height: 100%;
+                    }
+                </style>
+                <div class="main" slot="dialog-body">
+                    <iframe id="browser"></iframe>
+                    <paper-card id="masker" hidden$="[[ !busy ]]">
+                        <div class="card-content">
+                            <paper-spinner active></paper-spinner>
+                            <span>&nbsp;Loading...</span>
+                        </div>
+                    </paper-card>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onSaveTap">Download</paper-button>
+                    <paper-button on-tap="__onCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+    </template>
+    <script>
+        class FileViewer extends Polymer.Element {
+            static get is() {
+                return 'file-viewer';
+            }
+            static get properties() {
+                return {
+                    file: { type: String },
+                    busy: { type: Boolean, value: false }
+                };
+            }
+            constructor() {
+                super();
+                this.__loadHandler = this.__onLoad.bind(this);
+            }
+            disconnectedCallback() {
+                if (this.$.browser) {
+                    this.$.browser.removeEventListener('load', this.__loadHandler);
+                    this.$.browser.removeEventListener('error', this.__loadHandler);    
+                }
+                super.disconnectedCallback();
+            }
+            open(file, mime = null) {
+                this.$.dialog.open();
+                let gv = true;
+
+                if (mime) {
+                    if (/pdf/.test(mime)) {
+                        // check installed plugins
+                        let plugins = (window.navigator.plugins || []);
+                        let found = false;
+
+                        for (let i = 0, j = plugins.length; i < j; i++) {
+                            let name = (plugins[i].name).toLowerCase();
+                            if (/pdf/.test(name)) {
+                                found = true;
+                                break;
+                            }
+                        }
+
+                        if (found) {
+                            gv = false;
+                        }
+                    } else if (/(image|text)/.test(mime)) {
+                        gv = false;
+                    }
+                }
+
+                let src = '';
+
+                if (gv) {
+                    src = 'https://docs.google.com/viewer?url=' + file + '&embedded=true';
+                } else {
+                    src = file;
+                }
+
+                this.set('busy', true);
+                this.set('file', file);
+
+                this.$.browser.src = src;
+            }
+            close() {
+                this.$.browser.src = '';
+                this.$.dialog.close();
+            }
+            __onDialogReady() {
+                this.$.browser.addEventListener('load', this.__loadHandler);
+                this.$.browser.addEventListener('error', this.__loadHandler);
+            }
+            __onLoad(e) {
+                this.set('busy', false);
+            }
+            __onSaveTap() {
+                if ( ! this.file) {
+                    return;
+                }
+
+                let path = this.file.substr(this.file.indexOf('public/resources'));
+                
+                if (path) {
+                    this.$.ajax.__resolveUrl('/assets/download').then(url => {
+                        let link = document.createElement('a');
+
+                        link.href = url + '?s=' + path;
+                        link.target = '_blank';
+                        link.style.display = 'none';
+                        
+                        document.body.appendChild(link);
+                        
+                        link.click();
+
+                        let timer = setTimeout(() => {
+                            clearTimeout(timer);
+                            timer = null;
+                            document.body.removeChild(link);
+                        }, 10);
+                    });
+                }
+            }
+            __onCloseTap() {
+                this.close();
+            }
+        }
+        customElements.define(FileViewer.is, FileViewer);
+    </script>
+</dom-module>

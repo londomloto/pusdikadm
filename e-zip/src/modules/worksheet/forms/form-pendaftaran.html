@@ -1,0 +1,116 @@
+<link rel="import" href="mixins/pendaftaran-behavior.html">
+
+<dom-module id="form-pendaftaran">
+    <template>
+        <style include="form-style"></style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="message" hidden$="[[ __hideMessage(message) ]]">
+            <div class="message-tool">
+                <paper-icon-button on-tap="__onMessageCloseTap" icon="close"></paper-icon-button>
+            </div>
+            <div class="message-body">
+                <div class="message-title">PERHATIAN</div>
+                <div class="message-content">[[ message ]]</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">DATA PEGAWAI</h3>
+            <div>
+                <kct-column columns="2">
+                    <div>
+                        <paper-input label="Nama Lengkap *" value="{{ record.task.su_fullname }}" required auto-validate error-message="Nama lengkap wajib diisi"></paper-input>
+                        <paper-input label="Jenis Kelamin" value="{{ record.task.su_sex }}"></paper-input>
+                        <paper-input label="Tempat Lahir" value="{{ record.task.su_pob }}"></paper-input>
+                        <kct-date-picker label="Tanggal Lahir" value="{{ record.task.su_dob }}"></kct-date-picker>
+                        <paper-input label="No. Telepon" value="{{ record.task.su_phone }}"></paper-input>
+                    </div>
+                    <div>
+                        <paper-input label="No. Induk Pagawai" value="{{ record.task.su_no }}"></paper-input>
+                        
+                        <combo-grade label="Pangkat / Gol. Ruang" value="{{ record.task.su_sg_id }}"></combo-grade>
+                        <combo-job label="Jabatan (Pekerjaan)" value="{{ record.task.su_sj_id }}"></combo-job>
+                        <combo-department label="Unit Kerja" value="{{ record.task.su_sdp_id }}"></combo-department>
+
+                        <kct-combobox 
+                            url="/company" 
+                            label="Organisasi" 
+                            value="{{ record.task.su_scp_id }}" 
+                            page-size="10" 
+                            item-label-path="scp_name" 
+                            item-value-path="scp_id"></kct-combobox>
+                    </div>
+                </kct-column>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">DATA AKUN</h3>
+            <div>
+                <kct-column columns="2">
+                    <div>
+                        <paper-input type="email" label="Alamat Email *" value="{{ record.task.su_email }}" required auto-validate error-message="Alamat email harus valid"></paper-input>
+                        <kct-combobox 
+                            url="/roles" 
+                            label="Group Akses (Role) *" 
+                            value="{{ record.task.su_sr_id }}" 
+                            page-size="10" 
+                            item-label-path="sr_name" 
+                            item-value-path="sr_id" 
+                            required 
+                            auto-validate 
+                            error-message="Group akses wajib diisi"></kct-combobox>
+                    </div>
+                    <div>
+                        <paper-input id="passwd1" type="password" label="Password" value="{{ passwd1 }}"></paper-input>
+                        <paper-input id="passwd2" type="password" label="Konfirmasi Password" value="{{ passwd2 }}" error-message="Password tidak cocok"></paper-input>
+                    </div>
+                </kct-column>
+                
+                
+                
+            </div>
+        </div>
+
+    </template>
+    <script>
+        class FormPendaftaran extends Mixins(FormBase).use(Mixins.PendaftaranBehavior) {
+            static get is() {
+                return 'form-pendaftaran';
+            }
+
+            initialize() {
+                super.initialize();
+                
+                if (this.action == 'create') {
+                    this.set('buttons', 'save');
+                } else {
+                    
+                    if (this.record.task.su_task_flag == 'REVISION') {
+                        this.set('message', 'Berdasarkan hasil verifikasi, data pegawai berikut ini tidak otentik. Silakan lakukan perbaikan data, kemudian proses kembali.');
+                    }
+
+                    this.set('buttons', 'save,send,remove');
+                }
+            }
+
+            beforeSave(options) {
+                super.beforeSave(options);
+
+                if (this.action == 'create') {
+                    this.set('record.task.su_task_flag', 'TODO');
+                } else {
+                    if (options.send) {
+                        this.set('record.task.su_task_flag', 'VERIFICATION');
+                    }
+                }
+
+                return this.resolve({ success: true });
+            }
+            
+        }
+        customElements.define(FormPendaftaran.is, FormPendaftaran);
+    </script>
+</dom-module>

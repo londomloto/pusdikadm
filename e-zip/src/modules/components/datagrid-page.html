@@ -1,0 +1,205 @@
+<link rel="import" href="../../../../cores/bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/bower_components/vaadin-combo-box/vaadin-combo-box.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../cores/elements/kct-form/kct-form-validator.html">
+<link rel="import" href="../../../../cores/elements/kct-radio-group/kct-radio-group.html">
+
+<dom-module id="datagrid-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                display: block;
+                height: var(--datagrid-page-height, 582px);
+            }
+            #grid { 
+                display: block;
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-grid 
+            id="grid" 
+            url="/users" 
+            page-size="2" 
+            columns="{{ columns }}" 
+            selected="{{ selectedRecord }}" 
+            title="Component" 
+            description="Datagrid Component">
+
+            <template preserve-content>
+                <style include="theme-helper"></style>
+            </template>
+
+            <paper-button on-tap="__onAddTap"    slot="primary-toolbar"><iron-icon icon="add"></iron-icon>&nbsp;New</paper-button>
+            <paper-button on-tap="__onEditTap"   slot="primary-toolbar"><iron-icon icon="done"></iron-icon>&nbsp;Edit</paper-button>
+            <paper-button on-tap="__onDeleteTap" slot="primary-toolbar"><iron-icon icon="clear"></iron-icon>&nbsp;Delete</paper-button>
+            
+        </kct-grid>
+
+        <kct-dialog id="editor" title="Editor" width="400" height="100%">
+            <template preserve-content>
+
+                <style include="theme-helper"></style>
+
+                <div slot="dialog-body">
+                    <kct-form-validator id="validator" invalid="{{ __formInvalid }}" auto-validate>
+                        <paper-input label="Email address" type="email" value="{{ editingRecord.su_email }}" tabindex="0" autofocus required auto-validate error-message="Valid email address is required"></paper-input>    
+                        <paper-input label="Full Name" value="{{ editingRecord.su_fullname }}" required auto-validate error-message="Full name is required"></paper-input>    
+                        <kct-radio-group label="Sex/Gender" value="{{ editingRecord.su_sex }}" layout="horizontal" required auto-validate error-message="Sex is required">
+                            <paper-radio-button name="Male">Male</paper-radio-button>
+                            <paper-radio-button name="Female">Female</paper-radio-button>
+                        </kct-radio-group>
+                        <paper-input label="Phone" value="{{ editingRecord.su_phone }}"></paper-input>
+                        <vaadin-combo-box 
+                            label="Role" 
+                            value="{{ editingRecord.sr_su_id }}" 
+                            items="[[ __roles ]]" 
+                            item-value-path="sr_id" 
+                            item-label-path="sr_name" 
+                            required 
+                            auto-validate 
+                            error-message="Role is required"></vaadin-combo-box>
+
+                    </kct-form-validator>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap" disabled="[[ __formInvalid ]]">Save</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class DatagridPage extends KctView {
+            static get is() {
+                return 'datagrid-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Datagrid' },
+                    selectedRecord: { type: Object },
+                    editingRecord: { type: Object },
+                    columns: {
+                        type: Array,
+                        value: () => {
+                            return [
+                                { type: 'rownumber' },
+                                { text: 'Email Address', dataIndex: 'su_email' },
+                                { text: 'Full Name', dataIndex: 'su_fullname' },
+                                { text: 'Gender', dataIndex: 'su_sex', width: 120 },
+                                { text: 'Date of Birth', dataIndex: 'su_dob' },
+                                { text: 'Jobs Title', dataIndex: 'su_job_title' },
+                                {
+                                    type: 'action',
+                                    text: '',
+                                    width: 250,
+                                    renderer: (e) => {
+                                        if (e.data) {
+                                            return `
+                                                <paper-button class="btn-default"><iron-icon icon="search"></iron-icon>&nbsp;View</paper-button> 
+                                                <paper-button on-tap="__onRecordEditTap" class="btn-amber"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
+                                                <paper-button class="btn-danger"><iron-icon icon="close"></iron-icon>&nbsp;Trash</paper-button>
+                                            `;
+                                        }
+                                        return '';
+                                    }
+                                }
+                            ];
+                        }
+                    }
+                };
+            }
+
+            constructor() {
+                super();
+                this.__roles = [];
+            }
+
+            activate() {
+                this.$.grid.deferAutoload();
+            }
+
+            handleResizing(width, height) {
+                this.updateStyles({ '--datagrid-page-height': height + 'px' });
+                this.$.grid.resize();
+            }
+
+            __loadRoles() {
+                return this.$.ajax.GET('/roles').then(res => {
+                    this.set('__roles', res.data);
+                });
+            }
+
+            __loadReferences() {
+                return Promise.all([ 
+                    this.__loadRoles()
+                ]);
+            }
+
+            __onAddTap() {
+                this.mask('Opening...');
+
+                this.__loadReferences().then(() => {
+                    this.unmask();
+                    this.set('editingRecord', {});
+                    this.$.editor.open();
+                });
+            }
+
+            __onEditTap() {
+                if ( ! this.selectedRecord) {
+                    this.toast('Warning', 'No record selected', 'warn');
+                    return;
+                }
+
+                this.__loadReferences().then(() => {
+                    this.set('editingRecord', Object.assign({}, this.selectedRecord));
+                    this.$.editor.open();    
+                });
+            }
+
+            __onDeleteTap() {
+                if ( ! this.selectedRecord) {
+                    this.toast('Warning', 'No record selected', 'warn');
+                    return;
+                }
+
+                this.confirm('Confirm', 'Are you sure want to delete this record?').then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE_BATCH('/users').then(res => {
+                            
+                        });
+                    }
+                });
+            }
+
+            __onRecordEditTap(e) {
+                this.mask('Opening...');
+                this.__loadReferences().then(() => {
+                    this.unmask();
+                    this.set('editingRecord', e.data);
+                    this.$.editor.open();
+                });
+            }
+
+            __onEditorCloseTap() {
+                this.$.editor.close();
+            }
+
+            __onEditorSaveTap() {
+                this.$.editor.close();
+            }
+        }
+
+        customElements.define(DatagridPage.is, DatagridPage);
+    </script>
+</dom-module>

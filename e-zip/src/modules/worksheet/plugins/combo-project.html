@@ -1,0 +1,105 @@
+<dom-module id="combo-project">
+    <template>
+        <style>
+            #combo {
+                padding: 0;
+                --paper-input-container-input: {
+                    font-size: 15px;
+                    font-weight: 400;
+                };
+                --paper-input-container-label: {
+                    font-size: 15px;
+                    font-weight: 400;
+                };
+                --paper-input-container-underline: {
+                    display: none;
+                };
+                --paper-input-container-underline-focus: {
+                    display: none;
+                };
+            }
+        </style>
+        <kct-combobox 
+            id="combo" 
+            url="/projects?display=granted" 
+            label="Pilih module..." 
+            value="{{ value }}" 
+            page-size="10" 
+            list-width="400" 
+            item-label-path="sp_title" 
+            item-value-path="sp_name" 
+            on-beforeload="__onComboBeforeload" 
+            hide-clear 
+            no-label-float>
+
+            <paper-button slot="toolbar" on-tap="__onCreateTap"><iron-icon icon="add"></iron-icon>&nbsp;Module Baru</paper-button>
+            <paper-button slot="toolbar" on-tap="__onCloseTap"><iron-icon icon="close"></iron-icon>&nbsp;Tutup</paper-button>
+
+            <template>
+                <style>
+                    .logo {
+                        color: #fff;
+                        float: left;
+                        width: 32px;
+                        height: 32px;
+                        line-height: 32px;
+                        border-radius: 50%;
+                        text-align: center;
+                        font-weight: 600;
+                        margin-top: 4px;
+                    }
+                    .text {
+                        margin-left: 40px;
+                    }
+                    .name {
+                        font-weight: 500;
+                    }
+                    .time {
+                        font-size: 11px;
+                        color: #999;
+                        white-space: pre-wrap;
+                    }
+                </style>
+                <div>
+                    <div class="logo" style$="background-color: [[ item.sp_accent ]]">[[ item.sp_logo ]]</div>
+                    <div class="text">
+                        <div class="name">[[ item.sp_title ]]</div>
+                        <div class="time">[[ item.sp_desc ]]</div>
+                    </div>
+                </div>
+            </template>        
+        </kct-combobox>
+    </template>
+    <script>
+        class ComboProject extends Polymer.Element {
+            static get is() {
+                return 'combo-project';
+            }
+
+            static get properties() {
+                return {
+                    value: { type: String }
+                };
+            }
+
+            load() {
+                return this.$.combo.load();
+            }
+
+            __onComboBeforeload(e) {
+                let options = e.detail.options;
+                options.sort = [{ property: 'sp_title', direction: 'asc' }];
+            }
+
+            __onCreateTap() {
+                this.$.combo.close();
+                this.dispatchEvent(new CustomEvent('create-tap'));
+            }
+
+            __onCloseTap() {
+                this.$.combo.close();
+            }
+        }
+        customElements.define(ComboProject.is, ComboProject);
+    </script>
+</dom-module>

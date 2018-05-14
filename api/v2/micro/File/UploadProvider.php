@@ -80,8 +80,13 @@ class UploadProvider {
 
             if ($valid) {
                 if ($this->_encrypt) {
+                    
                     $name = \Micro\App::getDefault()->security->getRandom()->uuid();
-                    $name = str_replace('-', '', $name).'.'.$file->getExtension();
+                    $name = str_replace('-', '', $name);
+                    
+                    if (($ext = $file->getExtension())) {
+                        $name .= '.'.$ext;
+                    }
                 }
 
                 $path = $this->_path.$name;

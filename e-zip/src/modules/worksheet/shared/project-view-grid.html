@@ -1,0 +1,116 @@
+<link rel="import" href="../../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../../cores/elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../../cores/elements/kct-event/kct-event-subscriber.html">
+<link rel="import" href="../../../../../cores/mixins/mixins.html">
+<link rel="import" href="../styles/project-view-grid-style.html">
+
+<script>
+    Mixins.ProjectViewGrid = Polymer.dedupingMixin(superclass => {
+
+        return class extends superclass {
+
+            static get properties() {
+                return {
+                    busy: { type: Boolean, value: false, notify: true },
+                    project: { type: String },
+                    projectRecord: { type: Object },
+                    params: { type: Object }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__projectChanged(project)',
+                    '__paramsChanged(params.*)'
+                ];
+            }
+
+            activate() {
+                if (this.$.grid) {
+                    this.$.grid.deferAutoresize();
+                }
+            }
+
+            handleResizing() {
+                if (this.$.grid) {
+                    this.$.grid.resize();
+                }
+            }
+
+            reload() {
+                return this.__loadGrid();
+            }
+            
+            __projectChanged(project) {
+                if (project) {
+                    this.__loadProject();
+                    this.__loadGrid();
+                }
+            }
+
+            __paramsChanged(changed) {
+                if (changed.path == 'params') {
+                    this.reload();
+                }
+            }
+
+            __loadProject() {
+
+                this.set('projectRecord', null);
+                
+                if ( ! this.project) return;
+                
+                this.$.ajax.GET('/projects/' + this.project + '/load').then(res => {
+                    this.set('projectRecord', res.data);
+                    this.__loadGrid();
+                });
+            }
+
+            __loadGrid() {
+                this.set('busy', true);
+
+                if ( ! this.projectRecord) {
+                    this.set('busy', false);
+                    return Promise.resolve;
+                }
+
+                let grid = this.$.grid;
+                let params = Object.assign({}, this.params);
+                
+                params.project = this.projectRecord.sp_id;
+
+                grid.params = params;
+
+                return grid.load().then(() => {
+                    this.set('busy', false);
+                    return;
+                });
+            }
+
+            __onLocalNotify() {
+                this.reload();
+            }
+
+            __onTaskStatusTap(args) {
+                let btn = (args.event.path || [])[0];
+                let status = btn && btn.dataset.status;
+                if (status) {
+                    this.set('route.data.back', '/worksheet/' + this.project + '/view/list');
+                    this.set('route.path', '/worksheet/' + this.project + '/task/update/' + status);
+                }
+            }
+
+            __onEditTap(e) {
+                let data  = e.data;
+                if (data.statuses && data.statuses.length) {
+                    let status = data.statuses[0];
+                    this.set('route.data.back', '/worksheet/' + this.project + '/view/list');
+                    this.set('route.path', '/worksheet/' + this.project + '/task/update/' + status.tts_id);
+                }
+            }
+
+        }
+
+    });
+</script>

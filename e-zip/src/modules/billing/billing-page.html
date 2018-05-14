@@ -1,0 +1,119 @@
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../cores/elements/kct-form/kct-form-validator.html">
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="../../../../cores/mixins/theme.html">
+<link rel="import" href="../settings/blocks/setting-header-block.html">
+
+<dom-module id="billing-page">
+    <template>
+        <style include="theme-helper">
+            :host { 
+                height: 100%;
+            }
+
+            .form-upgrade {
+                padding: 10px 20px;
+                border: 1px solid #eee;
+            }
+
+            .form-button {
+                position: relative;
+                top: 15px;
+                border: 1px solid green;
+            }
+
+            .form-button:hover {
+                border: 1px solid #b8f33e;
+            }
+
+            .waiting-approval {
+                padding-top: 15px;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+         <kct-vbox>
+            <setting-header-block icon="cloud-upload" text="Billing" desc="Application package" hide-nav></setting-header-block>
+            <div class="flex scroll-y padding">
+               <kct-column columns="2">
+                    <div class="p-r">
+                        <h3>Package Information</h3>
+                        <paper-input id="package" label="Package Name" value="[[ __parsePackage(record.app_package, record.app_package_approval) ]]" readonly></paper-input>
+                        <kct-hbox>
+                            <div class="flex p-r">
+                                <paper-input label="User Limit" value="[[ record.app_limit ]]"  readonly></paper-input>    
+                            </div>
+                            <div class="flex">
+                                <paper-input label="Pricing (user/month)" value="[[ __parseIDR(record.app_pricing) ]]"  readonly><div slot="prefix">IDR &nbsp;</div></paper-input>    
+                            </div>
+                        </kct-hbox>
+                        <paper-input label="Monthly Billing (Active user * Pricing)" value="[[__calcBill(record.app_pricing,record.app_limit)]]"  readonly><div slot="prefix">IDR &nbsp;</div></paper-input>
+                        <kct-hbox>
+                            <div class="flex p-r">
+                                <paper-input label="Description" value="[[ record.app_package_desc ]]"  readonly></paper-input>
+                            </div>
+                            <div class="flex">
+                                <paper-button on-tap="__onUpgradeTap" title="Upgrade package" class="form-button"><iron-icon icon="cloud-upload" style="color: green;" ></iron-icon>&nbsp;Upgrade PRO</paper-button>
+                            </div>
+                        </kct-hbox>
+                    </div>
+                </kct-columns>  
+            </div>
+        </kct-vbox>
+
+    </template>
+    <script>
+
+        class BillingPage extends KctView {    
+            static get is() {
+                return 'billing-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Billing' },
+                    record: { type: Object }
+                };
+            }
+
+            handleRouteParams() {
+                this.__loadPackage();
+            }
+
+            __loadPackage() {
+                this.$.ajax.GET('/config/load-package').then(res => {
+                    this.set('record', res.data);
+                });
+            }
+
+            __parseIDR(money) {
+                return money.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            }
+
+            __parsePackage(pack, sts) {
+                return sts == 1 ? pack : pack + ' (Waiting approval)';
+            }
+
+            __calcBill(pricing, user) {
+                let bill = pricing * user;
+                return bill.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            }
+
+            __disableUpgrade(pack, sts) {
+                return (pack == 'PRO' && sts == 0) || pack == 'FREE';
+            }
+
+            __onUpgradeTap() {
+                
+            }
+
+        }
+
+        customElements.define(BillingPage.is, BillingPage);
+    </script>
+</dom-module>

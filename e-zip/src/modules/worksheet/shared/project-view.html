@@ -1,0 +1,126 @@
+<link rel="import" href="../../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../../cores/elements/kct-pages/kct-pages.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-combobox/kct-combobox.html">
+<link rel="import" href="../../../../../cores/elements/kct-media/kct-media.html">
+<link rel="import" href="../../../../../cores/mixins/mixins.html">
+<link rel="import" href="../blocks/header-block.html">
+<link rel="import" href="../plugins/combo-project.html">
+<link rel="import" href="../styles/project-view-style.html">
+
+<script>
+    Mixins.ProjectView = Polymer.dedupingMixin(superclass => {
+        return class extends superclass {
+
+            static get properties() {
+                return {
+                    view: { type: String },
+                    busy: { type: Boolean },
+                    project: { type: String }
+                };
+            }
+
+            constructor() {
+                super();
+                this.__initialized = false;
+            }
+
+            handleRouteParams(project, action, view) {
+                switch(view) {
+                    case 'list':
+                        this.set('view', 'list');
+                        break;
+                    default:
+                        this.set('view', 'kanban');
+                }
+
+                if ( ! this.__initialized) {
+                    this.__initialized = true;
+                    this.__loadReferences().then(() => {
+                        this.set('project', project);
+                    });
+                } else {
+                    this.set('project', project);
+                }
+            }
+
+            handleResizing(width, height) {
+                let viewItem = this.$['view-switcher'].selectedItem;
+
+                if (viewItem && viewItem.handleResizing) {
+                    viewItem.handleResizing(width, height);
+                }
+            }
+
+            getActiveView() {
+                return this.$['view-switcher'].selectedItem;
+            }
+
+            __loadReferences() {
+                return Promise.all([
+                    this.$['combo-project'].load()
+                ]);
+            }
+
+            __hideHeader(screen) {
+                if (screen == 'lg' || screen == 'xl') {
+                    return false;
+                }
+                return true;
+            }
+
+            __computeSelectedDisplay(type, view) {
+                return type == view ? 'active' : '';
+            }
+
+            __onViewActivate(e) {
+                let view = e.detail.activeItem;
+                view.activate && view.activate();
+            }
+
+            __onComboProjectChange(e) {
+                let combo = this.$['combo-project'];
+                let project = combo.value;
+
+                if (project) {
+                    this.set('route.path', '/worksheet/' + project + '/view/' + this.view);
+                    // revert back
+                    combo.value = this.project;
+                } else {
+                    // combo.value = this.project;
+                }
+            }
+
+            __onCreateProjectTap() {
+                this.set('route.data.back', '/worksheet/' + this.project + '/view/' + this.view);
+                this.set('route.path', '/worksheet/create');
+            }
+
+            __onDisplayTap(e) {
+                let view = e.target.dataset.view;
+                this.set('route.path', '/worksheet/' + this.project + '/view/' + view);
+            }
+
+            __onCreateTaskTap() {
+
+                this.set('route.data.back', '/worksheet/' + this.project + '/view/' + this.view);
+                this.set('route.path', '/worksheet/' + this.project + '/task/create');
+            }
+
+            __onReloadTap() {
+                this.set('notify', false);
+
+                let view = this.getActiveView();
+                if (view && view.reload) {
+                    view.reload();
+                }
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/worksheet');
+            }
+            
+        }
+    });
+</script>

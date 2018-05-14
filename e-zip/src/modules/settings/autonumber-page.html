@@ -1,0 +1,170 @@
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../cores/elements/kct-app/blocks/page-header-block.html">
+
+<dom-module id="autonumber-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <!-- <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to Setting" on-tap="__onBackTap"></paper-fab>
+        </div> -->
+
+        <kct-grid 
+            id="grid" 
+            url="/system/autonumber" 
+            selected="{{ selectedRecord }}"
+            columns="{{ columns }}" 
+            icon="image:filter-5" 
+            header-text="Referensi" 
+            header-desc="Penomoran" 
+            selection-model="row" 
+            on-back-tap="__onBackTap">
+
+            <paper-button slot="left-toolbar" on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;TAMBAH</paper-button>
+            <paper-button slot="left-toolbar" on-tap="__onEditTap"><iron-icon icon="done"></iron-icon>&nbsp;EDIT</paper-button>
+            <paper-button slot="left-toolbar" on-tap="__onRemoveTap"><iron-icon icon="close"></iron-icon>&nbsp;HAPUS</paper-button>
+
+        </kct-grid>
+
+        <kct-dialog id="editor" title="Editor" height="100%" width="400" scrollable>
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <paper-input label="Kode" value="{{ editingRecord.sn_name }}" readonly$="[[ __computeReadonlyCode(editingRecord.sn_type) ]]"></paper-input>
+                    <paper-input label="Keterangan" value="{{ editingRecord.sn_desc }}"></paper-input>
+                    <paper-input label="Nilai Sekarang" value="{{ editingRecord.sn_value }}"></paper-input>
+                    <paper-input label="Panjang Karakter" value="{{ editingRecord.sn_length }}"></paper-input>
+                    <paper-input label="Awalan" value="{{ editingRecord.sn_prefix }}"></paper-input>
+                    <paper-input label="Akhiran" value="{{ editingRecord.sn_suffix }}"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSave">Simpan</paper-button>
+                    <paper-button on-tap="__onEditorClose">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class AutonumberPage extends KctView {
+            static get is() {
+                return 'autonumber-page';
+            }
+
+            static get properties() {
+                return {
+                    columns: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'rownumber' },
+                            { text: 'Kode', dataIndex: 'sn_name' },
+                            { text: 'Nilai', dataIndex: 'sn_value', align: 'right', width: 100 },
+                            { text: 'Panjang', dataIndex: 'sn_length', align: 'right', width: 100 },
+                            { text: 'Awalan', dataIndex: 'sn_prefix'},
+                            { text: 'Akhiran', dataIndex: 'sn_suffix'},
+                            { text: 'Keterangan', dataIndex: 'sn_desc', width: 300 }
+                        ])
+                    },
+                    selectedRecord: { type: Object },
+                    editingRecord: { type: Object }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__heightChanged(height)'
+                ];
+            }
+
+            handleRouteParams(setting) {
+                if (setting != 'autonumber') return;
+                this.$.grid.deferAutoload();
+            }
+
+            handleResizing(width, height) {
+                if (this.$.grid) {
+                    this.$.grid.resize();
+                }
+            }
+
+            __computeReadonlyCode(type) {
+                return type == 'SYSTEM' ? true : false;
+            }
+
+            __onEditTap() {
+                if ( ! this.selectedRecord) {
+                    return;
+                }
+
+                this.set('editingRecord', Object.assign({}, this.selectedRecord));
+                this.$.editor.open();
+            }
+
+            __onEditorSave() {
+                this.$.editor.close();
+                let payload = this.editingRecord;
+
+                if (payload.sn_id) {
+                    this.$.ajax.PUT('/system/autonumber/' + payload.sn_id, payload).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/system/autonumber', payload).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.$.grid.load();
+                    }
+                }
+            }
+
+            __onEditorClose() {
+                this.$.editor.close();
+            }
+
+            __onAddTap() {
+                this.set('editingRecord', {
+                    sn_type: 'USER'
+                });
+
+                this.$.editor.open();
+            }
+
+            __onRemoveTap() {
+                let item = this.selectedRecord;
+                if ( ! item) {
+                    return;
+                }
+
+                if (item.sn_type == 'SYSTEM') {
+                    this.toast('Peringatan', 'Penomoran ini tidak dapat dihapus', 'danger');
+                    return;
+                }
+
+                this.confirm('Konfirmasi', 'Anda yakin akan menghapus penomoran ini?').then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/system/autonumber/' + item.sn_id).then(res => {
+                            if (res.success) {
+                                this.$.grid.load();
+                            }
+                        });
+                    }
+                });
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+
+        customElements.define(AutonumberPage.is, AutonumberPage);
+    </script>
+</dom-module>

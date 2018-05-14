@@ -1,0 +1,524 @@
+<link rel="import" href="../../../../../cores/mixins/fullscreen.html">
+<link rel="import" href="../../../../../cores/mixins/svg.html">
+<link rel="import" href="../../../../../cores/elements/kct-charts/kct-chart-pie.html">
+<link rel="import" href="../../../../../cores/elements/kct-charts/kct-chart-column.html">
+
+<dom-module id="lkh-dashboard">
+    <template>
+        <style include="lkh-page-style">
+            :host {
+                height: 100%;
+            }
+            :host([fullscreen]) {
+                background-color: #343435;
+                position: absolute;
+                width: 100vw;
+                height: 100vh;
+                top: 0;
+                left: 0;
+                box-sizing: border-box;
+            }
+            :host([fullscreen]) setting-header-block {
+                background-color: #343435;
+                color: #fff;
+                border-bottom-color: #555;
+                /*border-bottom: none;*/
+            }
+
+            .main {
+                background-color: #fff;
+                box-sizing: border-box;
+                position: relative;
+            }
+
+            :host([fullscreen]) .main {
+                background-color: #343435;
+                height: 100%;
+            }
+
+            .chart-wrapper {
+                padding: 2px;
+                box-sizing: border-box;
+                height: calc((100vh - 126px) / 2);
+            }
+
+            :host([fullscreen]) .chart-wrapper {
+                height: calc((100vh - 54px) / 2);
+                border-color: #555;
+            }
+
+            :host([fullscreen]) .chart {
+                /*display: none;*/
+            }
+
+            
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-socket manager="global-socket" 
+            on-live="__onSocketLive" 
+            on-notify="__onSocketNotify"></kct-socket>
+
+        <kct-vbox class="container">
+            <setting-header-block 
+                icon="editor:insert-chart" 
+                text="Dashboard" 
+                desc="[[ __computeHeader(params.user) ]] [[ __computePeriod(params.start_date, params.end_date) ]]" 
+                hide-nav$="[[ __hideNav(fullscreen) ]]" 
+                on-back-tap="__onBackTap">
+
+                <paper-icon-button slot="right-toolbar" icon$="[[ __computeFullScreenIcon(fullscreen) ]]" on-tap="__onScreenTap"></paper-icon-button>
+                <paper-icon-button slot="right-toolbar" icon="refresh" on-tap="__onReloadTap"></paper-icon-button>
+                <paper-icon-button slot="right-toolbar" icon="print" on-tap="__onPrintTap"></paper-icon-button>
+                <paper-icon-button slot="right-toolbar" icon="search" on-tap="__onOpenDrawerTap"></paper-icon-button>
+            </setting-header-block>
+            <div class="flex scroll-y">
+                <app-drawer-layout id="drawer-layout" force-narrow>
+                    <app-drawer id="drawer" slot="drawer" align="end">
+                        <app-toolbar>
+                            <paper-icon-button icon="close" on-tap="__onCloseDrawerTap"></paper-icon-button>
+                        </app-toolbar>
+                        <div class="side">
+                            <h3>Parameter</h3>
+                            <div>
+                                <combo-user 
+                                    id="combo-user" 
+                                    url="/lkh/observable-users"
+                                    label="Pegawai" 
+                                    value="{{ params.user }}"></combo-user>
+                                <kct-date-picker 
+                                    label="Dari Tanggal" 
+                                    value="{{ params.start_date }}"></kct-date-picker>
+
+                                <kct-date-picker 
+                                    label="Sampai Tanggal" 
+                                    value="{{ params.end_date }}"></kct-date-picker>
+                            </div>
+                            <div class="m-t">
+                                <paper-button disabled$="[[ loading ]]" on-tap="__onQueryTap" class="btn-primary">Query Data</paper-button>
+                            </div>
+                        </div>
+                    </app-drawer>
+                    <div class="main">
+
+                        <div class="page">
+                            <kct-column columns="3" spacer="0px" gutter="0px">
+                                <div>
+                                    <div class="chart-wrapper b-r">
+                                        <kct-chart-pie 
+                                            class="chart" 
+                                            theme="[[ theme ]]" 
+                                            title="Monitoring" 
+                                            subtitle="( prosentase yang sudah dan belum mengisi )" 
+                                            series="[[ record.monitoring.series ]]" 
+                                            legend></kct-chart-pie>    
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="chart-wrapper b-r">
+                                        <kct-chart-pie  
+                                            class="chart" 
+                                            theme="[[ theme ]]"
+                                            title="Status" 
+                                            subtitle="( prosentase tahapan pengerjaan dokumen )" 
+                                            series="[[ record.status.series ]]" 
+                                            legend></kct-chart-pie>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="chart-wrapper">
+                                        <kct-chart-pie  
+                                            class="chart" 
+                                            theme="[[ theme ]]"
+                                            title="Produktivitas" 
+                                            subtitle="( prosentase kegiatan mengandung satuan dan tidak )" 
+                                            series="[[ record.productivity.series ]]" 
+                                            legend></kct-chart-pie>
+                                    </div>
+                                </div>
+                            </kct-column>
+                            <kct-column columns="2" spacer="0px" gutter="0px">
+                                <div>
+                                    <div class="chart-wrapper b-t b-r">
+                                        <kct-chart-column 
+                                            class="chart" 
+                                            theme="[[ theme ]]" 
+                                            title="Performa" 
+                                            subtitle="( tempo pengisian kegiatan )" 
+                                            label-y="Jumlah Tanggal (kali)"
+                                            categories="[[ record.performance.categories ]]" 
+                                            series="[[ record.performance.series ]]"></kct-chart-column>    
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="chart-wrapper b-t">
+                                        <kct-chart-column  
+                                            class="chart" 
+                                            theme="[[ theme ]]"
+                                            title="Volume" 
+                                            subtitle="( akumulasi kuantitas per satuan )" 
+                                            label-y="Kuantias" 
+                                            categories="[[ record.volume.categories ]]" 
+                                            series="[[ record.volume.series ]]"></kct-chart-column>    
+                                    </div>
+                                </div>
+                            </kct-column>
+                        </div>
+
+                    </div>
+                </app-drawer-layout>
+            </div>
+        </kct-vbox>
+
+    </template>
+    <script>
+        class LkhDashboard extends Mixins(KctView).use(Mixins.LkhPageBehavior, Mixins.FullScreen, Mixins.SVG) {
+            static get is() {
+                return 'lkh-dashboard';
+            }
+
+            static get observers() {
+                return [
+                    '__fullscreenChanged(fullscreen)'
+                ];
+            }
+
+            static get properties() {
+                return {
+                    theme: { type: String, value: 'light', reflectToAttribute: true },
+                    record: {
+                        type: Object,
+                        value: ({
+                            monitoring: { loading: false, series: [] },
+                            status: { loading: false, series: [] },
+                            productivity: { loading: false, series: [] },
+                            performance: { loading: false, categories: [], series: [] },
+                            volume: { loading: false, categories: [], series: [] }
+                        })
+                    }
+                };
+            }
+
+            constructor() {
+                super();
+                this.__chartsReady = false;
+            }
+
+            handleRouteParams(page) {
+                if (page != 'dashboard') return;
+
+                let today = moment();
+                let startDate = today.clone().startOf('month').format('YYYY-MM-DD');
+                let endDate = today.clone().endOf('month').format('YYYY-MM-DD');
+
+                this.set('params', {
+                    start_date: startDate,
+                    end_date: endDate
+                });
+
+                let charts = this.shadowRoot.querySelectorAll('.chart');
+
+                charts.forEach(c => {
+                    c.animation = true;
+                });
+
+                this.__load().then(() => {
+                    this.__chartsReady = true;
+                    this.__resizeCharts();
+
+                    charts.forEach(c => {
+                        c.animation = false;
+                    });
+                });
+            }
+
+            handleResizing() {
+                if (this.__chartsReady) {
+                    this.__resizeCharts();    
+                }
+            }
+
+            __fullscreenChanged(fullscreen) {
+                this.set('theme', fullscreen ? 'dark' : 'light');
+                if (this.__chartsReady) {
+                    this.__resizeCharts();
+                }
+            }
+
+            __resizeCharts() {
+                this.shadowRoot.querySelectorAll('.chart').forEach(c => {
+                    c.resize();
+                });
+            }
+
+            __load() {
+                return Promise.all([
+                    this.__updateMonitoringChart(),
+                    this.__updateStatusChart(),
+                    this.__updatePerformanceChart(),
+                    this.__updateProductivityChart(),
+                    this.__updateVolumeChart()
+                ]);
+            }
+
+            __updateMonitoringChart() {
+                let payload = Object.assign({}, this.params);
+                payload.display = 'monitoring';
+
+                this.set('record.monitoring.loading', true);
+
+                return this.$.ajax.GET('/lkh/statistic', payload).then(res => {
+                    this.set('record.monitoring.loading', false);
+                    if (res.success) {
+                        let series = [
+                            {
+                                name: 'monitoring',
+                                data: []
+                            }
+                        ];
+
+                        (res.data || []).forEach(e => {
+                            let value = +e.value;
+                            value = isNaN(value) ? 0 : value;
+
+                            series[0].data.push({
+                                name: e.label,
+                                y: value
+                            });
+                        });
+
+                        this.set('record.monitoring.series', series);
+                    }
+                });
+            }
+
+            __updateStatusChart() {
+                let payload = Object.assign({}, this.params);
+                payload.display = 'status';
+
+                this.set('record.status.loading', true);
+
+                return this.$.ajax.GET('/lkh/statistic', payload).then(res => {
+                    this.set('record.status.loading', false);
+                    if (res.success) {
+                        let series = [
+                            {
+                                name: 'status',
+                                data: []
+                            }
+                        ];
+
+                        (res.data || []).forEach(e => {
+                            let value = +e.value;
+                            value = isNaN(value) ? 0 : value;
+                            series[0].data.push({
+                                name: e.label,
+                                y: value
+                            });
+                        });
+
+                        this.set('record.status.series', series);
+                    }
+                });
+            }
+
+            __updateProductivityChart() {
+                let payload = Object.assign({}, this.params);
+                payload.display = 'productivity';
+
+                this.set('record.productivity.loading', true);
+
+                return this.$.ajax.GET('/lkh/statistic', payload).then(res => {
+                    this.set('record.productivity.loading', false);
+                    if (res.success) {
+                        let series = [
+                            {
+                                name: 'productivity',
+                                data: []
+                            }
+                        ];
+
+                        (res.data || []).forEach(e => {
+                            let value = +e.value;
+                            value = isNaN(value) ? 0 : value;
+                            series[0].data.push({
+                                name: e.label,
+                                y: value
+                            });
+                        });
+
+                        this.set('record.productivity.series', series);
+                    }
+                });
+            }
+
+            __updatePerformanceChart() {
+                let payload = Object.assign({}, this.params);
+                payload.display = 'performance';
+
+                this.set('record.performance.loading', true);
+
+                return this.$.ajax.GET('/lkh/statistic', payload).then(res => {
+                    this.set('record.performance.loading', false);
+                    if (res.success) {
+                        let categories = [];
+                        let series = [
+                            {
+                                name: 'performa',
+                                colorByPoint: true,
+                                data: []
+                            }
+                        ];
+
+                        (res.data || []).forEach((e, i) => {
+                            let value = +e.value;
+                            value = isNaN(value) ? 0 : value;
+
+                            categories.push(e.label);
+                            series[0].data.push(value);
+                        });
+
+                        this.set('record.performance.categories', categories);
+                        this.set('record.performance.series', series);
+                    }
+                });
+            }
+
+            __updateVolumeChart() {
+                let payload = Object.assign({}, this.params);
+                payload.display = 'volume';
+
+                this.set('record.volume.loading', true);
+
+                return this.$.ajax.GET('/lkh/statistic', payload).then(res => {
+                    this.set('record.volume.loading', false);
+                    if (res.success) {
+                        let categories = [];
+
+                        let series = [
+                            {
+                                name: 'volume',
+                                colorByPoint: true,
+                                data: []
+                            }
+                        ];
+
+                        (res.data || []).forEach(e => {
+                            let value = +e.value;
+                            value = isNaN(value) ? 0 : value;
+
+                            categories.push(e.label);
+
+                            series[0].data.push({
+                                name: e.label,
+                                y: value
+                            });
+                        });
+
+                        this.set('record.volume.categories', categories);
+                        this.set('record.volume.series', series);
+                    }
+                });
+            }
+
+            __hideNav(fullscreen) {
+                return fullscreen ? true : false;
+            }
+
+            __computeFullScreenIcon(fullscreen) {
+                return fullscreen ? 'fullscreen-exit' : 'fullscreen';
+            }
+
+            __computeHeader(id) {
+                let combo = this.$['combo-user'];
+                
+                if (id && combo) {
+                    let model = combo.getModelForValue(id);
+                    if (model) {
+                        return model.su_fullname + ' - ';
+                    }
+                }
+
+                return 'Data Statistik';
+            }
+
+            __onScreenTap() {
+                this._toggleFullScreen();
+            }
+
+            __onReloadTap() {
+                this.__load();
+            }
+
+            __onQueryTap() {
+                this.__load();
+            }
+
+            __onPrintTap() {
+
+                let promises = [];
+
+                this.shadowRoot.querySelectorAll('.chart').forEach(c => {
+                    let svg = c.chart.getSVG();
+                    promises.push(this._svgToFile(svg));
+                });
+
+                Promise.all(promises)
+                    .then(files => {
+                        files = files.filter(f => f !== false).map((f, i) => {
+                            return {
+                                name: 'userfile_' + i,
+                                file: f
+                            };
+                        });
+                        
+                        if (files.length) {
+                            this.$.ajax.UPLOAD('/lkh/dashboard/save', {
+                                files: files
+                            }).then(res => {
+                                if (res.success && res.data.length) {
+                                    let payload = Object.assign({}, this.params);
+                                    payload.charts = res.data;
+
+                                    this.$.ajax.DOWNLOAD('/lkh/print/dashboard/xls', payload);
+                                }
+                            });
+                        }
+
+                    });
+
+
+                // let payload = this.params;
+                // this.$.ajax.DOWNLOAD('/lkh/print/dashboard/xls', payload);
+            }
+
+            __onSocketLive(e) {
+                let payload = e.detail;
+
+                if (payload.type == 'lkh_outstanding' || payload.type == 'lkh_settled') {
+                    let valid = false;
+
+                    if (payload.date && this.params.start_date && this.params.end_date) {
+                        valid = moment(payload.date).isBetween(this.params.start_date, this.params.end_date, null, '[]');
+                    }
+
+                    if (valid) {
+                        this.__updateMonitoringChart();    
+                        this.__updateProductivityChart();
+                        this.__updatePerformanceChart();
+                        this.__updateVolumeChart();
+                    }
+                    
+                }
+            }
+
+            __onSocketNotify(e) {
+                let payload = e.detail;
+                if (payload.type == 'update_status') {
+                    this.__updateStatusChart();
+                }
+            }
+        }
+        customElements.define(LkhDashboard.is, LkhDashboard);
+    </script>
+</dom-module>

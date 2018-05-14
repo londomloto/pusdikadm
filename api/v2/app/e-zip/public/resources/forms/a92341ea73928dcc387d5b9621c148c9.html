@@ -1,0 +1,238 @@
+<dom-module id="form-surat-masuk">
+    <template>
+        <style include="form-style">
+            :host {
+                margin: -30px;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="tabs" hidden$="[[ phantom ]]">
+            <paper-tabs id="tabs" attr-for-selected="name" selected="{{ page }}" scrollable no-slide no-bar noink>
+                <paper-tab name="agenda">AGENDA SURAT</paper-tab>
+                <paper-tab name="identitas">IDENTITAS SURAT</paper-tab>
+                <paper-tab name="berkas">BERKAS SURAT</paper-tab>
+                <paper-tab name="ekspedisi">EKSPEDISI</paper-tab>
+            </paper-tabs>
+        </div>
+
+        <div class="tabs-content">
+            <kct-pages attr-for-selected="name" selected="[[ page ]]">
+                
+                <div class="page" name="identitas">
+                    
+                    <div class="section">
+                        <h3 class="section-title">Agenda Surat</h3>
+                        <div>
+                            <kct-column columns="2">
+                                <div>
+                                    <paper-input label="No. Agenda" value="{{ record.task.tsm_agenda }}">
+                                        <div slot="suffix">
+                                            <paper-icon-button title="Generate" on-tap="__onGenerateAgendaTap" icon="refresh"></paper-icon-button>
+                                        </div>
+                                    </paper-input>
+                                </div>
+                                <div>
+                                    <kct-date-picker label="Tgl. Penerimaan" value="{{ record.task.tsm_register_date }}"></kct-date-picker>
+                                </div>
+                            </kct-column>
+                            <kct-column columns="2">
+                                <div>
+                                    <combo-user label="Penerima" value="{{ record.task.tsm_register_user }}"></combo-user>                                    
+                                </div>
+                                <div>
+                                    <paper-input label="Media Pengiriman" value="{{ record.task.tsm_courier }}"></paper-input>
+                                </div>
+                            </kct-column>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h3 class="section-title">Identitas Surat</h3>
+                        <div>
+                            <kct-column columns="2">
+                                <div>
+                                    <paper-input label="Nomor Surat" value="{{ record.task.tsm_no }}"></paper-input>
+                                </div>
+                                <div>
+                                    <kct-date-picker label="Tanggal Surat" value="{{ record.task.tsm_date }}"></kct-date-picker>
+                                </div>
+                            </kct-column>
+                            <paper-input label="Dari" value="{{ record.task.tsm_from }}"></paper-input>
+                            <kct-column columns="2">
+                                <div>
+                                    <combo-job 
+                                        label="Kepada" 
+                                        value="{{ record.task.tsm_to }}" 
+                                        on-change="__onComboToChange"></combo-job>
+                                </div>
+                                <div>
+                                    <combo-user 
+                                        label="Responsible" 
+                                        value="{{ record.task.tsm_responsible }}" on-change="__onComboUserToChange"></combo-user>
+                                </div>
+                            </kct-column>
+                            <paper-textarea label="Perihal" value="{{ record.task.tsm_subject }}"></paper-textarea>
+                            <paper-input label="Lampiran" value="{{ record.task.tsm_attachments }}"></paper-input>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h3 class="section-title">Atribute Surat</h3>
+                        <div>
+                            <kct-column columns="2">
+                                <div>
+                                    <kct-combobox   
+                                        url="/categories" 
+                                        label="Sifat Surat" 
+                                        value="{{ record.task.tsm_category }}" 
+                                        item-label-path="sct_label" 
+                                        item-value-path="sct_id" 
+                                        page-size="10"></kct-combobox>
+                                </div>
+                                <div>
+                                    <kct-combobox   
+                                        url="/shipments" 
+                                        label="Sifat Penyampaian" 
+                                        value="{{ record.task.tsm_shipment }}" 
+                                        item-label-path="sdt_label" 
+                                        item-value-path="sdt_id" 
+                                        page-size="10"></kct-combobox>
+                                </div>
+                            </kct-column>
+                            <kct-column columns="2">
+                                <div>
+                                    <kct-combobox   
+                                        url="/priorities" 
+                                        label="Sifat Penyelesaian" 
+                                        value="{{ record.task.tsm_priority }}" 
+                                        item-label-path="spt_label" 
+                                        item-value-path="spt_id" 
+                                        page-size="10"></kct-combobox>
+                                    
+                                </div>
+                                <div>
+                                    <kct-combobox   
+                                        url="/secrecy" 
+                                        label="Sifat Kerahasiaan" 
+                                        value="{{ record.task.tsm_secrecy }}" 
+                                        item-label-path="sst_label" 
+                                        item-value-path="sst_id" 
+                                        page-size="10"></kct-combobox>
+                                </div>
+                            </kct-column>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="page" name="berkas">
+                    <div class="section">
+                        <h3 class="section-title">Daftar Berkas</h3>
+                        <div>Daftar unggahan berkas digital surat.</div>
+                        <div class="m-t">
+                            <surat-masuk-file-manager 
+                                files="{{ record.files }}" 
+                                on-upload="__onFileManagerUpload" 
+                                on-remove="__onFileManagerRemove"></surat-masuk-file-manager>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="page" name="ekspedisi">
+                    <div class="section">
+                        <h3 class="section-title">Daftar Ekspedisi</h3>
+                        <div>Daftar riwayat ekpsedisi internal.</div>
+                        <div class="m-t">
+                            <surat-masuk-expedition 
+                                items="[[ record.expeditions ]]" 
+                                on-update="__onExpeditionUpdate"></surat-masuk-expedition>
+                        </div>
+                    </div>
+                </div>
+
+            </kct-pages>
+        </div>
+
+    </template>
+    <script>
+        class FormSuratMasuk extends Mixins(FormBase).use(Mixins.SuratMasukBehavior) {
+            static get is() {
+                return 'form-surat-masuk';
+            }
+
+            static get properties() {
+                return {
+                    page: { type: String }
+                };
+            }
+
+            static get observers() {
+                return [
+                    //'__computeValidation(record.task.tsm_from, record.task.tsm_to)'
+                ];
+            }
+
+            initialize() {
+                super.initialize();
+
+                this.set('invalid', false);
+                this.set('page', 'identitas');
+
+                if (this.action == 'create') {
+                    let today = moment();
+
+                    this.set('record.task.tsm_register_date', today.format('YYYY-MM-DD'));
+                    this.set('record.task.tsm_register_user', this.user.su_id);
+
+                    this.set('buttons', 'save');
+                } else {
+                    this.__loadFiles();
+                    this.__loadExpeditions();
+
+                    this.set('buttons', 'save,send,print,remove');
+                }
+
+            }
+
+            beforeSave(options) {
+                let promises = [];
+
+                if ( ! this.record.task.tsm_agenda) {
+                    promises.push(this.__computeAgenda());
+                }
+
+                if (promises.length) {
+                    return Promise.all(promises).then(() => {
+                        return { success: true };
+                    });
+                } else {
+                    return this.resolve({ success: true });
+                }
+            }
+
+            afterSave(response, options) {
+                if (response.success) {
+                    if (options.send) {
+                        // send expeditions and notify responsible users
+                        this.__send();
+                    }
+                }
+                return this.resolve({ success: true });
+            }
+
+            print() {
+
+            }
+
+            __computeValidation(from, to) {
+                let valid = true;
+                valid = valid && !!from;
+                valid = valid && !!to;
+                this.set('invalid', !valid);
+            }
+        }
+        customElements.define(FormSuratMasuk.is, FormSuratMasuk);
+    </script>
+</dom-module>

@@ -329,7 +329,7 @@
                                 </div>
                             </kct-column>
                             <paper-input label="Jabatan" value="[[ record.task.skp_su_sj_name ]]"></paper-input>
-                            <paper-input label="Unit Kerja" value="[[ record.task.skp_su_sdp_name ]]"></paper-input>
+                            <paper-input label="Unit Kerja" value="[[ record.task.skp_su_scp_name ]]"></paper-input>
                         </div>
                     </div>
 
@@ -353,7 +353,7 @@
                                         </div>
                                     </kct-column>
                                     <paper-input value="[[ record.task.evaluator_su_sj_name ]]" label="Jabatan"></paper-input>
-                                    <paper-input value="[[ record.task.evaluator_su_sdp_name ]]" label="Unit Kerja"></paper-input>
+                                    <paper-input value="[[ record.task.evaluator_su_scp_name ]]" label="Unit Kerja"></paper-input>
                                 </div>
                             </div>
                         </div>
@@ -376,7 +376,7 @@
                                         </div>
                                     </kct-column>
                                     <paper-input value="[[ record.task.examiner_su_sj_name ]]" label="Jabatan"></paper-input>
-                                    <paper-input value="[[ record.task.examiner_su_sdp_name ]]" label="Unit Kerja"></paper-input>
+                                    <paper-input value="[[ record.task.examiner_su_scp_name ]]" label="Unit Kerja"></paper-input>
                                 </div>
                             </div>
                         </div>
@@ -403,7 +403,7 @@
                                     <tr><td>NIP</td><td>:</td><td>[[ record.task.skp_su_no ]]</td></tr>
                                     <tr><td>Pangkat Golongan Ruang</td><td>:</td><td>[[ record.task.skp_su_sg_name ]]</td></tr>
                                     <tr><td>Jabatan</td><td>:</td><td>[[ record.task.skp_su_sj_name ]]</td></tr>
-                                    <tr><td>Unit Kerja</td><td>:</td><td>[[ record.task.skp_su_sdp_name ]]</td></tr>
+                                    <tr><td>Unit Kerja</td><td>:</td><td>[[ record.task.skp_su_scp_parent ]]</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -818,7 +818,7 @@
                     this.set('record.task.skp_su_no', this.user.su_no);
                     this.set('record.task.skp_su_sg_name', this.user.su_sg_name);
                     this.set('record.task.skp_su_sj_name', this.user.su_sj_name);
-                    this.set('record.task.skp_su_sdp_name', this.user.su_sdp_name);
+                    this.set('record.task.skp_su_scp_name', this.user.su_scp_name);
 
                     this.set('record.task.skp_cover_header_1', 'PENILAIAN PRESTASI KERJA');
                     this.set('record.task.skp_cover_header_2', 'PEGAWAI NEGERI SIPIL');

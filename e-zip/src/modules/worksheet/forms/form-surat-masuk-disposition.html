@@ -1,0 +1,175 @@
+<dom-module id="form-surat-masuk-disposition">
+    <template>
+        <style include="form-style">
+            :host {
+                margin: -30px;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="tabs">
+            <paper-tabs id="tabs" attr-for-selected="name" selected="{{ page }}" scrollable no-slide no-bar noink>
+                <paper-tab name="identitas">IDENTITAS SURAT</paper-tab>
+                <paper-tab name="berkas">BERKAS SURAT</paper-tab>
+                <paper-tab name="disposisi">DISPOSISI SURAT</paper-tab>
+                <paper-tab name="distribusi">DISTRIBUSI SURAT</paper-tab>
+            </paper-tabs>
+        </div>
+
+        <div class="tabs-content">
+
+            <kct-pages attr-for-selected="name" selected="[[ page ]]">
+                    
+                <div class="page" name="identitas">
+                    
+                    <surat-masuk-readonly record="[[ record ]]"></surat-masuk-readonly>
+
+                </div>
+
+                <div class="page" name="berkas">
+                    <surat-masuk-filemgr record="[[ record ]]" readonly$="[[ !record.perms.update_files ]]"></surat-masuk-filemgr>
+                </div>
+
+                <div class="page" name="disposisi">
+                    <surat-masuk-disposition    
+                        user="[[ user ]]" 
+                        record="{{ record }}"></surat-masuk-disposition>
+                </div>
+
+                <div class="page" name="distribusi">
+
+                    <surat-masuk-distribution 
+                        id="distribution" 
+                        user="[[ user ]]"
+                        record="{{ record }}" 
+                        readonly$="[[ !record.perms.update_distributions ]]" 
+                        on-validate="__onDistributionValidate"></surat-masuk-distribution>
+
+                </div>
+
+            </kct-pages>
+        </div>
+
+        <kct-dialog id="dialog-flag" title="Proses Surat" width="400" height="100%" scrollable>
+            <template preserve-content>
+                <style include="theme-helper">
+                    paper-radio-group {
+                        --paper-radio-group-item-padding: 8px 0;
+                    }
+                </style>
+                <div slot="dialog-body">
+                    <div>Tentukan proses lanjutan terhadap surat masuk:</div>
+                    <div class="m-t">
+                        <paper-radio-group attr-for-selected="name" selected="{{ record.task.tsm_task_flag }}">
+                            <template is="dom-repeat" items="[[ flags ]]">
+                                <paper-radio-button name="[[ item.value ]]">[[ item.label ]]</paper-radio-button>
+                            </template>
+                        </paper-radio-group>
+                    </div>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onDialogFlagProcessTap">Proses</paper-button>
+                    <paper-button on-tap="__onDialogFlagCancelTap">Batal</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class FormSuratMasukDisposition extends Mixins(FormBase).use(Mixins.SuratMasukBehavior) {
+            static get is() {
+                return 'form-surat-masuk-disposition';
+            }
+
+            static get properties() {
+                return {
+                    page: { type: String },
+                    flags: {
+                        type: Array,
+                        value: () => ([
+                            { label: 'Lanjutkan proses disposisi (pelaksana)', value: 'PELAKSANA' },
+                            { label: 'Lanjutkan ke tahap penyimpanan (arsip)', value: 'ARSIP' }
+                        ])
+                    }
+                };
+            }
+
+            constructor() {
+                super();
+                this.__hasOutstandingDistribution = false;
+            }
+
+            initialize() {
+                super.initialize();
+
+                this.set('invalid', false);
+                this.set('page', 'disposisi');
+                
+                this.__computeAuthors().then(() => {
+                    let buttons = ['save', 'send', 'print'];
+
+                    if (this.record.authors.indexOf(this.user.su_id) !== -1) {
+                        this.set('record.perms.update_files', true);
+                        this.set('record.perms.update_distributions', true);
+                        
+                        buttons.push('remove');
+                    }
+
+                    this.set('buttons', buttons.join(','));
+                    this.$.distribution.validate();
+
+                });
+
+            }
+
+            beforeSave(options) {
+                if (options.send) {
+                    return this.__computeFlag().then(done => {
+                        return { success: done };
+                    });
+                } else {
+                    return this.resolve({ success: true });
+                }
+            }
+
+            afterSave(response, options) {
+                if (response.success) {
+                    if (options.send) {
+                        // send disposition and notify responsible users
+                        this.__send();
+                    }
+                }
+                return this.resolve({ success: true });
+            }
+
+            __computeFlag() {
+                this.__flagResolver = {};
+
+                this.__flagResolver.promise = new Promise(res => {
+                    this.__flagResolver.resolve = res;
+                });
+
+                this.$['dialog-flag'].open();
+                return this.__flagResolver.promise;
+            }
+
+            __onDialogFlagProcessTap() {
+                this.$['dialog-flag'].close();
+                this.__flagResolver.resolve(true);
+            }
+
+            __onDialogFlagCancelTap() {
+                this.$['dialog-flag'].close();   
+                this.__flagResolver.resolve(false);
+            }
+
+            __onDistributionValidate(e) {
+                if (e.detail.outstandings.length) {
+                    this.set('page', 'distribusi');
+                }
+            }
+        }
+        customElements.define(FormSuratMasukDisposition.is, FormSuratMasukDisposition);
+    </script>
+</dom-module>

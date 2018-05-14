@@ -1,0 +1,64 @@
+<link rel="import" href="../../../../cores/bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
+<link rel="import" href="../../../../cores/bower_components/app-layout/app-drawer/app-drawer.html">
+<link rel="import" href="../../../../cores/bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-spinner/paper-spinner-lite.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-pages/kct-pages.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-date/kct-date-picker.html">
+<link rel="import" href="../../../../cores/vendors/moment/moment.html">
+<link rel="import" href="../settings/blocks/setting-header-block.html">
+<link rel="import" href="../worksheet/plugins/combo-user.html">
+<link rel="import" href="styles/lkh-page-style.html">
+<link rel="import" href="shared/lkh-page-behavior.html">
+
+<dom-module id="lkh-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--page-background-color);
+            }
+            #switcher {
+                display: block;
+                height: 100%;
+            }
+        </style>        
+        <kct-pages id="switcher" attr-for-selected="name" selected="[[ page ]]" lazy-load>
+            <lkh-index name="index" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" import="pages/lkh-index.html"></lkh-index>
+            <lkh-live name="live" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" import="pages/lkh-live.html"></lkh-live>
+            <lkh-report name="report" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" import="pages/lkh-report.html"></lkh-report>
+            <lkh-database name="database" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" import="pages/lkh-database.html"></lkh-database>
+            <lkh-database-items name="database-items" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" import="pages/lkh-database-items.html"></lkh-database-items>
+            <lkh-statistic name="statistic" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" import="pages/lkh-statistic.html"></lkh-statistic>
+            <lkh-dashboard name="dashboard" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" import="pages/lkh-dashboard.html"></lkh-dashboard>
+        </kct-pages>
+    </template>
+    <script>
+        class LkhPage extends KctView {
+            static get is() {
+                return 'lkh-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Kinerja Harian', notify: true }
+                };
+            }
+            handleRouteParams(page) {
+                page = page || 'index';
+                this.set('page', page)
+            }
+            handleResizing() {
+                let pageItem = this.$.switcher.selectedItem;
+                if (pageItem && pageItem.handleResizing) {
+                    pageItem.handleResizing();
+                }
+            }
+        }
+        customElements.define(LkhPage.is, LkhPage);
+    </script>
+</dom-module>

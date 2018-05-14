@@ -1,0 +1,162 @@
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../cores/elements/kct-combobox/kct-combobox.html">
+
+<dom-module id="jobs-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-grid 
+            id="grid" 
+            url="/jobs" 
+            columns="[[ columns ]]" 
+            selected="{{ selectedRecord }}" 
+            header-text="Referensi" 
+            header-desc="Daftar Jabatan" 
+            header-icon="av:web" 
+            selection-model="row" 
+            on-back-tap="__onBackTap" 
+            pagination>
+            <paper-button slot="left-toolbar" on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Tambah</paper-button>
+            <paper-button slot="left-toolbar" on-tap="__onEditTap"><iron-icon icon="done"></iron-icon>&nbsp;Edit</paper-button>
+            <paper-button slot="left-toolbar" on-tap="__onRemoveTap"><iron-icon icon="close"></iron-icon>&nbsp;Hapus</paper-button>
+        </kct-grid>
+
+        <kct-dialog id="editor" title="Editor Jabatan" width="400">
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <paper-input label="Kode" value="{{ editingRecord.sj_code }}"></paper-input>
+                    <paper-input label="Nama Jabatan" value="{{ editingRecord.sj_name }}"></paper-input>
+                    <paper-input label="Akronim" value="{{ editingRecord.sj_acronym }}"></paper-input>
+                    <!-- <kct-combobox 
+                        id="combo-superior" 
+                        url="/jobs" 
+                        label="Jabatan Superior" 
+                        value="{{ editingRecord.sj_superior }}" 
+                        item-label-path="sj_name" 
+                        item-value-path="sj_id" 
+                        page-size="10">
+                        <paper-button slot="toolbar" on-tap="__onRefreshSuperiorTap">
+                            <iron-icon icon="refresh"></iron-icon>&nbsp;Refresh
+                        </paper-button>
+                    </kct-combobox> -->
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap">Simpan</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class JobsPage extends KctView {
+            static get is() {
+                return 'jobs-page';
+            }
+
+            static get properties() {
+                return {
+                    selectedRecord: { type: Object },
+                    editingRecord: { type: Object },
+                    columns: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'rownumber' },
+                            { text: 'Kode', dataIndex: 'sj_code', width: 100 },
+                            { text: 'Nama Jabatan', dataIndex: 'sj_name', width: 350 },
+                            { text: 'Akronim', dataIndex: 'sj_acronym', width: 200 }
+                            // { text: 'Jabatan Superior', dataIndex: 'sj_superior_name', width: 350 }
+                        ])
+                    }
+                };
+            }
+
+            handleRouteParams(setting) {
+                if (setting != 'jobs') return;
+
+                if (this.$.grid) {
+                    this.$.grid.resize();
+                    this.$.grid.load();
+                }
+            }
+
+            handleResizing() {
+                if (this.$.grid) {
+                    this.$.grid.resize();
+                }
+            }
+
+            __onAddTap() {
+                this.set('editingRecord', {});
+                this.$.editor.open();
+            }
+
+            __onEditTap() {
+                if ( ! this.selectedRecord) {
+                    return;
+                }
+
+                this.set('editingRecord', Object.assign({}, this.selectedRecord));
+                this.$.editor.open();
+            }
+
+            __onRemoveTap() {
+                if ( ! this.selectedRecord) {
+                    return;
+                }
+
+                let payload = this.selectedRecord;
+
+                this.confirm('Konfirmasi', 'Apakah Anda yakin akan menghapus data ini?').then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/jobs/' + payload.sj_id).then(() => {
+                            this.$.grid.load();
+                        });
+                    }
+                });
+            }
+
+            __onEditorCloseTap() {
+                this.$.editor.close();
+            }
+
+            __onEditorSaveTap() {
+                this.$.editor.close();
+                let payload = this.editingRecord;
+
+                if (payload.sj_id) {
+                    this.$.ajax.PUT('/jobs/' + payload.sj_id, payload).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/jobs', payload).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.$.grid.load();
+                    }
+                }
+            }
+
+            __onRefreshSuperiorTap() {
+                this.$['combo-superior'].load();
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+
+        customElements.define(JobsPage.is, JobsPage);
+    </script>
+</dom-module>

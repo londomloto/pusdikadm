@@ -1,0 +1,142 @@
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../worksheet/plugins/combo-user.html">
+
+<dom-module id="departments-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-grid 
+            id="grid" 
+            url="/departments" 
+            columns="[[ columns ]]" 
+            selected="{{ selectedRecord }}" 
+            header-text="Referensi" 
+            header-desc="[[ title ]]" 
+            header-icon="work" 
+            selection-model="row" 
+            on-back-tap="__onBackTap" 
+            pagination>
+            <paper-button slot="left-toolbar" on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Tambah</paper-button>
+            <paper-button slot="left-toolbar" on-tap="__onEditTap"><iron-icon icon="done"></iron-icon>&nbsp;Sunting</paper-button>
+            <paper-button slot="left-toolbar" on-tap="__onRemoveTap"><iron-icon icon="close"></iron-icon>&nbsp;Hapus</paper-button>
+        </kct-grid>
+
+        <kct-dialog id="editor" title="[[ title ]]" width="400" height="100%">
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <!-- <paper-input label="Kode" value="{{ editingRecord.sdp_code }}"></paper-input> -->
+                    <paper-input label="Nama" value="{{ editingRecord.sdp_name }}"></paper-input>
+                    <paper-input label="Akronim" value="{{ editingRecord.sdp_acronym }}"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap">Simpan</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class DepartmentsPage extends KctView {
+            static get is() {
+                return 'departments-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Satuan Kerja' },
+                    selectedRecord: { type: Object },
+                    editingRecord: { type: Object },
+                    columns: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'rownumber' },
+                            // { text: 'Kode', dataIndex: 'sdp_code', width: 100 },
+                            { text: 'Nama', dataIndex: 'sdp_name', width: 350 },
+                            { text: 'Akronim', dataIndex: 'sdp_acronym', width: 350}
+                        ])
+                    }
+                };
+            }
+
+            handleRouteParams(setting) {
+                if (setting != 'departments') return;
+                this.$.grid && this.$.grid.load();
+            }
+
+            handleResizing() {
+                if (this.$.grid) {
+                    this.$.grid.resize();
+                }
+            }
+
+            __onAddTap() {
+                this.set('editingRecord', {});
+                this.$.editor.open();
+            }
+
+            __onEditTap() {
+                if ( ! this.selectedRecord) {
+                    return;
+                }
+
+                this.set('editingRecord', Object.assign({}, this.selectedRecord));
+                this.$.editor.open();
+            }
+
+            __onRemoveTap() {
+                let record = this.selectedRecord;
+
+                if ( ! record) {
+                    return;
+                }
+
+                this.confirm('Konfirmasi', 'Apakah Anda yakin akan menghapus data ini?').then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/departments/' + record.sdp_id).then(() => {
+                            this.$.grid.load();
+                        });
+                    }
+                });
+            }
+
+            __onEditorCloseTap() {
+                this.$.editor.close();
+            }
+
+            __onEditorSaveTap() {
+                this.$.editor.close();
+                let payload = this.editingRecord;
+
+                if (payload.sdp_id) {
+                    this.$.ajax.PUT('/departments/' + payload.sdp_id, payload).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/departments', payload).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.$.grid.load();
+                    }
+                }
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+
+        customElements.define(DepartmentsPage.is, DepartmentsPage);
+    </script>
+</dom-module>

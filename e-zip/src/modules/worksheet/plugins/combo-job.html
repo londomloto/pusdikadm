@@ -1,0 +1,105 @@
+<link rel="import" href="../../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../../cores/bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../../../../cores/elements/kct-combobox/kct-combobox.html">
+<link rel="import" href="../../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+
+<dom-module id="combo-job">
+    <template>
+        <style>
+            #combo {
+                padding: 4px 0;
+                --paper-input-container-label: {
+                    top: 3px;
+                };
+            }
+        </style>
+        <kct-ajax id="ajax"></kct-ajax>
+        
+        <kct-combobox 
+            id="combo" 
+            url="/jobs" 
+            page-size="10"
+            label="[[ label ]]" 
+            value="{{ value }}" 
+            item-label-path="sj_name" 
+            item-value-path="[[ itemValuePath ]]" 
+            required$="[[ required ]]" 
+            auto-validate$="[[ autoValidate ]]" 
+            error-message="Jabatan wajib diisi">
+            <paper-button on-tap="__onAddTap" slot="toolbar"><iron-icon icon="add"></iron-icon>&nbsp;Tambah</paper-button>        
+            <paper-button on-tap="__onReloadTap" slot="toolbar"><iron-icon icon="refresh"></iron-icon>&nbsp;Refresh</paper-button>        
+        </kct-combobox>        
+
+        <kct-dialog id="editor" title="Editor Jabatan" width="400">
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <paper-input label="Kode" value="{{ editingRecord.sj_code }}"></paper-input>
+                    <paper-input label="Nama Jabatan" value="{{ editingRecord.sj_name }}"></paper-input>
+                    <paper-input label="Akronim" value="{{ editingRecord.sj_acronym }}"></paper-input>
+                    <!-- <kct-combobox 
+                        id="combo-superior" 
+                        url="/jobs" 
+                        label="Jabatan Superior" 
+                        value="{{ editingRecord.sj_superior }}" 
+                        item-label-path="sj_name" 
+                        item-value-path="sj_id" 
+                        page-size="10">
+                        <paper-button slot="toolbar" on-tap="__onRefreshSuperiorTap">
+                            <iron-icon icon="refresh"></iron-icon>&nbsp;Refresh
+                        </paper-button>
+                    </kct-combobox> -->
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onSaveTap">Simpan</paper-button>
+                    <paper-button on-tap="__onCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+    </template>
+    <script>
+        class ComboJob extends Polymer.Element {
+            static get is() {
+                return 'combo-job';
+            }
+            static get properties() {
+                return {
+                    label: { type: String },
+                    value: { type: String, value: '', notify: true },
+                    required: { type: Boolean, value: false, reflectToAttribute: true },
+                    autoValidate: { type: Boolean, value: false },
+                    itemValuePath: { type: String, value: 'sj_id' },
+                    editingRecord: { type: Object }
+                }
+            }
+            load() {
+                return this.$.combo.load();
+            }
+            getSelectedJob() {
+                return this.$.combo.getModelForValue(this.$.combo.value);
+            }
+            __onAddTap() {
+                this.set('editingRecord', {});
+                this.$.editor.open();
+            }
+            __onReloadTap() {
+                this.$.combo.load();
+            }
+            __onCloseTap() {
+                this.$.editor.close();
+            }
+            __onSaveTap() {
+                this.$.editor.close();
+                let payload = this.editingRecord;
+
+                this.$.ajax.POST('/jobs', payload).then(res => {
+                    if (res.success) {
+                        this.set('value', res.data.sj_id);
+                    }
+                });
+            }
+        }
+        customElements.define(ComboJob.is, ComboJob);
+    </script>
+</dom-module>

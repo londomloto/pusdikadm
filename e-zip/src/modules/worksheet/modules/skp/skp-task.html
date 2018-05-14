@@ -1,0 +1,170 @@
+<link rel="import" href="../../shared/project-task.html">
+
+<link rel="import" href="blocks/skp-task-prop.html">
+<link rel="import" href="blocks/skp-task-logs.html">
+<link rel="import" href="blocks/skp-task-form.html">
+
+<dom-module id="skp-task">
+    <template>
+        <style include="project-task-style"></style>
+        
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-media screen="{{ screen }}"></kct-media>
+        <kct-event-publisher id="publisher"></kct-event-publisher>
+        <kct-socket manager="global-socket" session="{{ socketSession }}" on-notify="__onSocketNotify"></kct-socket>
+        <kct-role id="role"></kct-role>
+        
+        <kct-vbox class$="layout [[ __computeClass(loading) ]]">
+            <header-block id="header" on-back-tap="__onBackTap" text="[[ formRecord.bf_name ]]" hide-header$="[[ __hideHeader(screen) ]]">
+                <h3 slot="header-value">[[ header ]]</h3>
+
+                <paper-button hidden$="[[ __hideButton('save', formButtons) ]]" disabled$="[[ formInvalid ]]" on-tap="__onSaveTap" class="btn-action primary" slot="right-toolbar" style="margin-left: 8px;">
+                    <iron-icon icon="done"></iron-icon>&nbsp;[[ __computeSaveLabel(actionRecord) ]]
+                </paper-button>
+                
+                <paper-button hidden$="[[ __hideButton('send', formButtons) ]]" disabled$="[[ formInvalid ]]"  on-tap="__onSendTap" class="btn-action info" slot="right-toolbar">
+                    <iron-icon icon="arrow-forward"></iron-icon>&nbsp;Proses
+                </paper-button>
+
+                <paper-button hidden$="[[ __hideButton('remove', formButtons) ]]" on-tap="__onRemoveTap" class="btn-action danger" slot="right-toolbar">
+                    <iron-icon icon="close"></iron-icon>&nbsp;Hapus
+                </paper-button>
+
+                <paper-button hidden$="[[ __hideButton('print', formButtons) ]]" on-tap="__onPrintTap" class="btn-action default" slot="right-toolbar">
+                    <iron-icon icon="print"></iron-icon>&nbsp;Cetak
+                </paper-button>
+
+            </header-block>
+            <div id="workspace" class$="workspace flex [[ screen ]]">
+                
+                <kct-hbox class="workspace-wrapper">
+                    <div class="flex workspace-body">
+                        <skp-task-form 
+                            id="taskform" 
+                            project="[[ projectRecord ]]" 
+                            record="{{ taskRecord }}" 
+                            workspace="[[ workspaceRecord ]]" 
+                            action="[[ actionRecord ]]" 
+                            form="[[ formRecord ]]" 
+                            user="[[ user ]]" 
+                            route="{{ route }}" 
+                            invalid="{{ formInvalid }}" 
+                            buttons="{{ formButtons }}" 
+                            socket-session="[[ socketSession ]]"
+                            loading="[[ loading ]]"></skp-task-form>
+
+                        <skp-task-logs 
+                            id="tasklogs" 
+                            record="{{ taskRecord }}" 
+                            project="[[ projectRecord ]]" 
+                            hidden$="[[ __phantom ]]" 
+                            profile="[[ profile ]]" 
+                            socket-session="[[ socketSession ]]"
+                            loading="[[ loading ]]"></skp-task-logs> 
+                    </div>
+                    <div class="workspace-side hidden-sm hidden-md">
+                        <skp-task-prop 
+                            id="taskprop" 
+                            project="[[ projectRecord ]]" 
+                            action="[[ actionRecord ]]" 
+                            record="{{ taskRecord }}" 
+                            workspace="[[ workspaceRecord ]]" 
+                            user="[[ user ]]" 
+                            route="{{ route }}"
+                            loading="[[ loading ]]" 
+                            profile="[[ profile ]]" 
+                            socket-session="[[ socketSession ]]"
+                            on-after-update="__onPropAfterUpdate"></skp-task-prop>
+                    </div>
+                </kct-hbox>
+
+            </div>
+        </kct-vbox>
+
+    </template>
+    <script>
+        
+        class SkpTask extends Mixins(KctView).use(Mixins.ProjectTask) {
+            static get is() {
+                return 'skp-task';
+            }
+
+            static get properties() {
+                return {
+                    profile: { 
+                        type: Object,
+                        value: () => ({
+                            activity: {
+                                scope: 'skp'
+                            },
+                            service: {
+                                url: '/skp/kanban'
+                            },
+                            task: {
+                                primary_key: 'skp_id',
+                                primary_val: null,
+                                project_key: 'skp_task_project',
+                                due_key: 'skp_task_due',
+                                due_formatted_key: 'skp_task_due_formatted',
+                                creator_key: 'skp_created_by'
+                            },
+                            status: {
+                                primary_key: 'sks_id',
+                                primary_val: null,
+                                status_key: 'sks_status',
+                                worker_key: 'sks_worker',
+                                target_key: 'sks_target'
+                            }
+                        })
+                    }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__computeHeader(taskRecord.task.skp_su_fullname, taskRecord.task.skp_start_date, taskRecord.task.skp_end_date)'
+                ];
+            }
+
+            initialize() {
+                this.set('taskRecord', {
+                    task: {},
+                    status: {},
+                    labels: [],
+                    items: [],
+                    extra: [],
+                    users: [],
+                    perms: {}
+                });
+            }
+
+            __computeHeader(name, start, end) {
+                if (name) {
+                    let header = name;
+                    
+                    if (start && end) {
+                        start = moment(start);
+                        end = moment(end);
+
+                        if (start.format('YYYY-MM') == end.format('YYYY-MM')) {
+                            header += ' (' + start.format('MMMM YYYY') + ')';
+                        } else if (start.format('YYYY') == end.format('YYYY')) {
+                            header += ' ('+ start.format('MMMM') + ' s/d ' + end.format('MMMM') + ' ' + start.format('YYYY') + ')';
+                        } else {
+                            header += ' (' + start.format('MMMM YYYY') + ' s/d ' + end.format('MMMM YYYY') + ')';
+                        }
+                    }
+
+                    this.set('header', header);
+                }
+            }
+
+            __onPrintTap() {
+                this.$.ajax.DOWNLOAD('/skp/print/document/xls/' + this.taskRecord.task.skp_id);
+            }
+
+        }
+        
+        customElements.define(SkpTask.is, SkpTask);
+    </script>
+</dom-module>

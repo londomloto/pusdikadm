@@ -1,0 +1,128 @@
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../cores/elements/kct-media/kct-media.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../cores/elements/kct-input/kct-input-file.html">
+<link rel="import" href="../settings/blocks/setting-header-block.html">
+
+<dom-module id="company-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--page-background-color);
+            }
+            h3.title {
+                font-size: 15px;
+                font-weight: 600;
+            }
+            .logo {
+                width: 150px;
+                height: 150px;
+                background-color: var(--paper-grey-300);
+                text-align: center;
+            }
+            .sm .hidden-sm {
+                display: none;
+            }
+        </style>        
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-media screen="{{ screen }}"></kct-media>
+
+        <kct-vbox class$="[[ screen ]]">
+            <setting-header-block icon="home" text="Konfigurasi" desc="Organisasi" on-back-tap="__onBackTap">
+                <div class="separator"></div>
+                <paper-button on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Simpan</paper-button>
+            </setting-header-block>
+            <div class="flex scroll-y padding">
+                <kct-hbox>
+                    <div class="logo hidden-sm m-r">
+                        <img alt="." src$="[[ company.scp_logo_thumb ]]&w=150&h=150">
+                    </div>
+                    <div class="flex">
+                        <h3 class="title">Identitas Organiasasi</h3>
+                        <paper-input label="Organisasi" value="{{ company.scp_parent }}"></paper-input>
+                        <paper-input label="Unit Kerja" value="{{ company.scp_name }}"></paper-input>
+                        <paper-input label="Alamat" value="{{ company.scp_address }}"></paper-input>
+                        <kct-column columns="3">
+                            <div>
+                                <paper-input label="Kota" value="{{ company.scp_city }}"></paper-input>
+                            </div>
+                            <div>
+                                <paper-input label="Propinsi" value="{{ company.scp_state }}"></paper-input>
+                            </div>
+                            <div>
+                                <paper-input label="Kode Pos" value="{{ company.scp_zip }}"></paper-input>
+                            </div>
+                        </kct-column>
+                        <paper-input label="No. Telepon" value="{{ company.scp_phone }}"></paper-input>
+                        <paper-input label="No. Fax" value="{{ company.scp_fax }}"></paper-input>
+                        <paper-input label="Alamat Email" value="{{ company.scp_email }}"></paper-input>
+                        <paper-input label="Homepage" value="{{ company.scp_homepage }}"></paper-input>
+
+                        <kct-input-file file="{{ logo }}" label="Logo Organisasi" value="{{ company.scp_logo }}"></kct-input-file>
+                    </div>
+                </kct-hbox>
+                
+            </div>
+        </kct-vbox>
+
+    </template>
+    <script>
+        class CompanyPage extends KctView {
+            static get is() {
+                return 'company-page';
+            }
+
+            handleRouteParams(setting) {
+                if (setting != 'company') return;
+                this.__loadCompany();
+            }
+
+            __loadCompany() {
+                this.$.ajax.GET('/company/load').then(res => {
+                    let data = res.data || {};
+                    this.set('company', data);
+                });
+            }
+
+            __onSaveTap() {
+                let payload = this.company;
+
+                this.$.ajax.PUT('/company/' + this.company.scp_id, payload).then(res => {
+                    if (res.success) {
+                        if (this.logo) {
+                            this.$.ajax.UPLOAD('/company/upload', {
+                                files: [
+                                    { name: 'userfile', file: this.logo }
+                                ]
+                            }).then(r => {
+                                this.toast('Sukses', 'Data instansi berhasil disimpan');
+                                if (r.success) {
+                                    this.set('company.scp_logo', r.data.scp_logo);
+                                    this.set('company.scp_logo_thumb', r.data.scp_logo_thumb);
+                                }
+                            });
+                        } else {
+                            this.set('company.scp_logo', res.data.scp_logo);
+                            this.set('company.scp_logo_thumb', res.data.scp_logo_thumb);
+                            this.toast('Sukses', 'Data instansi berhasil disimpan');
+                        }
+                    }
+                });
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+
+        customElements.define(CompanyPage.is, CompanyPage);
+    </script>
+</dom-module>

@@ -5,6 +5,10 @@
     #RewriteCond %{HTTPS} !=on
     #RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
+    # DYNAMIC FORM
+    RewriteCond %{QUERY_STRING} ^dynamic=(.*)$
+    RewriteRule ^(.*)$ %1 [L]
+
     # ACCEPTABLE
     #RewriteCond %{REQUEST_URI} ^/(bower_components|elements|mixins|vendors|themes|helpers|fonts)/
     #RewriteRule ^(.*)$ cores/$1 [L,NC]

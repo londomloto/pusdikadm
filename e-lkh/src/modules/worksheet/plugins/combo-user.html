@@ -59,7 +59,7 @@
                     </div>
                     <div class="text">
                         <div class="name">[[ item.su_fullname ]]</div>
-                        <div class="meta">[[ __computeMeta(item) ]]</div>
+                        <div class="meta">[[ __computeCoalesce(item.su_sj_name) ]]</div>
                     </div>
                     <div class="clear"></div>
                 </div>
@@ -92,6 +92,9 @@
             }
             getModelForValue(value) {
                 return this.$.combo.getModelForValue(value);
+            }
+            __computeCoalesce(value) {
+                return value || '(kosong)';
             }
             __computeMeta(item) {
                 let meta = '';

@@ -1,0 +1,68 @@
+<link rel="import" href="../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/vendors/moment/moment.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../settings/blocks/setting-header-block.html">
+
+<dom-module id="backup-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--page-background-color);
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox>
+            <setting-header-block text="Konfigurasi" desc="Backup Database" icon="backup" on-back-tap="__onBackTap"></setting-header-block>
+            <div class="flex padding">
+                <kct-column columns="2">
+                    <div>
+                        <paper-input value="{{ backup.name }}" label="Nama file backup (*.sql)"></paper-input>
+                        <div class="m-t">
+                            <paper-button on-tap="__onBackupTap" class="btn-cyan">Backup Database</paper-button>    
+                        </div>
+                    </div>
+                </kct-column>
+                
+            </div>
+        </kct-vbox>
+
+    </template>
+    <script>
+        class BackupPage extends KctView {
+            static get is() {
+                return 'backup-page';
+            }
+            static get properties() {
+                return {
+                    backup: { type: Object, value: () => ({}) }
+                };
+            }
+            ready() {
+                super.ready();
+
+                this.set('backup', {
+                    name: 'Backup_' + moment().format('DD_MMM_YYYY')  + '.sql'
+                });
+            }
+            __onBackupTap() {
+                if ( ! this.backup.name) {
+                    return;
+                }
+
+                this.$.ajax.DOWNLOAD('/system/backup', this.backup);
+            }
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+
+        customElements.define(BackupPage.is, BackupPage);
+    </script>
+</dom-module>

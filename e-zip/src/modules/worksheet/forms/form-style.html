@@ -1,0 +1,264 @@
+<dom-module id="form-style">
+    <template>
+        <style include="theme-helper">
+            paper-button {
+                font-size: 13px;
+                font-weight: 500;
+                margin-right: 0;
+                /*font-size: 13px;
+                padding: 5px 8px;*/
+            }
+            paper-button iron-icon {
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
+            }
+            paper-button.btn-outline {
+                border: 1px solid #dfdfdf;
+            }
+            paper-button[disabled] {
+                background-color: var(--paper-grey-500);
+            }
+            .section {
+                /*padding: 20px;*/
+                /*border: 1px solid #dfdfdf;*/
+                border-radius: 0;
+                position: relative;
+                margin-bottom: 30px;
+            }
+            .section[hidden] {
+                display: none;
+            }
+            .section-title {
+                display: block;
+                font-size: 15px;
+                font-weight: 600;
+                margin: 0 0 8px 0;
+                text-decoration: underline;
+            }
+            .section-tools {
+                position: absolute;
+                top: 16px;
+                right: 0;
+            }
+            .section-tools paper-button {
+                font-size: 12px;
+                background: var(--paper-cyan-400);
+                color: #fff;
+                margin-right: 0;
+                margin-left: 3px;
+            }
+            .section-tools paper-button iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
+            }
+            .section.section-primary {
+                border-width: 2px;
+                border-color: var(--paper-cyan-300);
+            }
+            .section.section-warning {
+                background-color: var(--paper-yellow-100);
+                border-color: var(--paper-yellow-300);
+            }
+            
+            .form-group {
+                margin-top: 8px;
+                margin-bottom: 8px;
+                position: relative;
+            }
+            .form-group > label,
+            .form-group > .label {
+                display: block;
+                margin-bottom: 8px;
+                font-size: 12px;
+                color: #666;
+            }
+            .form-group .add-on {
+                width: 24px;
+                height: 24px;
+                padding: 4px;
+                position: absolute;
+                right: 0;
+                bottom: 14px;
+                color: #999;
+            }
+            .form-display {
+                margin: 8px 0;
+            }
+            .form-display .label {
+                font-size: 12px;
+                color: #555;
+            }
+            .form-display .value {
+                font-weight: 600;
+                border-bottom: 1px solid var(--paper-grey-300);
+                padding: 5px 0;
+            }
+            .form-display iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
+                position: relative;
+                top: -2px;
+            }
+            paper-radio-group.hbox {
+                @apply --layout-horizontal;
+            }
+            paper-radio-group.hbox.sm,
+            paper-radio-group.hbox.md {
+                @apply --layout-vertical;
+            }
+            paper-radio-group.hbox paper-radio-button {
+                padding: 0;
+                @apply --layout-flex;
+            }
+            paper-radio-group.hbox.sm paper-radio-button + paper-radio-button,
+            paper-radio-group.hbox.md paper-radio-button + paper-radio-button {
+                padding-top: 8px;
+            }
+
+            .document-item,
+            .disposition-item {
+                display: block;
+                background-color: #fafafa;
+                box-shadow: none;
+                position: relative;
+                border-radius: 0;
+            }
+            .document-item .name {
+                margin-bottom: 5px;
+            }
+            .document-item .meta {
+                font-size: 12px;
+            }
+            .document-item .tool,
+            .disposition-item .tool {
+                position: absolute;
+                right: 8px;
+                top: 8px;
+            }
+            .document-item .tool paper-button,
+            .disposition-item .tool paper-button {
+                border: 1px solid #dfdfdf;
+                font-size: 11px;
+                padding: 3px 5px;
+                font-weight: normal;
+                text-transform: none;
+            }
+            .document-item .tool paper-button iron-icon,
+            .disposition-item .tool paper-button iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
+
+            }
+            .document-item .card-content,
+            .disposition-item .card-content {
+                padding: 20px;
+            }
+            .document-item + .document-item,
+            .disposition-item + .disposition-item {
+                margin-top: 20px;
+            }
+
+            .message {
+                padding: 15px 30px;
+                background-color: var(--paper-grey-100);
+                border-bottom: 1px solid var(--paper-grey-200);
+                color: #666;
+                position: relative;
+                margin: -30px -30px 30px -30px;
+            }
+            .message-title {
+                font-weight: 500;
+                margin-bottom: 8px;
+            }
+            .message-tool {
+                position: absolute;
+                right: 5px;
+                top: 5px;
+            }
+
+            .message-tool paper-icon-button {
+                width: 32px;
+                height: 32px;
+                padding: 6px;
+            }
+
+            .form-section {
+                margin-bottom: 30px; 
+                padding: 20px; 
+                border: 1px solid #dfdfdf; 
+                border-radius: 3px;
+            }
+            .form-section h3 {
+                font-size: 15px;
+                font-weight: 600;
+            }
+            /*.form-section paper-button[focused] {
+                background-color: var(--paper-green-500);
+                @apply --shadow-elevation-2dp;
+            }*/
+
+            .tabs {
+                position: relative;
+                background-color: var(--paper-grey-100);
+            }
+
+            .tabs::before {
+                content: ' ';
+                display: block;
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 1px;
+                background-color: #dfdfdf;
+            }
+
+            .tabs paper-tabs {
+                height: 32px;
+                --paper-tabs-scroller-opacity: 0.3;
+                --paper-tabs-selection-bar-color: var(--paper-blue-grey-500);
+                --paper-tabs-selection-bar: {
+                    border-bottom-width: 2px;
+                };
+            }
+
+            .tabs paper-tab {
+                min-width: 100px;
+                font-size: 13px;
+                text-transform: uppercase;
+                
+                --paper-tab-ink: var(--paper-blue-grey-500);
+            }
+
+            .tabs paper-tab[hidden] {
+                display: none;
+            }
+
+            .tabs paper-tab::before {
+                display: none;
+                content: '';
+                background-color: #fff;
+                position: absolute;
+                left: 0;
+                right: 0;
+                top: 0;
+                bottom: 0;
+                border: 1px solid #dfdfdf;
+                border-width: 0 1px 0 1px;
+            }
+
+            .tabs paper-tab.iron-selected::before {
+                display: block;
+            }
+
+            .tabs paper-tab.iron-selected {
+                
+            }
+
+            .tabs-content .page {
+                display: block;
+                padding: 30px;
+            }
+        </style>
+    </template>
+</dom-module>

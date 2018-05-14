@@ -32,7 +32,7 @@ class PrintController extends \Micro\Controller {
             ->setCellValue('A2', 'Bulan '.$data['lkh_period'])
             ->setCellValue('C5', ': '.$data['lkh_su_fullname'])
             ->setCellValue('C6', ': '.$data['lkh_su_sj_name'])
-            ->setCellValue('C7', ': '.$data['lkh_su_sdp_name']);
+            ->setCellValue('C7', ': '.$data['lkh_su_scp_name']);
 
         $items = $lkh->fetchItems();
         $total = count($items);

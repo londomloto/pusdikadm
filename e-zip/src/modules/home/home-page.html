@@ -1,0 +1,79 @@
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+
+<dom-module id="home-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                background-image: var(--homepage-background);
+                background-size: cover; 
+                height: 100%;
+            }
+            .tagline {
+                color: #666;
+                position: relative;
+                z-index: 2;
+            }
+            .tagline-title {
+                font-size: 48px;
+            }
+            .tagline-desc {
+                font-size: 24px;
+            }
+            page-header-block {
+                border-bottom: none;
+            }
+            .overlay {
+                position: absolute;
+                left: 0;
+                top: 0;
+                right: 0;
+                bottom: 0;
+
+                background: -moz-linear-gradient(-45deg, rgba(245,245,245,1) 20%, rgba(255,255,255,0) 100%);
+                background: -webkit-linear-gradient(-45deg, rgba(245,245,245,1) 20%,rgba(255,255,255,0) 100%);
+                background: linear-gradient(135deg, rgba(245,245,245,1) 20%,rgba(255,255,255,0) 100%);
+                filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f5f5f5', endColorstr='#00ffffff',GradientType=1 );
+            }
+        </style>
+
+        <kct-vbox>
+            <div class="flex">
+                <div class="overlay"></div>
+                <div class="tagline padding">
+                    <h2 class="tagline-title f-300">[[ config.app_title ]]</h2>
+                    <p class="tagline-desc f-300">[[ config.app_description ]]</p>    
+                </div>
+            </div>
+        </kct-vbox>
+
+    </template>
+
+    <script>
+        class HomePage extends KctView {
+            static get is() {
+                return 'home-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Homepage' },
+                    inputs: { type: Array, value: [{ name: 'A' }, {name: 'B'}] }
+                }
+            }
+
+            ready() {
+                super.ready();
+                this.updateStyles({
+                    '--homepage-background': 'url(' + this._resolveUrl('../../../images/backgrounds/background-1.jpg') + ')'
+                });
+            }
+
+            download() {
+                this.$.ajax.DOWNLOAD('/home/download', {user: 1, type: 'jpeg', items: ['A', 'B']});
+            }
+        }
+
+        customElements.define(HomePage.is, HomePage);
+    </script>    
+</dom-module>

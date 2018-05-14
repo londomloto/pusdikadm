@@ -1,0 +1,80 @@
+<dom-module id="project-task-style">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+
+            .btn-action {
+                color: #999;
+                border: 1px solid #999;
+                margin-right: 0;
+                margin-left: 8px;
+            }
+
+            .btn-action.primary {
+                color: var(--app-primary);
+                border-color: var(--app-primary);
+            }
+
+            .btn-action.danger {
+                color: var(--app-danger);
+                border-color: var(--app-danger);
+            }
+
+            .btn-action.info {
+                color: var(--app-info);
+                border-color: var(--app-info);
+            }
+
+            .btn-action[disabled] {
+                color: var(--paper-grey-500);
+                border-color: var(--paper-grey-500);
+            }
+            
+            #workspace {
+                background-color: #f9f9f9;
+                position: relative;
+                overflow-y: scroll;
+                overflow-x: hidden;
+            }
+            #header h3 {
+                /*min-width: 300px;*/
+            }
+
+            #tasklogs {
+                margin-top: 50px;
+            }
+            
+            #tasklogs[hidden] {
+                display: none;
+            }
+
+            .workspace-wrapper {
+                min-height: 100%;
+            }
+
+            .workspace-body {
+                background-color: #fff;
+                padding: 30px;
+                box-shadow: 0 4px 4px rgba(0,0,0,.4);
+            }
+
+            .workspace-body-content {
+                background-color: #fff;
+            }
+
+            .workspace-side {
+                width: 250px;
+            }
+
+            .workspace.sm .hidden-sm { display: none;  }
+            .workspace.md .hidden-md { display: none;  }
+
+            .layout.loading #header paper-button {
+                display: none;
+            }
+
+        </style>
+    </template>
+</dom-module>

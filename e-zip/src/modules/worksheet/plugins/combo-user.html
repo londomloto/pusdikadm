@@ -1,0 +1,111 @@
+<link rel="import" href="../../../../../cores/elements/kct-combobox/kct-combobox.html">
+
+<dom-module id="combo-user">
+    <template>
+        <style>
+            #combo {
+                padding: 4px 0 8px 0;
+            }   
+        </style>
+        <kct-combobox 
+            id="combo" 
+            url="[[ url ]]" 
+            label="[[ label ]]" 
+            value="{{ value }}" 
+            page-size="[[ pageSize ]]" 
+            item-label-path="[[ itemLabelPath ]]" 
+            item-value-path="[[ itemValuePath ]]" 
+            invalid$="{{ invalid }}" 
+            required$="[[ required ]]" 
+            disabled$="[[ disabled ]]" 
+            auto-validate="[[ autoValidate ]]" 
+            error-message="[[ errorMessage ]]" 
+            autoload$="[[ autoload ]]">
+            <paper-button slot="toolbar"  on-tap="__onRefreshTap">
+                <iron-icon icon="refresh"></iron-icon>&nbsp;Refresh
+            </paper-button>
+            <template>
+                <style>
+
+                    .clear { clear: both; }
+                    .icon {
+                        float: left;
+                        width: 36px;
+                        height: 36px;
+                        margin-right: 10px;
+                    }
+                    .icon img {
+                        display: block;
+                        border-radius: 50%;
+                        width: 36px;
+                        height: 36px;
+                    }
+                    .text {
+                        position: relative;
+                        top: 0;
+                    }
+                    .name {
+                        font-weight: 500;
+                    }
+                    .meta {
+                        display: block;
+                        font-size: 12px;
+                        color: #666;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                    }
+                </style>
+                <div class="item">
+                    <div class="icon">
+                        <img alt="" src$="[[ item.su_avatar_thumb ]]&w=36&h=36">
+                    </div>
+                    <div class="text">
+                        <div class="name">[[ item.su_fullname ]]</div>
+                        <div class="meta">[[ __computeCoalesce(item.su_sj_name) ]]</div>
+                    </div>
+                    <div class="clear"></div>
+                </div>
+            </template>        
+        </kct-combobox>
+    </template>
+    <script>
+        class ComboUser extends Polymer.Element {
+            static get is() {
+                return 'combo-user';
+            }
+            static get properties() {
+                return {
+                    url: { type: String, value: '/users' },
+                    label: { type: String },
+                    value: { type: String, value: '', notify: true },
+                    pageSize: { type: Number, value: 10 },
+                    itemLabelPath: { type: String, value: 'su_fullname' },
+                    itemValuePath: { type: String, value: 'su_id' },
+                    invalid: { type: Boolean, value: false, notify: true, reflectToAttribute: true },
+                    required: { type: Boolean, value: false, reflectToAttribute: true },
+                    disabled: { type: Boolean, value: false, reflectToAttribute: true },
+                    autoValidate: { type: Boolean, value: false },
+                    errorMessage: { type: String },
+                    autoload: { type: Boolean, value: false }
+                };
+            }
+            load(options) {
+                return this.$.combo.load(options);
+            }
+            getModelForValue(value) {
+                return this.$.combo.getModelForValue(value);
+            }
+            getSelectedUser() {
+                return this.getModelForValue(this.value);
+            }
+            __computeCoalesce(value) {
+                return value || '(kosong)';
+            }
+            __onRefreshTap() {
+                this.$.combo.load();
+            }
+        }
+        customElements.define(ComboUser.is, ComboUser);
+    </script>
+</dom-module>

@@ -1,0 +1,35 @@
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-editor/kct-editor.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-app/blocks/page-header-block.html">
+
+<dom-module id="editor-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: var(--editor-page-height, 100%);
+            }
+        </style>
+        <kct-vbox>
+            <page-header-block icon="code" title="Components" description="Web based code editor">
+                <paper-button><iron-icon icon="add"></iron-icon>&nbsp;Create New</paper-button>
+                <paper-button><iron-icon icon="done"></iron-icon>&nbsp;Save</paper-button>
+            </page-header-block>
+            <div class="flex scroll-y">
+                <kct-editor id="editor"></kct-editor>
+            </div>
+        </kct-vbox>
+    </template>
+    <script>
+        class EditorPage extends KctView {
+            static get is() {
+                return 'editor-page';
+            }
+            handleResizing(width, height) {
+                this.updateStyles({ '--editor-page-height': height + 'px' });
+            }
+        }
+
+        customElements.define(EditorPage.is, EditorPage);
+    </script>
+</dom-module>

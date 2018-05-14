@@ -1,0 +1,26 @@
+{
+  "entrypoint": "index.html",
+  "shell": "../cores/elements/kct-app/kct-app.html",
+  "fragments": [
+    "../cores/elements/kct-app/layouts/main-layout.html",
+    "../cores/elements/kct-app/layouts/auth-layout.html",
+    "../cores/elements/kct-app/layouts/error-layout.html"
+  ],
+  "sources": [
+    "../cores/elements/**/*",
+    "../cores/mixins/**/*",
+    "../cores/themes/**/*",
+    "../cores/vendors/**/*",
+    "../cores/fonts/**/*",
+    "../cores/bower.json",
+    "src/**/*",
+    "images/**/*"
+  ],
+  "extraDependencies": [
+    "manifest.json",
+    "../cores/bower_components/webcomponentsjs/*.js"
+  ],
+  "lint": {
+    "rules": ["polymer-2"]
+  }
+}

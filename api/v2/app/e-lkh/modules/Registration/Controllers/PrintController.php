@@ -45,6 +45,8 @@ class PrintController extends \Micro\Controller {
         $file = strtoupper($data['su_fullname'].'_'.$data['su_no']);
         $file = preg_replace('/[^a-z0-9]+/i', '_', $file).'.xlsx';
 
+        $sheet->getRowDimension('13')->setRowHeight(-1);
+
         $xls->stream($file);
     }
 
@@ -105,7 +107,7 @@ class PrintController extends \Micro\Controller {
                 ->setCellValue('D'.$line, $item['su_no'])
                 ->setCellValue('E'.$line, $item['su_sg_name'])
                 ->setCellValue('F'.$line, $item['su_sj_name'])
-                ->setCellValue('G'.$line, $item['su_sdp_name'])
+                ->setCellValue('G'.$line, $item['su_scp_name'])
                 ->setCellValue('H'.$line, $item['su_email'])
                 ->setCellValue('I'.$line, $item['su_phone'])
                 ->setCellValue('J'.$line, $item['sr_name']);

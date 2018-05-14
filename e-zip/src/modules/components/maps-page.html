@@ -1,0 +1,31 @@
+<link rel="import" href="../../../../cores/elements/kct-maps/kct-maps.html">
+
+<dom-module id="maps-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: var(--maps-page-height, 582px);
+            }    
+        </style>
+
+        <kct-maps id="maps"></kct-maps>        
+    </template>
+    <script>
+
+        class MapsPage extends KctView {
+            static get is() {
+                return 'maps-page';
+            }
+
+            handleResizing(width, height) {
+                if (this.__lastHeight !== height) {
+                    this.updateStyles({ '--maps-page-height': height + 'px' });
+                    this.$.maps.resize();
+                    this.__lastHeight = height;
+                }
+            }
+        }
+
+        customElements.define(MapsPage.is, MapsPage);
+    </script>
+</dom-module>

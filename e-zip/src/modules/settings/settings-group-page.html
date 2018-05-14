@@ -1,0 +1,86 @@
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-pages/kct-pages.html">
+
+<dom-module id="settings-group-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            #pages {
+                display: block;
+                height: 100%;
+            }
+        </style>
+
+        <kct-pages id="pages" selected="[[ page ]]" attr-for-selected="name" on-itemactivate="__onPageActive" lazy-load>
+            <general-page name="general" route="{{ route }}" config="{{ config }}" state="[[ state ]]" import="general-page.html"></general-page>
+            <autonumber-page name="autonumber" route="{{ route }}" config="{{ config }}" state="[[ state ]]" import="autonumber-page.html"></autonumber-page>
+            <!-- <constants-page name="constants" route="{{ route }}" config="{{ config }}" state="[[ state ]]" import="constants-page.html"></constants-page> -->
+            <!-- <timezone-page name="timezone" route="{{ route }}" config="{{ config }}" state="[[ state ]]" import="../timezone/timezone-page.html"></timezone-page> -->
+            <menus-page name="menus" route="{{ route }}" state="[[ state ]]" import="../menus/menus-page.html"></menus-page>
+            <modules-page name="modules" route="{{ route }}" state="[[ state ]]" import="modules-page.html"></modules-page>
+            <!-- <backup-page name="backup" route="{{ route }}" state="[[ state ]]" import="backup-page.html"></backup-page> -->
+            <users-page name="users" route="{{ route }}" state="[[ state ]]" import="../users/users-page.html"></users-page>
+            <users-permissions-page name="users-permissions" route="{{ route }}" state="[[ state ]]" import="../users/users-permissions-page.html"></users-permissions-page>
+            <roles-page name="roles" route="{{ route }}" state="[[ state ]]" import="../roles/roles-page.html"></roles-page>
+            <roles-permissions-page name="roles-permissions" route="{{ route }}" state="[[ state ]]" import="../roles/roles-permissions-page.html"></roles-permissions-page>
+            <bpmn-page name="bpmn" route="{{ route }}" state="[[ state ]]" import="../bpmn/bpmn-page.html"></bpmn-page>
+            <kanban-settings-page name="kanban-settings" route="{{ route }}" state="[[ state ]]" import="../kanban/kanban-settings-page.html"></kanban-settings-page>
+            <kanban-forms-page name="kanban-forms" route="{{ route }}" user="[[ user ]]" state="[[ state ]]" import="../kanban/kanban-forms-page.html"></kanban-forms-page>
+            <company-page name="company" route="{{ route }}" state="[[ state ]]" import="../references/company-page.html"></company-page>
+            <departments-page name="departments" route="{{ route }}" state="[[ state ]]" import="../references/departments-page.html"></departments-page>
+            <jobs-page name="jobs" route="{{ route }}" state="[[ state ]]" import="../references/jobs-page.html"></jobs-page>
+            <grades-page name="grades" route="{{ route }}" state="[[ state ]]" import="../references/grades-page.html"></grades-page>
+            <dispositions-page name="dispositions" route="{{ route }}" state="[[ state ]]" import="../references/dispositions-page.html"></dispositions-page>
+            <categories-page name="categories" route="{{ route }}" state="[[ state ]]" import="../references/categories-page.html"></categories-page>
+            <priorities-page name="priorities" route="{{ route }}" state="[[ state ]]" import="../references/priorities-page.html"></priorities-page>
+            <secrecy-page name="secrecy" route="{{ route }}" state="[[ state ]]" import="../references/secrecy-page.html"></secrecy-page>
+            <shipments-page name="shipments" route="{{ route }}" state="[[ state ]]" import="../references/shipments-page.html"></shipments-page>
+            <instructions-page name="instructions" route="{{ route }}" state="[[ state ]]" import="../references/instructions-page.html"></instructions-page>
+        </kct-pages>
+
+    </template>
+
+    <script>
+        class SettingsGroupPage extends KctView {
+            static get is() {
+                return 'settings-group-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Settings' },
+                    page: { type: String }
+                }
+            }
+            static get observers() {
+                return [
+                    '__stateChanged(state.*)'
+                ];
+            }
+
+            handleResizing(width, height) {
+                let pageNode = this.$.pages.selectedItem;
+                
+                if (pageNode && pageNode.handleResizing) {
+                    pageNode.handleResizing(width, height);
+                }
+            }
+
+            __stateChanged(changed) {
+                if (this.state.setting) {
+                    this.set('page', this.state.setting);
+                }
+            }
+
+            __onPageActive(e) {
+                let pageNode = e.detail.activeItem;
+                
+                if (pageNode && pageNode.activate) {
+                    pageNode.activate();
+                }
+            }
+        }
+        customElements.define(SettingsGroupPage.is, SettingsGroupPage);
+    </script>
+</dom-module>

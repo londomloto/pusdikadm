@@ -1,0 +1,908 @@
+<link rel="import" href="../../../../cores/bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../cores/elements/kct-pages/kct-pages.html">
+<link rel="import" href="../../../../cores/elements/kct-editor/kct-html-editor.html">
+<link rel="import" href="../../../../cores/elements/kct-html/kct-html.html">
+<link rel="import" href="../../../../cores/elements/kct-checkbox/kct-checkbox.html">
+<link rel="import" href="../settings/blocks/setting-header-block.html">
+<link rel="import" href="plugins/message-composer.html">
+
+<dom-module id="messages-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: #fff;
+            }
+            .side {
+                width: 170px;
+                padding: 15px;
+                background-color: var(--paper-blue-grey-500);
+            }
+            .menu {
+                display: block;
+                color: #fff;
+                text-transform: none;
+            }
+            .menu.iron-selected {
+                color: var(--paper-blue-grey-500);
+                background-color: var(--paper-grey-200);
+            }
+            .main {
+                position: relative;
+                overflow-y: scroll;
+                overflow-x: hidden;
+                height: calc(100vh - 128px);
+            }
+            .section {
+                display: block;
+            }
+            .message-list {
+                
+            }
+            .message-item {
+                display: block;
+                box-shadow: none;
+                position: relative;
+                cursor: pointer;
+                border-radius: 0;
+                background-color: #f9f9f9;
+                border-bottom: 1px solid #f0f0f0;
+            }
+            .message-item.unread {
+                background-color: #fff;
+            }
+            .message-item .card-content {
+                padding: 10px;
+            }
+            .message-item .mark {
+                padding: 0 5px;
+            }
+            .message-item .icon {
+                width: 40px;
+                height: 40px;
+                padding-right: 10px;
+            }
+            .message-item .icon img {
+                display: block;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+            }
+            .message-item .text {
+                
+            }
+            .message-item .subject {
+                font-weight: 400;
+                font-size: 14px;
+                color: var(--paper-blue-grey-500);
+            }
+            .message-item.unread .subject {
+                font-weight: 600;
+                color: #333;
+            }
+            section[name=outbox] .message-item,
+            section[name=draft] .message-item {
+                background: #fff;
+            }
+            section[name=outbox] .message-item .subject,
+            section[name=draft] .message-item .subject {
+                font-weight: 600;
+            }
+            .message-item:hover .subject {
+                text-decoration: underline;
+            }
+            .message-item .summary {
+                font-size: 14px;
+                color: #888;
+                width: 80%;
+                overflow: hidden;
+                white-space: nowrap;
+                
+                text-overflow: ellipsis;
+                position: relative;
+            }
+            .message-item .meta {
+                font-size: 12px;
+                color: var(--paper-blue-grey-500);
+                margin-bottom: 8px;
+            }
+            .message-item .meta .meta-item  {
+                margin-right: 20px;
+            }
+            .message-item .meta iron-icon {
+                --iron-icon-width: 14px;
+                --iron-icon-height: 14px;
+                position: relative;
+                top: -1px;
+            }
+            .message-detail {
+                padding: 20px;
+                position: relative;
+            }
+            .message-detail .actions {
+                position: absolute;
+                right: 3px;
+                top: 3px;
+                color: var(--paper-blue-grey-500);
+            }
+            .message-detail .subject {
+                font-size: 20px;
+                font-weight: 400;
+                display: block;
+                padding: 8px 0;
+                margin-bottom: 15px;
+                border-bottom: 1px solid #dfdfdf;
+            }
+            .message-detail .meta {
+                margin-bottom: 15px;
+            }
+            .message-detail .message {
+                margin-bottom: 30px;
+            }
+            .message-detail .form {
+                padding-top: 10px;
+                border-top: 1px solid #dfdfdf;
+                min-height: 100px;
+            }
+            .message-detail .form .footer {
+                padding: 8px;
+                text-align: right;
+            }
+            .message-item .logo,
+            .message-detail .logo {
+                width: 40px;
+                height: 40px;
+                background: var(--paper-grey-300);
+                color: #fff;
+                border-radius: 50%;
+                text-align: center;
+                line-height: 36px;
+            }
+            .html-editor {
+                height: 150px;
+                --wysiwyg-toolbar-background: #fff;
+                --wysiwyg-toolbar-color: var(--paper-blue-grey-500);
+                --wysiwyg-tool-icon-disabled-color: var(--paper-grey-500);
+                --wysiwyg-toolbar: {
+                    border-bottom: 1px solid #dfdfdf;
+                };
+                --wysiwyg-editable: {
+                    line-height: 24px;
+                    font-size: 15px;
+                };
+            }
+            .message-composer {
+                padding: 20px;
+            }
+
+            kct-checkbox {
+                --paper-checkbox-unchecked-color: var(--paper-blue-grey-500);
+
+                --paper-checkbox-checked-background-color: transparent;
+                --paper-checkbox-checked-color: var(--paper-blue-grey-500);
+                --paper-checkbox-margin: 0;
+                --paper-checkbox-size: 16px;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox>
+            <setting-header-block hide-nav="[[ __hideNav ]]" text="Personal" desc="Inbox" icon="mail" on-back-tap="__onBackTap">
+                <div class="separator"></div>
+                <paper-icon-button on-tap="__onRefreshTap" icon="refresh"></paper-icon-button>
+                <paper-button on-tap="__onComposeTap"><iron-icon icon="add"></iron-icon>&nbsp;Buat Pesan</paper-button>
+
+                <paper-button on-tap="__onRemoveTap"><iron-icon icon="close"></iron-icon>&nbsp;Hapus</paper-button>                
+                <paper-button on-tap="__onRestoreTap"><iron-icon icon="move-to-inbox"></iron-icon>&nbsp;Restore</paper-button>                
+
+            </setting-header-block>
+            <div class="flex">
+                <kct-hbox fit>
+                    <div class="side">
+                        <iron-selector attr-for-selected="name" selected="[[ section ]]"> 
+                            <template is="dom-repeat" items="[[ sections ]]">
+                                <paper-button on-tap="__onSectionTap" name="[[ item.name ]]" class="menu">[[ item.text ]] [[ item.info ]]</paper-button>    
+                            </template> 
+                        </iron-selector>
+                    </div>
+                    <div class="main flex">
+                        <kct-pages attr-for-selected="name" selected="[[ section ]]">
+                            <section class="section" name="inbox">
+                                <kct-pages attr-for-selected="name" selected="[[ inbox.view ]]">
+                                    <div name="list" class="message-list">
+                                        <template is="dom-repeat" items="[[ inbox.items ]]" as="message">
+                                            <paper-card class$="message-item [[ __computeClass(message.smi_read) ]]">
+                                                <div class="card-content">
+                                                    <kct-hbox>
+                                                        <div class="mark">
+                                                            <kct-checkbox value="{{ message.smi_checked }}"></kct-checkbox>
+                                                        </div>
+                                                        <div class="icon">
+                                                            <template is="dom-if" if="[[ message.smi_has_sender ]]">
+                                                                <img alt="" src$="[[ message.sender_su_avatar_thumb ]]&w=40&h=40">
+                                                            </template>
+                                                        </div>
+                                                        <div class="flex text">
+                                                            <div class="subject" on-click="__onInboxItemTap">[[ message.smi_subject ]]</div>
+                                                            <div class="meta" hidden$="[[ !message.smi_has_sender ]]">
+                                                                <span class="meta-item"><iron-icon icon="perm-identity"></iron-icon> [[ message.sender_su_fullname ]]</span> 
+                                                                <span class="meta-item"><iron-icon icon="schedule"></iron-icon>&nbsp;[[ message.smi_receiving_dt_relative ]]</span>
+                                                            </div>
+                                                            <div class="summary"  on-click="__onInboxItemTap">
+                                                                [[ message.smi_summary ]]
+                                                            </div>
+                                                        </div>
+                                                    </kct-hbox>
+                                                </div>
+                                            </paper-card>
+                                        </template>
+                                    </div>
+                                    <div name="detail" class="message-detail">
+                                        <h3 class="subject">[[ inbox.message.smi_subject ]]</h3>
+                                        <kct-hbox class="meta">
+                                            <div class="icon">
+                                                <img alt="" src$="[[ inbox.message.sender_su_avatar_thumb ]]&w=36&h=36">
+                                            </div>
+                                            <div class="text p-l-sm">
+                                                <div><strong>[[ inbox.message.sender_su_fullname ]]</strong></div>
+                                                <div>[[ inbox.message.smi_receiving_dt_formatted ]]</div>
+                                            </div>
+                                        </kct-hbox>
+                                        <div class="message">
+                                            <kct-html html="[[ inbox.message.smi_text ]]"></kct-html>
+                                        </div>
+                                        <kct-hbox class="form">
+                                            <div class="icon p-r-sm">
+                                                <img alt="" src$="[[ user.su_avatar_thumb ]]&w=36&h=36">
+                                            </div>
+                                            <div class="flex b-a">
+                                                <div class="p-a" hidden$="[[ inbox.editing ]]">
+                                                    Klik di sini untuk <a href="javascript:;" on-click="__onReplyTap">membalas</a> pesan ini.
+                                                </div>
+                                                <div hidden$="[[ !inbox.editing ]]">
+                                                    <div>
+                                                        <kct-html-editor value="{{ inbox.reply.smo_text }}" class="html-editor"></kct-html-editor>    
+                                                    </div>
+                                                    <div class="footer">
+                                                        <paper-button on-tap="__onInboxReplyTap" class="btn-blue">Kirim Pesan</paper-button>
+                                                    </div>    
+                                                </div>
+                                                
+                                            </div>
+                                        </kct-hbox>
+                                    </div>
+                                </kct-pages>
+                            </section>
+
+                            <section class="section" name="outbox">
+                                <kct-pages attr-for-selected="name" selected="[[ outbox.view ]]">
+                                    <div name="list" class="message-list">
+                                        <template is="dom-repeat" items="[[ outbox.items ]]" as="message">
+                                            <paper-card class="message-item">
+                                                <div class="card-content">
+                                                    <kct-hbox>
+                                                        <div class="mark">
+                                                            <kct-checkbox value="{{ message.smo_checked }}"></kct-checkbox>
+                                                        </div>
+                                                        <div class="flex text">
+                                                            <div class="subject" on-click="__onOutboxItemTap">[[ message.smo_subject ]]</div>
+                                                            <div class="meta">Dikirim <span hidden$="[[ !message.smo_has_recipients ]]">kepada [[ message.smo_recipients_names ]]</span> pada [[ message.smo_sending_dt_formatted ]]</div>
+                                                            <div class="summary" on-click="__onOutboxItemTap">[[ message.smo_summary ]]</div>
+                                                        </div>
+                                                    </kct-hbox>
+                                                </div>
+                                            </paper-card>
+                                        </template>
+                                    </div>
+                                    <div name="detail" class="message-detail">
+                                        <h3 class="subject">[[ outbox.message.smo_subject ]]</h3>
+                                        <kct-hbox class="meta">
+                                            <div class="icon">
+                                                <div class="logo"><iron-icon icon="communication:mail-outline"></iron-icon></div>
+                                            </div>
+                                            <div class="text p-l-sm">
+                                                <div>Kepada: <strong>[[ outbox.message.smo_recipients_names ]]</strong></div>
+                                                <div>Dikirim tanggal: [[ outbox.message.smo_sending_dt_formatted ]]</div>
+                                            </div>
+                                        </kct-hbox>
+                                        <div class="message">
+                                            <kct-html html="[[ outbox.message.smo_text ]]"></kct-html>
+                                        </div>
+                                    </div>
+                                </kct-pages>
+                            </section>
+
+                            <section class="section" name="draft">
+                                <kct-pages attr-for-selected="name" selected="[[ draft.view ]]">
+                                    <div name="list" class="message-list">
+                                        <template is="dom-repeat" items="[[ draft.items ]]" as="message">
+                                            <paper-card class="message-item">
+                                                <div class="card-content">
+                                                    <kct-hbox>
+                                                        <div class="mark">
+                                                            <kct-checkbox value="{{ message.smo_checked }}"></kct-checkbox>
+                                                        </div>
+                                                        <div class="flex text">
+                                                            <div class="subject" on-click="__onDraftItemTap">[[ message.smo_subject ]]</div>
+                                                            <div class="meta">
+                                                                Dibuat pada [[ message.smo_created_dt_formatted ]] 
+                                                            </div>
+                                                            <div class="summary"  on-click="__onDraftItemTap">[[ message.smo_summary ]]</div>
+                                                        </div>
+                                                    </kct-hbox>
+                                                </div>
+                                            </paper-card>
+                                        </template>
+                                    </div>
+                                    <div name="detail" class="message-detail">
+                                        <message-composer 
+                                            id="drafter" 
+                                            on-after-save="__onDrafterAfterSave" 
+                                            on-after-send="__onDrafterAfterSend" 
+                                            message="[[ draft.message ]]"></message-composer>
+                                    </div>
+                                </kct-pages>
+                            </section>
+
+                            <section class="section" name="trash">
+                                <kct-pages attr-for-selected="name" selected="[[ trash.view ]]">
+                                    <div name="list" class="message-list">
+                                        <template is="dom-repeat" items="[[ trash.items ]]" as="message">
+                                            <paper-card class$="message-item [[ __computeClass(message.smi_read) ]]">
+                                                <div class="card-content">
+                                                    <kct-hbox>
+                                                        <div class="mark">
+                                                            <kct-checkbox value="{{ message.smi_checked }}"></kct-checkbox>
+                                                        </div>
+                                                        <div class="icon">
+                                                            <template is="dom-if" if="[[ message.smi_has_sender ]]">
+                                                                <img alt="" src$="[[ message.sender_su_avatar_thumb ]]&w=40&h=40">
+                                                            </template>
+                                                        </div>
+                                                        <div class="flex text">
+                                                            <div class="subject" on-click="__onTrashItemTap">[[ message.smi_subject ]]</div>
+                                                            <div class="meta" hidden$="[[ !message.smi_has_sender ]]">
+                                                                <span class="meta-item"><iron-icon icon="perm-identity"></iron-icon> [[ message.sender_su_fullname ]]</span> 
+                                                                <span class="meta-item"><iron-icon icon="schedule"></iron-icon>&nbsp;[[ message.smi_receiving_dt_relative ]]</span>
+                                                            </div>
+                                                            <div class="summary">
+                                                                [[ message.smi_summary ]]
+                                                            </div>
+                                                        </div>
+                                                    </kct-hbox>
+                                                </div>
+                                            </paper-card>
+                                        </template>
+                                    </div>
+                                    <div name="detail" class="message-detail">
+                                        <h3 class="subject">[[ trash.message.smi_subject ]]</h3>
+                                        <kct-hbox class="meta">
+                                            <div class="icon">
+                                                <img alt="" src$="[[ trash.message.sender_su_avatar_thumb ]]&w=36&h=36">
+                                            </div>
+                                            <div class="text p-l-sm">
+                                                <div><strong>[[ trash.message.sender_su_fullname ]]</strong></div>
+                                                <div>[[ trash.message.smi_receiving_dt_formatted ]]</div>
+                                            </div>
+                                        </kct-hbox>
+                                        <div class="message">
+                                            <kct-html html="[[ trash.message.smi_text ]]"></kct-html>
+                                        </div>
+                                    </div>
+                                </kct-pages>
+                            </section>
+
+                            <section name="compose" class="message-composer">
+                                <message-composer 
+                                    id="composer" 
+                                    on-after-save="__onComposerAfterSave" 
+                                    on-after-send="__onComposerAfterSave"></message-composer>
+                            </section>
+
+                        </kct-pages>
+                        
+                    </div>
+                </kct-hbox>
+            </div>
+        </kct-vbox>
+    </template>
+    <script>
+        class MessagesPage extends KctView {
+            static get is() {
+                return 'messages-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Perpesanan', notify: true },
+                    section: { type: String },
+                    sections: {
+                        type: Array,
+                        value: () => ([
+                            { name: 'inbox', text: 'Kotak Masuk' },
+                            { name: 'outbox', text: 'Kotak Keluar' },
+                            { name: 'draft', text: 'Draft Pesan' },
+                            { name: 'trash', text: 'Kotak Sampah' }
+                        ])
+                    },
+                    inbox: {
+                        type: Object,
+                        value: () => ({
+                            view: 'list',
+                            load: false,
+                            items: [],
+                            total: 0,
+                            unread: 0,
+                            message: {},
+                            reply: {},
+                            editing: false
+                        })
+                    },
+                    outbox: {
+                        type: Object,
+                        value: () => ({
+                            view: 'list',
+                            load: false,
+                            items: [],
+                            message: {}
+                        })
+                    },
+                    draft: {
+                        type: Object,
+                        value: () => ({
+                            view: 'list',
+                            load: false,
+                            items: [],
+                            message: {}
+                        })
+                    },
+                    trash: {
+                        type: Object,
+                        value: () => ({
+                            view: 'list',
+                            load: false,
+                            items: [],
+                            message: {}
+                        })
+                    }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__unreadChanged(inbox.unread)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__hideNav = true;
+            }
+
+            handleRouteParams(section, id) {
+                section = section || 'inbox';
+                this.set('section', section);
+
+                let func;
+
+                if (id) {
+                    id = decodeURIComponent(id);
+                    this.set('__hideNav', false);
+                    func = this.__computeHandler(section, 'open');
+                    func(id);
+                } else {
+                    this.set('__hideNav', true);
+                    switch(section) {
+                        case 'compose':
+                            break;
+                        default:
+                            this.set(section + '.view', 'list');
+                            let loaded = this.get(section + '.load');
+
+                            if ( ! loaded) {
+                                this.set(section + '.load', true);
+                                func = this.__computeHandler(section, 'load');
+                                func();
+                            }
+                    }
+                    
+                }
+            }
+
+            __computeClass(read) {
+                return read == '0' ? 'unread' : '';
+            }
+
+            __computeHandler(section, method) {
+                let name = section.substr(0, 1).toUpperCase() + section.substr(1);
+                let func = this['__' + method + name];
+
+                if (func) {
+                    return func.bind(this);
+                } else {
+                    return function() {};
+                }
+            }
+
+            __loadInbox() {
+                this.mask('Loading...');
+
+                let payload = {
+                    params: {
+                        smi_deleted: 0
+                    }
+                };
+                this.$.ajax.GET('/messages/inbox', payload).then(res => {
+                    this.unmask();
+                    this.set('inbox.items', res.data);
+
+                    this.__loadInboxInfo();
+                    
+                });
+            }
+
+            __loadInboxInfo() {
+                     
+
+                this.$.ajax.GET('/messages/inbox/info').then(res => {
+                    let unread = +res.data.unread;
+                    this.set('inbox.unread', unread);
+
+                    
+                });
+            }
+
+            __unreadChanged(unread) {
+                
+                let sectionIndex = this.sections.findIndex(e => e.name == 'inbox');
+                
+                if (unread > 0) {
+                    this.set('sections.' + sectionIndex + '.info', '(' + unread + ')');        
+                } else {
+                    this.set('sections.' + sectionIndex + '.info', '');       
+                }
+            }
+
+            __loadTrash() {
+                this.mask('Loading...');
+
+                let payload = {
+                    params: {
+                        smi_deleted: 1
+                    }
+                };
+
+                this.$.ajax.GET('/messages/inbox', payload).then(res => {
+                    this.unmask();
+                    this.set('trash.items', res.data);
+                });
+            }
+
+            __openInbox(code) {
+                this.set('inbox.editing', false);
+
+                this.$.ajax.GET('/messages/inbox/' + code + '/read').then(res => {
+                    this.set('inbox.message', res.data);
+                    this.set('inbox.view', 'detail');
+                });
+            }
+
+            __removeInbox() {
+                let removedItems;
+
+                if (this.inbox.view == 'detail') {
+                    removedItems = [this.inbox.message.smi_code];
+                } else {
+                    removedItems = this.inbox.items.filter(e => e.smi_checked == 1).map(e => e.smi_code);
+                }
+                
+                if (removedItems.length) {
+                    this.mask('Memindahkan ke kotak sampah...');
+                    this.$.ajax.POST('/messages/inbox/trash', {
+                        messages: removedItems
+                    }).then(() => {
+                        this.unmask();
+
+                        if (this.inbox.view == 'detail') {
+                            this.set('inbox.load', false);
+                            this.set('trash.load', false);
+                            this.set('route.path', '/messages/inbox');
+                        } else {
+                            let items = this.inbox.items.filter(e => {
+                                return removedItems.indexOf(e.smi_code) === -1;
+                            });
+
+                            this.set('inbox.items', items);
+                            this.set('trash.load', false);
+                        }
+
+                        this.__loadInboxInfo();
+                    });
+                }
+            }
+
+            __removeOutbox() {
+                let removedItems;
+
+                if (this.outbox.view == 'detail') {
+                    removedItems = [this.outbox.message.smo_code];
+                } else {
+                    removedItems = this.outbox.items.filter(e => e.smo_checked == 1).map(e => e.smo_code);
+                }
+
+                if (removedItems.length) {
+
+                    this.confirm('Konfirmasi', 'Hapus pesan keluar dari daftar?').then(y => {
+                        this.mask('Menghapus pesan keluar...');
+                        this.$.ajax.POST('/messages/outbox/trash', {
+                            messages: removedItems
+                        }).then(() => {
+                            this.unmask();
+
+                            if (this.outbox.view == 'detail') {
+                                this.set('outbox.load', false);
+                                this.set('route.path', '/messages/outbox');
+                            } else {
+                                let items = this.outbox.items.filter(e => {
+                                    return removedItems.indexOf(e.smo_code) === -1;
+                                });
+
+                                this.set('outbox.items', items);
+                            }
+                        });
+                    });
+                    
+                }
+            }
+
+            __removeDraft() {
+                let removedItems;
+
+                if (this.draft.view == 'detail') {
+                    removedItems = [this.draft.message.smo_code];
+                } else {
+                    removedItems = this.draft.items.filter(e => e.smo_checked == 1).map(e => e.smo_code);
+                }
+
+                if (removedItems.length) {
+
+                    this.mask('Menghapus draft...');
+
+                    this.$.ajax.POST('/messages/outbox/trash', {
+                        messages: removedItems
+                    }).then(() => {
+                        this.unmask();
+
+                        if (this.draft.view == 'detail') {
+                            this.set('draft.load', false);
+                            this.set('route.path', '/messages/draft');
+                        } else {
+                            let items = this.draft.items.filter(e => {
+                                return removedItems.indexOf(e.smo_code) === -1;
+                            });
+
+                            this.set('draft.items', items);
+                        }
+                        
+                    });
+                    
+                }
+            }
+
+            __removeTrash() {
+                let removedItems;
+                if (this.trash.view == 'detail') {
+                    removedItems = [this.trash.message.smi_code];
+                } else {
+                    removedItems = this.trash.items.filter(e => e.smi_checked == 1).map(e => e.smi_code);
+                }
+                
+                if (removedItems.length) {
+                    this.mask('Sedang menghapus pesan...');
+
+                    this.$.ajax.POST('/messages/inbox/remove', {
+                        messages: removedItems
+                    }).then(() => {
+                        this.unmask();
+
+                        if (this.trash.view == 'detail') {
+                            this.set('trash.load', false);
+                            this.set('route.path', '/messages/trash');
+                        } else {
+                            let items = this.trash.items.filter(e => {
+                                return removedItems.indexOf(e.smi_code) === -1;
+                            });
+
+                            this.set('trash.items', items);
+                        }
+
+                        
+                    });
+                }
+            }
+
+            __loadOutbox() {
+                let payload = {
+                    params: {
+                        smo_sending: 1
+                    }
+                };
+
+                this.mask('Loading...');
+
+                this.$.ajax.GET('/messages/outbox', payload).then(res => {
+                    this.unmask();
+                    this.set('outbox.items', res.data);
+                });
+            }
+
+            __openOutbox(code) {
+                this.$.ajax.GET('/messages/outbox/' + code + '/open').then(res => {
+                    this.set('outbox.message', res.data);
+                    this.set('outbox.view', 'detail');
+                });
+            }
+
+            __loadDraft() {
+                let payload = {
+                    params: {
+                        smo_sending: 0
+                    }
+                };
+                this.mask('Loading');
+                this.$.ajax.GET('/messages/outbox', payload).then(res => {
+                    this.unmask();
+                    this.set('draft.items', res.data);
+                });
+            }
+
+            __openDraft(code) {
+                this.$.drafter.initialize();
+
+                this.$.ajax.GET('/messages/outbox/' + code + '/open').then(res => {
+                    this.set('draft.message', res.data);
+                    this.set('draft.view', 'detail');
+                });
+            }
+
+            __openTrash(code) {
+                this.$.ajax.GET('/messages/inbox/' + code + '/read').then(res => {
+                    this.set('trash.message', res.data);
+                    this.set('trash.view', 'detail');
+                });
+            }
+
+            __restoreTrash() {
+                let restoredItems = this.trash.items.filter(e => e.smi_checked == 1).map(e => e.smi_code);
+                if (restoredItems.length) {
+                    this.mask('Memindahkan pesan ke kotak masuk...');
+                    this.$.ajax.POST('/messages/inbox/restore', {
+                        messages: restoredItems
+                    }).then(() => {
+                        this.unmask();
+                        let items = this.trash.items.filter(e => {
+                            return restoredItems.indexOf(e.smi_code) === -1;
+                        });
+                        this.set('trash.items', items);
+                        this.set('inbox.load', false);
+                    });
+                }
+            }
+
+            __onSectionTap(e) {
+                let section = e.model.item.name;
+                this.set('route.path', '/messages/' + section);
+            }
+
+            __onInboxItemTap(e) {
+                let code = encodeURIComponent(e.model.message.smi_code);
+
+                if (e.model.message.smi_read == 0) {
+                    let unread = this.inbox.unread - 1;
+
+                    if (unread < 0) {
+                        unread = 0;
+                    }
+
+                    this.set('inbox.unread', unread);
+                }
+
+                this.set('inbox.items.' + e.model.index + '.smi_read', 1);
+                this.set('route.path', '/messages/inbox/' + code);
+            }
+
+            __onOutboxItemTap(e) {
+                this.set('route.path', '/messages/outbox/' + e.model.message.smo_code);
+            }
+
+            __onDraftItemTap(e) {
+                this.set('route.path', '/messages/draft/' + e.model.message.smo_code);
+            }
+
+            __onTrashItemTap(e) {
+                this.set('route.path', '/messages/trash/' + e.model.message.smi_code);
+            }
+
+            __onComposeTap() {
+                this.$.composer.initialize();
+                this.set('route.path', '/messages/compose');
+            }
+
+            __onReplyTap() {
+                this.set('inbox.reply.smo_text', '');
+                this.set('inbox.editing', true);
+            }
+
+            __onInboxReplyTap() {
+
+                let reply = this.inbox.reply;
+                
+                reply.smo_sender = this.user.su_id;
+                reply.smo_subject = 'Reply: ' + this.inbox.message.smi_subject.replace(/^reply:\s+/i, '');
+                reply.smo_recipients = [this.inbox.message.smi_sender];
+
+                this.mask('Mengirim balasan...');
+                this.$.ajax.POST('/messages/outbox/send', reply).then(res => {
+                    this.unmask();
+                    this.toast('Berhasil', 'Pesan balasan sudah dikirim');
+                });
+
+                this.set('inbox.editing', false);
+            }
+
+            __onRefreshTap() {
+                if (this.section) {
+                    this.set(this.section + '.load', false);
+                    this.set(this.section + '.view', 'list');
+
+                    let func = this.section.substr(0, 1).toUpperCase() + this.section.substr(1);
+                    this['__load' + func] && this['__load' + func]();
+                }
+            }
+
+            __onComposerAfterSave() {
+                if (this.section) {
+                    this.set('outbox.load', false);
+                    this.set('draft.load', false);
+                    this.set('inbox.load', false);
+                }
+            }
+
+            __onRemoveTap() {
+                if (this.section) {
+                    let func = this.__computeHandler(this.section, 'remove');
+                    func();
+                }
+            }
+
+            __onRestoreTap() {
+                if (this.section == 'trash') {
+                    let func = this.__computeHandler(this.section, 'restore');
+                    func();
+                }
+            }
+
+            __onDrafterAfterSend() {
+                this.set('outbox.load', false);
+                this.set('route.path', '/messages/outbox');
+            }
+
+            __onDrafterAfterSave() {
+                this.set('draft.load', false);
+                this.set('route.path', '/messages/draft');
+            }
+
+            __onBackTap() {
+                let back = this.section || 'inbox';
+                this.set('route.path', '/messages/' + back);
+            }
+        }
+        customElements.define(MessagesPage.is, MessagesPage);
+    </script>
+</dom-module>

@@ -1,0 +1,186 @@
+<link rel="import" href="../../../../../cores/vendors/moment/moment.html">
+<link rel="import" href="../../../../../cores/elements/kct-media/kct-media.html">
+<link rel="import" href="../../../../../cores/elements/kct-file/kct-file-button.html">
+
+<dom-module id="form-absensi">
+    <template>
+        <style include="form-style"></style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-media screen="{{ screen }}"></kct-media>
+
+        <div class="section">
+            <h3 class="section-title">Data Absensi</h3>
+            <div>
+                <template is="dom-if" if="[[ phantom ]]">
+                    <kct-combobox 
+                        label="Nama Lengkap" 
+                        value="{{ record.task.tpr_su_id }}"
+                        url="/users" 
+                        page-size="10" 
+                        item-label-path="su_fullname" 
+                        item-value-path="su_id" 
+                        on-change="__onComboUserChange"></kct-combobox>
+                    <paper-input label="Jabatan" value="{{ record.task.tpr_su_sj_name }}"></paper-input>
+                    <paper-input label="Unit Kerja" value="{{ record.task.tpr_su_sdp_name }}"></paper-input>    
+                    <kct-date-picker label="Tanggal" value="{{ record.task.tpr_date }}"></kct-date-picker>                    
+                </template>
+
+                <template is="dom-if" if="[[ !phantom ]]">
+                    <paper-input label="Nama Lengkap" value="[[ record.task.tpr_su_fullname ]]" readonly></paper-input>
+                    <paper-input label="Jabatan" value="[[ record.task.tpr_su_sj_name ]]" readonly></paper-input>
+                    <paper-input label="Unit Kerja" value="[[ record.task.tpr_su_sdp_name ]]" readonly></paper-input>
+                    <paper-input label="Tanggal" value="[[ record.task.tpr_date_formatted ]]" readonly></paper-input>
+                </template>
+
+                <div class="form-group">
+                    <label>Absensi (Kehadiran)</label>
+                    <paper-radio-group selected="{{ record.task.tpr_type }}" attr-for-selected="name" class$="hbox [[ screen ]]">
+                        <paper-radio-button name="Masuk">Masuk</paper-radio-button>
+                        <paper-radio-button name="Izin">Izin</paper-radio-button>
+                        <paper-radio-button name="Sakit">Sakit</paper-radio-button>
+                        <paper-radio-button name="Alfa">Alfa</paper-radio-button>
+                        <paper-radio-button name="Dinas Luar">Dinas Luar</paper-radio-button>
+                        <paper-radio-button name="Lain-lain">Lain-lain</paper-radio-button>
+                    </paper-radio-group>
+                </div>
+
+                <paper-input label="Keterangan" value="{{ record.task.tpr_desc }}" hidden$="[[ __otherHidden ]]"></paper-input>
+
+                <paper-input label="Jam Absensi" value="{{ record.task.tpr_checkin }}" hidden$="[[ __timeHidden ]]"></paper-input>
+                <kct-file-button label="Attachment" id="attachment" value="{{ record.task.tpr_filename }}"></kct-file-button>
+            </div>
+        </div>
+
+    </template>
+    <script>
+        class FormAbsensi extends FormBase {
+            static get is() {
+                return 'form-absensi';
+            }
+
+            static get observers() {
+                return [
+                    '__typeChanged(record.task.tpr_type)',
+                    '__validationChanged(record.task.tpr_su_id, record.task.tpr_date)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__timeHidden = true;
+                this.__otherHidden = true;
+            }
+
+            initialize() {
+                this.shadowRoot.querySelectorAll('kct-combobox[page-size]').forEach(c => c.load);
+
+                if (this.action == 'create') {
+                    
+                    this.set('buttons', 'save');
+
+                    let today = moment();
+
+                    this.set('record.task.tpr_su_id', this.user.su_id);
+                    this.set('record.task.tpr_su_sj_name', this.user.su_sj_name);
+                    this.set('record.task.tpr_su_sdp_name', this.user.su_sdp_name);
+                    this.set('record.task.tpr_date', today.format('YYYY-MM-DD'));
+                    this.set('record.task.tpr_type', 'Masuk');
+                } else {
+                    this.set('buttons', 'save,remove');
+                }
+
+                return this.resolve();
+                
+            }
+
+            beforeSave(options) {
+                let def = this.defer();
+
+                if (this.phantom) {
+                    this.__validate().then(valid => {
+                        if ( ! valid) {
+                            def.resolve({ success: false });
+                        } else {
+                            save.bind(this, def)();
+                        }
+                    });    
+                } else {
+                    save.bind(this, def)();
+                }
+
+                return def.promise;
+
+                function save(def) {
+                    // upload attachments
+                    if (this.$.attachment.file) {
+                        this.$.attachment.upload('/presence/attach').then(res => {
+                            if (res.success) {
+                                this.set('record.task.tpr_filename', res.data.filename);
+                                this.set('record.task.tpr_filetype', res.data.filetype);
+                            }
+                            def.resolve({ success: true });
+                        });
+                    } else {
+                        def.resolve({ success: true });
+                    }
+                }
+            }
+
+            beforeRemove() {
+                let key = (this.record.task || {}).tpr_id;
+
+                if (key) {
+                    return this.$.ajax.DELETE('/presence/' + key);
+                } else {
+                    return this.resolve({ success: true });
+                }
+            }
+
+            __validate() {
+                let params = {
+                    tpr_su_id: this.record.task.tpr_su_id,
+                    tpr_date: this.record.task.tpr_date
+                };
+
+                return this.$.ajax.GET('/presence', { params: params }).then(res => {
+                    if (res.data.length > 0) {
+                        this.toast('Gagal', 'Absensi Anda sudah pernah dibuat', 'danger');
+                        return false;
+                    }
+                    return true;
+                });
+            }
+
+            __validationChanged(user, date) {
+                let valid = true;
+                valid = valid && !!user;
+                valid = valid && !!date;
+                this.set('invalid', !valid);
+            }
+
+            __typeChanged(type) {
+                if (type == 'Masuk') {
+                    this.set('__timeHidden', false);
+                    this.set('__otherHidden', true);
+                } else {
+                    this.set('__timeHidden', true);
+                    this.set('__otherHidden', false);
+                }
+            } 
+
+            __onComboUserChange(e) {
+                let author = e.target.getModelForValue(e.target.value);
+
+                if (author) {
+                    this.set('record.task.tpr_su_sj_name', author.su_sj_name);
+                    this.set('record.task.tpr_su_sdp_name', author.su_sdp_name);
+                } else {
+                    this.set('record.task.tpr_su_sj_name', '');
+                    this.set('record.task.tpr_su_sdp_name', '');
+                }
+            }
+        }
+        customElements.define(FormAbsensi.is, FormAbsensi);
+    </script>
+</dom-module>

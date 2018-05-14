@@ -1,0 +1,58 @@
+
+<link rel="import" href="../../shared/project-view-kanban.html">
+<link rel="import" href="plugins/skp-card.html">
+
+<dom-module id="skp-view-kanban">
+    <template>
+        <style include="project-view-kanban-style"></style>
+        
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-event-subscriber on-notify="__onLocalNotify"></kct-event-subscriber>
+        <kct-socket manager="global-socket" on-notify="__onSocketNotify"></kct-socket>
+        
+        <kct-worksheet id="worksheet" columns="4">
+            <template is="dom-repeat" items="[[ worksheetRecord.ks_panels ]]" as="panel">
+                <kct-worksheet-panel title="[[ panel.kp_title ]]" accent="[[ panel.kp_accent ]]" hide-condensed hide-secondary>
+                    <div class="panel-content">
+                        <template is="dom-repeat" items="[[ panel.kp_data ]]">
+                            <skp-card 
+                                class="panel-item" 
+                                record="[[ item ]]" 
+                                accent="[[ panel.kp_accent ]]" 
+                                on-card-tap="__onCardItemTap"></skp-card>
+                        </template>
+                        <div class="panel-paging" hidden$="[[ !panel.kp_more ]]">
+                            <paper-button on-tap="__onLoadMoreTap">Load more items&nbsp;<iron-icon icon="arrow-drop-down"></iron-icon></paper-button>
+                        </div>
+                    </div>
+                </kct-worksheet-panel>
+            </template>
+        </kct-worksheet>
+
+    </template>
+    <script>
+        class SkpViewKanban extends Mixins(KctView).use(Mixins.ProjectViewKanban) {
+            static get is() {
+                return 'skp-view-kanban';
+            }
+
+            static get properties() {
+                return {
+                    profile: {
+                        type: Object,
+                        value: () => ({
+                            service: {
+                                url: '/skp/kanban'
+                            },  
+                            status: {
+                                primary_key: 'sks_id'
+                            }
+                        })
+                    }
+                };
+            }
+        }
+
+        customElements.define(SkpViewKanban.is, SkpViewKanban);
+    </script>
+</dom-module>

@@ -1,0 +1,430 @@
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-spinner/paper-spinner-lite.html">
+<link rel="import" href="../../../../../cores/mixins/mixins.html">
+<link rel="import" href="../../../../../cores/vendors/moment/moment.html">
+
+<link rel="import" href="../plugins/task-combo-user.html">
+<link rel="import" href="../plugins/task-combo-label.html">
+<link rel="import" href="../plugins/task-combo-status.html">
+<link rel="import" href="../plugins/task-date-picker.html">
+<link rel="import" href="../plugins/save-indicator.html">
+<link rel="import" href="../styles/project-task-prop-style.html">
+
+<script>
+    Mixins.ProjectTaskProp = Polymer.dedupingMixin(superclass => {
+
+        return class extends superclass {
+            static get properties() {
+                return {
+                    project: { type: Object },
+                    workspace: { type: Object }, 
+                    profile: { type: Object },
+                    record: { type: Object, notify: true },
+                    loading: { type: Boolean, value: false, reflectToAttribute: true }, 
+                    socketSession: { type: String }
+                };
+            }
+
+            constructor() {
+                super();
+                
+                this.__states = {
+                    editing: {
+                        user: false,
+                        due: false,
+                        label: false,
+                        status: false
+                    }
+                };
+
+            }
+
+            initialize() {
+                this.stopEditing();
+                this.assignAuthor();
+                
+                this.set('record.task.' + this.profile.task.creator_key , this.user.su_id);
+                this.set('record.task.creator_su_avatar_thumb', this.user.su_avatar_thumb);
+                this.set('record.task.creator_su_fullname', this.user.su_fullname);
+                this.set('record.task.creator_su_sg_name', this.user.su_sg_name);
+                this.set('record.task.creator_su_no', this.user.su_no);
+
+
+                if (this.project) {
+                    this.set('record.task.' + this.profile.task.due_key, this.project.sp_end_date);
+                    this.set('record.task.' + this.profile.task.due_formatted_key, this.project.sp_end_date_formatted);
+                }
+            }
+            
+            stopEditing() {
+                this.stopEditingLabel();
+                this.stopEditingUser();
+                // this.stopEditingStatus();
+                // this.stopEditingDue();
+            }
+
+            startEditingUser() {
+                this.set('__states.editing.user', true);
+                this.$['combo-user'].open();
+            }
+
+            stopEditingUser() {
+                if (this.$['combo-user']) {
+                    this.$['combo-user'].close();
+                    this.set('__states.editing.user', false);    
+                }
+            }
+
+            startEditingLabel() {
+                this.set('__states.editing.label', true);
+                this.$['combo-label'].open();
+            }
+
+            stopEditingLabel() {
+                this.$['combo-label'].close();
+                this.set('__states.editing.label', false);
+            }
+
+            startEditingDue() {
+                this.set('__states.editing.due', true);
+                this.$['due-picker'].open();
+            }
+
+            stopEditingDue() {
+                this.$['due-picker'].close();
+                this.set('__states.editing.due', false);
+            }
+
+            startEditingStatus() {
+                this.set('__states.editing.status', true);
+                this.$['combo-status'].open();
+            }
+
+            stopEditingStatus() {
+                this.$['combo-status'].close();
+                this.set('__states.editing.status', false);
+            }
+
+            assignAuthor() {
+                this.__resolveProjectUsers().then(users => {
+                    let exists = {};
+
+                    users.forEach(e => {
+                        this.push('record.users', Object.assign({}, e));
+                        exists[e.su_id] = true;
+                    });
+
+                    let user = this.user;
+                    
+                    if (user && exists[user.su_id] === undefined) {
+                        this.push('record.users', {
+                            su_id: user.su_id,
+                            su_fullname: user.su_fullname,
+                            su_avatar_thumb: user.su_avatar_thumb,
+                            su_no: user.su_no,
+                            su_sg_name: user.su_sg_name,
+                            su_sj_name: user.su_sj_name
+                        });
+                    }
+                    
+                    if ((this.record.users || []).length) {
+                        this.__save('user');
+                    }
+                });
+            }
+
+            __resolveProjectUsers() {
+                if (this.project) {
+                    if (this.project.sp_type == 'private') {
+                        return this.$.ajax.GET('/projects/projects-users', {
+                            params: {
+                                spu_sp_id: this.project.sp_id
+                            }
+                        }).then(res => {
+                            if (res.success) {
+                                return res.data;
+                            }
+                        });
+                    } else {
+                        let users = [
+                            {
+                                su_id: this.project.sp_creator_id,
+                                su_fullname: this.project.creator_su_fullname,
+                                su_avatar_thumb: this.project.creator_su_avatar_thumb,
+                                su_no: this.project.creator_su_no,
+                                su_sg_name: this.project.creator_su_sg_name,
+                                su_sj_name: this.project.creator_su_sj_name
+                            }
+                        ];
+
+                        return Promise.resolve(users);
+                    }
+                } else {
+                    return Promise.resolve([]);
+                }
+            }
+
+            __hideEmptyUser() {
+                if (this.record && this.record.users) {
+                    return (this.record.users || []).length > 0;
+                }
+                return true;
+            }
+
+            __hideEmptyLabel() {
+                if (this.record && this.record.labels) {
+                    return (this.record.labels || []).length > 0;
+                }
+                return true;
+            }
+
+            __hideEmptyDue(due) {
+                return !!due;
+            }
+
+            __hideEmptyStatus(status) {
+                return !!status;
+            }
+
+            __computeCoalesce(value) {
+                return value || '(kosong)';
+            }
+
+            __computeCreatorAvatar(avatar) {
+                return avatar ? avatar + '&w=36&h=36' : '';
+            }
+
+            __computeUserMeta(no, grade) {
+                return grade || no || '';
+            }
+
+            __save(prop, send = false, back = false) {
+                let update = this.record && this.record.task && this.record.task[this.profile.task.primary_key] && this.workspace;
+                let promise, resolve, reject;
+                
+                promise = new Promise((a, b) => {
+                    resolve = a;
+                    reject = b;
+                });
+
+                if (update) {
+                    let payload = {
+                        worker: this.workspace.worker,
+                        record: this.record,
+                        send: send,
+                        logs: ['due'].indexOf(prop) !== -1 ? true :false
+                    };
+
+                    let options = {};
+
+                    if (this.socketSession) {
+                        options.headers = {
+                            'X-Socket-Session': this.socketSession
+                        };
+                    }
+
+                    let indicator = prop + '-indicator';
+                    this.$[indicator].busy = true;
+
+                    this.$.ajax.PUT(this.profile.service.url + '/' + this.record.task[this.profile.task.primary_key], payload, options).then(res => {
+                        this.$[indicator].busy = false;
+
+                        if (res.success) {
+                            if (prop == 'due') {
+                                this.set('record.task.' + this.profile.task.due_formatted_key, res.data.task[this.profile.task.due_formatted_key]);
+                            }
+                        }
+
+                        this.dispatchEvent(new CustomEvent('after-update', {
+                            detail: {
+                                send: send,
+                                back: back
+                            }
+                        }));
+                        
+                        resolve(res);
+                    });
+
+                } else {
+                    resolve({ success: false });
+                }
+
+                return promise;
+            }
+
+            __onUserEditTap() {
+                if ( ! this.__states.editing.user) {
+                    this.startEditingUser();
+                } else {
+                    this.stopEditingUser();
+                }
+            }
+
+            __onUserRemoveTap(e) {
+                let index = e.model.index;
+                
+                if (index !== -1) {
+                    this.splice('record.users', index, 1);
+                    this.__save('user');
+                }
+            }
+
+            __onAssignSelfTap(e) {
+                e.preventDefault();
+                this.assignAuthor();
+            }
+
+            __onLabelEditTap() {
+                if ( ! this.__states.editing.label) {
+                    this.startEditingLabel();
+                } else {
+                    this.stopEditingLabel();
+                }
+            }
+
+            __onLabelRemoveTap(e) {
+                this.stopEditingLabel();
+
+                let index = e.model.index;
+                if (index !== -1) {
+                    this.splice('record.labels', index, 1);
+                    this.__save('label');
+                }
+            }
+
+            __onDueEditTap() {
+                if ( ! this.__states.editing.due) {
+                    this.startEditingDue();
+                } else {
+                    this.stopEditingDue();
+                }
+            }
+
+            __onDueRemoveTap(e) {
+                e.preventDefault();
+                this.set('record.task.' + this.profile.task.due_key, '');
+                this.__save('due');
+            }
+
+            __onComboUserChange(e) {
+                let combo = e.target,
+                    user = combo.getSelectedUser();
+
+                if (user) {
+                    if (this.record && this.record.users) {
+                        let index = (this.record.users || []).findIndex(item => {
+                            return item.su_id == user.su_id;
+                        });
+
+                        if (index !== -1) {
+                            this.stopEditingUser();
+                            return;
+                        }
+                    }
+
+                    this.push('record.users', Object.assign({}, user));
+                    this.stopEditingUser();
+                    this.__save('user');
+                } else {
+                    this.stopEditingUser();
+                }
+                
+            }
+
+            __onComboLabelChange(e) {
+                let combo = e.target,
+                    label = combo.getSelectedLabel();
+
+                if (label) {
+                    if (this.record && this.record.labels) {
+                        let index = (this.record.labels || []).findIndex(item => {
+                            return item.sl_id == label.sl_id;
+                        });
+
+                        if (index !== -1) {
+                            this.stopEditingLabel();
+                            return;
+                        }
+                    }
+
+                    this.push('record.labels', Object.assign({}, label));
+                    this.stopEditingLabel();
+                    this.__save('label');
+                } else {
+                    this.stopEditingLabel();
+                }   
+                
+            }
+
+            __onComboLabelAdd(e) {
+                let label = e.detail.label;
+                this.push('record.labels', label);
+                this.stopEditingLabel();
+                this.__save('label');
+            }
+
+            __onComboLabelAction() {
+                this.stopEditingLabel();
+            }
+
+            __onComboUserAdd(e) {
+                let member = e.detail.member;
+
+                if (this.record && this.record.users) {
+                    let index = (this.record.users || []).findIndex(item => {
+                        return item.su_id == member.su_id;
+                    });
+
+                    if (index === -1) {
+                        this.push('record.users', Object.assign({}, member));
+                        this.__save('user');
+                    }
+                }
+            }
+
+            __onComboUserAction() {
+                this.stopEditingUser();
+            }
+
+            __onDuePickerChange(e) {
+                let picker = e.target,
+                    value = picker.value;
+
+                this.stopEditingDue();
+
+                if (value) {
+                    this.set('record.task.' + this.profile.task.due_key, value);
+                    this.__save('due');
+
+                }
+            }
+
+            __onStatusEditTap() {
+                if ( ! this.__states.editing.status) {
+                    this.startEditingStatus();
+                } else {
+                    this.stopEditingStatus();
+                }
+            }
+
+            __onComboStatusAction() {
+                this.stopEditingStatus();
+            }
+
+            __onComboStatusChange(e) {
+                let status = e.target.getSelectedStatus();
+                if (status) {
+                    this.set('record.task.tt_flag', status.text);
+                    this.__save('status', true).then(res => {
+                        if (res.success) {
+                            this.$['combo-status'].status = status.id;
+                            this.$['combo-status'].load();
+                        }
+                    });
+                }
+                this.stopEditingStatus();
+            }
+        };
+
+    });
+</script>

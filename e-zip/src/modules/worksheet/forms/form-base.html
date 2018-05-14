@@ -1,0 +1,145 @@
+<link rel="import" href="../../../../../cores/bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-radio-group/paper-radio-group.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-radio-button/paper-radio-button.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-spinner/paper-spinner-lite.html">
+<link rel="import" href="../../../../../cores/bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="../../../../../cores/elements/kct-combobox/kct-combobox.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../../cores/elements/kct-file/kct-file.html">
+<link rel="import" href="../../../../../cores/elements/kct-input/kct-input-number.html">
+<link rel="import" href="../../../../../cores/elements/kct-input/kct-input-file.html">
+<link rel="import" href="../../../../../cores/elements/kct-checkbox/kct-checkbox.html">
+<link rel="import" href="../../../../../cores/elements/kct-message/kct-confirm.html">
+<link rel="import" href="../../../../../cores/elements/kct-message/kct-alert.html">
+<link rel="import" href="../../../../../cores/elements/kct-date/kct-date-picker.html">
+<link rel="import" href="../../../../../cores/elements/kct-media/kct-media.html">
+<link rel="import" href="../../../../../cores/elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../../../cores/mixins/resolver.html">
+<link rel="import" href="../../../../../cores/mixins/types.html">
+<link rel="import" href="../../../../../cores/mixins/formatter.html">
+
+<dom-module id="form-base">
+    <script>
+        class FormBase extends Mixins(Polymer.Element).use(Mixins.Resolver, Mixins.Types) {
+            static get is() {
+                return 'form-base';
+            }
+
+            static get properties() {
+                return {
+                    record: { type: Object, notify: true },
+                    action: { type: String, value: 'create'},
+                    invalid: { type: Boolean, notify: true },
+                    buttons: { type: String, notify: true },
+                    phantom: { type: Boolean, value: true },
+                    socketSession: { type: String }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__actionChanged(action)'
+                ];
+            }
+
+            defer() {
+                let def = {};
+
+                def.promise = new Promise((res, rej) => {
+                    def.resolve = res;
+                    def.reject = rej;
+                });
+
+                return def;
+            }
+
+            beforeSave(options) {
+                return this.resolve({ success: true });
+            }
+
+            afterSave(response, options) {
+                return this.resolve({ success: true });
+            }
+
+            beforeRemove() {
+                return this.resolve({success: true});
+            }
+
+            resolve(data = {}) {
+                return Promise.resolve(data);
+            }
+
+            trigger(name, data = {}) {
+                let event = new CustomEvent(name, {
+                    composed: true,
+                    bubbles: true,
+                    detail: data
+                });
+
+                this.dispatchEvent(event);
+            }
+            
+            toast(title, message, type = 'info') {
+                let toast = document.createElement('kct-toast');
+                
+                toast.duration = 3000;
+                toast.type = type;
+                toast.title = title;
+                toast.message = message;
+
+                document.body.appendChild(toast);
+                toast.open();
+            }
+
+            warning(title, message) {
+                let dialog = document.createElement('kct-alert');
+                dialog.title = title;
+                dialog.message = message;
+                document.body.appendChild(dialog);
+                dialog.open();
+            }
+
+            confirm(title, message) {
+                let def = this._defer(),
+                    dialog = document.createElement('kct-confirm');
+
+                dialog.title = title;
+                dialog.message = message;
+
+                dialog.addEventListener('close', e => {
+                    let value = e.detail.value,
+                        action = value == 'yes' ? true : false;
+
+                    def.resolve(action);
+                    document.body.removeChild(dialog);
+                });
+
+                document.body.appendChild(dialog);
+                dialog.open();
+
+                return def.promise;
+            }
+
+            setup() {
+                return this.resolve();
+            }
+
+            initialize() {
+                return this.resolve();
+            }
+
+            __actionChanged(action) {
+                this.set('phantom', action != 'update');
+            }
+        }
+        customElements.define(FormBase.is, FormBase);
+    </script>
+</dom-module>

@@ -114,7 +114,8 @@
                         su_fullname: user.su_fullname,
                         su_avatar_thumb: user.su_avatar_thumb,
                         su_no: user.su_no,
-                        su_sg_name: user.su_sg_name
+                        su_sg_name: user.su_sg_name,
+                        su_sj_name: user.su_sj_name
                         
                     });
                 }
@@ -153,7 +154,8 @@
                                 su_fullname: this.project.creator_su_fullname,
                                 su_avatar_thumb: this.project.creator_su_avatar_thumb,
                                 su_no: this.project.creator_su_no,
-                                su_sg_name: this.project.creator_su_sg_name
+                                su_sg_name: this.project.creator_su_sg_name,
+                                su_sj_name: this.project.creator_su_sj_name
                             }
                         ];
 
@@ -186,19 +188,16 @@
                 return !!status;
             }
 
-            
+            __computeCoalesce(value) {
+                return value || '(kosong)';
+            }
 
             __computeCreatorMeta(no, grade) {
                 return grade || no || '';
-                // return no + (grade ? ' (' + grade + ')' : '');
             }
-
+            
             __computeCreatorAvatar(avatar) {
                 return avatar ? avatar + '&w=36&h=36' : '';
-            }
-
-            __computeUserMeta(no, grade) {
-                return grade || no || '';
             }
 
             __save(prop, send = false, back = false) {

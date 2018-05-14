@@ -1,0 +1,200 @@
+<!-- <link rel="import" href="user-dock.html"> -->
+
+<dom-module id="pendaftaran-card">
+    <template>
+        <style include="theme-helper">
+            .item {
+                border-radius: 3px;
+                margin-bottom: 0;
+            }
+            .item .box-body {
+                cursor: pointer;
+                /*padding-bottom: 0;*/
+                padding: 8px 12px 0 12px;
+            }
+            .item .box-body > * {
+                pointer-events: none;
+            }
+            .item .box-foot {
+                padding: 5px 5px;
+                font-size: 11px;
+                color: var(--paper-blue-grey-500);
+            }
+            .item .box-foot iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
+                position: relative;
+            }
+            .item .box-title,
+            .item .box-content {
+                color: var(--paper-blue-grey-500);
+            }
+            .item .separator {
+                margin: 5px 0;
+                border-top: 1px solid #f2f2f2;
+            }
+            .item-logo {
+                width: 36px;
+                height: 36px;
+                border-radius: 3px;
+                position: relative;
+                overflow: hidden;
+                margin-right: 10px;
+            }
+            .item .box-user {
+                position: absolute;
+                right: 10px;
+                bottom: 6px;
+            }
+            .item-user {
+                position: relative;
+                overflow: hidden;
+                width: 30px;
+                height: 30px;
+                border-radius: 3px;
+                float: left;
+                margin-left: 2px;
+            }
+            .item-prop {
+                font-size: 12px;
+            }
+            .item-prop iron-icon {
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
+                position: relative;
+                top: -2px;
+            }
+            .item-badge {
+                font-size: 11px;
+                text-transform: none;
+                padding: 3px 5px;
+                margin: 0;
+                float: left;
+            }
+            .item-title {
+                font-weight: 600;
+                color: var(--paper-blue-500);
+                font-size: 14px;
+                margin-bottom: 5px;
+            }
+            .item-content {
+                color: var(--paper-blue-grey-500);
+                margin-top: 5px;
+                padding-right: 36px;
+                font-size: 12px;
+            }
+            .item-content iron-icon {
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
+                position: relative;
+                top: -1px;
+            }
+            .item-content-group + .item-content-group {
+                margin-top: 5px;
+            }
+            .item-content-label {
+                color: #999;   
+            }
+            .item-content-value {
+                font-weight: 500;
+            }
+            .item-meta {
+                font-size: 11px;
+                color: #888;
+            }
+            .item-meta iron-icon {
+                --iron-icon-width: 14px;
+                --iron-icon-height: 14px;
+                position: relative;
+                top: -1px;
+            }
+            .item-label {
+                font-size: 11px;
+                font-weight: 300;
+                float: left;
+                background-color: var(--paper-grey-500);
+                color: #fff;
+                padding: 2px 5px;
+                border-radius: 2px;
+                margin: 0 1px;
+            }
+            .item-clear {
+                display: block;
+                clear: both;
+            }
+            .item-desc {
+                padding-right: 50px;
+                font-size: 12px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                color: var(--paper-blue-grey-500);
+            }
+            .item-desc iron-icon {
+                --iron-icon-width: 14px;
+                --iron-icon-height: 14px;
+                position: relative;
+                top: -1px;
+            }
+        </style>
+        
+        <div class="box box-shadow-z2 item" style$="border-left: 2px solid [[ accent ]]">
+            <div class="box-body" on-tap="__onCardTap">
+                <kct-hbox>
+                    <div>
+                        <div class="item-logo">
+                            <img src$="[[ record.task.su_avatar_thumb ]]&w=36&h=36" alt=" ">
+                        </div>
+                    </div>
+                    <div class="flex">
+                        <div class="box-title">
+                            <h3 class="item-title" style$="color: [[ accent ]]">&nbsp;[[ record.task.su_fullname ]]</h3> 
+                        </div>
+                        <div class="box-content">
+                            <div class="item-prop">
+                                <iron-icon icon="credit-card"></iron-icon>&nbsp;[[ record.task.su_no ]]    
+                            </div>
+                            <!-- <div class="item-prop">
+                                <iron-icon icon="mail"></iron-icon>&nbsp;<strong>[[ record.task.su_email ]]</strong>
+                            </div> -->
+                        </div>
+                        <div class="box-label">
+                            <template is="dom-repeat" items="[[ record.labels ]]">
+                                <span class="item-label" style$="background-color: [[ item.sl_color ]]">[[ item.sl_label ]]</span>
+                            </template>
+                            <span class="item-clear"></span>
+                        </div>
+                    </div>
+                </kct-hbox>
+            </div>
+            <div class="box-foot">
+                <!-- <paper-button class="item-badge">
+                    <iron-icon icon="today"></iron-icon>&nbsp;[[ record.task.lkh_date_formatted ]]    
+                </paper-button>
+                <div class="clearfix"></div> -->
+            </div>
+        </div>
+
+    </template>
+    <script>
+        class PendaftaranCard extends Polymer.Element {
+            static get is() {
+                return 'pendaftaran-card';
+            }
+
+            static get properties() {
+                return {
+                    accent: { type: String },
+                    record: { type: Object }
+                };
+            }
+
+            __onCardTap() {
+                this.dispatchEvent(new CustomEvent('card-tap'));
+            }
+
+        }
+
+        customElements.define(PendaftaranCard.is, PendaftaranCard);
+    </script>
+</dom-module>

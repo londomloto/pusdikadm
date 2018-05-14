@@ -1,0 +1,7 @@
+Setup autoload module:
+1. copy `api/v2/teams/modules/Config`
+2. copy `api/v2/teams/config/routes.php`
+3. copy `team/index.html`
+4. tambah routing di `api/v2/teams/routes/api.php`:
+        Router::get('/config/routes', 'App\Config\Controllers\ConfigController@routes'); 
+5. tambah kolom `smn_default (int)` di tabel `sys_menus`

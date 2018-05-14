@@ -1,0 +1,183 @@
+<dom-module id="form-surat-masuk-archive">
+    <template>
+        <style include="form-style">
+            :host {
+                margin: -30px;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="tabs">
+            <paper-tabs id="tabs" attr-for-selected="name" selected="{{ page }}" scrollable no-slide no-bar noink>
+                <paper-tab name="identitas">IDENTITAS SURAT</paper-tab>
+                <paper-tab name="berkas">BERKAS SURAT</paper-tab>
+                <paper-tab name="disposisi">DISPOSISI SURAT</paper-tab>
+                <paper-tab name="distribusi">DISTRIBUSI SURAT</paper-tab>
+                <paper-tab name="arsip">PENYIMPANAN</paper-tab>
+            </paper-tabs>
+        </div>
+
+        <div class="tabs-content">
+
+            <kct-pages attr-for-selected="name" selected="[[ page ]]">
+                    
+                <div class="page" name="identitas">
+                    
+                    <surat-masuk-readonly record="[[ record ]]"></surat-masuk-readonly>
+
+                </div>
+
+                <div class="page" name="berkas">
+                    <surat-masuk-filemgr record="[[ record ]]" readonly$="[[ !record.perms.update_files ]]"></surat-masuk-filemgr>
+                </div>
+
+                <div class="page" name="disposisi">
+                    <surat-masuk-disposition    
+                        user="[[ user ]]" 
+                        record="{{ record }}"></surat-masuk-disposition>
+                </div>
+
+                <div class="page" name="distribusi">
+
+                    <surat-masuk-distribution 
+                        id="distribution" 
+                        user="[[ user ]]"
+                        record="{{ record }}" 
+                        readonly$="[[ !record.perms.update_distributions ]]"></surat-masuk-distribution>
+
+                </div>
+
+                <div class="page" name="arsip">
+                    
+                </div>
+
+            </kct-pages>
+        </div>
+
+        <kct-dialog id="dialog-flag" title="Proses Surat" width="400" height="100%" scrollable>
+            <template preserve-content>
+                <style include="theme-helper"></style>
+                <div slot="dialog-body">
+                    <div>Pilih proses yang akan diterapkan:</div>
+                    <div class="m-t">
+                        <paper-radio-group attr-for-selected="name" selected="{{ record.task.tsm_task_flag }}">
+                            <template is="dom-repeat" items="[[ flags ]]">
+                                <paper-radio-button name="[[ item.value ]]">[[ item.label ]]</paper-radio-button>
+                            </template>
+                        </paper-radio-group>
+                    </div>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onDialogFlagProcessTap">Proses</paper-button>
+                    <paper-button on-tap="__onDialogFlagCancelTap">Batal</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class FormSuratMasukArchive extends Mixins(FormBase).use(Mixins.SuratMasukBehavior) {
+            static get is() {
+                return 'form-surat-masuk-archive';
+            }
+
+            static get properties() {
+                return {
+                    page: { type: String },
+                    flags: {
+                        type: Array,
+                        value: () => ([
+                            { label: 'Proses pelaksanaan (disposisi)', value: 'PELAKSANAAN' },
+                            { label: 'Proses penyimpanan (arsip)', value: 'ARSIP' }
+                        ])
+                    }
+                };
+            }
+
+            initialize() {
+                super.initialize();
+
+                this.set('invalid', false);
+                this.set('page', 'disposisi');
+                
+                this.__computeAuthors().then(() => {
+                    let buttons = ['save', 'send', 'print'];
+
+                    if (this.record.authors.indexOf(this.user.su_id) !== -1) {
+                        this.set('record.perms.update_files', true);
+                        this.set('record.perms.update_distributions', true);
+                        
+                        buttons.push('remove');
+                    }
+
+                    this.set('buttons', buttons.join(','));
+
+                    this.$.distribution.validate().then(ost => {
+                        if (ost.length) {
+                            this.set('page', 'distribusi');
+                        }
+                    });
+                });
+
+            }
+
+            beforeSave(options) {
+                let promises = [];
+
+                if ( ! this.record.task.tsm_agenda) {
+                    promises.push(this.__computeAgenda());
+                }
+
+                if (options.send) {
+                    promises.push(this.__computeFlag());
+                }
+
+                if (promises.length) {
+                    return Promise.all(promises).then(values => {
+                        let valid = true;
+                        values.forEach(v => {
+                            valid = valid && v;
+                        });
+
+                        return { success: valid };
+                    });
+                } else {
+                    return this.resolve({ success: true });
+                }
+            }
+
+            afterSave(response, options) {
+                /*if (response.success) {
+                    if (options.send) {
+                        // send disposition and notify responsible users
+                        //this.__send();
+                    }
+                }*/
+                return this.resolve({ success: true });
+            }
+
+            __computeFlag() {
+                this.__flagResolver = {};
+
+                this.__flagResolver.promise = new Promise(res => {
+                    this.__flagResolver.resolve = res;
+                });
+
+                this.$['dialog-flag'].open();
+                return this.__flagResolver.promise;
+            }
+
+            __onDialogFlagProcessTap() {
+                this.$['dialog-flag'].close();
+                this.__flagResolver.resolve(true);
+            }
+
+            __onDialogFlagCancelTap() {
+                this.$['dialog-flag'].close();   
+                this.__flagResolver.resolve(false);
+            }
+        }
+        customElements.define(FormSuratMasukArchive.is, FormSuratMasukArchive);
+    </script>
+</dom-module>

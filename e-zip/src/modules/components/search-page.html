@@ -1,0 +1,48 @@
+<link rel="import" href="../../../../cores/bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-search/kct-search-advance.html">
+
+<dom-module id="search-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                background-color: var(--page-background-color);
+                height: var(--search-page-height, 100%);
+            }
+        </style>
+
+        <div class="padding">
+            
+            <kct-search-advance search="{{ search }}" on-search="__onSearch"></kct-search-advance>
+
+            
+
+        </div>
+
+    </template>
+    <script>
+        class SearchPage extends KctView {
+            static get is() {
+                return 'search-page';
+            }
+            static get properties() {
+                return {
+                    search: { type: Object }
+                }
+            }
+            static get observers() {
+                return [
+                    '__searchChanged(search.*)'
+                ]
+            }
+            __searchChanged() {
+                console.log('changed:', JSON.stringify(this.search));
+            }
+            __onSearch(e) {
+                console.log('on-search:', JSON.stringify(e.detail));
+            }
+        }
+
+        customElements.define(SearchPage.is, SearchPage);
+    </script>
+</dom-module>

@@ -1,0 +1,1228 @@
+
+<dom-module id="surat-masuk-disposition">
+    <template>
+        <style include="form-style">
+
+            .form-section {
+                margin-bottom: 10px;
+                padding: 15px;
+                position: relative;
+            }
+
+            .form-section .meta {
+                color: #666;
+                font-size: 13px;
+            }
+            .form-actions .btn-action {
+                float: left;
+                margin-right: 5px;
+            }
+
+            .form-actions span.btn-action {
+                padding: 3px;
+            }
+
+            .form-actions paper-button {
+                text-transform: none;
+                border: 1px solid #dfdfdf;
+                padding: 3px 5px;
+            }
+
+            .form-actions paper-button iron-icon {
+                --iron-icon-width: 14px;
+                --iron-icon-height: 14px;
+            }
+
+            .form-actions .action-group {
+                float: left;
+            }
+
+            .form-horizontal {
+                margin: 8px 0;
+            }
+
+            .form-horizontal .label {
+                width: 80px;
+            }
+
+            .form-group .label {
+                text-decoration: underline;
+            }
+
+            .form-group .value {
+                font-weight: 600;
+            }
+
+            .comments {
+                position: relative;
+            }
+
+            .comment-block {
+                position: relative;
+                z-index: 2;
+            }
+
+            .comment-block > .stub {
+                width: 46px;
+                position: relative;
+            }
+
+            .comment-block > .icon {
+                width: 46px;
+                position: relative;
+            }
+
+            .comment-block > .icon img {
+                display: block;
+                width: 36px;
+                height: 36px;
+                border-radius: 3px;
+            }
+
+            .todo {
+                margin: 3px 0;
+            }
+
+            .todo-icon {
+                display: inline-block;
+                width: 16px;
+                height: 16px;
+                border-radius: 2px;
+                border: 1px solid #000;
+                text-align: center;
+            }
+
+            .todo iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
+                position: relative;
+                top: -2px;
+            }
+            .form-tools {
+                position: absolute;
+                right: 5px;
+                top: 5px;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-socket manager="global-socket" session="{{ socketSession }}" on-notify-disposition="__onSocketNotify"></kct-socket>
+
+        <div class="section">
+
+            <div class="section-tools">
+                <div>
+                    <paper-toggle-button on-change="__onExpandChange" checked="{{ expand }}" title="Ganti tampilan"></paper-toggle-button>
+                </div>
+            </div>
+
+            <h3 class="section-title">Disposisi Surat</h3>
+            <div>Daftar riwayat disposisi surat.</div>
+            <div class="m-t">
+
+                <div class="text-center p-a" hidden$="[[ !loading ]]">
+                    <paper-spinner-lite active$="[[ loading ]]"></paper-spinner-lite>
+                </div>
+
+                <div class="comments" hidden$="[[ loading ]]">
+                    
+                    <template is="dom-repeat" items="[[ record.dispositions ]]">
+                        <kct-hbox class="comment-block">
+                            <template is="dom-repeat" items="[[ item.tdp_stubs ]]">
+                                <div class="stub"></div>    
+                            </template>
+                            <div class="icon">
+                                <img src$="[[ item.responsible_su_avatar_thumb ]]&w=36&h=36">    
+                            </div>
+                            <div class="flex">
+                                <div class="form-section blurred">
+                                    <div class="form-tools">
+                                        <paper-icon-button on-tap="__onToggleTap" icon="[[ __computeToggleIcon(item.tdp_expand) ]]"></paper-icon-button>
+                                    </div>
+                                    <h3>[[ __computeTitle(item.tdp_name, item.tdp_position, item.responsible_su_fullname) ]]</h3>
+                                    <div class="meta">[[ __computeMeta(item.tdp_root, item.tdp_leaf, item.tdp_sending_date_formatted, item.tdp_receiving_date_formatted) ]]</div>
+                                    <div class="m-t" hidden$="[[ !item.tdp_expand ]]">
+                                        <div hidden$="[[ __hideRootBlock(item.tdp_root) ]]">
+                                            <div class="form-group">
+                                                <div class="label">Petunjuk</div>
+                                                <div>
+                                                    <kct-column columns="4">
+                                                        <template is="dom-repeat" items="[[ item.instructions ]]" as="todo">
+                                                            <div class="todo">
+                                                                <span class="todo-icon"><iron-icon icon="[[ __computeChecked(todo.sin_checked) ]]"></iron-icon></span>&nbsp;[[ todo.sin_name ]]
+                                                            </div>
+                                                        </template>    
+                                                    </kct-column>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <div class="label">Catatan</div>
+                                                <div class="value">[[ __coalesce(item.tdp_notes, '(tidak ada)') ]]&nbsp;</div>
+                                            </div>
+                                            <kct-column columns="3">
+                                                <div>
+                                                    <div class="form-group">
+                                                        <div class="label">Sifat</div>
+                                                        <div class="value">[[ __coalesce(item.category_sct_label, '(tidak ada)') ]]&nbsp;</div>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div class="form-group">
+                                                        <div class="label">Penyampaian</div>
+                                                        <div class="value">[[ __coalesce(item.shipment_sdt_label, '(tidak ada)') ]]&nbsp;</div>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div class="form-group">
+                                                        <div class="label">Penyelesaian</div>
+                                                        <div class="value">[[ __coalesce(item.priority_spt_label, '(tidak ada)') ]]&nbsp;</div>
+                                                    </div>
+                                                </div>
+                                            </kct-column>    
+                                        </div>
+
+                                        <div hidden$="[[ __hideNodeBlock(item.tdp_root) ]]">
+                                            <kct-column columns="3">
+                                                <div>
+                                                    <div class="form-group">
+                                                        <div class="label">Status Berkas</div>
+                                                        <div class="value">[[ __coalesce(item.tdp_paper_label, '(tidak ada)') ]]&nbsp;</div>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div class="form-group">
+                                                        <div class="label">Tindak Lanjut</div>
+                                                        <div class="value">[[ __coalesce(item.tdp_actions, '(belum ada)') ]]&nbsp;</div>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div class="form-group">
+                                                        <div class="label">Tgl. Penyelesaian</div>
+                                                        <div class="value">[[ __coalesce(item.tdp_finish_date_formatted, '(belum ada)') ]]&nbsp;</div>
+                                                    </div>
+                                                </div>
+                                            </kct-column>
+                                        </div>
+
+                                        <div hidden$="[[ __hideNestBlock(item.tdp_root, item.tdp_leaf, item.tdp_name) ]]">
+                                            <div class="form-group">
+                                                <div class="label">Petunjuk Diposisi</div>
+                                                <div class="value">[[ __coalesce(item.tdp_notes, '(tidak ada)') ]]&nbsp;</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-actions m-t" hidden$="[[ readonly ]]">
+                                            <div class="action-group">
+                                                <paper-button class="btn-action" on-tap="__onPrintTap"><iron-icon icon="print"></iron-icon>&nbsp;Lembar</paper-button>
+                                                <div class="clearfix"></div>
+                                            </div>
+                                            <div class="action-group" hidden$="[[ __hideResponseActions(item.tdp_root, item.tdp_responsible, record.authors) ]]">
+                                                <paper-button class="btn-action" on-tap="__onForwardTap"><iron-icon icon="social:person-add"></iron-icon>&nbsp;Teruskan</paper-button>
+                                                <paper-button class="btn-action" on-tap="__onResponseTap"><iron-icon icon="done"></iron-icon>&nbsp;Tindakan</paper-button>
+                                                <div class="clearfix"></div>
+                                            </div>
+                                            <div class="action-group" hidden$="[[ __hideThreadActions(item.tdp_name, item.tdp_responsible, record.authors) ]]">
+                                                <paper-button class="btn-action" on-tap="__onEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Sunting</paper-button>
+                                                <span class="btn-action"><a on-tap="__onRemoveTap" href="javascript:;">batalkan disposisi</a>&nbsp;</span>
+                                                <div class="clearfix"></div>
+                                            </div>
+                                            <div class="clearfix"></div>
+                                        </div>
+
+                                        <div class="form-actions m-t" hidden$="[[ !readonly ]]">
+                                            <div class="action-group">
+                                                <paper-button class="btn-action" on-tap="__onPrintTap"><iron-icon icon="print"></iron-icon>&nbsp;Lembar</paper-button>
+                                                <div class="clearfix"></div>
+                                            </div>
+                                            <div class="clearfix"></div>
+                                        </div>
+
+                                    </div>
+
+                                </div>
+                            </div>
+                        </kct-hbox>
+                    </template>
+
+                    <div hidden$="[[ readonly ]]">
+                        <kct-hbox class="comment-block">
+                            <div class="icon">
+                                <img src$="[[ user.su_avatar_thumb ]]&w=40&h=40">
+                            </div>
+                            <div class="flex">
+                                <div class="form-section">
+                                    <div><a on-click="__onAddTap" href="javascript:;">Klik di sini</a> untuk membuat lembar disposisi baru</div>
+                                </div>
+                            </div>
+                        </kct-hbox>    
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <kct-dialog id="thread-editor" title="Disposisi Surat" width="100%" height="100%" scrollable>
+            <template preserve-content>
+                <style include="form-style">
+                    
+                    .form-section {
+                        padding: 15px;
+                        margin-bottom: 10px;
+                    }
+
+                    .form-horizontal {
+                        margin: 8px 0;
+                    }
+
+                    .form-horizontal .label {
+                        width: 80px;
+                    }
+
+                    kct-checkbox {
+                        --paper-checkbox-margin: 5px 0;
+                    }
+
+                    .table kct-checkbox {
+                        --paper-checkbox-margin: 0 0 0 6px;
+                    }
+
+                    a {
+                        text-decoration: none;
+                        color: #000;
+                    }
+
+                    a:hover {
+                        color: var(--paper-blue-500);
+                        text-decoration: underline;
+                    }
+
+                </style>
+                <div slot="dialog-body">
+                    
+                    <kct-column columns="3">
+                        <div>
+                            <kct-combobox 
+                                label="Nama Disposisi *)" 
+                                value="{{ thread.tdp_template }}" 
+                                url="/dispositions?display=template" 
+                                item-label-path="stp_name" 
+                                item-value-path="stp_id" 
+                                page-size="10" 
+                                on-beforeload="__onComboTemplateBeforeload" 
+                                on-change="__onEditorTemplateChange"></kct-combobox>
+                        </div>
+                        <div>
+                            <combo-user 
+                                label="Pembuat Disposisi" 
+                                value="{{ thread.tdp_responsible }}"></combo-user>
+                        </div>
+                        <div>
+                            <kct-date-picker label="Tanggal disposisi" value="{{ thread.tdp_sending_date }}"></kct-date-picker>
+                        </div>
+                    </kct-column>
+
+                    <kct-column columns="3">
+                        <div>
+                            <kct-combobox 
+                                class="combo-attribute" 
+                                label="Sifat" 
+                                value="{{ thread.tdp_category }}" 
+                                url="/categories" 
+                                item-label-path="sct_label" 
+                                item-value-path="sct_id" 
+                                page-size="10"></kct-combobox>
+                        </div>
+                        <div>
+                            <kct-combobox 
+                                class="combo-attribute" 
+                                label="Penyampaian" 
+                                value="{{ thread.tdp_shipment }}" 
+                                url="/shipments" 
+                                item-label-path="sdt_label" 
+                                item-value-path="sdt_id" 
+                                page-size="10"></kct-combobox>
+                        </div>
+                        <div>
+                            <kct-combobox 
+                                class="combo-attribute" 
+                                label="Penyelesaian" 
+                                value="{{ thread.tdp_priority }}" 
+                                url="/priorities" 
+                                item-label-path="spt_label" 
+                                item-value-path="spt_id" 
+                                page-size="10"></kct-combobox>
+                        </div>
+                    </kct-column>
+
+                    <kct-hbox class="form-horizontal">
+                        <div class="label">Petunjuk</div>
+                        <div class="flex">
+                            <kct-column columns="4">
+                                <template is="dom-repeat" items="{{ thread.instructions }}">
+                                    <div>
+                                        <kct-checkbox value="{{ item.sin_checked }}">[[ item.sin_name ]]</kct-checkbox>
+                                    </div>
+                                </template>
+                            </kct-column>
+                        </div>
+                    </kct-hbox>
+
+                    <paper-textarea label="Catatan" value="{{ thread.tdp_notes }}"></paper-textarea>
+
+                    <div class="m-t m-b">
+
+                        <div style="height: 30px;">&nbsp;</div>
+
+                        <table class="table bordered">
+                            <thead>
+                                <tr>
+                                    <th class="text-center" style="width: 30px;">&nbsp;</th>
+                                    <th style="width: 30px;">&nbsp;</th>
+                                    <th class="text-left">Ditujukan Kepada</th>
+                                    <th style="width: 80px;">Asli</th>
+                                    <th style="width: 80px;">Tembusan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template is="dom-repeat" items="{{ thread.subordinates }}">
+                                    <tr>
+                                        <td class="text-center action">
+                                            <paper-icon-button on-tap="__onRemoveSubordinateTap" icon="close"></paper-icon-button>
+                                        </td>
+                                        <td class="text-center action">
+                                            <kct-checkbox value="{{ item.su_checked }}"></kct-checkbox>
+                                        </td>
+                                        <td><a on-click="__onEditSubordinateTap" href="javascript:;">[[ __computeSubordinateLabel(item.su_position, item.su_fullname) ]]</a></td>
+                                        <td class="text-center action">
+                                            <kct-checkbox value="{{ item.su_orig }}"></kct-checkbox>
+                                        </td>
+                                        <td class="text-center action">
+                                            <kct-checkbox value="{{ item.su_copy }}"></kct-checkbox>
+                                        </td>
+                                    </tr>
+                                </template>
+                                <tr>
+                                    <td class="text-center action">
+                                        <paper-icon-button on-tap="__onAddSubordinateTap" icon="add"></paper-icon-button>
+                                    </td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>    
+                    </div>
+
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button disabled$="[[ threadInvalid ]]" on-tap="__onThreadEditorSaveTap">Simpan</paper-button>
+                    <paper-button on-tap="__onThreadEditorCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        <kct-dialog id="forward-editor" title="Disposisi Lanjutan" width="100%" height="100%" scrollable>
+            <template preserve-content>
+                <style include="theme-helper">
+                    .form-section {
+                        padding: 15px;
+                        margin-bottom: 10px;
+                    }
+
+                    .form-horizontal {
+                        margin: 8px 0;
+                    }
+
+                    .form-horizontal .label {
+                        width: 80px;
+                    }
+
+                    kct-checkbox {
+                        --paper-checkbox-margin: 5px 0;
+                    }
+
+                    .table kct-checkbox {
+                        --paper-checkbox-margin: 0 0 0 6px;
+                    }
+
+                    a {
+                        text-decoration: none;
+                        color: #000;
+                    }
+
+                    a:hover {
+                        color: var(--paper-blue-500);
+                        text-decoration: underline;
+                    }
+                </style>
+                <div slot="dialog-body">
+                    <kct-column columns="3">
+                        <div>
+                            <kct-combobox 
+                                label="Nama Disposisi *)" 
+                                value="{{ forward.tdp_template }}" 
+                                url="/dispositions?display=template" 
+                                item-label-path="stp_name" 
+                                item-value-path="stp_id" 
+                                page-size="10" 
+                                on-beforeload="__onComboTemplateBeforeload" 
+                                on-change="__onForwardTemplateChange"></kct-combobox>
+                        </div>
+                        <div>
+                            <combo-user 
+                                label="Pejabat pembuat disposisi" 
+                                value="{{ forward.tdp_responsible }}"></combo-user>
+                        </div>
+                        <div>
+                            <kct-date-picker label="Tanggal disposisi" value="{{ forward.tdp_sending_date }}"></kct-date-picker>
+                        </div>
+                    </kct-column>
+                    <paper-textarea label="Petunjuk disposisi" value="{{ forward.tdp_notes }}"></paper-textarea>
+
+                    <div class="m-t m-b">
+
+                        <div style="height: 30px;">&nbsp;</div>
+
+                        <table class="table bordered">
+                            <thead>
+                                <tr>
+                                    <th class="text-center" style="width: 30px;">&nbsp;</th>
+                                    <th style="width: 30px;">&nbsp;</th>
+                                    <th class="text-left">Ditujukan Kepada</th>
+                                    <th style="width: 80px;">Asli</th>
+                                    <th style="width: 80px;">Tembusan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template is="dom-repeat" items="{{ forward.subordinates }}">
+                                    <tr>
+                                        <td class="text-center action">
+                                            <paper-icon-button on-tap="__onRemoveSubordinateTap" icon="close"></paper-icon-button>
+                                        </td>
+                                        <td class="text-center action">
+                                            <kct-checkbox value="{{ item.su_checked }}"></kct-checkbox>
+                                        </td>
+                                        <td><a on-click="__onEditSubordinateTap" href="javascript:;">[[ __computeSubordinateLabel(item.su_position, item.su_fullname) ]]</a></td>
+                                        <td class="text-center action">
+                                            <kct-checkbox value="{{ item.su_orig }}"></kct-checkbox>
+                                        </td>
+                                        <td class="text-center action">
+                                            <kct-checkbox value="{{ item.su_copy }}"></kct-checkbox>
+                                        </td>
+                                    </tr>
+                                </template>
+                                <tr>
+                                    <td class="text-center action">
+                                        <paper-icon-button on-tap="__onAddSubordinateTap" icon="add"></paper-icon-button>
+                                    </td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>    
+                    </div>
+
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button disabled$="[[ forwardInvalid ]]" on-tap="__onForwardEditorSaveTap">Simpan</paper-button>
+                    <paper-button on-tap="__onForwardEditorCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        <kct-dialog id="subordinate-editor" width="400" title="Tujuan Disposisi" height="100%" scrollable>
+            <template preserve-content>
+                <style include="theme-helper"></style>
+                <div slot="dialog-body">
+                    <combo-job 
+                        label="Jabatan" 
+                        value="{{ subordinateRecord.su_position }}" 
+                        item-value-path="sj_name" 
+                        on-change="__onComboSubordinateJobChange"></combo-job>
+
+                    <combo-user 
+                        id="combo-subordinate-user" 
+                        label="Nama Pegawai" 
+                        value="{{ subordinateRecord.su_id }}" 
+                        on-change="__onComboSubordinateUserChange"></combo-user>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onSubordinateEditorSaveTap">Tambah</paper-button>
+                    <paper-button on-tap="__onSubordinateEditorCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        <kct-dialog id="response-editor" title="Tindakan" width="400" height="100%" scrollable>
+            <template preserve-content>
+                <style include="theme-helper"></style>
+                <div slot="dialog-body">
+                    <paper-input label="Tindakan" value="{{ responseRecord.tdp_actions }}"></paper-input>
+                    <kct-date-picker label="Tanggal Penyelesaian" value="{{ responseRecord.tdp_finish_date }}"></kct-date-picker>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onResponseEditorSaveTap">Simpan</paper-button>
+                    <paper-button on-tap="__onResponseEditorCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class SuratMasukDisposition extends Polymer.Element {
+            static get is() {
+                return 'surat-masuk-disposition';
+            }
+
+            static get properties() {
+                return {
+                    expand: { type: Boolean, value: false },
+                    user: { type: Object },
+                    record: { type: Object, notify: true },
+                    activity: { type: String },
+
+                    thread: { 
+                        type: Object,
+                        value: () => ({
+                            instructions: [],
+                            subordinates: []
+                        })
+                    },
+                    
+                    forward: { 
+                        type: Object,
+                        value: () => ({
+                            subordinates: []
+                        })
+                    },
+                    
+                    subordinateRecord: { type: Object },
+                    responseRecord: { type: Object },
+
+                    selectedDisposition: { type: Number, value: -1 },
+                    selectedSubordinate: { type: Number, value: -1 },
+
+                    readonly: { type: Boolean, value: false },
+
+                    threadInvalid: { type: Boolean, value: false },
+                    forwardInvalid: { type: Boolean, value: false },
+
+                    loading: { type: Boolean, value: false }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__recordChanged(record.*)',
+                    '__computeThreadValidation(thread.tdp_template)',
+                    '__computeForwardValidation(forward.tdp_template)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__instructions = null;
+            }
+
+            load() {
+                if ( ! this.isValidTask()) {
+                    return;
+                }
+
+                let payload = {
+                    task: this.record.task.tsm_id,
+                    display: 'cascade'
+                };
+
+                this.set('loading', true);
+
+                this.$.ajax.GET('/surat-masuk/dispositions', payload).then(res => {
+                    this.set('loading', false);
+
+                    if (res.success) {
+                        let dispositions = (res.data || []).map(e => {
+                            let expand = e.tdp_name ? '1' : this.expand;
+                            e.tdp_expand = expand;
+                            e.tdp_stubs = Array(+e.tdp_level).fill('0');
+                            return e;
+                        });
+
+                        this.set('record.dispositions', dispositions);
+                    }
+                });
+            }
+
+            isValidTask() {
+                return !!(this.record && this.record.task && this.record.task.tsm_id);
+            }
+
+            resetThread() {
+                if ( ! this.isValidTask()) {
+                    return;
+                }
+
+                this.set('thread', {
+                    tdp_tsm_id: this.record.task.tsm_id,
+                    tdp_type: 'DISPOSITION',
+                    instructions: [],
+                    subordinates: []
+                });
+            }
+
+            initThread(template) {
+                if ( ! this.isValidTask()) {
+                    return;
+                }
+
+                let today = moment();
+                let tomorrow = today.clone().add(1, 'days');
+
+                this.set('thread.tdp_name', template.stp_name);
+                this.set('thread.tdp_responsible', template.stp_responsible);
+                this.set('thread.tdp_position', template.stp_position);
+                this.set('thread.tdp_sending_date', today.format('YYYY-MM-DD'));
+                this.set('thread.tdp_priority', this.record.task.tsm_priority);
+                this.set('thread.tdp_category', this.record.task.tsm_category);
+                this.set('thread.tdp_shipment', this.record.task.tsm_shipment);
+
+                let subordinates = (template.subordinates || []).slice();
+                this.set('thread.subordinates', subordinates);
+
+                this.__loadInstructions().then(instructions => {
+                    this.set('thread.instructions', instructions);
+                });
+            }
+
+            editThread(model) {
+                let excludes = ['subordinates', 'instructions'];
+                
+                Object.keys(model).forEach(k => {
+                    if (excludes.indexOf(k) === -1) {
+                        this.set('thread.' + k, model[k]);
+                    }
+                });
+
+                let subordinates = (model.subordinates || []).slice();
+                let instructions = (model.instructions || []).slice();
+
+                this.set('thread.subordinates', subordinates);
+                this.set('thread.instructions', instructions);
+
+            }
+
+            resetForward() {
+                this.set('forward', {
+                    tdp_tsm_id: this.record.task.tsm_id,
+                    tdp_type: 'DISPOSITION',
+                    subordinates: []
+                });
+            }
+
+            initForward(source, template) {
+                let today = moment(),
+                    responsible = source.tdp_responsible || template.stp_responsible,
+                    subordinates = (template.subordinates || []).slice();
+
+                this.set('forward.tdp_name', template.stp_name);
+                this.set('forward.tdp_sending_date', today.format('YYYY-MM-DD'));
+                this.set('forward.tdp_responsible', responsible);
+                this.set('forward.subordinates', subordinates);
+
+            }
+
+            editForward(model) {
+                let excludes = ['subordinates'];
+
+                Object.keys(model).forEach(k => {
+                    this.set('forward.' + k, model[k]);
+                });
+
+                let subordinates = (model.subordinates || []).slice();
+
+                this.set('forward.subordinates', subordinates);
+            }
+
+            __computeThreadValidation(template) {
+                let valid = true;
+                valid = valid && !!template;
+                this.set('threadInvalid', !valid);
+            }
+
+            __computeForwardValidation(template) {
+                let valid = true;
+                valid = valid && !!template;
+                this.set('forwardInvalid', !valid);
+            }
+
+            __loadInstructions() {
+                let cached = this.__instructions;
+
+                if (cached) {
+                    return Promise.resolve(cached.slice());
+                } else {
+                    return this.$.ajax.GET('/instructions').then(res => {
+                        let instructions = [];
+
+                        if (res.success) {
+                            instructions = (res.data || []).map(e => {
+                                e.sin_checked = '0';
+                                return e;
+                            });
+                        }
+
+                        this.set('__instructions', instructions);
+                        return instructions.slice();
+                    });
+                }
+            }
+
+            __computeSequence(index){
+                return index + 1;
+            }
+
+            __computeSubordinateLabel(position, fullname) {
+                if (fullname) {
+                    return position + ' ( ' + fullname + ' )';
+                }
+                return position;
+            }
+
+            __computeTitle(disposition, position, fullname) {
+                if (disposition) {
+                    if (fullname) {
+                        return disposition + ' ( ' + fullname + ' )';
+                    }
+                    return disposition;
+                } else {
+                    if (fullname) {
+                        return position + ' ( ' + fullname + ' )';
+                    }
+                    return position;
+                }
+            }
+
+            __computeToggleIcon(expand) {
+                return expand ? 'arrow-drop-up' : 'arrow-drop-down';
+            }
+
+            __computeChecked(checked) {
+                return checked == 1 ? 'done' : '';
+            }
+            __computeMeta(root, leaf, sending, receiving) {
+                if (root) {
+                    return `Disposisi dikirim pada ${sending}`;
+                } else {
+                    if (leaf) {
+                        if ( ! receiving) {
+                            return `Disposisi belum diterima`;
+                        } else {
+                            return `Disposisi diterima pada ${receiving}`;
+                        }
+                    } else {
+                        return `Disposisi diterima pada ${receiving} dan diteruskan kembali pada ${sending}`;
+                    }
+                }
+            }
+            __hideRootBlock(root) {
+                return root ? false : true;
+            }
+            __hideNodeBlock(root) {
+                return root ? true : false
+            }
+            __hideNestBlock(root, leaf, disposition) {
+                if (root || leaf) {
+                    return true;
+                }
+                return false;
+            }
+            __hideThreadActions(disposition, responsible) {
+                if ( ! disposition) {
+                    return true;
+                }
+
+                if (responsible != this.user.su_id) {
+                    let authors = (this.record.authors || []);
+
+                    if (authors.indexOf(this.user.su_id) !== -1) {
+                        return false;
+                    }
+                    return true;
+                } 
+                return false;
+            }
+            __hideResponseActions(root, responsible) {
+                if (root) {
+                    return true;
+                }
+
+                if (responsible != this.user.su_id) {
+                    let authors = (this.record.authors || []);
+                    
+                    if (authors.indexOf(this.user.su_id) !== -1) {
+                        return false;
+                    }
+
+                    return true;
+                }
+
+                return false;
+            }
+
+            __coalesce(value, defaults) {
+                if (value) {
+                    return value;
+                }
+                return defaults || '';
+            }
+
+            __recordChanged(changed) {
+                if (changed.path == 'record') {
+                    this.load();
+                }
+            }
+
+            __confirm(title, message) {
+                let d = document.createElement('kct-confirm');
+                let q = {};
+
+                q.promise = new Promise(res => {
+                    q.resolve = res;
+                });
+
+
+                d.title = title;
+                d.message = message;
+                d.addEventListener('close', e => {
+                    document.body.removeChild(d);
+
+                    let y = e.detail.value == 'yes';
+                    q.resolve(y);
+                });
+
+                document.body.appendChild(d);
+                d.open();
+
+                return q.promise;
+            }
+
+            __onComboTemplateBeforeload(e) {
+                let authors = ((this.record && this.record.authors) || []);
+                if (authors.indexOf(this.user.su_id) !== -1) {
+                    return;
+                }
+                e.detail.options.params = {
+                    stp_job: this.user.su_sj_id
+                };
+            }
+
+            __onEditorTemplateChange(e) {
+                let template = e.target.getModelForValue(e.target.value);
+
+                if (template) {
+                    this.initThread(template);
+                } else {
+                    this.resetThread();
+                }
+            }
+
+            __onForwardTemplateChange(e) {
+                let index = this.get('selectedDisposition');
+                if (index != -1) {
+                    let item = this.get('record.dispositions.' + index);
+                    let template = e.target.getModelForValue(e.target.value);
+                    if (template) {
+                        this.initForward(item, template);
+                    } else {
+                        this.resetForward(item);
+                    }
+                }
+            }
+
+            __onComboSubordinateJobChange(e) {
+                let job = e.target.getSelectedJob();
+                let payload = {
+                    start: 0
+                };
+
+                if (job) {
+                    payload = {
+                        params: {
+                            su_sj_id: job.sj_id
+                        }
+                    };
+                }
+
+                this.$['combo-subordinate-user'].load(payload);
+            }
+
+            __onComboSubordinateUserChange(e) {
+                let combo = e.target,
+                    model = combo.getSelectedUser();
+
+                if (model) {
+                    this.set('subordinateRecord.su_fullname', model.su_fullname);
+                } else {
+                    this.set('subordinateRecord.su_fullname', '');
+                }
+            }
+
+            __onAddTap() {
+                this.set('activity', 'THREAD');
+                this.$['thread-editor'].open();
+                this.resetThread();
+            }
+
+            __onEditTap(e) {
+                let item = e.model.item;
+
+                if (item.tdp_root) {
+                    this.set('activity', 'THREAD');
+                    this.$['thread-editor'].open();
+                    this.resetThread();
+                    this.editThread(item);
+                } else {
+                    this.set('activity', 'FORWARD');
+                    this.$['forward-editor'].open();
+                    this.resetForward();
+                    this.editForward(item);
+                }
+            }
+
+            __onRemoveTap(e) {
+                let item = e.model.item;
+                this.__confirm('Konfirmasi', 'Anda yakin akan membatalkan disposisi ini?').then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/surat-masuk/dispositions/' + item.tdp_id).then(res => {
+                            if (res.success) {
+                                this.load();
+                            }
+                        });
+                    }
+                });
+            }
+
+            __onForwardTap(e) {
+                this.set('activity', 'FORWARD');
+
+                this.resetForward();
+
+                this.set('selectedDisposition', e.model.index);
+                this.$['forward-editor'].open();
+            }
+
+            __onThreadEditorSaveTap() {
+                this.$['thread-editor'].close();
+                this.set('loading', true);
+
+                let thread = this.thread;
+
+                if (thread.tdp_id) {
+                    this.$.ajax.PUT('/surat-masuk/dispositions/' + thread.tdp_id, thread).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/surat-masuk/dispositions', thread).then(done.bind(this));
+                }
+
+                function done(res) {
+                    this.set('loading', false);
+
+                    if (res.success) {
+                        this.load();
+                    }
+                }
+            }
+
+            __onThreadEditorCloseTap() {
+                this.$['thread-editor'].close();
+            }
+
+            __onSubordinateEditorSaveTap() {
+                this.$['subordinate-editor'].close();
+
+                let selected = this.selectedSubordinate;
+                let update = Object.assign({}, this.subordinateRecord);
+                let items = ((this.activity == 'THREAD' ? this.thread.subordinates : this.forward.subordinates) || [])
+                let responsible = this.activity == 'THREAD' ? this.thread.tdp_responsible : this.forward.tdp_responsible;
+                let path = this.activity == 'THREAD' ? 'thread.subordinates' : 'forward.subordinates';
+
+                if (update.su_position) {
+                    let valid = true;
+
+                    if (update.su_id) {
+                        let index = items.findIndex(e => e.su_id == update.su_id);
+                        
+                        if (index !== -1) {
+                            valid = false;
+                        }
+
+                        if (update.su_id == responsible) {
+                            valid = false;
+                        }
+                    }
+
+                    if (valid) {
+                        if (selected !== -1) {
+                            Object.keys(update).forEach(k => {
+                                this.set(path + '.' + selected + '.' + k, update[k]);
+                            });        
+                        } else {
+                            update.su_checked = '1';
+                            this.push(path, update);
+                        }
+                    }
+
+                    
+                }
+                
+            }
+
+            __onSubordinateEditorCloseTap() {
+                this.$['subordinate-editor'].close();
+            }
+
+            __onEditSubordinateTap(e) {
+                let item = e.model.item;
+
+                this.$['combo-subordinate-user'].load({
+                    start: 0,
+                    params: {}
+                }).then(() => {
+                    this.set('selectedSubordinate', e.model.index);
+                    this.set('subordinateRecord', Object.assign({}, item));
+                });
+
+                this.$['subordinate-editor'].open();
+            }
+
+            __onAddSubordinateTap() {
+                this.set('selectedSubordinate', -1);
+
+                this.set('subordinateRecord', {
+                    su_position: '',
+                    su_id: '',
+                    su_fullname: '',
+                    su_copy: '0',
+                    su_orig: '0'
+                });
+
+                this.$['subordinate-editor'].open();
+            }
+
+            __onRemoveSubordinateTap(e) {
+                let path = this.activity == 'THREAD' ? 'thread.subordinates' : 'forward.subordinates';
+
+                this.__confirm('Konfirmasi', 'Hapus daftar tujuan disposisi?').then(y => {
+                    if (y) {
+                        this.splice(path, e.model.index, 1);
+                    }
+                })
+            }
+
+            __onPrintTap(e) {
+                this.$.ajax.DOWNLOAD('/surat-masuk/print/disposition/xls/' + e.model.item.tdp_id);
+            }
+
+            __onResponseTap(e) {
+                this.set('selectedDisposition', e.model.index);
+                this.set('responseRecord', Object.assign({}, e.model.item));
+
+                this.$['response-editor'].open();
+            }
+
+            __onResponseEditorSaveTap() {
+                this.$['response-editor'].close();
+                let selected = this.selectedDisposition;
+                
+                if (selected !== -1) {
+                    let data = this.responseRecord;
+                    let disp = this.get('record.dispositions.' + selected);
+
+                    let opts = {};
+                    if (this.socketSession) {
+                        opts.headers = {
+                            'X-Socket-Session': this.socketSession
+                        };
+                    }
+
+                    this.$.ajax.PUT('/surat-masuk/dispositions/' + disp.tdp_id, data, opts).then(res => {
+                        if (res.success) {
+                            Object.keys(res.data).forEach(k => {
+                                this.set('record.dispositions.' + selected + '.' + k, res.data[k]);
+                            });
+                        }
+                    });
+                }
+            }
+
+            __onResponseEditorCloseTap() {
+                this.$['response-editor'].close();
+            }
+
+            __onForwardEditorSaveTap() {
+                this.$['forward-editor'].close();
+                let selected = this.selectedDisposition;
+
+                if (selected !== -1) {
+                    
+                    let sending = this.get('record.dispositions.' + selected);
+
+                    if (sending) {
+                        let forward = this.forward;
+                        
+                        forward.instructions = [];
+
+                        if ( ! forward.tdp_actions) {
+                            forward.tdp_actions = 'sudah diteruskan';
+                        }
+
+                        this.$.ajax.PUT('/surat-masuk/dispositions/' + sending.tdp_id, forward).then(res => {
+                            if (res.success) {
+                                this.load();
+                            }
+                        });
+                    }
+                }
+            }
+
+            __onForwardEditorCloseTap() {
+                this.$['forward-editor'].close();
+            }
+
+            __onToggleTap(e) {
+                let index = e.model.index;
+                let expanded = e.model.item.tdp_expand;
+
+                this.set('record.dispositions.' + index + '.tdp_expand', !expanded);
+            }
+
+            __onExpandChange(e) {
+                (this.record.dispositions || []).forEach((elm, idx) => {
+                    this.set('record.dispositions.' + idx + '.tdp_expand', this.expand);
+                });
+            }
+
+            __onSocketNotify(e) {
+                if ( ! this.isValidTask()) {
+                    return;
+                }
+
+                let payload = e.detail;
+                let data = JSON.parse(payload.data);
+                
+                if (payload.type == 'update') {
+                    if (payload.project == this.record.task.tsm_task_project && payload.task == this.record.task.tsm_id) {
+                        let index = (this.record.dispositions || []).findIndex(elem => elem.tdp_id == data.tdp_id);
+                        if (index != -1) {
+                            Object.keys(data).forEach(k => {
+                                this.set('record.dispositions.' + index + '.' + k, data[k]);
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        customElements.define(SuratMasukDisposition.is, SuratMasukDisposition);
+    </script>
+</dom-module>

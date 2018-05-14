@@ -1,0 +1,151 @@
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../vendors/signature-pad/signature-pad.html">
+<dom-module id="kct-painter">
+    <template>
+
+        <style>
+            :host {
+                display: block;
+            }
+
+            .container {
+                border: 1px solid #dfdfdf;
+                width: var(--signature-pad-width, 100%);
+                height: var(--signature-pad-height, 300px);
+                overflow: hidden;
+                position: relative;
+            }
+
+            .tool {
+                position: absolute;
+                top: 5px;
+                right: 5px;
+                padding: 5px;
+            }
+
+            .tool paper-icon-button {
+                width: 26px;
+                height: 26px;
+                padding: 4px;
+            }
+
+            #canvas {
+                width: 100%;
+                height: 100%;
+            }
+        </style>
+        
+        <div class="container">
+            <canvas id="canvas"></canvas>
+            <div class="tool">
+                <paper-icon-button on-tap="__onClearTap" icon="clear"></paper-icon-button>
+                <paper-icon-button on-tap="__onSaveTap" icon="file-download"></paper-icon-button>
+            </div>
+        </div>
+
+    </template>
+    <script>
+        class KctPainter extends Polymer.Element {
+            static get is() {
+                return 'kct-painter';
+            }
+            static get properties() {
+                return {
+                    width: { type: String },
+                    height: { type: String }
+                }
+            }
+            static get observers() {
+                return [
+                    '__sizeChanged(width, height)'
+                ];
+            }
+            constructor() {
+                super();
+                this.painter = null;
+            }
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, () => {
+                    this.__setup();
+                });
+            }
+            resize() {
+                let ratio =  Math.max(window.devicePixelRatio || 1, 1);
+                let canvas = this.$.canvas;
+
+                canvas.width = canvas.offsetWidth * ratio;
+                canvas.height = canvas.offsetHeight * ratio;
+                canvas.getContext("2d").scale(ratio, ratio);
+
+                if (this.painter) {
+                    this.painter.clear();
+                }
+            }
+            saveAsJPG() {
+                return this.saveAsBlob('image/jpeg');
+            }
+            saveAsPNG() {
+
+            }
+            saveAsSVG() {
+
+            }
+            saveAsBlob(format) {
+                if ( ! this.painter || this.painter.isEmpty()) {
+                    return null;
+                }
+                let dataURL = this.painter.toDataURL(format);
+                let parts = dataURL.split(';base64,');
+                let contentType = parts[0].split(':')[1];
+                let raw = window.atob(parts[1]);
+                let rawLength = raw.length;
+                let uInt8Array = new Uint8Array(rawLength);
+
+                for (let i = 0; i < rawLength; ++i) {
+                    uInt8Array[i] = raw.charCodeAt(i);
+                }
+
+                return new Blob([uInt8Array], { type: contentType });
+            }
+            __setup() {
+                this.painter = new SignaturePad(this.$.canvas, {
+                    backgroundColor: 'rgb(255, 255, 255)',
+                    maxWidth: 4.5
+                });
+
+                this.resize();
+            }
+            __sizeChanged(width, height) {
+                let styles = {};
+
+                if (width !== undefined) {
+                    styles['--signature-pad-width'] = width;
+                }
+
+                if (height !== undefined) {
+                    styles['--signature-pad-height'] = height;
+                }
+
+                this.updateStyles(styles);
+
+                let delay = setTimeout(() => {
+                    this.resize();
+                    clearTimeout(delay);
+                    delay = null;
+                }, 10);
+            }
+
+            __onClearTap(e) {
+                e.stopPropagation();
+
+                if (this.painter) {
+                    this.painter.clear();
+                }
+            }
+        }
+        customElements.define(KctPainter.is, KctPainter);
+    </script>
+</dom-module>
