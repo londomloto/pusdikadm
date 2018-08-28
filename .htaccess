@@ -20,10 +20,7 @@
     #RewriteCond %{REQUEST_URI} /(bower_components|elements|mixins|vendors|themes|helpers|fonts)/
     #RewriteCond %{REQUEST_URI} !/(cores)/
     #RewriteRule ^([^/]+)/(.*)$ /cores/$2 [L,R=301]
-
-    RewriteCond %{REQUEST_URI} !(43L3il6czKoDpheHqv0lyHwVZy3GbGslWKrke5MFdGE|X5EIdRgZ3IYeBXmud38jE4lwcpFcbYR60B199KXPT7o)$
-    RewriteRule ^([^/]+)/(.*)$ $1/ [L,NC]
-
+    
     RewriteCond %{REQUEST_URI} !\.(html|gif|jpg|jpeg|png|css|js|ttf|woff2?|svg|eot|map|json|ico|mp3|ogg|otf)$
     RewriteRule ^([^/]+)/(.*)$ $1/ [L,NC]
     #RewriteRule ^$ /demo [L]
