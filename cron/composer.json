@@ -1,0 +1,6 @@
+{
+    "require": {
+        "guzzlehttp/guzzle": "~6.0",
+        "fightbulc/moment": "^1.26"
+    }
+}
