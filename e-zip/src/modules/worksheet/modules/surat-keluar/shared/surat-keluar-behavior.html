@@ -1,0 +1,182 @@
+<link rel="import" href="../../../../../../../cores/mixins/mixins.html">
+
+<script>
+    Mixins.SuratKeluarBehavior = Polymer.dedupingMixin(superclass => {
+
+        return class extends superclass {
+
+            initialize() {
+                this.set('record.perms.update_users', true);
+                this.set('record.perms.update_labels', true);
+            }
+
+            __computeAgenda() {
+                let code = this.record.task.tsk_serial || 'AGENDA-KELUAR';
+
+                return this.$.ajax.GET('/system/autonumber/generate', {
+                    code: code
+                }).then(res => {
+                    if (res.success) {
+                        this.set('record.task.tsk_agenda', res.data);
+                    }
+                });
+            }
+
+            __computeNumber() {
+                let valid = this.record && this.record.task;
+                
+                if ( ! valid) {
+                    return;
+                }
+
+                let value, parts, today;
+                
+                today = moment();
+                value = [];
+                parts = (this.record.task.tsk_agenda || '').split(/\//);
+                
+                if (parts && parts[0]) {
+                    value.push(parts[0]);
+                }
+
+                if (this.record.task.tsk_from_code) {
+                    value.push(this.record.task.tsk_from_code);
+                }
+
+                if (this.record.task.class_scl_code) {
+                    value.push(this.record.task.class_scl_code);
+                }
+
+                value.push(today.format('MM/YYYY'));
+                value = value.join('/');
+                
+                this.set('record.task.tsk_no', value);
+            }
+
+            __computeAuthors() {
+                return this.$.ajax.GET('/surat-keluar/' + this.record.task.tsk_id + '/authors').then(res => {
+                    if (res.success) {
+                        this.set('record.authors', res.data);
+                    }
+                });
+            }
+
+            __addAssignee(user) {
+
+                if ( ! this.record.users) {
+                    this.set('record.users', []);
+                }
+
+                let index = this.record.users.findIndex(e => {
+                    return e.su_id == user.su_id;
+                });
+
+                if (index === -1) {
+                    this.push('record.users', {
+                        su_id: user.su_id,
+                        su_fullname: user.su_fullname,
+                        su_avatar_thumb: user.su_avatar_thumb,
+                        su_sg_name: user.su_sg_name,
+                        su_sj_name: user.su_sj_name,
+                        su_no: user.su_no
+                    });
+                }
+
+            }
+
+            __resolveAgenda() {
+                if ( ! this.record.task.tsk_agenda) {
+                    return this.__computeAgenda();
+                } else {
+                    return Promise.resolve();
+                }
+            }
+
+            __resolveMembers() {
+                let members = [
+                    this.record.task.tsk_from_user,
+                    this.record.task.tsk_evaluator,
+                    this.record.task.tsk_examiner
+                ].filter(e => !!e);
+
+                if (members.length) {
+                    return this.$.ajax.GET('/users', {
+                        params: {
+                            su_id: ['IN', members]
+                        }
+                    }).then(res => {
+                        if (res.success) {
+                            (res.data || []).forEach(user => {
+                                this.__addAssignee(user);
+                            });
+                        }
+                        return res.success;
+                    });
+                } else {
+                    return Promise.resolve();
+                }
+            }
+
+            __resolveExamFlag() {
+                let exams = (this.record.exams || []);
+
+                if (exams.length) {
+                    let lastExam = exams[exams.length - 1];
+                    this.set('record.task.tsk_task_flag', lastExam.tske_flag);
+                }
+            }
+
+            __saveSignature() {
+                if (this.$.signature.dirty) {
+                    let signature = this.$.signature.saveAsJPG();
+                    if (signature) {
+                        return this.$.ajax.UPLOAD('/surat-keluar/' + this.record.task.tsk_id + '/signature', {
+                            files: [
+                                { name: 'userfile', file: signature }
+                            ]
+                        }).then(res => {
+                            if (res.success) {
+                                this.set('record.task.tsk_signature', res.data.tsk_signature);
+                            }
+                            this.$.signature.dirty = false;
+                            return true;
+                        });
+                    }
+                }
+                return this.resolve(false);
+            }
+
+            __onGenerateAgendaTap() {
+                this.__computeAgenda();
+            }
+
+            __onGenerateNumberTap() {
+                this.__computeNumber();
+            }
+
+            __onComboFromChange(e) {
+                let job = e.target.getModelForValue(e.target.value);
+
+                if (job) {
+                    this.set('record.task.tsk_from', job.sj_name);
+                    this.set('record.task.tsk_from_code', job.sj_code);
+                    this.set('record.task.tsk_from_user', job.su_id);
+                } else {
+                    this.set('record.task.tsk_from', '');
+                    this.set('record.task.tsk_from_code', '');
+                    this.set('record.task.tsk_from_user', '');
+                }
+            }
+
+            __onComboClassChange(e) {
+                let model = e.target.getSelectedItem();
+                if (model) {
+                    this.set('record.task.class_scl_code', model.scl_code);
+                } else {
+                    this.set('record.task.class_scl_code', '');
+                }
+            }
+        };
+
+    });
+</script>

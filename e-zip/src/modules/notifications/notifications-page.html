@@ -158,10 +158,7 @@
                             <h3>Notifikasi</h3>
                             <div>Anda dapat menerima pesan notifikasi dari perangkat yang Anda gunakan pada saat aplikasi tidak aktif.</div>
                             <div class="m-t">
-                                <kct-hbox>
-                                    <div><kct-checkbox checked="[[ subscribed ]]"></kct-checkbox></div>
-                                    <div class="flex"><a href="javascript:;" on-tap="__onSubToggle">Aktifkan notifikasi</a></div>
-                                </kct-hbox>
+                                <a href="javascript:;" on-tap="__onSubToggle">[[ __computeSubscribeLabel(subscribed) ]]</a>
                             </div>    
                         </div>
                         
@@ -203,16 +200,12 @@
                 this.__load();
             }
 
+            __computeSubscribeLabel(subscribed) {
+                return subscribed ? 'Non-aktifkan notifikasi' : 'Aktifkan notifikasi';
+            }
+
             __computeItemClass(type, unread) {
                 return type + (unread ? ' unread' : '');
-            }
-
-            __computeSubClass(subscribed) {
-                return subscribed ? 'btn-danger' : 'btn-blue';
-            }
-
-            __computeSubLabel(subscribed) {
-                return subscribed ? 'Non-aktifkan Notifikasi' : 'Aktifkan Notifikasi';
             }
 
             __load(options = {}) {

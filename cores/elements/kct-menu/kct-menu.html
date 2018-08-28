@@ -20,7 +20,7 @@
 
                 cursor: pointer;
                 color: #666;
-                --paper-item-min-height: 38px;
+                --paper-item-min-height: 32px;
                 --paper-item-selected-weight: normal;
             }
             paper-item > .gutt {
@@ -39,7 +39,10 @@
                 
             }
             paper-item > .icon > iron-icon {
-                
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
+                position: relative;
+                top: -1px;
             }
             paper-item > .tool {
                 display: none;

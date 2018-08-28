@@ -137,5 +137,17 @@ class Spreadsheet {
         return FALSE;
 
     }
+    
+    public static function applyBorderStyle($sheet, $range, $effect = 'outline', $style = 'thin') {
+        $borders = array();
+        
+        $borders[$effect] = array(
+            'borderStyle' => $style
+        );
+
+        $sheet->getStyle($range)->applyFromArray(array(
+            'borders' => $borders
+        ));
+    }
 
 }

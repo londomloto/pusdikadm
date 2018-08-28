@@ -2,11 +2,35 @@
 namespace App\Jobs\Controllers;
 
 use App\Jobs\Models\Job;
+use App\Users\Models\User;
 
 class JobsController extends \Micro\Controller {
 
     public function findAction() {
-        return Job::get()->filterable()->sortable()->paginate();
+        $display = $this->request->getQuery('display');
+
+        switch($display) {
+            case 'template':
+
+                $result = Job::get()
+                    ->columns(array(
+                        'sj_id',
+                        'MAX(su_id) AS su_id'
+                    ))
+                    ->join('App\Users\Models\User', 'sj_id = su_sj_id', '', 'LEFT')
+                    ->groupBy('sj_id')
+                    ->filterable()
+                    ->paginate();
+
+                return $result->filter(function($row){
+                    $item = Job::findFirst($row->sj_id)->toArray();
+                    $item['su_id'] = $row->su_id;
+                    return $item;
+                });
+
+            default:
+                return Job::get()->filterable()->sortable()->paginate();
+        }
     }
 
     public function subordinatesAction($id) {

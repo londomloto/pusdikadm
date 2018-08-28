@@ -98,7 +98,7 @@
             </div>
         </div>
 
-        <div class="section">
+        <div class="section" hidden$="[[ personal ]]">
             <h3 class="section-title">Penerimaan Disposisi</h3>
             <div>Daftar riwatat distribusi (ekpsedisi internal) disposisi surat.</div>
             <div class="m-t">
@@ -194,7 +194,8 @@
                     receiving: { type: Object },
                     readonly: { type: Boolean, value: false, reflectToAttribute: true },
                     message: { type: String, value: '' },
-                    outstandings: { type: Array, value: () => ([]) }
+                    outstandings: { type: Array, value: () => ([]) },
+                    personal: { type: Boolean, value: false }
                 };
             }
 

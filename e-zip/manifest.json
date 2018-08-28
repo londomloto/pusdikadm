@@ -1,7 +1,7 @@
 {
-  "name": "e-lkh",
-  "short_name": "e-lkh",
-  "start_url": "/pusdikadm/e-lkh/",
+  "name": "e-zip",
+  "short_name": "e-zip",
+  "start_url": "/pusdikadm/e-zip/",
   "display": "standalone",
   "theme_color": "#4caf50",
   "background_color": "#4caf50",

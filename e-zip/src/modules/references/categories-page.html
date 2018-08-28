@@ -54,6 +54,7 @@
                 <div slot="dialog-body">
                     <paper-input label="Kode" value="{{ editingRecord.sct_code }}"></paper-input>
                     <paper-input label="Nama" value="{{ editingRecord.sct_name }}"></paper-input>
+                    <paper-input label="Bobot" value="{{ editingRecord.sct_weight }}"></paper-input>
                     <div class="form-group">
                         <label>Warna Penanda</label>
                         <div>
@@ -98,7 +99,8 @@
                                     }
                                     return '';
                                 }
-                            }
+                            },
+                            { text: 'Bobot', dataIndex: 'sct_weight', align: 'center', width: 100 }
                         ])
                     },
                     selectedRecord: { type: Object },

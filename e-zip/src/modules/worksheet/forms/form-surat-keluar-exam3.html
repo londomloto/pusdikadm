@@ -1,0 +1,96 @@
+<dom-module id="form-surat-keluar-exam3">
+    <template>
+        <style include="form-style"></style>
+
+        <style include="form-style">
+            :host {
+                margin: -30px;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="tabs" hidden$="[[ phantom ]]">
+            <paper-tabs id="tabs" attr-for-selected="name" selected="{{ page }}" scrollable no-slide no-bar noink>
+                <paper-tab name="identitas">IDENTITAS SURAT</paper-tab>
+                <paper-tab name="konsep">KONSEP SURAT</paper-tab>
+                <paper-tab name="exam">KOREKSI SURAT</paper-tab>
+            </paper-tabs>
+        </div>
+
+        <div class="tabs-content">
+            <kct-pages attr-for-selected="name" selected="[[ page ]]">
+
+                <div class="page" name="identitas">
+                    <surat-keluar-readonly record="[[ record ]]"></surat-keluar-readonly>
+                </div>
+
+                <div class="page" name="konsep">
+                    <surat-keluar-filemgr 
+                        record="{{ record }}" 
+                        readonly$="[[ !record.perms.update_files ]]"></surat-keluar-filemgr>
+                </div>
+
+                <div class="page" name="exam">
+                    <surat-keluar-exam 
+                        examiner="[[ record.task.tsk_from_user ]]"
+                        record="{{ record }}"></surat-keluar-exam>
+                </div>
+
+            </kct-pages>
+        </div>
+
+    </template>
+    <script>
+        class FormSuratKeluarExam3 extends Mixins(FormBase).use(Mixins.SuratKeluarBehavior) {
+            static get is() {
+                return 'form-surat-keluar-exam3';
+            }
+            static get properties() {
+                return {
+                    page: { type: String },
+                    examRecord: { type: Object }
+                };
+            }
+            initialize() {
+                super.initialize();
+                this.set('page', 'exam');
+
+                this.__computeAuthors().then(() => {
+                    let buttons = ['save', 'send', 'print'];
+
+                    if (this.record.authors.indexOf(this.user.su_id) !== -1) {
+                        this.set('record.perms.update_files', true);
+                        this.set('record.perms.update_exams', true);
+                        
+                        buttons.push('remove');
+                    }
+
+                    this.set('buttons', buttons.join(','));
+                });
+            }
+
+            beforeSave(options) {
+                if (options.send) {
+                    if ( ! this.record.exams.length) {
+                        return this.confirm('Konfirmasi', 'Sepertinya Anda belum memberikan catatan pemeriksaan (koreksi). Tetap lanjutkan proses?').then(y => {
+                            if ( ! y) {
+                                this.set('page', 'exam');
+                                return { success: false };
+                            } else {
+                                return { success: true };
+                            }
+                        });
+                    } else {
+                        this.__resolveExamFlag();
+                        return this.resolve({ success: true });
+                    }
+                } else {
+                    return this.resolve({ success: true });
+                }
+            }
+            
+        }
+        customElements.define(FormSuratKeluarExam3.is, FormSuratKeluarExam3);
+    </script>
+</dom-module>

@@ -67,6 +67,9 @@
             getSelectedUnit() {
                 return this.$.combo.getModelForValue(this.$.combo.value);
             }
+            getSelectedItem() {
+                return this.$.combo.getModelForValue(this.$.combo.value);
+            }
             __onAddTap() {
                 this.set('editingRecord', {});
                 this.$.editor.open();

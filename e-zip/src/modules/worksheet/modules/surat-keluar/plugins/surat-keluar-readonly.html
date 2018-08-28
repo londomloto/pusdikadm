@@ -1,0 +1,177 @@
+<dom-module id="surat-keluar-readonly">
+    <template>
+        <style include="form-style"></style>
+
+        <div class="section">
+            <h3 class="section-title">IDENITAS SURAT</h3>
+            <div class="m-t">
+                <kct-column columns="2">
+                    <div>
+                        <div class="form-display">
+                            <div class="label">Nomor Surat</div>
+                            <div class="value">[[ record.task.tsk_no ]]&nbsp;</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="form-display">
+                            <div class="label">Tanggal Surat</div>
+                            <div class="value">[[ record.task.tsk_date_formatted ]]&nbsp;</div>
+                        </div>
+                    </div>
+                </kct-column>
+                <div class="form-display">
+                    <div class="label">Tujuan</div>
+                    <div class="value">[[ record.task.tsk_to ]]&nbsp;</div>
+                </div>
+                <div class="form-display">
+                    <div class="label">Perihal</div>
+                    <div class="value">[[ record.task.tsk_subject ]]&nbsp;</div>
+                </div>
+                <div class="form-display">
+                    <div class="label">Lampiran</div>
+                    <div class="value">[[ record.task.tsk_attachments ]]&nbsp;</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">ATRIBUT SURAT</h3>
+            <div class="m-t">
+                <kct-column columns="2">
+                    <div>
+                        <div class="form-display">
+                            <div class="label">Klasifikasi</div>
+                            <div class="value">[[ record.task.class_scl_label ]]&nbsp;</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="form-display">
+                            <div class="label">Sifat</div>
+                            <div class="value">[[ record.task.category_sct_label ]]&nbsp;</div>
+                        </div>
+                    </div>
+                </kct-column>
+                <kct-column columns="2">
+                    <div>
+                        <div class="form-display">
+                            <div class="label">Penyampaian</div>
+                            <div class="value">[[ record.task.shipment_sdt_label ]]&nbsp;</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="form-display">
+                            <div class="label">Kerahasiaan</div>
+                            <div class="value">[[ record.task.secrecy_sst_label ]]&nbsp;</div>
+                        </div>
+                    </div>
+                </kct-column>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">KORESPONDENSI</h3>
+            <div class="m-t">
+                <kct-column columns="2">
+                    <div>
+                        <div class="form-display">
+                            <div class="label">Surat Masuk</div>
+                            <div class="value">[[ record.task.corres_label ]]&nbsp;</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="form-display">
+                            <div class="label">Tanggal Terima</div>
+                            <div class="value">[[ record.task.corres_tsm_register_date_formatted ]]&nbsp;</div>
+                        </div>
+                    </div>
+                </kct-column>
+                <div class="form-display">
+                    <div class="label">Asal Surat</div>
+                    <div class="value">[[ record.task.corres_tsm_from ]]&nbsp;</div>
+                </div>
+                <div class="form-display">
+                    <div class="label">Perihal Surat</div>
+                    <div class="value">[[ record.task.corres_tsm_subject ]]&nbsp;</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-title">PEMBUATAN</h3>
+            <div class="m-t">
+                <kct-column columns="2">
+                    <div>
+                        <div class="form-display">
+                            <div class="label">Buku Agenda</div>
+                            <div class="value">[[ record.task.tsk_serial ]]&nbsp;</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="form-display">
+                            <div class="label">No. Agenda</div>
+                            <div class="value">[[ record.task.tsk_agenda ]]&nbsp;</div>
+                        </div>
+                    </div>
+                </kct-column>
+                <kct-column columns="2">
+                    <div>
+                        <div class="form-display">
+                            <div class="label">Tanggal Pembuatan</div>
+                            <div class="value">[[ record.task.tsk_register_date_formatted ]]&nbsp;</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="form-display">
+                            <div class="label">Pembuat Konsep</div>
+                            <div class="value">[[ record.task.conceptor_su_fullname ]]&nbsp;</div>
+                        </div>
+                    </div>
+                </kct-column>
+                <kct-column columns="2">
+                    <div>
+                        <div class="form-display">
+                            <div class="label">Instansi Pengirim</div>
+                            <div class="value">[[ record.task.origin_label ]]&nbsp;</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="form-display">
+                            <div class="label">Penandatangan</div>
+                            <div class="value">[[ record.task.responsible_su_fullname ]]&nbsp;</div>
+                        </div>
+                    </div>
+                </kct-column>
+                <kct-column columns="2">
+                    <div>
+                        <div class="form-display">
+                            <div class="label">Pemeriksa I (Eselon IV)</div>
+                            <div class="value">[[ record.task.evaluator_su_fullname ]]&nbsp;</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="form-display">
+                            <div class="label">Pemeriksa II (Eselon III)</div>
+                            <div class="value">[[ record.task.examiner_su_fullname ]]&nbsp;</div>
+                        </div>
+                    </div>
+                </kct-column>
+            </div>
+        </div>
+
+        
+
+    </template>
+    <script>
+        class SuratKeluarReadonly extends Polymer.Element {
+            static get is() {
+                return 'surat-keluar-readonly';
+            }
+            static get properties() {
+                return {
+                    record: { type: Object }
+                };
+            }
+        }
+        customElements.define(SuratKeluarReadonly.is, SuratKeluarReadonly);
+    </script>
+</dom-module>

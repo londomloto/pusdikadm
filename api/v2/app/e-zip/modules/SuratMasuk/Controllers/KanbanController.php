@@ -33,7 +33,8 @@ class KanbanController extends \Micro\Controller {
             ->join('App\SuratMasuk\Models\TaskLabel', 'task.tsm_id = task_label.tsml_tsm_id', 'task_label', 'left')
             ->join('App\SuratMasuk\Models\TaskUser', 'task.tsm_id = task_user.tsmu_tsm_id', 'task_user', 'left')
             ->join('App\Labels\Models\Label', 'task_label.tsml_sl_id = label.sl_id', 'label', 'left')
-            ->join('App\Users\Models\User', 'task.tsm_to = receiver.su_id', 'receiver', 'left')
+            //->join('App\Users\Models\User', 'task.tsm_to = receiver.su_id', 'receiver', 'left')
+            ->join('App\Categories\Models\Category', 'task.tsm_category = category.sct_id', 'category', 'left')
             ->groupBy('task_status.tsms_id');
 
         $query->inWhere('task_user.tsmu_su_id', array($auth['su_id']));
@@ -330,7 +331,14 @@ class KanbanController extends \Micro\Controller {
             $fields = json_decode($params['fields'], TRUE);
             
             $maps = array(
-                //'receiver' => 'receiver.su_id'
+                'origin' => 'task.tsm_from',
+                'date' => 'task.tsm_date',
+                'category' => 'category.sct_name',
+                'label' => 'label.sl_label',
+                'tsm_agenda' => 'task.tsm_agenda',
+                'tsm_no' => 'task.tsm_no',
+                'tsm_from' => 'task.tsm_from',
+                'tsm_subject' => 'task.tsm_subject'
             );
 
             $where = array();
@@ -365,8 +373,16 @@ class KanbanController extends \Micro\Controller {
                     $query->inWhere('task_label.tsml_sl_id', $json->label[1]);
                 }
 
+                if (isset($json->origin) && count($json->origin) > 0) {
+                    $query->inWhere('task.tsm_from', $json->origin[1]);
+                }
+
+                if (isset($json->category) && count($json->category) > 0) {
+                    $query->inWhere('task.tsm_category', $json->category[1]);
+                }
+
                 if (isset($json->date) && count($json->date) > 0) {
-                    $query->inWhere('task.tsm_date', $json->data[1]);
+                    $query->inWhere('task.tsm_date', $json->date[1]);
                 }
             }
         }
@@ -374,16 +390,19 @@ class KanbanController extends \Micro\Controller {
 
     public static function applySorter($query, $params, $cols) {
         if ( ! isset($params['sort'])) {
-            $cols[] = 'MAX(task.tsm_register_date) AS tsm_register_date';
+            $cols[] = 'MAX(task.tsm_date) AS tsm_date';
             $query->columns($cols);
-            $query->orderBy('tsm_register_date DESC');
+            $query->orderBy('tsm_date DESC');
         } else {
             $ps = json_decode($params['sort']);
 
             $sort = array();
 
             $maps = array(
-                'date' => 'task.tsm_register_date'
+                'tsm_no' => 'task.tsm_no',
+                'tsm_date' => 'task.tsm_date',
+                'tsm_agenda' => 'task.tsm_agenda',
+                'sct_weight' => 'category.sct_weight'
             );
 
             foreach($ps as $e) {

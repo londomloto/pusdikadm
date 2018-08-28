@@ -11,6 +11,8 @@ class AutonumberController extends \Micro\Controller {
 
     public function createAction() {
         $post = $this->request->getJson();
+        $post['sn_date'] = date('Y-m-d');
+        
         $name = trim($post['sn_name']);
 
         $data = Autonumber::findFirst(array(

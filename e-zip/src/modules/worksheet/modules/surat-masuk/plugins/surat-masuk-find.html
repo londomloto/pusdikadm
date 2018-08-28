@@ -78,16 +78,15 @@
                                     </kct-search-combo>
 
                                     <kct-search-combo 
-                                        name="user" 
-                                        url="/users" 
-                                        class="popup" 
-                                        item-value-path="su_id" 
-                                        item-label-path="su_fullname" 
-                                        item-query-path="su_fullname" 
+                                        name="origin" 
+                                        url="/surat-masuk/origins" 
+                                        item-label-path="label" 
+                                        item-value-path="value" 
                                         list-width="400" 
                                         page-size="10" 
-                                        on-change="__onComboChange" 
-                                        on-beforeload="__onComboBeforeload">
+                                        class="popup" 
+                                        on-beforeload="__onComboBeforeload" 
+                                        on-change="__onComboChange">
                                         <template>
                                             <style>
                                                 paper-item {
@@ -99,16 +98,43 @@
                                                     --iron-icon-width: 16px;
                                                     --iron-icon-height: 16px;
                                                     margin-right: 5px;
-                                                    position: relative;
-                                                    top: -1px;
                                                 }
                                             </style>
 
                                             <paper-item>
-                                                <div>
-                                                    <iron-icon icon="social:person-outline"></iron-icon>
-                                                    <span>[[ item.su_fullname ]]</span>
-                                                </div>
+                                                <paper-item-body>[[ item.label ]]</paper-item-body>    
+                                            </paper-item>
+
+                                        </template>        
+                                    </kct-search-combo>
+
+                                    <kct-search-combo 
+                                        name="category" 
+                                        url="/categories" 
+                                        item-label-path="sct_label" 
+                                        item-value-path="sct_id" 
+                                        list-width="400" 
+                                        page-size="10" 
+                                        class="popup" 
+                                        on-beforeload="__onComboBeforeload" 
+                                        on-change="__onComboChange">
+                                        <template>
+                                            <style>
+                                                paper-item {
+                                                    --paper-item-min-height: 34px;
+                                                    font-size: 13px;
+                                                    font-weight: 400;
+                                                }
+                                                paper-item iron-icon {
+                                                    --iron-icon-width: 16px;
+                                                    --iron-icon-height: 16px;
+                                                    margin-right: 5px;
+                                                }
+                                            </style>
+
+                                            <paper-item>
+                                                <iron-icon icon="label-outline"></iron-icon>
+                                                <paper-item-body>[[ item.sct_label ]]</paper-item-body>    
                                             </paper-item>
 
                                         </template>        
@@ -201,11 +227,13 @@
                         type: Array,
                         value: () => ([
                             { field: 'search', label: 'Search', icon: 'search', hide: false, hint: 'Tekan enter untuk pencarian' },
-                            { field: 'user', label: 'Pegawai', icon: 'social:person-outline', hide: false, hint: 'Filter pegawai: <b>@pegawai</b>' },
-                            { field: 'date', label: 'Tanggal', icon: 'today', hide: false, hint: 'Filter periode: <b>#periode</b>'  },
-                            { field: 'label', label: 'Label', icon: 'label-outline', hide: false, hint: 'Filter data label: <b>~label</b>' },
-                            { field: 'period', label: 'Periode', icon: '', hide: true, hint: '' },
-                            { field: 'identity', label: 'No. Induk', icon: '', hide: true, hint: '' }
+                            { field: 'origin', label: 'Pengirim', icon: 'mail', hide: false, hint: 'Filter pengirim: <b>@pengirim</b>' },
+                            { field: 'date', label: 'Tanggal', icon: 'today', hide: false, hint: 'Filter tanggal surat: <b>&tanggal</b>' },
+                            { field: 'category', label: 'Sifat', icon: 'label-outline', hide: false, hint: 'Filter sifat surat: <b>~sifat</b>' },
+                            { field: 'label', label: 'Label', icon: 'label-outline', hide: false, hint: 'Filter label: <b>!label</b>' },
+                            { field: 'tsm_agenda', label: 'No. Agenda', icon: '', hide: true, hint: '' },
+                            { field: 'tsm_no', label: 'No. Surat', icon: '', hide: true, hint: '' },
+                            { field: 'tsm_subject', label: 'Perihal', icon: '', hide: true, hint: '' }
                         ])
                     },
 
@@ -214,9 +242,11 @@
                     sorters: {
                         type: Array,
                         value: () => ([
-                            { field: 'user', sort: 'ASC', label: 'Pegawai' },
-                            { field: 'date', sort: 'ASC', label: 'Lama' },
-                            { field: 'date', sort: 'DESC', label: 'Baru' }
+                            { field: 'tsm_no', sort: 'ASC', label: 'Surat' },
+                            { field: 'tsm_date', sort: 'DESC', label: 'Baru' },
+                            { field: 'tsm_date', sort: 'ASC', label: 'Lama' },
+                            { field: 'tsm_agenda', sort: 'ASC', label: 'Agenda' },
+                            { field: 'sct_weight', sort: 'DESC', label: 'Sifat' }
                         ])
                     },
 
@@ -228,8 +258,8 @@
             ready() {
                 super.ready();
                 
-                this.set('selectedSorter', this.sorters[2]);
-                this.set('sorters.2.checked', true);
+                this.set('selectedSorter', this.sorters[1]);
+                this.set('sorters.1.checked', true);
             }
 
         }

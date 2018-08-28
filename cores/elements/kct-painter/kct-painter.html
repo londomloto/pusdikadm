@@ -9,12 +9,29 @@
                 display: block;
             }
 
+            :host([fullscreen]) {
+                position: absolute;
+                left: 20px;
+                right: 20px;
+                top: 20px;
+                bottom: 20px;
+                z-index: 2048;
+            }
+
             .container {
+                box-sizing: border-box;
                 border: 1px solid #dfdfdf;
                 width: var(--signature-pad-width, 100%);
                 height: var(--signature-pad-height, 300px);
                 overflow: hidden;
                 position: relative;
+
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                 -khtml-user-select: none;
+                   -moz-user-select: none;
+                    -ms-user-select: none;
+                        user-select: none;
             }
 
             .tool {
@@ -25,8 +42,14 @@
             }
 
             .tool paper-icon-button {
-                width: 26px;
-                height: 26px;
+                width: 27px;
+                height: 27px;
+                padding: 4px;
+            }
+
+            :host([fullscreen]) .tool paper-icon-button {
+                width: 32px;
+                height: 32px;
                 padding: 4px;
             }
 
@@ -34,14 +57,23 @@
                 width: 100%;
                 height: 100%;
             }
+            .overlay {
+                position: absolute;
+                left: 0;
+                right: 0;
+                top: 0;
+                bottom: 0;
+                background-color: rgba(255,255,255,0);
+            }
         </style>
         
         <div class="container">
             <canvas id="canvas"></canvas>
             <div class="tool">
-                <paper-icon-button on-tap="__onClearTap" icon="clear"></paper-icon-button>
-                <paper-icon-button on-tap="__onSaveTap" icon="file-download"></paper-icon-button>
+                <paper-icon-button hidden$="[[ readonly ]]" title="Bersihkan layar" on-tap="__onClearTap" icon="clear"></paper-icon-button>
+                <!-- <paper-icon-button title="Toggle fullscreen" on-tap="__onZoomTap" icon="[[ __computeFullscreenIcon(fullscreen) ]]"></paper-icon-button> -->
             </div>
+            <div class="overlay" hidden$="[[ !readonly ]]"></div>
         </div>
 
     </template>
@@ -53,17 +85,27 @@
             static get properties() {
                 return {
                     width: { type: String },
-                    height: { type: String }
+                    height: { type: String },
+                    fullscreen: { type: Boolean, value: false, reflectToAttribute: true },
+                    dirty: { type: Boolean, value: false },
+                    source: { type: String },
+                    readonly: { type: Boolean, value: false }
                 }
             }
             static get observers() {
                 return [
-                    '__sizeChanged(width, height)'
+                    '__sizeChanged(width, height)',
+                    '__sourceChanged(source)'
                 ];
             }
             constructor() {
                 super();
+
                 this.painter = null;
+
+                this.__contextNode = null;
+                this.__contextSize = null;
+
             }
             ready() {
                 super.ready();
@@ -72,16 +114,42 @@
                     this.__setup();
                 });
             }
+            connectedCallback() {
+                super.connectedCallback();
+
+                if ( ! this.__contextNode) {
+                    this.__contextNode = this.parentNode;
+                }
+            }
             resize() {
-                let ratio =  Math.max(window.devicePixelRatio || 1, 1);
-                let canvas = this.$.canvas;
+                let timer = setTimeout(() => {
+                    clearTimeout(timer);
+                    timer = null;
 
-                canvas.width = canvas.offsetWidth * ratio;
-                canvas.height = canvas.offsetHeight * ratio;
-                canvas.getContext("2d").scale(ratio, ratio);
+                    let ratio =  Math.max(window.devicePixelRatio || 1, 1);
+                    let canvas = this.$.canvas;
 
-                if (this.painter) {
-                    this.painter.clear();
+                    canvas.width = canvas.offsetWidth * ratio;
+                    canvas.height = canvas.offsetHeight * ratio;
+                    canvas.getContext("2d").scale(ratio, ratio);
+
+                    if (this.painter) {
+                        this.painter.clear();
+                    }
+                }, 10);
+            }
+            deferResize() {
+                if ( ! this.__resized) {
+                    this.__resized = true;
+                    this.resize();
+                }
+            }
+            toggle() {
+                let fs = this.fullscreen;
+                if (fs) {
+                    this.__restore();
+                } else {
+                    this.__relocate();
                 }
             }
             saveAsJPG() {
@@ -113,10 +181,65 @@
             __setup() {
                 this.painter = new SignaturePad(this.$.canvas, {
                     backgroundColor: 'rgb(255, 255, 255)',
-                    maxWidth: 4.5
+                    maxWidth: 4.5,
+                    onEnd: () => {
+                        this.set('dirty', true);
+                    }
                 });
 
                 this.resize();
+            }
+            __relocate() {
+                if ( ! this.__contextNode) {
+                    return;
+                }
+
+                if (this.parentNode !== document.body) {
+                    let bbox;
+
+                    bbox = this.__contextNode.getBoundingClientRect();
+                        
+                    this.__contextSize = {
+                        width: bbox.width,
+                        height: bbox.height
+                    };
+
+                    this.set('fullscreen', true);   
+
+                    document.body.appendChild(this);
+
+                    bbox = this.getBoundingClientRect();
+
+                    if (bbox.width && bbox.height) {
+                        this.updateStyles({
+                            '--signature-pad-width': bbox.width + 'px',
+                            '--signature-pad-height': bbox.height + 'px'
+                        });    
+
+                        this.resize();
+                    }
+                }
+            }
+            __restore() {
+                if ( ! this.__contextNode) {
+                    return;
+                }
+
+                this.set('fullscreen', false);
+
+                this.__contextNode.appendChild(this);
+
+                this.updateStyles({
+                    '--signature-pad-height': this.__contextSize.height + 'px',
+                    '--signature-pad-width': this.__contextSize.width + 'px'
+                });
+
+                this.resize();
+            }
+            __sourceChanged(source) {
+                if (source) {
+                    this.painter.fromDataURL(source);
+                }
             }
             __sizeChanged(width, height) {
                 let styles = {};
@@ -130,12 +253,11 @@
                 }
 
                 this.updateStyles(styles);
+                this.resize();
+            }
 
-                let delay = setTimeout(() => {
-                    this.resize();
-                    clearTimeout(delay);
-                    delay = null;
-                }, 10);
+            __computeFullscreenIcon(fs) {
+                return fs ? 'fullscreen-exit' : 'fullscreen';
             }
 
             __onClearTap(e) {
@@ -144,6 +266,10 @@
                 if (this.painter) {
                     this.painter.clear();
                 }
+            }
+
+            __onZoomTap() {
+                this.toggle();
             }
         }
         customElements.define(KctPainter.is, KctPainter);

@@ -1,0 +1,102 @@
+<link rel="import" href="../../../../../cores/elements/kct-grid/kct-grid.html">
+<link rel="import" href="../plugins/surat-keluar-database-search.html">
+
+<dom-module id="surat-keluar-database">
+    <template>
+        <style include="surat-keluar-page-style">
+            :host {
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-grid 
+            id="grid" 
+            url="/surat-keluar?display=database" 
+            params="[[ params ]]" 
+            icon="description"
+            header-text="Database" 
+            header-desc="Agenda Surat Keluar" 
+            columns="[[ columns ]]" 
+            selection-model="row" 
+            pagination 
+            on-back-tap="__onBackTap">
+            <surat-keluar-database-search slot="center-toolbar" search="{{ params }}"></surat-keluar-database-search>
+            <paper-icon-button slot="right-toolbar" icon="print" on-tap="__onPrintTap"></paper-icon-button>
+        </kct-grid>
+    </template>
+    <script>
+        class SuratKeluarDatabase extends Mixins(KctView).use(Mixins.SuratKeluarPageBehavior) {
+            static get is() {
+                return 'surat-keluar-database';
+            }
+            static get properties() {
+                return {
+                    params: { type: Object },
+                    columns: {
+                        type: Array,
+                        value: () => ([
+
+                            { type: 'rownumber' }, 
+                            {
+                                type: 'action',
+                                width: 40,
+                                align: 'center',
+                                renderer: e => {
+                                    if (e.data) {
+                                        return '<kct-grid-action on-tap="__onItemTap" icon="search" accent="cyan" icon-only rounded></kct-grid-action>';
+                                    }
+                                    return '';
+                                }
+                            },
+                            { text: 'NO. AGENDA', dataIndex: 'tsk_agenda', sorting: false, width: 150},
+                            { text: 'TGL. KIRIM', dataIndex: 'tsk_delivery_date_formatted', align: 'center', sorting: false, width: 100 },
+                            { text: 'NO. SURAT', dataIndex: 'tsk_no', sorting: false },
+                            { text: 'TGL. SURAT', dataIndex: 'tsk_date_formatted', align: 'center', sorting: false, width: 100 },
+                            { text: 'TUJUAN', dataIndex: 'tsk_to', sorting: false, width: 250 },
+                            { text: 'SIFAT', dataIndex: 'category_sct_label', sorting: false, width: 130 },
+                            {
+                                text: 'PROSES',
+                                dataIndex: 'tsk_task_flag', 
+                                sorting: false,
+                                width: 200,
+                                renderer: e => {
+                                    if (e.data) {
+                                        let statuses = e.data.statuses.map(s => {
+                                            return s.status_text;
+                                        });
+                                        return statuses.join(', ');
+                                    }
+                                    return '';
+                                }
+                            }
+
+                        ])
+                    }
+                };
+            }
+            handleRouteParams(page) {
+                if (page != 'database') return;
+                this.$.grid.deferAutoresize();
+                this.__load();
+            }
+            handleResizing() {
+                this.$.grid && this.$.grid.resize();
+            }
+            __load() {
+                this.$.grid.load();
+            }
+            __onItemTap(e) {
+                if (e.data && e.data.tsk_link) {
+                    this.set('route.path', e.data.tsk_link);
+                }
+            }
+            __onPrintTap() {
+                let payload = this.$.grid.params;
+                this.$.ajax.DOWNLOAD('/surat-keluar/print/database/xls', payload);
+            }
+        }
+        customElements.define(SuratKeluarDatabase.is, SuratKeluarDatabase);
+    </script>
+</dom-module>

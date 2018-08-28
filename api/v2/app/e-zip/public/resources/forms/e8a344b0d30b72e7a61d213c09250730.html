@@ -1,0 +1,95 @@
+<dom-module id="form-surat-personal">
+    <template>
+        <style include="form-style">
+            :host {
+                margin: -30px;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="tabs">
+            <paper-tabs id="tabs" attr-for-selected="name" selected="{{ page }}" scrollable no-slide no-bar noink>
+                <paper-tab name="identitas">IDENTITAS SURAT</paper-tab>
+                <paper-tab name="distribusi">DISTRIBUSI SURAT</paper-tab>
+            </paper-tabs>
+        </div>
+
+        <div class="tabs-content">
+
+            <kct-pages attr-for-selected="name" selected="[[ page ]]">
+                    
+                <div class="page" name="identitas">
+                    
+                    <surat-masuk-readonly record="[[ record ]]"></surat-masuk-readonly>
+
+                </div>
+
+                <div class="page" name="distribusi">
+
+                    <surat-masuk-distribution 
+                        id="distribution" 
+                        user="[[ user ]]"
+                        record="{{ record }}" 
+                        readonly$="[[ !record.perms.update_distributions ]]" 
+                        on-validate="__onDistributionValidate"></surat-masuk-distribution>
+
+                </div>
+
+            </kct-pages>
+        </div>
+
+    </template>
+    <script>
+        class FormSuratPersonal extends Mixins(FormBase).use(Mixins.SuratMasukBehavior) {
+            static get is() {
+                return 'form-surat-personal';
+            }
+
+            static get properties() {
+                return {
+                    page: { type: String }
+                };
+            }
+
+            initialize() {
+                super.initialize();
+                
+                this.set('invalid', false);
+                this.set('page', 'identitas');
+                
+                this.__computeAuthors().then(() => {
+                    let buttons = ['save', 'send', 'print'];
+
+                    if (this.record.authors.indexOf(this.user.su_id) !== -1) {
+                        this.set('record.perms.update_files', true);
+                        this.set('record.perms.update_distributions', true);
+                        
+                        buttons.push('remove');
+                    }
+
+                    this.set('buttons', buttons.join(','));
+                    this.$.distribution.validate();
+                });
+
+            }
+
+            afterSave(response, options) {
+                if (response.success) {
+                    if (options.send) {
+                        // send disposition and notify responsible users
+                        this.__send();
+                    }
+                }
+                return this.resolve({ success: true });
+            }
+
+            __onDistributionValidate(e) {
+                if (e.detail.outstandings.length) {
+                    this.set('page', 'distribusi');
+                }
+            }
+        }
+        customElements.define(FormSuratPersonal.is, FormSuratPersonal);
+    </script>
+</dom-module>

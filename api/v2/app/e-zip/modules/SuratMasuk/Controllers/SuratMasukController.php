@@ -8,8 +8,59 @@ use App\SuratMasuk\Models\SuratMasukFile;
 use App\Users\Models\User;
 use Micro\Helpers\Date;
 use App\Activities\Models\Activity;
+use App\Users\Models\UserToken;
 
 class SuratMasukController extends \Micro\Controller {
+
+    public function findAction() {
+        $display = $this->request->getQuery('display');
+        
+        switch($display) {
+            case 'database':
+
+                $query = Task::get()
+                    ->alias('task')
+                    ->columns(array(
+                        'task.tsm_id',
+                        'category.sct_weight AS sct_weight'
+                    ))
+                    ->join('App\Categories\Models\Category', 'category.sct_id = task.tsm_category', 'category', 'LEFT')
+                    ->groupBy('task.tsm_id')
+                    ->filterable()
+                    ->sortable();
+
+                $params = $this->request->getQuery('params');
+
+                if ( ! empty($params)) {
+                    $params = json_decode($params, TRUE);
+                    if (isset($params['status']) && ! empty($params['status'])) {
+                        $query->join('App\SuratMasuk\Models\TaskStatus', 'task_status.tsms_tsm_id = task.tsm_id AND task_status.tsms_deleted = 0', 'task_status', 'LEFT');
+                        $query->join('App\Kanban\Models\KanbanStatus', 'kst.kst_status = task_status.tsms_status', 'kst', 'LEFT');
+                        $query->join('App\Kanban\Models\KanbanPanel', 'kp.kp_id = kst.kst_kp_id', 'kp', 'LEFT');
+                        $query->inWhere('kp.kp_id', $params['status'][1]);
+                    }
+                }
+
+                $result = $query->paginate();
+
+                $result->filter(function($row){
+                    $task = Task::findFirst($row->tsm_id);
+                    
+                    $data = $task->toArray();
+                    
+                    $data['tsm_link'] = $task->getLink();
+                    $data['statuses'] = $task->getCurrentStatuses()->filter(function($status){
+                        return $status->toArray();
+                    });
+
+                    return $data;
+                });
+
+                return $result;
+            default:
+                return Task::get()->sortable()->filterable()->paginate();
+        }
+    }
 
     // only for update total & performance & behaviors
     public function updateAction($id) {
@@ -223,6 +274,13 @@ class SuratMasukController extends \Micro\Controller {
                     if ($log) {
                         $log->subscribe($subs);
                         $log->broadcast();
+
+                        // notify gcm?
+                        self::__deviceNotify($subs, array(
+                            'title' => 'Surat Masuk',
+                            'body' => 'Anda menerima surat masuk '.$task->tsm_no.' dari '.$task->tsm_from,
+                            'link' => $task->getLink(TRUE)
+                        ));
                     }
                 }
             }
@@ -231,6 +289,33 @@ class SuratMasukController extends \Micro\Controller {
         return array(
             'success' => TRUE
         );
+    }
+
+    private static function __deviceNotify($users, $payload) {
+        $result = UserToken::get()
+            ->inWhere('sut_su_id', $users)
+            ->execute();
+
+
+        $tokens = array();
+
+        foreach($result as $item) {
+            if ( ! empty($item->sut_token)) {
+                $tokens[] = $item->sut_token;
+            }
+        }
+
+        if (count($tokens) > 0) {
+            $gcm = \Micro\App::getDefault()->gcm;
+            $topic = 'distribution';
+            
+            $reg = $gcm->subscribe($topic, $tokens, TRUE);
+
+            if ($reg->success) {
+                $gcm->broadcast($topic, $payload);
+                $unreg = $gcm->unsubscribe($topic, $tokens);
+            }
+        }
     }
 
     public function receiveAction($id) {
@@ -274,5 +359,18 @@ class SuratMasukController extends \Micro\Controller {
             'success' => TRUE,
             'data' => $tree
         );
+    }
+
+    public function originsAction() {
+        return Task::get()
+            ->columns(array(
+                'tsm_from AS label',
+                'tsm_from AS value'
+            ))
+            ->groupBy('tsm_from')
+            ->andWhere("tsm_from <> ''")
+            ->filterable()
+            ->paginate();
+
     }
 }

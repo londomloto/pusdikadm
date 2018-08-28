@@ -36,6 +36,7 @@
                 <div slot="dialog-body">
                     <paper-input label="Kode" value="{{ editingRecord.spt_code }}"></paper-input>
                     <paper-input label="Nama" value="{{ editingRecord.spt_name }}"></paper-input>
+                    <paper-input label="Bobot" value="{{ editingRecord.spt_weight }}"></paper-input>
                 </div>
                 <div slot="dialog-footer">
                     <paper-button on-tap="__onEditorSaveTap">Simpan</paper-button>
@@ -60,7 +61,8 @@
                         value: () => ([
                             { type: 'rownumber' },
                             { text: 'Kode', dataIndex: 'spt_code', align: 'center', width: 100 },
-                            { text: 'Nama', dataIndex: 'spt_name' }
+                            { text: 'Nama', dataIndex: 'spt_name' },
+                            { text: 'Bobot', dataIndex: 'spt_weight', align: 'center', width: 100 }
                         ])
                     },
                     selectedRecord: { type: Object },

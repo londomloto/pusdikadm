@@ -114,7 +114,8 @@ class SuratMasuk extends \Micro\Model {
             'tsm_category',
             'tsm_secrecy',
             'tsm_shipment',
-            'tsm_storing_date'
+            'tsm_storing_date',
+            'tsm_class'
         ));
     }
 

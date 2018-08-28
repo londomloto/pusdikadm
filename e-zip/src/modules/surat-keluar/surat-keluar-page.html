@@ -1,0 +1,59 @@
+<link rel="import" href="../../../../cores/bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
+<link rel="import" href="../../../../cores/bower_components/app-layout/app-drawer/app-drawer.html">
+<link rel="import" href="../../../../cores/bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../../../../cores/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../cores/bower_components/paper-spinner/paper-spinner-lite.html">
+<link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
+<link rel="import" href="../../../../cores/elements/kct-pages/kct-pages.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../../../cores/elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-date/kct-date-picker.html">
+<link rel="import" href="../../../../cores/vendors/moment/moment.html">
+<link rel="import" href="../settings/blocks/setting-header-block.html">
+<link rel="import" href="../worksheet/plugins/combo-user.html">
+<link rel="import" href="styles/surat-keluar-page-style.html">
+<link rel="import" href="shared/surat-keluar-page-behavior.html">
+
+<dom-module id="surat-keluar-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--page-background-color);
+            }
+            #switcher {
+                display: block;
+                height: 100%;
+            }
+        </style>        
+        <kct-pages id="switcher" attr-for-selected="name" selected="[[ page ]]" lazy-load>
+            <surat-keluar-index name="index" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" import="pages/surat-keluar-index.html"></surat-keluar-index>
+            <surat-keluar-database name="database" route="{{ route }}" state="[[ state ]]" user="[[ user ]]" import="pages/surat-keluar-database.html"></surat-keluar-database>
+        </kct-pages>
+    </template>
+    <script>
+        class SuratKeluarPage extends KctView {
+            static get is() {
+                return 'surat-keluar-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Surat Keluar', notify: true }
+                };
+            }
+            handleRouteParams(page) {
+                page = page || 'index';
+                this.set('page', page)
+            }
+            handleResizing() {
+                let pageItem = this.$.switcher.selectedItem;
+                if (pageItem && pageItem.handleResizing) {
+                    pageItem.handleResizing();
+                }
+            }
+        }
+        customElements.define(SuratKeluarPage.is, SuratKeluarPage);
+    </script>
+</dom-module>

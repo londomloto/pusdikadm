@@ -38,8 +38,8 @@
                         backface-visibility: hidden;*/
             }
             .item {
-                margin: 2px 0;
-                font-size: 13px;
+                margin: 1px 0;
+                font-size: 12px;
             }
             
             .selectable {
@@ -50,14 +50,14 @@
                 padding: 4px 7px;
                 background-color: var(--paper-yellow-300);
                 margin-right: 1px;
-                border-radius: 3px 0 0 3px;
+                border-radius: 2px 0 0 2px;
             }
             .selectable:hover .label {
                 background-color: var(--paper-amber-200);
             }
             .selectable .value {
                 background-color: var(--paper-grey-200);
-                border-radius: 0 3px 3px 0;
+                border-radius: 0 2px 2px 0;
             }
             .selectable .value[hidden] {
                 display: none;
@@ -159,6 +159,15 @@
                 font-size: 12px;
                 text-transform: none;
                 margin: 0 0 0 -1px;
+            }
+
+            .column-sorter .sorter-display {
+                width: 80px; 
+                display: block; 
+                overflow: hidden; 
+                white-space: nowrap; 
+                text-overflow: ellipsis; 
+                text-align: center;
             }
 
             /** popup */

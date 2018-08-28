@@ -122,17 +122,25 @@
                             display: none;
                         };
                     }
+                    .link {
+                        color: #000;
+                        text-decoration: none;
+                    }
+                    .link:hover {
+                        color: var(--paper-blue-500);
+                        text-decoration: underline;
+                    }
                 </style>
                 <div slot="dialog-body">
                     <kct-column columns="3">
                         <div>
-                            <combo-job label="Jabatan (Satker)" value="{{ editingRecord.stp_job }}"></combo-job>
+                            <combo-job label="Jabatan (Satker)" value="{{ dispositionRecord.stp_job }}"></combo-job>
                         </div>
                         <div>
-                            <paper-input label="Nama Disposisi" value="{{ editingRecord.stp_name }}"></paper-input>
+                            <paper-input label="Nama Disposisi" value="{{ dispositionRecord.stp_name }}"></paper-input>
                         </div>
                         <div>
-                            <combo-user label="Pembuat Disposisi" value="{{ editingRecord.stp_responsible }}"></combo-user>
+                            <combo-user label="Pembuat Disposisi" value="{{ dispositionRecord.stp_responsible }}"></combo-user>
                         </div>
                     </kct-column>
 
@@ -146,13 +154,13 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <template is="dom-repeat" items="[[ editingRecord.subordinates ]]">
+                                <template is="dom-repeat" items="[[ dispositionRecord.subordinates ]]">
                                     <tr>
                                         <td class="action text-center">
                                             <paper-icon-button on-tap="__onRemoveSubordinateTap" icon="close"></paper-icon-button>
                                         </td>
                                         <td class="text-center">[[ __computeSequence(index) ]]</td>
-                                        <td>[[ item.su_position ]]</td>
+                                        <td><a on-click="__onEditSubordinateTap" class="link" href="javascript:;">[[ item.su_position ]]</a></td>
                                     </tr>
                                 </template>
                                 <tr>
@@ -160,18 +168,7 @@
                                         <paper-icon-button on-tap="__onAddSubordinateTap" icon="add"></paper-icon-button>
                                     </td>
                                     <td></td>
-                                    <td class="editable">
-                                        <kct-combobox 
-                                            id="combo-job" 
-                                            placeholder="Pilih jabatan..." 
-                                            value="{{ editingSubordinate.su_sj_id }}" 
-                                            url="/jobs" 
-                                            item-label-path="sj_name" 
-                                            item-value-path="sj_id" 
-                                            page-size="10" 
-                                            on-change="__onComboJobChange" 
-                                            no-label-float></kct-combobox>
-                                    </td>
+                                    <td></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -188,13 +185,13 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <template is="dom-repeat" items="[[ editingRecord.flows ]]">
+                                <template is="dom-repeat" items="[[ dispositionRecord.flows ]]">
                                     <tr>
                                         <td class="action text-center">
                                             <paper-icon-button on-tap="__onRemoveFlowTap" icon="close"></paper-icon-button>
                                         </td>
                                         <td class="text-center">[[ __computeSequence(index) ]]</td>
-                                        <td>[[ item.sdp_name ]]</td>
+                                        <td><a on-click="__onEditFlowTap" href="javascript:;" class="link">[[ item.sdp_name ]]</a></td>
                                         <td>[[ item.sdp_to ]]</td>
                                     </tr>
                                 </template>
@@ -203,12 +200,8 @@
                                         <paper-icon-button on-tap="__onAddFlowTap" icon="add"></paper-icon-button>
                                     </td>
                                     <td></td>
-                                    <td class="editable">
-                                        <paper-input placeholder="Nama disposisi..." value="{{ editingFlow.sdp_name }}" no-label-float></paper-input>
-                                    </td>
-                                    <td class="editable">
-                                        <paper-input placeholder="Tujuan disposisi..." value="{{ editingFlow.sdp_to }}" no-label-float></paper-input>
-                                    </td>
+                                    <td></td>
+                                    <td></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -216,8 +209,43 @@
                     
                 </div>
                 <div slot="dialog-footer">
-                    <paper-button disabled$="[[ editingInvalid ]]" on-tap="__onEditorSaveTap">Simpan</paper-button>
+                    <paper-button disabled$="[[ dispositionInvalid ]]" on-tap="__onEditorSaveTap">Simpan</paper-button>
                     <paper-button on-tap="__onEditorCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        <kct-dialog id="subordinate-editor" title="Penerima" width="400" height="100%">
+            <template preserve-content>
+                <style include="theme-helper"></style>
+                <div slot="dialog-body">
+                    <kct-combobox 
+                        placeholder="Jabatan" 
+                        value="{{ subordinateRecord.su_sj_id }}" 
+                        url="/jobs" 
+                        item-label-path="sj_name" 
+                        item-value-path="sj_id" 
+                        page-size="10" 
+                        on-change="__onComboJobChange" 
+                        no-label-float></kct-combobox>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onSubordinateEditorSaveTap">Tambah</paper-button>
+                    <paper-button on-tap="__onSubordinateEditorCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        <kct-dialog id="flow-editor" title="Aliran" width="400" height="100%">
+            <template preserve-content>
+                <style include="theme-helper"></style>
+                <div slot="dialog-body">
+                    <paper-input placeholder="Nama disposisi" value="{{ flowRecord.sdp_name }}" no-label-float></paper-input>
+                    <paper-input placeholder="Penerima disposisi" value="{{ flowRecord.sdp_to }}" no-label-float></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onFlowEditorSaveTap">Tambah</paper-button>
+                    <paper-button on-tap="__onFlowEditorCloseTap">Tutup</paper-button>
                 </div>
             </template>
         </kct-dialog>
@@ -232,15 +260,17 @@
                 return {
                     title: { type: String, value: 'Disposisi' },
                     items: { type: Array, value: () => ([]) },
-                    editingRecord: { type: Object },
-                    editingInvalid: { type: Boolean, value: false },
-                    editingSubordinate: { type: Object, value: () => ({}) },
-                    editingFlow: { type: Object, value: () => ({}) }
+                    dispositionRecord: { type: Object },
+                    dispositionInvalid: { type: Boolean, value: false },
+                    subordinateRecord: { type: Object, value: () => ({}) },
+                    subordinateEdited: { type: Number, value: -1 },
+                    flowRecord: { type: Object, value: () => ({}) },
+                    flowEdited: { type: Number, value: -1 }
                 };
             }
             static get observers() {
                 return [
-                    '__computeValidation(editingRecord.stp_name)'
+                    '__computeValidation(dispositionRecord.stp_name)'
                 ];
             }
             handleRouteParams(setting) {
@@ -258,52 +288,59 @@
             __computeValidation(name) {
                 let valid = true;
                 valid = valid && !!name;
-                this.set('editingInvalid', !valid);
+                this.set('dispositionInvalid', !valid);
             }
             __computeSequence(index) {
                 return index + 1;
             }
-            __addSubordinate() {
-                let payload = Object.assign({}, this.editingSubordinate);
+            __saveSubordinate() {
+                let payload = Object.assign({}, this.subordinateRecord);
+                if (payload.su_sj_id) {
 
-                if (payload.su_position) {
                     payload.su_copy = '0';
                     payload.su_orig = '0';
                     payload.su_checked = '0';
 
-                    this.push('editingRecord.subordinates', payload);
+                    let edited = this.get('subordinateEdited');
+                    
+                    if (edited === -1) {
+                        this.push('dispositionRecord.subordinates', payload);
+                    } else {
+                        this.set('dispositionRecord.subordinates.' + edited, payload);
+                    }
                 }
-
-                this.set('editingSubordinate', {});
             }
-            __addFlow() {
-                let payload = Object.assign({}, this.editingFlow);
+            __saveFlow() {
+                let payload = Object.assign({}, this.flowRecord);
                 if (payload.sdp_name) {
-                    this.push('editingRecord.flows', payload);
+                    let edited = this.get('flowEdited');
+                    if (edited === -1) {
+                        this.push('dispositionRecord.flows', payload);
+                    } else {
+                        this.set('dispositionRecord.flows.' + edited, payload);
+                    }
                 }
-
-                this.set('editingFlow', {});
             }
             __onAddTap() {
-                this.set('editingRecord', {
+                this.set('dispositionRecord', {
                     stp_name: '',
                     stp_responsible: null,
                     subordinates: [],
                     flows: []
                 });
 
-                this.set('editingSubordinate', {});
-                this.set('editingFlow', {});
+                this.set('subordinateRecord', {});
+                this.set('flowRecord', {});
 
                 this.$.editor.open();
             }
             __onEditTap(e) {
                 let item = e.model.item;
                 
-                this.set('editingRecord', Object.assign({}, item));
+                this.set('dispositionRecord', Object.assign({}, item));
                 
-                this.set('editingSubordinate', {});
-                this.set('editingFlow', {});
+                this.set('subordinateRecord', {});
+                this.set('flowRecord', {});
 
                 this.$.editor.open();
             }
@@ -320,15 +357,7 @@
             }
             __onEditorSaveTap() {
                 this.$.editor.close();
-                let payload = this.editingRecord;
-
-                if (this.editingSubordinate.su_position) {
-                    this.__addSubordinate();
-                }
-
-                if (this.editingFlow.sdp_name) {
-                    this.__addFlow();
-                }
+                let payload = this.dispositionRecord;
 
                 if (payload.stp_id) {
                     this.$.ajax.PUT('/dispositions/' + payload.stp_id, payload).then(done.bind(this));
@@ -348,24 +377,55 @@
             }
             __onComboJobChange(e) {
                 let job = e.target.getModelForValue(e.target.value);
-
                 if (job) {
-                    this.set('editingSubordinate.su_position', job.sj_name);
+                    this.set('subordinateRecord.su_position', job.sj_name);
                 } else {
-                    this.set('editingSubordinate.su_position', null);
+                    this.set('subordinateRecord.su_position', null);
                 }
             }
             __onAddSubordinateTap() {
-                this.__addSubordinate();
+                this.set('subordinateEdited', -1);
+                this.set('subordinateRecord', {});
+
+                this.$['subordinate-editor'].open();
+            }
+            __onEditSubordinateTap(e) {
+                this.set('subordinateEdited', e.model.index);
+                this.set('subordinateRecord', Object.assign({}, e.model.item));
+
+                this.$['subordinate-editor'].open();
+            }
+            __onSubordinateEditorCloseTap() {
+                this.$['subordinate-editor'].close();
+            }
+            __onSubordinateEditorSaveTap() {
+                this.$['subordinate-editor'].close();
+                this.__saveSubordinate();
             }
             __onAddFlowTap() {
-                this.__addFlow();
+                this.set('flowEdited', -1);
+                this.set('flowRecord', {});
+
+                this.$['flow-editor'].open();
+            }
+            __onEditFlowTap(e) {
+                this.set('flowEdited', e.model.index);
+                this.set('flowRecord', Object.assign({}, e.model.item));
+
+                this.$['flow-editor'].open();
+            }
+            __onFlowEditorCloseTap() {
+                this.$['flow-editor'].close();
+            }
+            __onFlowEditorSaveTap() {
+                this.$['flow-editor'].close();
+                this.__saveFlow();
             }
             __onRemoveSubordinateTap(e) {
-                this.splice('editingRecord.subordinates', e.model.index, 1);
+                this.splice('dispositionRecord.subordinates', e.model.index, 1);
             }
             __onRemoveFlowTap(e) {
-                this.splice('editingRecord.flows', e.model.index, 1);
+                this.splice('dispositionRecord.flows', e.model.index, 1);
             }
             __onBackTap() {
                 this.set('route.path', '/settings');

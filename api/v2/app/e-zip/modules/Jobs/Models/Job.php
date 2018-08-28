@@ -50,7 +50,15 @@ class Job extends \Micro\Model {
     public function toArray($columns = NULL) {
         $data = parent::toArray($columns);
         $data['sj_superior_name'] = $this->getSuperiorName();
+        $data['sj_label'] = $this->getLabel();
         return $data;
+    }
+
+    public function getLabel() {
+        if ( ! empty($this->sj_code) && ! empty($this->sj_name)) {
+            return $this->sj_code.' - '.$this->sj_name;
+        }
+        return $this->sj_name;
     }
 
     public function getSuperiorName() {

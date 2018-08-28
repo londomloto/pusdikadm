@@ -1,0 +1,16 @@
+<dom-module id="form-surat-keluar-concept">
+    <template>
+        
+    </template>
+    <script>
+        class FormSuratKeluarConcept extends Mixins(FormBase).use(Mixins.SuratKeluarBehavior) {
+
+            static get is() {
+                return 'form-surat-keluar-concept';
+            }
+
+        }
+
+        customElements.define(FormSuratKeluarConcept.is, FormSuratKeluarConcept);
+    </script>
+</dom-module>

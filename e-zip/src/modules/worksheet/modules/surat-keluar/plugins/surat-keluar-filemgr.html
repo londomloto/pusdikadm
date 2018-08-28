@@ -1,0 +1,274 @@
+<link rel="import" href="../../../../../../../cores/elements/kct-file/kct-file.html">
+<link rel="import" href="../../../../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../../../../cores/elements/kct-message/kct-confirm.html">
+<link rel="import" href="../../../plugins/file-viewer.html">
+
+<dom-module id="surat-keluar-filemgr">
+    <template>
+        <style include="form-style">
+            .item {
+                cursor: pointer;
+                width: 250px;
+                box-sizing: border-box;
+                margin: 0 8px 8px 0;
+                padding: 3px;
+                float: left;
+                background-color: var(--paper-grey-100);
+            }
+            .item > .hbox {
+                @apply --layout-horizontal;
+            }
+            .item .text {
+                line-height: 15px;
+                @apply --layout-flex;
+            }
+            .item .icon > img {
+                display: block;
+                width: 48px;
+                height: 48px;
+                margin-left: -5px;
+            }
+
+            .text-name {
+                font-size: 12px;
+                color: #666;
+                white-space: nowrap;
+                position: relative;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                width: 130px;
+            }
+
+            .text-size {
+                font-size: 12px;
+                color: #999;
+            }
+
+            .text-link {
+                background-color: transparent;
+                font-size: 12px;
+            }
+
+            .item:hover {
+                background-color: var(--paper-grey-300);
+            }
+
+            .clear {
+                display: block;
+                clear: both;
+            }
+
+            .item-plus {
+                float: left;
+                margin: 0 8px 8px 0;
+                width: 48px;
+                height: 48px;
+                line-height: 45px;
+                color: #999;
+                background-color: var(--paper-grey-100);
+                text-align: center;
+                padding: 3px;
+                cursor: pointer;
+            }
+            .item-plus iron-icon {
+                --iron-icon-width: 35px;
+                --iron-icon-height: 35px;
+            }
+            .item-plus:hover {
+                background-color: var(--paper-grey-300);
+                color: #666;
+            }
+        </style>
+
+        <kct-file id="file"></kct-file>
+        <kct-ajax id="ajax"></kct-ajax>
+        <file-viewer id="viewer"></file-viewer>
+
+        <div class="section">
+            <h3 class="section-title">Konsep Surat</h3>
+            <div>Daftar unggahan konsep surat digital.</div>
+            <div class="m-t">
+                
+                <div class="container">
+                    <template is="dom-repeat" items="[[ record.files ]]">
+                        <div class="item">
+                            <div class="hbox">
+                                <div class="icon" on-click="__onOpenItemTap">
+                                    <img alt="." src$="[[ __computeIcon(item.tskf_type) ]]">
+                                </div>
+                                <div class="text">
+                                    <div  on-click="__onOpenItemTap">
+                                        <div class="text-name">[[ item.tskf_orig ]]</div>
+                                        <div class="text-size">[[ item.tskf_size_formatted ]]</div>    
+                                    </div>
+                                    
+                                    <div class="text-link">
+                                        <a href="javascript:;" on-tap="__onOpenItemTap">Buka</a>&nbsp;&nbsp;&nbsp;
+                                        <a href="javascript:;" hidden$="[[ readonly ]]" on-tap="__onRemoveItemTap">Hapus</a>
+                                    </div>
+                                </div>    
+                            </div>
+                        </div>
+                        
+                    </template>
+                    <div class="item-plus" on-click="__onAddItemTap" title="Upload Berkas" hidden$="[[ readonly ]]">
+                        <iron-icon icon="add"></iron-icon>
+                    </div>
+                    <div class="clear"></div>
+                </div>
+                
+            </div>
+        </div>
+
+    </template>
+
+    <script>
+        class SuratKeluarFileMgr extends Polymer.Element {
+            static get is() {
+                return 'surat-keluar-filemgr';
+            }
+            static get properties() {
+                return {
+                    record: { 
+                        type: Object, 
+                        value: () => ({
+                            files: []
+                        }) 
+                    },
+                    readonly: { type: Boolean, value: false, reflectToAttribute: true }
+                }
+            }
+            static get observers() {
+                return [
+                    '__recordChanged(record.*)'
+                ];
+            }
+            constructor() {
+                super();
+                this.__iconpath = null;
+            }
+            ready() {
+                super.ready();
+                this.set('__iconpath', this.resolveUrl('../../../../../../images/icons/'));
+            }
+            load() {
+                let valid = this.record && this.record.task && this.record.task.tsk_id;
+
+                if ( ! valid) {
+                    return;
+                }
+
+                let payload = {
+                    params: {
+                        tskf_tsk_id: this.record.task.tsk_id
+                    }
+                };
+
+                this.$.ajax.GET('/surat-keluar/surat-keluar-files', payload).then(res => {
+                    if (res.success) {
+                        this.set('record.files', res.data);
+                    }
+                });
+            }
+            save() {
+                let valid = this.record && this.record.task && this.record.task.tsk_id;
+
+                if ( ! valid) {
+                    return;
+                }
+
+                let payload = {
+                    files: this.record.files
+                };
+
+                this.$.ajax.PUT('/surat-keluar/' + this.record.task.tsk_id, payload);
+            }
+            __recordChanged(changed) {
+                if (changed.path == 'record') {
+                    this.load();
+                }
+            }
+            __computeIcon(type) {
+                let icon = 'document_48px.png';
+
+                switch(type) {
+                    case 'image/png':
+                        icon = 'png_48px.png';
+                        break;
+                    case 'image/jpeg':
+                        icon = 'jpg_48px.png';
+                        break;
+                    case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+                        icon = 'xls_48px.png';
+                        break;
+                    case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+                        icon = 'word_48px.png';
+                        break;
+                    case 'application/vnd.openxmlformats-officedocument.presentationml.presentation':
+                        icon = 'powerpoint_48px.png';
+                        break;
+                    case 'application/pdf':
+                        icon = 'pdf_48px.png';
+                        break;
+                    default:
+                        if (/image/.test(type)) {
+                            icon = 'image_file_48px.png';
+                        }
+                        break;
+                }
+
+                if (icon) {
+                    return this.__iconpath + icon;
+                }
+                return '';
+            }
+            __onOpenItemTap(e) {
+                let item = e.model.item;
+                if (item.tskf_file_url) {
+                    this.$.viewer.open(item.tskf_file_url, item.tskf_type);
+                }
+            }
+            __onAddItemTap(){
+                this.$.file.browse().then(files => {
+                    this.$.file.reset();
+
+                    if (files.length) {
+                        this.$.ajax.UPLOAD('/surat-keluar/upload', {
+                            files: [
+                                { name: 'userfile', file: files[0] }
+                            ]
+                        }).then(res => {
+                            if (res.success) {
+                                this.push('record.files', res.data);
+                                this.save();
+                            }
+                        });
+                    }
+
+                    
+                });
+            }
+            __onRemoveItemTap(e) {
+                e.stopPropagation();
+
+                let dialog = document.createElement('kct-confirm');
+
+                dialog.title = 'Konfirmasi';
+                dialog.message = 'Anda yakin akan menghapus file tersebut?';
+                
+                dialog.addEventListener('close', (evt) => {
+                    if (evt.detail.value == 'yes') {
+                        this.splice('record.files', e.model.index, 1);
+                        this.save();
+                    }
+                    document.body.removeChild(dialog);
+                });
+
+                document.body.appendChild(dialog);
+                dialog.open();
+                
+            }
+        }
+        customElements.define(SuratKeluarFileMgr.is, SuratKeluarFileMgr);
+    </script>
+</dom-module>

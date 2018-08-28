@@ -23,7 +23,7 @@
             page-size="10"
             label="[[ label ]]" 
             value="{{ value }}" 
-            item-label-path="sj_name" 
+            item-label-path="[[ itemLabelPath ]]"  
             item-value-path="[[ itemValuePath ]]" 
             required$="[[ required ]]" 
             auto-validate$="[[ autoValidate ]]" 
@@ -69,7 +69,8 @@
                     value: { type: String, value: '', notify: true },
                     required: { type: Boolean, value: false, reflectToAttribute: true },
                     autoValidate: { type: Boolean, value: false },
-                    itemValuePath: { type: String, value: 'sj_id' },
+                    itemValuePath: { type: String, value: 'sj_id' }, 
+                    itemLabelPath: { type: String, value: 'sj_name' },
                     editingRecord: { type: Object }
                 }
             }

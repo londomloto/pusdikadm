@@ -140,7 +140,7 @@
                                         <paper-icon-button on-tap="__onToggleTap" icon="[[ __computeToggleIcon(item.tdp_expand) ]]"></paper-icon-button>
                                     </div>
                                     <h3>[[ __computeTitle(item.tdp_name, item.tdp_position, item.responsible_su_fullname) ]]</h3>
-                                    <div class="meta">[[ __computeMeta(item.tdp_root, item.tdp_leaf, item.tdp_sending_date_formatted, item.tdp_receiving_date_formatted) ]]</div>
+                                    <div class="meta">[[ __computeMeta(item.tdp_root, item.tdp_leaf, item.tdp_sending_date_formatted, item.tdp_receiving_date_formatted, item.tdp_finish_date_formatted) ]]</div>
                                     <div class="m-t" hidden$="[[ !item.tdp_expand ]]">
                                         <div hidden$="[[ __hideRootBlock(item.tdp_root) ]]">
                                             <div class="form-group">
@@ -302,6 +302,7 @@
                     <kct-column columns="3">
                         <div>
                             <kct-combobox 
+                                id="combo-thread-template" 
                                 label="Nama Disposisi *)" 
                                 value="{{ thread.tdp_template }}" 
                                 url="/dispositions?display=template" 
@@ -309,7 +310,7 @@
                                 item-value-path="stp_id" 
                                 page-size="10" 
                                 on-beforeload="__onComboTemplateBeforeload" 
-                                on-change="__onEditorTemplateChange"></kct-combobox>
+                                on-change="__onComboThreadTemplateChange"></kct-combobox>
                         </div>
                         <div>
                             <combo-user 
@@ -460,6 +461,7 @@
                     <kct-column columns="3">
                         <div>
                             <kct-combobox 
+                                id="combo-forward-template" 
                                 label="Nama Disposisi *)" 
                                 value="{{ forward.tdp_template }}" 
                                 url="/dispositions?display=template" 
@@ -467,7 +469,7 @@
                                 item-value-path="stp_id" 
                                 page-size="10" 
                                 on-beforeload="__onComboTemplateBeforeload" 
-                                on-change="__onForwardTemplateChange"></kct-combobox>
+                                on-change="__onComboForwardTemplateChange"></kct-combobox>
                         </div>
                         <div>
                             <combo-user 
@@ -811,19 +813,21 @@
             __computeChecked(checked) {
                 return checked == 1 ? 'done' : '';
             }
-            __computeMeta(root, leaf, sending, receiving) {
+            __computeMeta(root, leaf, sending, receiving, finishing) {
                 if (root) {
-                    return `Disposisi dikirim pada ${sending}`;
+                    return `Disposisi dibuat pada ${sending}`;
                 } else {
-                    if (leaf) {
-                        if ( ! receiving) {
-                            return `Disposisi belum diterima`;
-                        } else {
-                            return `Disposisi diterima pada ${receiving}`;
+                    let label = '';
+
+                    if (receiving) {
+                        label = `Disposisi diterima pada ${receiving}`;
+                        if (finishing) {
+                            label += `, diselesaikan pada ${finishing}`;
                         }
                     } else {
-                        return `Disposisi diterima pada ${receiving} dan diteruskan kembali pada ${sending}`;
+                        label = `Disposisi belum diterima (dikonfirmasi)`;
                     }
+                    return label;
                 }
             }
             __hideRootBlock(root) {
@@ -910,15 +914,18 @@
 
             __onComboTemplateBeforeload(e) {
                 let authors = ((this.record && this.record.authors) || []);
+                let params = e.detail.options.params || {};
+
                 if (authors.indexOf(this.user.su_id) !== -1) {
-                    return;
+                    params.stp_job = undefined;
+                } else {
+                    params.stp_job = this.user.su_sj_id;
                 }
-                e.detail.options.params = {
-                    stp_job: this.user.su_sj_id
-                };
+
+                e.detail.options.params = params;
             }
 
-            __onEditorTemplateChange(e) {
+            __onComboThreadTemplateChange(e) {
                 let template = e.target.getModelForValue(e.target.value);
 
                 if (template) {
@@ -928,7 +935,7 @@
                 }
             }
 
-            __onForwardTemplateChange(e) {
+            __onComboForwardTemplateChange(e) {
                 let index = this.get('selectedDisposition');
                 if (index != -1) {
                     let item = this.get('record.dispositions.' + index);
@@ -1006,7 +1013,6 @@
 
             __onForwardTap(e) {
                 this.set('activity', 'FORWARD');
-
                 this.resetForward();
 
                 this.set('selectedDisposition', e.model.index);

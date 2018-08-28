@@ -2,6 +2,7 @@
 <link rel="import" href="../../../../cores/elements/kct-view/kct-view.html">
 <link rel="import" href="../../../../cores/elements/kct-grid/kct-grid.html">
 <link rel="import" href="../../../../cores/elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../../cores/elements/kct-checkbox/kct-checkbox.html">
 <link rel="import" href="../../../../cores/elements/kct-dialog/kct-dialog.html">
 <link rel="import" href="../../../../cores/elements/kct-app/blocks/page-header-block.html">
 
@@ -38,6 +39,11 @@
 
         <kct-dialog id="editor" title="Editor" height="100%" width="400" scrollable>
             <template preserve-content>
+                <style include="theme-helper">
+                    kct-checkbox {
+                        --paper-checkbox-margin: 8px 0;
+                    }
+                </style>
                 <div slot="dialog-body">
                     <paper-input label="Kode" value="{{ editingRecord.sn_name }}" readonly$="[[ __computeReadonlyCode(editingRecord.sn_type) ]]"></paper-input>
                     <paper-input label="Keterangan" value="{{ editingRecord.sn_desc }}"></paper-input>
@@ -45,6 +51,12 @@
                     <paper-input label="Panjang Karakter" value="{{ editingRecord.sn_length }}"></paper-input>
                     <paper-input label="Awalan" value="{{ editingRecord.sn_prefix }}"></paper-input>
                     <paper-input label="Akhiran" value="{{ editingRecord.sn_suffix }}"></paper-input>
+                    <div>
+                        <kct-checkbox value="{{ editingRecord.sn_monthly }}">Reset setiap bulan</kct-checkbox>    
+                    </div>
+                    <div>
+                        <kct-checkbox value="{{ editingRecord.sn_yearly }}">Reset setiap tahun</kct-checkbox>    
+                    </div>
                 </div>
                 <div slot="dialog-footer">
                     <paper-button on-tap="__onEditorSave">Simpan</paper-button>
@@ -67,10 +79,34 @@
                         value: () => ([
                             { type: 'rownumber' },
                             { text: 'Kode', dataIndex: 'sn_name' },
-                            { text: 'Nilai', dataIndex: 'sn_value', align: 'right', width: 100 },
-                            { text: 'Panjang', dataIndex: 'sn_length', align: 'right', width: 100 },
-                            { text: 'Awalan', dataIndex: 'sn_prefix'},
-                            { text: 'Akhiran', dataIndex: 'sn_suffix'},
+                            { text: 'Nilai', dataIndex: 'sn_value', align: 'right', width: 80 },
+                            { text: 'Panjang', dataIndex: 'sn_length', align: 'right', width: 80 },
+                            { text: 'Awalan', dataIndex: 'sn_prefix', width: 130},
+                            { text: 'Akhiran', dataIndex: 'sn_suffix', width: 130},
+                            { 
+                                text: 'Bulanan', 
+                                dataIndex: 'sn_monthly', 
+                                align: 'center', 
+                                width: 80,
+                                renderer: e => {
+                                    if (e.data && e.data.sn_monthly == 1) {
+                                        return  `<iron-icon icon="done"></iron-icon>`; 
+                                    }
+                                    return '';
+                                }
+                            },
+                            { 
+                                text: 'Tahunan', 
+                                dataIndex: 'sn_yearly', 
+                                align: 'center', 
+                                width: 80,
+                                renderer: e => {
+                                    if (e.data && e.data.sn_yearly == 1) {
+                                        return  `<iron-icon icon="done"></iron-icon>`; 
+                                    }
+                                    return '';
+                                }
+                            },
                             { text: 'Keterangan', dataIndex: 'sn_desc', width: 300 }
                         ])
                     },

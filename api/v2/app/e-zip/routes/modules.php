@@ -85,21 +85,14 @@ Router::group(array(
 ))
 ->get('/{id}/subordinates', 'subordinates');
 
-// REGIS
-Router::group(array(
-    'prefix' => '/registration',
-    'handler' => 'App\Registration\Controllers\RegistrationController',
-    'middleware' => 'auth'
-))
-->get('/observable-users', 'observableUsers')
-->get('/grouped-statuses', 'groupedStatuses');
-
 // SURAT MASUK
 Router::group(array(
     'prefix' => '/surat-masuk',
     'handler' => 'App\SuratMasuk\Controllers\SuratMasukController',
     'middleware' => 'auth'
 ))
+->get('/grouped-statuses', 'groupedStatuses')
+->get('/origins', 'origins')
 ->get('/{id}/authors', 'authors')
 ->get('/{id}/outstandings', 'outstandings')
 ->post('/{id}/send', 'send')
@@ -115,7 +108,8 @@ Router::group(array(
 ->post('/document/{format}/{id}', 'document')
 ->post('/document-receipt/{format}/{id}', 'documentReceipt')
 ->post('/document-distributions/{format}/{id}', 'documentDistributions')
-->post('/disposition/{format}/{id}', 'disposition');
+->post('/disposition/{format}/{id}', 'disposition')
+->post('/database/{format}', 'database');
 
 Router::group(array(
     'prefix' => '/surat-masuk/distributions',
@@ -123,3 +117,33 @@ Router::group(array(
     'middleware' => 'auth'
 ))
 ->post('/{id}/signature', 'signature');
+
+// SURAT KELUAR
+Router::group(array(
+    'prefix' => '/surat-keluar',
+    'handler' => 'App\SuratKeluar\Controllers\SuratKeluarController',
+    'middleware' => 'auth'
+))
+->get('/grouped-statuses', 'groupedStatuses')
+->get('/destinations', 'destinations')
+->get('/{id}/authors', 'authors')
+->get('/{id}/load-signature', 'loadSignature')
+->post('/{id}/notify', 'notify')
+->post('/upload', 'upload')
+->post('/{id}/signature', 'signature')
+->post('/{id}/save-signature', 'saveSignature');
+
+Router::group(array(
+    'prefix' => '/surat-keluar/surat-keluar-exams',
+    'handler' => 'App\SuratKeluar\Controllers\SuratKeluarExamsController',
+    'middleware' => 'auth'
+))
+->post('/{id}/signature', 'signature');
+
+Router::group(array(
+    'prefix' => '/surat-keluar/print',
+    'handler' => 'App\SuratKeluar\Controllers\PrintController',
+    'middleware' => 'auth'
+))
+->post('/document/{format}/{id}', 'document')
+->post('/database/{format}', 'database');

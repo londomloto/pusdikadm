@@ -1,0 +1,102 @@
+<link rel="import" href="../../../../../cores/elements/kct-grid/kct-grid.html">
+<link rel="import" href="../plugins/surat-masuk-database-search.html">
+
+<dom-module id="surat-masuk-database">
+    <template>
+        <style include="surat-masuk-page-style">
+            :host {
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-grid 
+            id="grid" 
+            url="/surat-masuk?display=database" 
+            params="[[ params ]]" 
+            icon="description"
+            header-text="Database" 
+            header-desc="Agenda Surat Masuk" 
+            columns="[[ columns ]]" 
+            selection-model="row" 
+            pagination 
+            on-back-tap="__onBackTap">
+            <surat-masuk-database-search slot="center-toolbar" search="{{ params }}"></surat-masuk-database-search>
+            <paper-icon-button slot="right-toolbar" icon="print" on-tap="__onPrintTap"></paper-icon-button>
+        </kct-grid>
+    </template>
+    <script>
+        class SuratMasukDatabase extends Mixins(KctView).use(Mixins.SuratMasukPageBehavior) {
+            static get is() {
+                return 'surat-masuk-database';
+            }
+            static get properties() {
+                return {
+                    params: { type: Object },
+                    columns: {
+                        type: Array,
+                        value: () => ([
+
+                            { type: 'rownumber' }, 
+                            {
+                                type: 'action',
+                                width: 40,
+                                align: 'center',
+                                renderer: e => {
+                                    if (e.data) {
+                                        return '<kct-grid-action on-tap="__onItemTap" icon="search" accent="cyan" icon-only rounded></kct-grid-action>';
+                                    }
+                                    return '';
+                                }
+                            },
+                            { text: 'NO. AGENDA', dataIndex: 'tsm_agenda', sorting: false, width: 150},
+                            { text: 'TGL. TERIMA', dataIndex: 'tsm_register_date_formatted', align: 'center', sorting: false, width: 100 },
+                            { text: 'NO. SURAT', dataIndex: 'tsm_no', sorting: false },
+                            { text: 'TGL. SURAT', dataIndex: 'tsm_date_formatted', align: 'center', sorting: false, width: 100 },
+                            { text: 'ASAL', dataIndex: 'tsm_from', sorting: false, width: 250 },
+                            { text: 'SIFAT', dataIndex: 'category_sct_label', sorting: false, width: 130 },
+                            {
+                                text: 'PROSES',
+                                dataIndex: 'tsm_task_flag', 
+                                sorting: false,
+                                width: 200,
+                                renderer: e => {
+                                    if (e.data) {
+                                        let statuses = e.data.statuses.map(s => {
+                                            return s.status_text;
+                                        });
+                                        return statuses.join(', ');
+                                    }
+                                    return '';
+                                }
+                            }
+
+                        ])
+                    }
+                };
+            }
+            handleRouteParams(page) {
+                if (page != 'database') return;
+                this.$.grid.deferAutoresize();
+                this.__load();
+            }
+            handleResizing() {
+                this.$.grid && this.$.grid.resize();
+            }
+            __load() {
+                this.$.grid.load();
+            }
+            __onItemTap(e) {
+                if (e.data && e.data.tsm_link) {
+                    this.set('route.path', e.data.tsm_link);
+                }
+            }
+            __onPrintTap() {
+                let payload = this.$.grid.params;
+                this.$.ajax.DOWNLOAD('/surat-masuk/print/database/xls', payload);
+            }
+        }
+        customElements.define(SuratMasukDatabase.is, SuratMasukDatabase);
+    </script>
+</dom-module>

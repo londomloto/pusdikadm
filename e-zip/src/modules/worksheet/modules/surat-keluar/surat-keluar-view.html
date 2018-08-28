@@ -1,0 +1,57 @@
+<link rel="import" href="../../shared/project-view.html">
+<link rel="import" href="plugins/surat-keluar-find.html">
+
+<dom-module id="surat-keluar-view">
+    <template>
+        <style include="project-view-style"></style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-media screen="{{ screen }}"></kct-media>
+
+        <kct-vbox class$="container [[ screen ]]">
+            <header-block text="Module" on-back-tap="__onBackTap" hide-header$="[[ __hideHeader(screen) ]]">
+                <combo-project 
+                    id="combo-project" 
+                    slot="header-value" 
+                    value="[[ project ]]" 
+                    on-change="__onComboProjectChange" 
+                    on-create-tap="__onCreateProjectTap"></combo-project>
+
+                <div class="separator hidden-sm hidden-md hidden-lg" slot="left-toolbar"></div>
+
+                <div slot="left-toolbar" class="reload-button" hidden$="[[ busy ]]">
+                    <paper-icon-button on-tap="__onReloadTap" icon="refresh" title="Reload"></paper-icon-button>
+                </div>
+
+                <paper-spinner-lite slot="left-toolbar" active$="[[ busy ]]" hidden$="[[ !busy ]]"></paper-spinner-lite>
+
+                <paper-button id="button-create-task" on-tap="__onCreateTaskTap" slot="left-toolbar">
+                    <iron-icon icon="add" style="position: relative; top: -1px;"></iron-icon><span class="hidden-sm hidden-md">&nbsp;Record</span>
+                </paper-button>
+                
+                <surat-keluar-find project="[[ project ]]" search="{{ search }}" slot="center-toolbar"></surat-keluar-find>
+                
+                <!-- <paper-icon-button title="Kanban View" data-view="kanban" on-tap="__onDisplayTap" class$="display-button hidden-sm hidden-md [[ __computeSelectedDisplay('kanban', view) ]]" icon="view-column" slot="right-toolbar"></paper-icon-button>
+                <paper-icon-button title="List View" data-view="list" on-tap="__onDisplayTap" class$="display-button hidden-sm hidden-md [[ __computeSelectedDisplay('list', view) ]]" icon="view-list" slot="right-toolbar"></paper-icon-button> -->
+            </header-block>
+
+            <div class="flex main">
+
+                <kct-pages id="view-switcher" attr-for-selected="name" selected="[[ view ]]" on-itemactivate="__onViewActivate" lazy-load>
+                    <surat-keluar-view-kanban import="surat-keluar-view-kanban.html" busy="{{ busy }}" name="kanban" route="{{ route }}" project="[[ project ]]" params="[[ search ]]"></surat-keluar-view-kanban>
+                    <!-- <surat-keluar-view-grid import="surat-keluar-view-grid.html" busy="{{ busy }}" name="list" route="{{ route }}" project="[[ project ]]" params="[[ search ]]"></surat-keluar-view-grid> -->
+                </kct-pages>
+
+            </div>
+        </kct-vbox>
+    </template>
+    <script>
+        class SuratKeluarView extends Mixins(KctView).use(Mixins.ProjectView) {
+            static get is() {
+                return 'surat-keluar-view';
+            }
+        }
+
+        customElements.define(SuratKeluarView.is, SuratKeluarView);
+    </script>
+</dom-module>

@@ -30,7 +30,7 @@
                                 <div>
                                     <paper-input label="No. Agenda" value="{{ record.task.tsm_agenda }}">
                                         <div slot="suffix">
-                                            <paper-icon-button title="Generate" on-tap="__onGenerateAgendaTap" icon="refresh"></paper-icon-button>
+                                            <paper-icon-button tabindex="-1" title="Generate" on-tap="__onGenerateAgendaTap" icon="refresh"></paper-icon-button>
                                         </div>
                                     </paper-input>
                                 </div>
@@ -60,7 +60,7 @@
                             <paper-input label="Asal Surat" value="{{ record.task.tsm_from }}"></paper-input>
                             <paper-input label="Tujuan Surat" value="{{ record.task.tsm_to }}"></paper-input>
                             <paper-input label="Lampiran" value="{{ record.task.tsm_attachments }}"></paper-input>
-                            <paper-input label="Perihal" value="{{ record.task.tsm_subject }}"></paper-input>
+                            <paper-textarea label="Perihal" value="{{ record.task.tsm_subject }}"></paper-textarea>
                         </div>
                     </div>
 

@@ -1,0 +1,294 @@
+<link rel="import" href="../../../../../cores/mixins/search.html">
+
+<dom-module id="surat-masuk-database-search">
+    <template>
+        <style include="kct-search-styles"></style>
+        <kct-hbox class="container" on-ready="__onContainerReady">
+            <div class="column-history">
+                <paper-icon-button icon="search"></paper-icon-button>
+            </div>
+            <div class="column-search flex" id="column-search">
+                <kct-hbox class="scoller-container">
+                    <div class="scroller-nav" hidden$="[[ __hideNav ]]">
+                        <iron-icon data-nav="left" on-tap="__onNavTap" icon="chevron-left"></iron-icon>
+                    </div>
+                    <div class="scroller flex" id="scroller">
+                        <kct-hbox id="list" class="list">
+                            <template is="dom-repeat" items="[[ filters ]]">
+                                <div class="item selectable-item">
+                                    <kct-hbox class="selectable" fit>
+                                        <div class="label">[[ item.label ]]</div>
+                                        <div class="value" hidden$="[[ !item.values.length ]]">
+                                            <template is="dom-repeat" items="[[ item.values ]]">
+                                                <div class="item-value">
+                                                    <span class="item-value-label" on-tap="__onFilterTap">[[ item.label ]]</span>  
+                                                    <span class="item-value-trash"><iron-icon on-tap="__onRemoveTap" icon="close"></iron-icon></span>    
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </kct-hbox>
+                                </div>
+                            </template>
+                            
+                            <div class="item flex">
+                                <iron-selector id="selector" attr-for-selected="name" selected="[[ selectedFeature ]]">
+                                    <kct-search-combo 
+                                        id="combo-search" 
+                                        name="search" 
+                                        class="popup" 
+                                        items="[[ features ]]" 
+                                        item-label-path="hint" 
+                                        item-value-path="label" 
+                                        placeholder="Pencarian atau filter data..." 
+                                        overlay-vertical-offset="2" 
+                                        on-change="__onCommandChange" 
+                                        on-keydown="__onCommandKeydown" 
+                                        no-label-float 
+                                        hide-trigger>
+                                        
+                                        <template>
+                                            <style>
+                                                paper-item {
+                                                    --paper-item-min-height: 34px;
+                                                    font-size: 13px;
+                                                    font-weight: 400;
+                                                }
+                                                paper-item iron-icon {
+                                                    --iron-icon-width: 16px;
+                                                    --iron-icon-height: 16px;
+                                                    margin-right: 5px;
+                                                }
+                                                hidden {
+                                                    display: none;
+                                                }
+                                            </style>
+
+                                            <paper-item hidden$="[[ item.hide ]]">
+                                                <iron-icon icon="[[ item.icon ]]"></iron-icon>
+                                                <paper-item-body>
+                                                    <span class="hint" inner-h-t-m-l="[[ item.hint ]]"></span>
+                                                </paper-item-body>    
+                                            </paper-item>
+
+                                        </template>
+
+                                    </kct-search-combo>
+
+                                    <kct-search-combo 
+                                        name="tsm_from" 
+                                        url="/surat-masuk/origins" 
+                                        item-label-path="label" 
+                                        item-value-path="value" 
+                                        list-width="400" 
+                                        page-size="10" 
+                                        class="popup" 
+                                        on-beforeload="__onComboBeforeload" 
+                                        on-change="__onComboChange">
+                                        <template>
+                                            <style>
+                                                paper-item {
+                                                    --paper-item-min-height: 34px;
+                                                    font-size: 13px;
+                                                    font-weight: 400;
+                                                }
+                                                paper-item iron-icon {
+                                                    --iron-icon-width: 16px;
+                                                    --iron-icon-height: 16px;
+                                                    margin-right: 5px;
+                                                }
+                                            </style>
+
+                                            <paper-item>
+                                                <iron-icon icon="mail"></iron-icon>
+                                                <paper-item-body>[[ item.label ]]</paper-item-body>    
+                                            </paper-item>
+
+                                        </template>        
+                                    </kct-search-combo>
+
+                                    <kct-search-combo 
+                                        name="tsm_category" 
+                                        url="/categories" 
+                                        item-label-path="sct_label" 
+                                        item-value-path="sct_id" 
+                                        list-width="400" 
+                                        page-size="10" 
+                                        class="popup" 
+                                        on-beforeload="__onComboBeforeload" 
+                                        on-change="__onComboChange">
+                                        <template>
+                                            <style>
+                                                paper-item {
+                                                    --paper-item-min-height: 34px;
+                                                    font-size: 13px;
+                                                    font-weight: 400;
+                                                }
+                                                paper-item iron-icon {
+                                                    --iron-icon-width: 16px;
+                                                    --iron-icon-height: 16px;
+                                                    margin-right: 5px;
+                                                }
+                                            </style>
+
+                                            <paper-item>
+                                                <iron-icon icon="label-outline"></iron-icon>
+                                                <paper-item-body>[[ item.sct_label ]]</paper-item-body>    
+                                            </paper-item>
+
+                                        </template>        
+                                    </kct-search-combo>
+
+                                    <kct-search-combo 
+                                        name="tsm_serial" 
+                                        url="/system/autonumber" 
+                                        item-label-path="sn_name" 
+                                        item-value-path="sn_name" 
+                                        list-width="400" 
+                                        page-size="10" 
+                                        class="popup" 
+                                        on-beforeload="__onComboBeforeload" 
+                                        on-change="__onComboChange">
+                                        <template>
+                                            <style>
+                                                paper-item {
+                                                    --paper-item-min-height: 34px;
+                                                    font-size: 13px;
+                                                    font-weight: 400;
+                                                }
+                                                paper-item iron-icon {
+                                                    --iron-icon-width: 16px;
+                                                    --iron-icon-height: 16px;
+                                                    margin-right: 5px;
+                                                }
+                                            </style>
+
+                                            <paper-item>
+                                                <iron-icon icon="class"></iron-icon>
+                                                <paper-item-body>[[ item.sn_name ]]</paper-item-body>    
+                                            </paper-item>
+
+                                        </template>        
+                                    </kct-search-combo>
+
+                                    <kct-search-combo 
+                                        name="status" 
+                                        url="/surat-masuk/grouped-statuses"  
+                                        item-label-path="kp_title" 
+                                        item-value-path="kp_id" 
+                                        list-width="400" 
+                                        page-size="10" 
+                                        class="popup" 
+                                        on-beforeload="__onComboBeforeload" 
+                                        on-change="__onComboChange">
+                                        <template>
+                                            <style>
+                                                paper-item {
+                                                    --paper-item-min-height: 34px;
+                                                    font-size: 13px;
+                                                    font-weight: 400;
+                                                }
+                                                paper-item iron-icon {
+                                                    --iron-icon-width: 16px;
+                                                    --iron-icon-height: 16px;
+                                                    margin-right: 5px;
+                                                }
+                                            </style>
+
+                                            <paper-item>
+                                                <iron-icon icon="view-carousel"></iron-icon>
+                                                <paper-item-body>[[ item.kp_title ]]</paper-item-body>    
+                                            </paper-item>
+
+                                        </template>        
+                                    </kct-search-combo>
+
+                                    <kct-search-date name="tsm_date" on-change="__onDatePickerChange"></kct-search-date>
+
+                                </iron-selector>
+                                
+                            </div>
+                        </kct-hbox>    
+                    </div>
+                    <div class="scroller-nav" hidden$="[[ __hideNav ]]">
+                        <iron-icon data-nav="right" on-tap="__onNavTap" icon="chevron-right"></iron-icon>
+                    </div>
+                </kct-hbox>
+                
+                
+            </div>
+            <div class="column-clear">
+                <paper-icon-button on-tap="__onClearTap" icon="clear"></paper-icon-button>
+            </div>
+            <div class="column-sorter">
+                <paper-menu-button horizontal-align="right" vertical-offset="34" no-animations>
+                    <paper-button slot="dropdown-trigger">
+                        <span class="sorter-display">Urut [[ selectedSorter.label ]]</span>
+                    </paper-button>
+                    <paper-listbox selectable="paper-item" slot="dropdown-content">
+                        <template is="dom-repeat" items="[[ sorters ]]">
+                            <paper-item on-tap="__onSortCheckChange">
+                                <iron-icon hidden$="[[ item.checked ]]"></iron-icon>
+                                <iron-icon icon="done" hidden$="[[ !item.checked ]]"></iron-icon>
+                                <paper-item-body>&nbsp;Urut [[ item.label ]]</paper-item-body>
+                            </paper-item>
+                        </template>
+                    </paper-listbox>
+                </paper-menu-button>
+            </div>
+        </kct-hbox>
+    </template>
+    <script>
+        class SuratMasukDatabaseSearch extends Mixins(Polymer.Element).use(Mixins.Search) {
+            static get is() {
+                return 'surat-masuk-database-search';
+            }
+            static get properties() {
+                return {
+                    search: { type: Object, notify: true },
+                    filters: { 
+                        type: Array,
+                        value: () => ([])
+                    },
+
+                    features: {
+                        type: Array,
+                        value: () => ([
+                            { field: 'search', label: 'Search', icon: 'search', hide: false, hint: 'Tekan enter atau klik...' }, 
+                            { field: 'tsm_from', label: 'Pengirim', icon: 'mail', hide: false, hint: 'Filter pengirim: <b>@pengirim</b>' },
+                            { field: 'tsm_date', label: 'Tanggal', icon: 'today', hide: false, hint: 'Filter tanggal surat: <b>&tanggal</b>' },
+                            { field: 'tsm_category', label: 'Sifat', icon: 'label-outline', hide: false, hint: 'Filter sifat surat: <b>~sifat</b>' },
+                            { field: 'tsm_serial', label: 'Agenda', icon: 'class', hide: false, hint: 'Filter buku agenda: <b>$agenda</b>' },
+                            { field: 'status', label: 'Proses', icon: 'view-carousel', hide: false, hint: 'Filter data proses: <b>#proses</b>' },
+                            { field: 'tsm_agenda', label: 'No. Agenda', icon: '', hide: true, hint: '' },
+                            { field: 'tsm_no', label: 'No. Surat', icon: '', hide: true, hint: '' }
+                        ])
+                    },
+
+                    selectedFeature: { type: String, value: 'search' },
+
+                    sorters: {
+                        type: Array,
+                        value: () => ([
+                            { field: 'tsm_no', sort: 'ASC', label: 'Surat' },
+                            { field: 'tsm_date', sort: 'DESC', label: 'Baru' },
+                            { field: 'tsm_date', sort: 'ASC', label: 'Lama' },
+                            { field: 'tsm_agenda', sort: 'ASC', label: 'Agenda' },
+                            { field: 'sct_weight', sort: 'DESC', label: 'Sifat' }
+                        ])
+                    },
+
+                    selectedSorter: { type: Object },
+                    project: { type: String }
+                };
+            }
+
+            ready() {
+                super.ready();
+                
+                this.set('selectedSorter', this.sorters[0]);
+                this.set('sorters.0.checked', true);
+            }
+        }
+        customElements.define(SuratMasukDatabaseSearch.is, SuratMasukDatabaseSearch);
+    </script>
+</dom-module>

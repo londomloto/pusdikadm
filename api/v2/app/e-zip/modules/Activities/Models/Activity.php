@@ -199,6 +199,8 @@ class Activity extends \Micro\Model {
                 return 'warning';
             case 'activation':
                 return 'lock-open';
+            case 'correction':
+                return 'find-in-page';
         }
     }
 
@@ -362,6 +364,9 @@ class Activity extends \Micro\Model {
                     $time
                 );
 
+                break;
+
+            case 'correction':
                 break;
         }
 

@@ -2,6 +2,7 @@
 <link rel="import" href="../../../../../cores/bower_components/paper-input/paper-input.html">
 <link rel="import" href="../../../../../cores/bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../../../../../cores/elements/kct-combobox/kct-combobox.html">
+<link rel="import" href="../../../../../cores/elements/kct-checkbox/kct-checkbox.html">
 <link rel="import" href="../../../../../cores/elements/kct-dialog/kct-dialog.html">
 <link rel="import" href="../../../../../cores/elements/kct-ajax/kct-ajax.html">
 
@@ -33,7 +34,11 @@
 
         <kct-dialog id="editor" title="Editor Penomoran" width="400" height="100%" scrollable>
             <template preserve-content>
-                <style include="theme-helper"></style>
+                <style include="theme-helper">
+                    kct-checkbox {
+                        --paper-checkbox-margin: 8px 0;
+                    }
+                </style>
                 <div slot="dialog-body">
                     <paper-input label="Kode" value="{{ editingRecord.sn_name }}" required auto-validate error-message="Kode wajib diisi"></paper-input>
                     <paper-input label="Keterangan" value="{{ editingRecord.sn_desc }}"></paper-input>
@@ -41,6 +46,12 @@
                     <paper-input label="Panjang Karakter" value="{{ editingRecord.sn_length }}"></paper-input>
                     <paper-input label="Awalan" value="{{ editingRecord.sn_prefix }}"></paper-input>
                     <paper-input label="Akhiran" value="{{ editingRecord.sn_suffix }}"></paper-input>
+                    <div>
+                        <kct-checkbox value="{{ editingRecord.sn_monthly }}">Reset setiap bulan</kct-checkbox>    
+                    </div>
+                    <div>
+                        <kct-checkbox value="{{ editingRecord.sn_yearly }}">Reset setiap tahun</kct-checkbox>    
+                    </div>
                 </div>
                 <div slot="dialog-footer">
                     <paper-button disabled$="[[ editingInvalid ]]" on-tap="__onSaveTap">Simpan</paper-button>

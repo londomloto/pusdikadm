@@ -1,0 +1,223 @@
+<link rel="import" href="../../../../../../../cores/elements/kct-painter/kct-painter.html">
+
+<dom-module id="surat-keluar-exam">
+    <template>
+        <style include="form-style"></style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="section">
+            <div class="section-tools" hidden$="[[ readonly ]]">
+                <paper-button on-tap="__onAddTap" class="btn-cyan"><iron-icon icon="add"></iron-icon>&nbsp;Pemeriksaan</paper-button>
+            </div>
+            <h3 class="section-title">Riwayat Pemeriksaan</h3>
+            <div>Daftar riwayat pemeriksaan (koreksi) konsep surat keluar.</div>
+            <div class="m-t">
+                <table class="table bordered">
+                    <thead>
+                        <tr>
+                            <th style="width: 30px;">No.</th>
+                            <th style="width: 30px;"  hidden$="[[ readonly ]]">&nbsp;</th>
+                            <th style="width: 80px;">Tanggal</th>
+                            <th style="width: 300px;" class="text-left">Pejabat Pemeriksa</th>
+                            <th style="width: 300px;" class="text-left">Catatan Pemeriksaan</th>
+                            <th style="width: 100px;">Paraf</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template is="dom-repeat" items="[[ record.exams ]]">
+                            <tr>
+                                <td class="text-center">[[ __computeSequence(index) ]]</td>
+                                <td class="action text-center"  hidden$="[[ readonly ]]">
+                                    <paper-icon-button icon="close" on-tap="__onRemoteItemTap"></paper-icon-button>
+                                </td>
+                                <td class="text-center">[[ item.tske_date_formatted ]]</td>
+                                <td>[[ __computeExaminerLabel(item.examiner_su_sj_name, item.examiner_su_fullname) ]]</td>
+                                <td>[[ item.tske_result ]]</td>
+                                <td class="text-center action">
+                                    <a class="image-link" target="_blank" href$="[[ item.tske_signature_url ]]"><img src$="[[ __computeSignature(item.tske_signature_thumb) ]]"></a>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <kct-dialog id="editor" title="Pemeriksaan" width="400" height="100%" on-opened="__onEditorOpened" scrollable>
+            <template preserve-content>
+                <style include="theme-helper"></style>
+                <div slot="dialog-body">
+                    <kct-date-picker label="Tanggal" value="{{ examRecord.tske_date }}"></kct-date-picker>
+                    <combo-user label="Pejabat Pemeriksa" value="{{ examRecord.tske_user }}"></combo-user>
+                    <vaadin-combo-box 
+                        label="Status Pemeriksaan *)" 
+                        value="{{ examRecord.tske_flag }}" 
+                        items="[[ flags ]]"></vaadin-combo-box> 
+                    <paper-textarea label="Catatan" value="{{ examRecord.tske_notes }}"></paper-textarea>
+                    <div class="m-t">
+                        Bubuhkan paraf pada kotak di bawah jika setuju dengan konsep surat (opsional). Jika dikosongkan akan menggunakan paraf terakhir yang pernah dibuat.
+                    </div>
+                    <div class="m-t">
+                        <kct-painter id="signature" height="250px"></kct-painter>
+                    </div>
+                    
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button disabled$="[[ invalidEditor ]]" on-tap="__onEditorSaveTap">Simpan</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Tutup</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class SuratKeluarExam extends Polymer.Element {
+            static get is() {
+                return 'surat-keluar-exam';
+            }
+            static get properties() {
+                return {
+                    record: { type: Object, notify: true },
+                    examiner: { type: String },
+                    examRecord: { type: Object },
+                    flags: {
+                        type: Array,
+                        value: () => ([
+                            { value: 'APPROVED', label: 'Konsep Disetuji' },
+                            { value: 'REVISION', label: 'Revisi Konsep' }
+                        ])
+                    },
+                    invalidEditor: { type: Boolean, value: false },
+                    readonly: { type: Boolean, value: false }
+                };
+            }
+            static get observers() {
+                return [
+                    '__recordChanged(record.*)',
+                    '__computeEditorValidation(examRecord.tske_flag)'
+                ];
+            }
+            load() {
+                let valid = this.record && this.record.task && this.record.task.tsk_id;
+                if ( ! valid) {
+                    return;
+                }
+
+                this.$.ajax.GET('/surat-keluar/surat-keluar-exams', {
+                    params: {
+                        tske_tsk_id: this.record.task.tsk_id
+                    }
+                }).then(res => {
+                    if (res.success) {
+                        this.set('record.exams', res.data);
+                    }
+                });
+            }
+            __computeEditorValidation(flag) {
+                let valid = true;
+                valid = valid && !!flag;
+                this.set('invalidEditor', !valid);
+            }
+            __recordChanged(changed) {
+                if (changed.path == 'record') {
+                    this.load();
+                }
+            }
+            __computeSequence(index) {
+                return index + 1;
+            }
+            __computeSignature(signature) {
+                if (signature) {
+                    return signature + '&w=60&h=60';
+                }
+                return '';
+            }
+            __computeExaminerLabel(position, fullname) {
+                if (position) {
+                    return position + ' (' + fullname + ')';
+                }
+                return fullname;
+            }
+            __confirm(title, message) {
+                let defer = {};
+                defer.promise = new Promise(res => {
+                    defer.resolve = res;
+                });
+
+                let dialog = document.createElement('kct-confirm');
+                dialog.title = title;
+                dialog.message = message;
+                dialog.addEventListener('close', e => {
+                    document.body.removeChild(dialog);
+                    let y = e.detail.value == 'yes';
+                    defer.resolve(y);
+                });
+                document.body.appendChild(dialog);
+                dialog.open();
+
+                return defer.promise;
+            }
+            __onAddTap() {
+                let today = moment();
+
+                this.set('examRecord', {
+                    tske_tsk_id: this.record.task.tsk_id,
+                    tske_date: today.format('YYYY-MM-DD'),
+                    tske_user: this.examiner
+                });
+
+                this.$.editor.open();
+            }
+            __onRemoteItemTap(e) {
+                this.__confirm('Konfirmasi', 'Anda yakin akan menghapus data pemeriksaan?').then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/surat-keluar/surat-keluar-exams/' + e.model.item.tske_id).then(res => {
+                            if (res.success) {
+                                this.load();
+                            }
+                        });
+                    }
+                });
+            }
+            __onEditorCloseTap() {
+                this.$.editor.close();
+            }
+
+            __onEditorSaveTap() {
+                this.$.editor.close();
+                let payload = this.examRecord;
+
+                if (payload.tske_id) {
+                    this.$.ajax.PUT('/surat-keluar/surat-keluar-exams/' + payload.tske_id, payload).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/surat-keluar/surat-keluar-exams', payload).then(done.bind(this));
+                }
+
+                function done(res) {
+
+                    if (res.success) {
+                        let signature = this.$.signature.saveAsJPG();
+
+                        if (signature) {
+                            this.$.ajax.UPLOAD('/surat-keluar/surat-keluar-exams/' + res.data.tske_id + '/signature', {
+                                files: [
+                                    { name: 'userfile', file: signature }
+                                ]
+                            }).then(() => {
+                                this.load();
+                            });
+                        } else {
+                            this.load();
+                        }
+                    }
+                }
+            }
+
+            __onEditorOpened() {
+                this.$.signature.resize();
+            }
+        }
+        customElements.define(SuratKeluarExam.is, SuratKeluarExam);
+    </script>
+</dom-module>

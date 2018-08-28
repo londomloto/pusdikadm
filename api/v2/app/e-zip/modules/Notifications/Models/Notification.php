@@ -288,6 +288,13 @@ class Notification extends \App\Activities\Models\Activity {
                 );
 
                 break;
+
+            case 'correction':
+                $verb = sprintf(
+                    'Anda menerima permohonan koreksi surat keluar: "%s"',
+                    $taskTitle
+                );
+                break;
         }
 
         return $verb;

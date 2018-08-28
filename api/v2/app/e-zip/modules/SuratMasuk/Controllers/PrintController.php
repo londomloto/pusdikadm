@@ -60,7 +60,7 @@ class PrintController extends \Micro\Controller {
 
         $sheet->setCellValue('D'.$line, $data['tsm_agenda']);
         $sheet->setCellValue('G'.$line, $data['tsm_register_date_formatted']);
-        $sheet->setCellValue('J'.$line, $data['classification_scl_code']);
+        $sheet->setCellValue('J'.$line, self::__nulled($data, 'classification_scl_code'));
         $line++;
         $sheet->setCellValue('D'.$line, $data['tsm_subject']);
         $line++;
@@ -71,7 +71,7 @@ class PrintController extends \Micro\Controller {
         $sheet->setCellValue('D'.$line, $data['tsm_date_formatted']);
         $sheet->setCellValue('G'.$line, $data['tsm_no']);
         $line++;
-        $sheet->setCellValue('D'.$line, $data['registrar_su_fullname']);
+        $sheet->setCellValue('D'.$line, self::__nulled($data, 'registrar_su_fullname'));
         
         $xls->stream('KENDALI_SURAT_MASUK.xlsx');
     }
@@ -217,12 +217,10 @@ class PrintController extends \Micro\Controller {
 
         $nodes = array_reverse($nodes);
         $root = array_shift($nodes);
-        $from = $node->getSendingNode();
 
         $arrayTask = $task->toArray();
         $arrayRoot = $root->toArray();
         $arrayNode = $node->toArray();
-        $arrayFrom = $from ? $from->toArray() : FALSE;
 
         $xls = new Spreadsheet(PUBPATH.'resources/templates/surat-masuk/disposition.xlsx');
 
@@ -268,14 +266,15 @@ class PrintController extends \Micro\Controller {
                         $sheet->setCellValue('I'.($line + 4), $label);
                         $sheet->setCellValue('I'.($line + 5), 'Penerima :');
 
-                        $sheet->getStyle('B'.$line.':H'.$line)->applyFromArray(array('borders' => array('outline' => array('borderStyle' => 'thin'))));
-                        $sheet->getStyle('B'.($line + 1).':H'.($line + 3))->applyFromArray(array('borders' => array('outline' => array('borderStyle' => 'thin'))));
-                        $sheet->getStyle('B'.($line + 4).':H'.($line + 4))->applyFromArray(array('borders' => array('outline' => array('borderStyle' => 'thin'))));
-                        $sheet->getStyle('B'.($line + 5).':H'.($line + 5))->applyFromArray(array('borders' => array('outline' => array('borderStyle' => 'thin'))));
-                        $sheet->getStyle('I'.$line.':O'.$line)->applyFromArray(array('borders' => array('outline' => array('borderStyle' => 'thin'))));
-                        $sheet->getStyle('I'.($line + 1).':O'.($line + 3))->applyFromArray(array('borders' => array('outline' => array('borderStyle' => 'thin'))));
-                        $sheet->getStyle('I'.($line + 4).':O'.($line + 4))->applyFromArray(array('borders' => array('outline' => array('borderStyle' => 'thin'))));
-                        $sheet->getStyle('I'.($line + 5).':O'.($line + 5))->applyFromArray(array('borders' => array('outline' => array('borderStyle' => 'thin'))));
+                        Spreadsheet::applyBorderStyle($sheet, 'B'.$line.':H'.$line);
+                        Spreadsheet::applyBorderStyle($sheet, 'B'.($line + 1).':H'.($line + 3));
+                        Spreadsheet::applyBorderStyle($sheet, 'B'.($line + 4).':H'.($line + 4));
+                        Spreadsheet::applyBorderStyle($sheet, 'B'.($line + 5).':H'.($line + 5));
+
+                        Spreadsheet::applyBorderStyle($sheet, 'I'.$line.':O'.$line);
+                        Spreadsheet::applyBorderStyle($sheet, 'I'.($line + 1).':O'.($line + 3));
+                        Spreadsheet::applyBorderStyle($sheet, 'I'.($line + 4).':O'.($line + 4));
+                        Spreadsheet::applyBorderStyle($sheet, 'I'.($line + 5).':O'.($line + 5));
 
                         $sheet->getStyle('B'.$line.':O'.$line)->getFont()->setBold(TRUE);
                         $sheet->getStyle('B'.$line.':B'.($line + 5))->getFont()->setSize(10);
@@ -293,10 +292,11 @@ class PrintController extends \Micro\Controller {
                     $sheet->setCellValue('B'.($line + 4), 'Tanggal Penyelesaian :');
                     $sheet->setCellValue('B'.($line + 5), 'Penerima :');
 
-                    $sheet->getStyle('B'.$line.':O'.$line)->applyFromArray(array('borders' => array('outline' => array('borderStyle' => 'thin'))));
-                    $sheet->getStyle('B'.($line + 1).':O'.($line + 3))->applyFromArray(array('borders' => array('outline' => array('borderStyle' => 'thin'))));
-                    $sheet->getStyle('B'.($line + 4).':O'.($line + 4))->applyFromArray(array('borders' => array('outline' => array('borderStyle' => 'thin'))));
-                    $sheet->getStyle('B'.($line + 5).':O'.($line + 5))->applyFromArray(array('borders' => array('outline' => array('borderStyle' => 'thin'))));
+                    Spreadsheet::applyBorderStyle($sheet, 'B'.$line.':O'.$line);
+                    Spreadsheet::applyBorderStyle($sheet, 'B'.($line + 1).':O'.($line + 3));
+                    Spreadsheet::applyBorderStyle($sheet, 'B'.($line + 4).':O'.($line + 4));
+                    Spreadsheet::applyBorderStyle($sheet, 'B'.($line + 5).':O'.($line + 5));
+                    
                     $sheet->getStyle('B'.$line)->getFont()->setBold(TRUE);
                     $sheet->getStyle('B'.$line.':O'.($line + 5))->getFont()->setSize(10);
                 }
@@ -390,7 +390,7 @@ class PrintController extends \Micro\Controller {
         $line++;
         $sheet->setCellValue('E'.$line, $arrayTask['tsm_attachments']);
         $line++;
-        // $sheet->setCellValue('E'.$line, $arrayTask['tsm_agenda_date_formatted']);
+        $sheet->setCellValue('E'.$line, $arrayTask['tsm_register_date_formatted']);
         $line++;
         $sheet->setCellValue('E'.$line, $arrayTask['tsm_agenda']);
 
@@ -508,7 +508,7 @@ class PrintController extends \Micro\Controller {
         $total = max(array( count($subordinates), ($chunked['total'] + 2) ));
         $insert = $limit > 2 ? $limit - 2 : 0;
 
-        $branch = isset($nodes[0]) ? $nodes[0] : FALSE;
+        $mandatory = isset($nodes[0]) ? $nodes[0] : FALSE;
 
         if ($total > 0) {
             if ($insert > 0) {
@@ -565,18 +565,15 @@ class PrintController extends \Micro\Controller {
         
         $line++;
 
-        if ($branch) {
-            $arrayBranch = $branch->toArray();
-            $sheet->setCellValue('B'.$line, 'Tanggal penyelesaian: '.$arrayBranch['tdp_finish_date_formatted']);
-            $sheet->setCellValue('B'.($line + 1), 'Penerima: '.self::__resolveReceiver($arrayBranch));
+        if ($mandatory) {
+            $arrayMandatory = $mandatory->toArray();
+
+            $sheet->setCellValue('B'.$line, 'Tanggal penyelesaian : '.$arrayMandatory['tdp_finish_date_formatted']);
+            $sheet->setCellValue('B'.($line + 1), 'Penerima : '.self::__resolveReceiver($arrayMandatory));
+
+            // $sheet->setCellValue('I'.$line, 'Diajukan kembali tanggal : '.$arrayMandatory['tdp_recurrent_date_formatted']);
+            // $sheet->setCellValue('I'.($line + 1), 'Penerima : '.self::__resolvePublisher($arrayRoot));
         }
-        
-        // if ($from && ! $from->isRoot()) {
-        //     if ( ! empty($arrayFrom['tdp_sending_date_formatted'])) {
-        //         $sheet->setCellValue('I'.$line, 'Tanggal diajukan kembali: '.$arrayFrom['tdp_sending_date_formatted']);
-        //         $sheet->setCellValue('I'.($line + 1), 'Penerima: '.self::__resolveReceiver($arrayFrom));
-        //     }
-        // }
 
         $line += 2;
 
@@ -585,57 +582,19 @@ class PrintController extends \Micro\Controller {
         if ($chunked['total'] > 0) {
 
             $offset = $line;
+            $pages = count($chunked['pages']);
             $page = 1;
 
             foreach($chunked['pages'] as $items) {
-
-                if ($page > 1) {
-                    $sheet->setCellValue('B'.($offset), 'DISPOSISI STAFF');
-                    $sheet->setCellValue('B'.($offset + 1), 'Kepada Staff:');
-                    $sheet->setCellValue('B'.($offset + 2), 'Petunjuk:');
-                    $sheet->setCellValue('B'.($offset + 4), 'Tanggal penyelesaian:');
-                    $sheet->setCellValue('B'.($offset + 5), 'Penerima:');
-
-                    $sheet->setCellValue('I'.($offset), 'DISPOSISI STAFF');
-                    $sheet->setCellValue('I'.($offset + 1), 'Kepada Staff:');
-                    $sheet->setCellValue('I'.($offset + 2), 'Petunjuk:');
-                    $sheet->setCellValue('I'.($offset + 4), 'Tanggal penyelesaian:');
-                    $sheet->setCellValue('I'.($offset + 5), 'Penerima:');
-
-                    $sheet->getStyle('B'.($offset).':I'.$offset)->getFont()->setBold(TRUE);
-
-                    $range = 'B'.$offset.':H'.$offset;
-                    $sheet->getStyle($range)->applyFromArray(array('borders' => array('outline' => array('borderStyle' => 'thin'))));
-
-                    $range = 'B'.($offset + 1).':H'.($offset + 3);
-                    $sheet->getStyle($range)->applyFromArray(array('borders' => array('outline' => array('borderStyle' => 'thin'))));
-
-                    $range = 'B'.($offset + 4).':H'.($offset + 4);
-                    $sheet->getStyle($range)->applyFromArray(array('borders' => array('outline' => array('borderStyle' => 'thin'))));
-                    
-                    $range = 'B'.($offset + 5).':H'.($offset + 5);
-                    $sheet->getStyle($range)->applyFromArray(array('borders' => array('outline' => array('borderStyle' => 'thin'))));
-
-                    $range = 'I'.$offset.':O'.$offset;
-                    $sheet->getStyle($range)->applyFromArray(array('borders' => array('outline' => array('borderStyle' => 'thin'))));
-
-                    $range = 'I'.($offset + 1).':O'.($offset + 3);
-                    $sheet->getStyle($range)->applyFromArray(array('borders' => array('outline' => array('borderStyle' => 'thin'))));
-
-                    $range = 'I'.($offset + 4).':O'.($offset + 4);
-                    $sheet->getStyle($range)->applyFromArray(array('borders' => array('outline' => array('borderStyle' => 'thin'))));
-                    
-                    $range = 'I'.($offset + 5).':O'.($offset + 5);
-                    $sheet->getStyle($range)->applyFromArray(array('borders' => array('outline' => array('borderStyle' => 'thin'))));
-                }
 
                 $A = $items[0];
                 $B = $items[1];
                 $C = $items[2];
                 $D = $items[3];
 
-                $notesA = '';
-                $notesC = '';
+                $noteA = '';
+                $nodeC = '';
+                $dateC = '';
 
                 if ($A) {
                     $arrayA = $A->toArray();
@@ -644,7 +603,7 @@ class PrintController extends \Micro\Controller {
 
                         $sheet->setCellValue('B'.$offset, strtoupper($arrayA['tdp_name']));
                         $sheet->setCellValue('B'.($offset + 3), $arrayA['tdp_notes']);
-                        $notesA = $arrayA['tdp_notes'];
+                        $noteA = $arrayA['tdp_notes'];
                     }
 
                 }
@@ -652,8 +611,8 @@ class PrintController extends \Micro\Controller {
                 if ($B) {
                     $arrayB = $B->toArray();
 
-                    $sheet->setCellValue('B'.($offset + 4), 'Tanggal penyelesaian: '.$arrayB['tdp_finish_date_formatted']);
-                    $sheet->setCellValue('B'.($offset + 5), 'Penerima: '.self::__resolveReceiver($arrayB));
+                    $sheet->setCellValue('B'.($offset + 4), 'Tanggal penyelesaian : '.$arrayB['tdp_finish_date_formatted']);
+                    $sheet->setCellValue('B'.($offset + 5), 'Penerima : '.self::__resolveReceiver($arrayB));
                 }
 
                 if ($C) {
@@ -663,22 +622,28 @@ class PrintController extends \Micro\Controller {
                         $sheet->setCellValue('I'.$offset, strtoupper($arrayC['tdp_name']));
                         $sheet->setCellValue('I'.($offset + 3), $arrayC['tdp_notes']);
 
-                        $notesC = $arrayC['tdp_notes'];
-
+                        $nodeC = $arrayC['tdp_notes'];
+                        $dateC = $arrayC['tdp_sending_date_formatted'];
                     }
                 }
 
                 if ($D) {
                     $arrayD = $D->toArray();
 
-                    $sheet->setCellValue('I'.($offset + 4), 'Tanggal penyelesaian: '.$arrayD['tdp_finish_date_formatted']);
-                    $sheet->setCellValue('I'.($offset + 5), 'Penerima: '.self::__resolveReceiver($arrayD));
+                    if ($page == $pages) {
+                        $sheet->setCellValue('I'.($offset + 4), 'Tanggal penyelesaian : '.$arrayD['tdp_finish_date_formatted']);
+                        $sheet->setCellValue('I'.($offset + 5), 'Penerima : '.self::__resolveReceiver($arrayD));
+                    } else {
+                        $sheet->setCellValue('I'.($offset + 4), 'Diajukan kembali tanggal : '.$dateC);
+                        $sheet->setCellValue('I'.($offset + 5), 'Penerima : '.self::__resolveReceiver($arrayD));
+                    }
+                    
                 }
 
-                if (strlen($notesA) > strlen($notesC)) {
-                    $notes = $notesA;
+                if (strlen($noteA) > strlen($nodeC)) {
+                    $notes = $noteA;
                 } else {
-                    $notes = $notesC;
+                    $notes = $nodeC;
                 }
 
                 self::__autoHeightRow($sheet, ($offset + 3), $notes, $width = 60);
@@ -692,11 +657,15 @@ class PrintController extends \Micro\Controller {
     }
 
     private static function __resolveReceiver($disposition) {
-        $result = isset($disposition['responsible_su_fullname']) 
+        return isset($disposition['responsible_su_fullname']) 
             ? $disposition['responsible_su_fullname'] 
-            : '(anonim)';
+            : '';
+    }
 
-        return $result;
+    private static function __resolvePublisher($disposition) {
+        return isset($disposition['publisher_su_fullname'])
+            ? $disposition['publisher_su_fullname'] 
+            : '';
     }
 
     private static function __createHeaders() {
@@ -902,262 +871,97 @@ class PrintController extends \Micro\Controller {
         $query = Task::get()
             ->alias('task')
             ->columns(array(
-                'task.skp_id'
+                'task.tsm_id',
+                'category.sct_weight AS sct_weight'
             ))
-            ->join('App\Users\Models\User', 'user.su_id = task.skp_su_id', 'user')
-            ->filterable($payload)
-            ->sortable($payload)
-            ->groupBy('task.skp_id');
+            ->join('App\Categories\Models\Category', 'category.sct_id = task.tsm_category', 'category', 'LEFT')
+            ->groupBy('task.tsm_id')
+            ->filterable()
+            ->sortable();
 
-        if (isset($payload['params'])) {
-            $params = json_decode($payload['params'], TRUE);
+        $params = isset($payload['params']) ? $payload['params'] : array();
+
+        if ( ! empty($params)) {
+            
+            $params = json_decode($params, TRUE);
+
             if (isset($params['status']) && ! empty($params['status'])) {
-                $query->join('App\Skp\Models\TaskStatus', 'task_status.sks_skp_id = task.skp_id AND task_status.sks_deleted = 0', 'task_status', 'LEFT');
-                $query->join('App\Kanban\Models\KanbanStatus', 'kst.kst_status = task_status.sks_status', 'kst', 'LEFT');
+                $query->join('App\SuratMasuk\Models\TaskStatus', 'task_status.tsms_tsm_id = task.tsm_id AND task_status.tsms_deleted = 0', 'task_status', 'LEFT');
+                $query->join('App\Kanban\Models\KanbanStatus', 'kst.kst_status = task_status.tsms_status', 'kst', 'LEFT');
                 $query->join('App\Kanban\Models\KanbanPanel', 'kp.kp_id = kst.kst_kp_id', 'kp', 'LEFT');
-                $query->inWhere('kp.kp_id', $params['status'][1]);        
+                $query->inWhere('kp.kp_id', $params['status'][1]);
             }
         }
 
-        if ( ! $this->role->can('manage@skp')) {
-            $auth = $this->auth->user();
-            $query
-                ->join('App\Skp\Models\TaskUser', 'task_user.sku_skp_id = task.skp_id', 'task_user', 'LEFT')
-                ->andWhere('task_user.sku_su_id = :user:', array('user' => $auth['su_id']));
-        }
+        $result = $query->paginate();
 
-        if (isset($payload['start'], $payload['limit'])) {
-            $query->limit($payload['limit'], $payload['start']);
-            $result = $query->paginate(FALSE);
-        } else {
-            $result = $query->paginate();    
-        }
-
-        $items = $result->data->filter(function($row){
-            $task = Task::findFirst($row->skp_id);
+        $result->filter(function($row){
+            $task = Task::findFirst($row->tsm_id);
+            
             $data = $task->toArray();
-            $data['skp_link'] = $task->getLink();
+            
+            $data['tsm_link'] = $task->getLink();
             $data['statuses'] = $task->getCurrentStatuses()->filter(function($status){
                 return $status->toArray();
             });
+
             return $data;
         });
 
-        $xls = new Spreadsheet(dirname(__DIR__).'/Templates/database.xlsx');
+        $xls = new Spreadsheet(PUBPATH.'resources/templates/surat-masuk/database.xlsx');
 
         $sheet = $xls->getSheet(0);
         $index = 1;
         $line = 4;
 
-        foreach($items as $item) {
+        foreach($result->data as $item) {
+
             $sheet
                 ->setCellValue('A'.$line, $index)
-                ->setCellValue('B'.$line, $item['skp_period'])
-                ->setCellValue('C'.$line, $item['skp_su_fullname'])
-                ->setCellValue('C'.($line + 1), $item['skp_su_no']);
-
-
-            if ($item['skp_has_evaluator']) {
-                $sheet
-                    ->setCellValue('D'.$line, $item['evaluator_su_fullname'])
-                    ->setCellValue('D'.($line + 1), $item['evaluator_su_no']);
-            }
-
-            if ($item['skp_has_examiner']) {
-                $sheet
-                    ->setCellValue('E'.$line, $item['examiner_su_fullname'])
-                    ->setCellValue('E'.($line + 1), $item['examiner_su_no']);
-            }
-
-            $sheet
-                ->setCellValue('F'.$line, $item['skp_performance'])
-                ->setCellValue('G'.$line, $item['skp_behavior_average'])
-                ->setCellValue('H'.$line, $item['skp_value']);
-
-            $statuses = array_map(function($s){
-                return $s['status_text'];
-            }, $item['statuses']);
-
-            $statuses = implode(', ', $statuses);
-            $sheet->setCellValue('I'.$line, $statuses);
-
-            $sheet->getStyle('A'.($line + 1).':I'.($line + 1))->applyFromArray(array(
-                'borders' => array(
-                    'bottom' => array(
-                        'borderStyle' => 'thin'
-                    )
-                )
-            ));
-
-            $index++;
-            $line += 2;
-        }
-
-        $column = 'A';
-        $bottom = $line - 1;
-
-        for($i = 0; $i < 8; $i++) {
-            $coords = $column.'4:'.$column.$bottom;
-
-            $sheet->getStyle($coords)->applyFromArray(array(
-                'borders' => array(
-                    'right' => array(
-                        'borderStyle' => 'thin'
-                    )
-                )
-            ));
-
-            $column++;
-        }
-
-        $xls->setActiveSheetIndex(0);
-        $xls->stream('DOKUMEN_SKP.xlsx');
-    }
-
-    public function databaseItemsAction($format) {
-        $method = '__databaseItems'.ucfirst(strtolower($format));
-        if (method_exists($this, $method)) {
-            $this->{$method}();
-        }
-    }
-
-    private function __databaseItemsXls() {
-        $payload = $this->request->getJson();
-
-        $query = SkpItem::get()
-            ->columns(array('ski_id'))
-            ->join('App\Skp\Models\Task', 'skp_id = ski_skp_id')
-            ->join('App\Users\Models\User', 'su_id = skp_su_id')
-            ->filterable($payload)
-            ->sortable($payload);
-
-        if ( ! $this->role->can('manage@skp')) {
-            $auth = $this->auth->user();
-            $query
-                ->columns(array('ski_id'))
-                ->join('App\Skp\Models\TaskUser', 'task_user.sku_skp_id = skp_id', 'task_user', 'LEFT')
-                ->andWhere('task_user.sku_su_id = :user:', array('user' => $auth['su_id']))
-                ->groupBy('ski_id');
-        }
-
-        if ( ! isset($payload['sort'])) {
-            $query->orderBy('ski_date DESC');
-        }
-
-        if (isset($payload['start'], $payload['limit'])) {
-            $query->limit($payload['limit'], $payload['start']);
-        }
-        $result = $query->paginate(FALSE);
-
-        $xls = new Spreadsheet(dirname(__DIR__).'/Templates/database-items.xlsx');
-        $sheet = $xls->getSheet(0);
-
-        $line = 5;
-        $index = 1;
-
-        foreach($result->data as $row) {
-            $item = SkpItem::findFirst($row->ski_id);
-            $task = $item->getTask();
-
-            $data = $item->toArray();
-
-            $sheet->setCellValue('A'.$line, $index);
-
-            if ($task) {
-                if (($user = $task->user)) {
-                    $sheet->setCellValue('B'.$line, $user->getName()."\n".$user->su_no);
-                }
-                $sheet->setCellValue('C'.$line, $task->skp_period);
-            }
-
-            $sheet
-                ->setCellValue('D'.$line, $data['ski_desc'])
-                ->setCellValue('E'.$line, $data['ski_ak_factor'])
-                ->setCellValue('F'.$line, $data['ski_ak'])
-                ->setCellValue('G'.$line, $data['ski_volume'])
-                ->setCellValue('H'.$line, $data['ski_unit'])
-                ->setCellValue('I'.$line, $data['ski_quality'])
-                ->setCellValue('J'.$line, $data['ski_duration'])
-                ->setCellValue('K'.$line, $data['ski_duration_unit'])
-                ->setCellValue('L'.$line, $data['ski_cost'])
-                ->setCellValue('M'.$line, $data['ski_ak_real'])
-                ->setCellValue('N'.$line, $data['ski_volume_real'])
-                ->setCellValue('O'.$line, $data['ski_unit'])
-                ->setCellValue('P'.$line, $data['ski_quality_real'])
-                ->setCellValue('Q'.$line, $data['ski_duration_real'])
-                ->setCellValue('R'.$line, $data['ski_duration_unit'])
-                ->setCellValue('S'.$line, $data['ski_cost_real'])
-                ->setCellValue('T'.$line, $data['ski_total'])
-                ->setCellValue('U'.$line, $data['ski_performance']);
-
-            $sheet->getStyle('A'.$line.':U'.$line)->applyFromArray(array(
-                'borders' => array(
-                    'bottom' => array(
-                        'borderStyle' => 'thin'
-                    )
-                )
-            ));
+                ->setCellValue('B'.$line, $item['tsm_agenda'])
+                ->setCellValue('C'.$line, $item['tsm_register_date_formatted'])
+                ->setCellValue('D'.$line, $item['tsm_no'])
+                ->setCellValue('E'.$line, $item['tsm_date_formatted'])
+                ->setCellValue('F'.$line, $item['tsm_from'])
+                ->setCellValue('G'.$line, $item['tsm_to'])
+                ->setCellValue('H'.$line, $item['tsm_subject'])
+                ->setCellValue('I'.$line, $item['tsm_attachments'])
+                ->setCellValue('J'.$line, self::__nulled($item, 'classification_scl_label'))
+                ->setCellValue('K'.$line, self::__nulled($item, 'category_sct_name'))
+                ->setCellValue('L'.$line, self::__nulled($item, 'shipment_sdt_name'))
+                ->setCellValue('M'.$line, self::__nulled($item, 'priority_spt_name'))
+                ->setCellValue('N'.$line, self::__nulled($item, 'secrecy_sst_name'));
 
             $index++;
             $line++;
         }
 
-        $column = 'A';
-        $bottom = $line - 1;
-
-        for($i = 0; $i < 20; $i++) {
-            $coords = $column.'5:'.$column.$bottom;
-
-            $sheet->getStyle($coords)->applyFromArray(array(
+        if (count($result->data) > 2) {
+            $sheet->getStyle('A6:N'.$line)->applyFromArray(array(
                 'borders' => array(
-                    'right' => array(
+                    'allBorders' => array(
                         'borderStyle' => 'thin'
                     )
                 )
             ));
 
-            $column++;
+            $sheet->getStyle('A6:N'.$line)->applyFromArray(array(
+                'borders' => array(
+                    'left' => array(
+                        'borderStyle' => 'none'
+                    ),
+                    'right' => array(
+                        'borderStyle' => 'none'
+                    )
+                )
+            ));
         }
+
+        // echo '<pre>';
+        // echo json_encode($result, JSON_PRETTY_PRINT);
 
         $xls->setActiveSheetIndex(0);
-        $xls->stream('KEGIATAN_SKP.xlsx');
-    }
-
-    public function dashboardAction($format) {
-        $method = '__dashboard'.ucfirst(strtolower($format));
-        if (method_exists($this, $method)) {
-            $this->{$method}();
-        }
-    }
-
-    private function __dashboardXls() {
-        $payload = $this->request->getJson();
-        $xls = new Spreadsheet();
-
-        $xls = new Spreadsheet(dirname(__DIR__).'/Templates/dashboard.xlsx');
-        $sheet = $xls->getSheet(0);
-
-        $line = 5;
-
-        $charts = isset($payload['charts']) ? $payload['charts'] : array();
-
-        foreach($charts as $chart) {
-            if ( ! empty($chart)) {
-                $image = Spreadsheet::createImage(PUBPATH.'resources/charts/'.$chart);
-                @unlink(PUBPATH.'resources/charts/'.$chart);
-
-                if ($image) {
-                    $image->setCoordinates('A'.$line);
-                    $image->setWorksheet($sheet);
-                    //$image->getShadow()->setVisible(TRUE);
-
-                    $line += 24;
-                }
-            }
-        }
-
-        $xls->setActiveSheetIndex(0);
-        $xls->stream('DASHBOARD_LKH.xlsx');
+        $xls->stream('DATABSE-SURAT-MASUK.xlsx');
     }
 
 }
