@@ -5,16 +5,16 @@ var https = require('https');
 var express = require('express');
 var app = express();
 
-// var server = https.createServer({ 
-//     key: fs.readFileSync('ssl/www_pusdikadm_xyz.key'), 
-//     cert: fs.readFileSync('ssl/www_pusdikadm_xyz.crt'),
-//     ca: fs.readFileSync('ssl/ca-bundle-client.crt')
-// }, app);
-
 var server = https.createServer({ 
-    key: fs.readFileSync('ssl/server.key'), 
-    cert: fs.readFileSync('ssl/server.crt')
+    key: fs.readFileSync('ssl/private.key'), 
+    cert: fs.readFileSync('ssl/certificate.crt'),
+    ca: fs.readFileSync('ssl/ca_bundle.crt')
 }, app);
+
+// var server = https.createServer({ 
+//     key: fs.readFileSync('ssl/server.key'), 
+//     cert: fs.readFileSync('ssl/server.crt')
+// }, app);
 
 var io = require('socket.io')(server);
 
